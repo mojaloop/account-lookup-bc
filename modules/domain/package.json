@@ -1,0 +1,34 @@
+{
+  "name": "@mojaloop/account-lookup-bc-domain",
+  "version": "0.0.1",
+  "description": "Account Lookup BC domain.",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/modules/domain",
+  "bugs": {
+    "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
+  },
+  "contributors": [],
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "start": "yarn run service",
+    "service": "tsc && node dist/application/index.js",
+    "build": "tsc",
+    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
+    "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
+  },
+  "dependencies": {
+    "@mojaloop/logging-bc-public-types-lib": "^0.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.17.0",
+    "jest": "^28.1.1",
+    "npm-check-updates": "^13.1.2",
+    "ts-jest": "^28.0.4",
+    "typescript": "^4.7.3"
+  }
+}
