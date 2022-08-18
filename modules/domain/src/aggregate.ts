@@ -30,16 +30,58 @@
 
 "use strict";
 
-import {IOracleFinder, IOracleProvider, IParty} from "./interfaces";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
+import { IParty, IPartyAccount } from "./types";
 
-export class AccountLookupAggregate{
+export class AccountLookupAggregate {
+	private readonly logger: ILogger;
+	private readonly oracleFinder: IOracleFinder;
+	private readonly oracleProviders: IOracleProvider[];
 
-    constructor(oracleFinder:IOracleFinder, oracles:IOracleProvider[], logger:ILogger) {
-
+    constructor(oracleFinder:IOracleFinder, oracleProviders:IOracleProvider[], logger:ILogger) {
+		this.logger = logger;
+		this.oracleFinder = oracleFinder;
+		this.oracleProviders = oracleProviders;
     }
 
-    async getParty(type:String, id:string):Promise<IParty|null>{
-        throw new Error("not implemented");
+    async getParty(partyType:String, partyId:String, partySubId?:String):Promise<IParty|null|undefined>{
+        const oracleProvider = await this.getOracleProvider(partyType)
+
+        const party = await oracleProvider?.getParty(partyType, partyId);
+
+        return party;
     }
+    
+    async createParty(partyType:String, partyId:String, partySubId?:String):Promise<IPartyAccount|null|undefined>{
+        const oracleProvider = await this.getOracleProvider(partyType)
+
+        const party = await oracleProvider?.createParty(partyType, partyId);
+
+        return party;
+    }
+
+    async deleteParty(partyType:String, partyId:String, partySubId?:String):Promise<boolean>{
+        const oracleProvider = await this.getOracleProvider(partyType)
+
+        await oracleProvider?.deleteParty(partyType, partyId);
+
+        return true;
+    }
+
+    private async getOracleProvider(partyType:String): Promise<IOracleProvider|null|undefined> {
+        const oracleId = await this.oracleFinder.getOracleForType(partyType);
+
+        if(!oracleId) {
+            throw new Error(`oracle not found for partyType: ${partyType}`);
+        }
+
+        const oracleProvider = this.oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
+
+        if(!oracleProvider) {
+            throw new Error(`oracle provider not found for oracleId: ${oracleId}`);
+        }
+
+		return oracleProvider;
+	}
 }

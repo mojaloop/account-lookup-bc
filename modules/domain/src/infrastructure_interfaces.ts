@@ -30,12 +30,7 @@
 
 "use strict";
 
-/* entity interfaces */
-
-
-export interface IParty{
-
-}
+import { IParty, IPartyAccount } from "./types";
 
 
 /* infratructure interfaces */
@@ -46,5 +41,8 @@ export interface IOracleFinder{
 
 
 export interface IOracleProvider{
-    getParty(type:String, id:string):Promise<IParty|null>;
+    id: String;
+    getParty(type:String, id:String):Promise<IParty|null>;
+    createParty(type:String, id:String):Promise<IPartyAccount|null>;
+    deleteParty(type:String, id:String):Promise<void>;
 }

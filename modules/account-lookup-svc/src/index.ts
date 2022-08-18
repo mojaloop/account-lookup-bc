@@ -33,10 +33,11 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {KafkaLogger} from "@mojaloop/logging-bc-client-lib/dist/index";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {ExampleOracleFinder, ExampleOracleProvider} from "@mojaloop/account-lookup-bc-infrastructure";
+import { MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaConsumer, MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -69,18 +70,67 @@ const logger:KafkaLogger = new KafkaLogger(
         LOGLEVEL
 );
 
-function setupKafkaConsumer() {
 
+let consumerOptions: MLKafkaConsumerOptions = {
+    kafkaBrokerList: 'localhost:9092',
+    kafkaGroupId: 'test_consumer_group_'+Date.now(),
+    outputType: MLKafkaConsumerOutputType.Json
+}
+
+let kafkaConsumer: MLKafkaConsumer = new MLKafkaConsumer(consumerOptions, logger)
+
+let producerOptions: MLKafkaProducerOptions = {
+    kafkaBrokerList: 'localhost:9092',
+}
+let kafkaProducer: MLKafkaProducer =  new MLKafkaProducer(producerOptions, logger)
+
+// example to get delivery reports
+kafkaProducer.on('deliveryReport', (topic: string, partition: number|null, offset: number|null) => {
+    console.log(`delivery report event - topic: ${topic}, partition: ${partition}, offset: ${offset}`)
+    return;
+})
+
+
+
+
+
+function setupKafkaConsumer() {
+    async function handler(message: any): Promise<void> {
+        logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`)
+        return
+    }
+    
+    kafkaConsumer.setCallbackFn(handler)
+    kafkaConsumer.setTopics(['myTopic'])
 }
 
 async function start():Promise<void>{
     /// start logger
     await logger.start();
-
     accountLookupAgg = new AccountLookupAggregate(oracleFinder, [oracleProvider1], logger);
 
-
     // accountLookupAgg.init();
+
+    const msgs = []
+
+    for (let i = 0; i < 5; i++) {
+        msgs.push({
+            topic: 'myTopic',
+            value: { testProp: i },
+            key: null,
+            headers: [
+                { key1: 'testStr' }
+            ]
+        })
+    }
+
+    await kafkaProducer.connect()
+    await kafkaProducer.send(msgs)
+
+    await kafkaConsumer.connect()
+
+    // Start consuming to handler
+    await kafkaConsumer.start()
 
 }
 

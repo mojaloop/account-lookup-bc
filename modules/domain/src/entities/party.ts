@@ -30,12 +30,37 @@
 
 "use strict";
 
-import {IParty} from "../interfaces";
+import { InvalidPartyIdError, InvalidPartyTypeError } from "../errors";
+import { IParty } from "../types";
 
 export class Party implements IParty{
-    constructor() {
+	id: string;
+	type: string;
+    currency: string;
+	subId: string | null;
 
-    }
+	constructor(
+		id: string,
+		type: string,
+        currency: string,
+        subId: string | null = null,
+	) {
+		this.id = id;
+		this.type = type;
+        this.currency = currency;
+        this.subId = subId;
+	}
 
     // logic
+
+    static validateParty(party: Party): void {
+		// id.
+		if (party.id === "") {
+			throw new InvalidPartyIdError();
+		}
+		// type.
+		if (!(party.type === "")) {
+			throw new InvalidPartyTypeError();
+		}
+	}
 }
