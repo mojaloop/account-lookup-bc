@@ -31,6 +31,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { UnableToGetOracleProviderError } from "./errors";
 import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
 import { IParty, IPartyAccount } from "./types";
 
@@ -39,11 +40,29 @@ export class AccountLookupAggregate {
 	private readonly oracleFinder: IOracleFinder;
 	private readonly oracleProviders: IOracleProvider[];
 
-    constructor(oracleFinder:IOracleFinder, oracleProviders:IOracleProvider[], logger:ILogger) {
+	constructor(
+		logger: ILogger,
+        oracleFinder:IOracleFinder,
+        oracleProviders:IOracleProvider[]
+	) {
 		this.logger = logger;
 		this.oracleFinder = oracleFinder;
 		this.oracleProviders = oracleProviders;
     }
+
+    async init(): Promise<void> {
+		try {
+	
+		} catch (e: unknown) {
+			this.logger.fatal(e);
+			throw e;
+		}
+	}
+
+	// DONE.
+	async destroy(): Promise<void> {
+
+	}
 
     async getParty(partyType:String, partyId:String, partySubId?:String):Promise<IParty|null|undefined>{
         const oracleProvider = await this.getOracleProvider(partyType)
@@ -73,13 +92,13 @@ export class AccountLookupAggregate {
         const oracleId = await this.oracleFinder.getOracleForType(partyType);
 
         if(!oracleId) {
-            throw new Error(`oracle not found for partyType: ${partyType}`);
+            throw new UnableToGetOracleError(`oracle not found for partyType: ${partyType}`);
         }
 
         const oracleProvider = this.oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
 
         if(!oracleProvider) {
-            throw new Error(`oracle provider not found for oracleId: ${oracleId}`);
+            throw new UnableToGetOracleProviderError(`oracle provider not found for oracleId: ${oracleId}`);
         }
 
 		return oracleProvider;

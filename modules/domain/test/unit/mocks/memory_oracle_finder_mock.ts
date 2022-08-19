@@ -29,10 +29,30 @@ optionally within square brackets <email>.
 
 "use strict";
 
-// Party.
-export class InvalidPartyIdError extends Error {}
-export class InvalidPartyTypeError extends Error {}
-// Gets.
-export class UnableToGetOracleError extends Error {}
-export class UnableToGetOracleProviderError extends Error {}
+import {
+    IOracleFinder
+} from "../../../src";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
+export class MemoryOracleFinder implements IOracleFinder {
+    // Properties received through the constructor.
+    private readonly logger: ILogger;
+
+    constructor(
+        logger: ILogger,
+    ) {
+        this.logger = logger;
+
+    }
+
+    async init(): Promise<void> {
+    }
+
+    async destroy(): Promise<void> {
+    }
+
+    async getOracleForType(type: String): Promise<String> {
+        return type;
+    }
+
+}
