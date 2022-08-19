@@ -107,7 +107,7 @@ function setupKafkaConsumer() {
 async function start():Promise<void>{
     /// start logger
     await logger.start();
-    accountLookupAgg = new AccountLookupAggregate(oracleFinder, [oracleProvider1], logger);
+    accountLookupAgg = new AccountLookupAggregate(logger, oracleFinder, [oracleProvider1]);
 
     // accountLookupAgg.init();
 

@@ -31,7 +31,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { UnableToGetOracleProviderError } from "./errors";
+import { UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
 import { IParty, IPartyAccount } from "./types";
 

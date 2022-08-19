@@ -77,7 +77,7 @@ describe("party lookup service - unit tests", () => {
             currency: "EUR",
             subId: null
             };
-        const partyReceived = await aggregate.createParty(party.type, party.id);
+        const partyReceived = await aggregate.associateParty(party.type, party.id);
         expect(partyReceived).toEqual(party);
     });
     test("create party should throw error of oracle provider not found", async () => {
@@ -90,7 +90,7 @@ describe("party lookup service - unit tests", () => {
             };
         await expect(
             async () => {
-                await aggregate.createParty(party.type, party.id);
+                await aggregate.associateParty(party.type, party.id);
             }
         ).rejects.toThrow(UnableToGetOracleProviderError);
     });

@@ -43,6 +43,6 @@ export interface IOracleFinder{
 export interface IOracleProvider{
     id: String;
     getParty(type:String, id:String):Promise<IParty|null>;
-    createParty(type:String, id:String):Promise<IPartyAccount|null>;
-    deleteParty(type:String, id:String):Promise<void>;
+    associateParty(type:String, id:String):Promise<IPartyAccount|null>;
+    disassociateParty(type:String, id:String):Promise<void>;
 }

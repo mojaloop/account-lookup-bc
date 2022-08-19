@@ -59,11 +59,11 @@
         return id as unknown as IParty;
      }
      
-     async createParty(type:String, id:String):Promise<IPartyAccount|null> {
+     async associateParty(type:String, id:String):Promise<IPartyAccount|null> {
         return id as unknown as IPartyAccount;
      }
 
-     async deleteParty(type:String, id:String):Promise<void> {
+     async disassociateParty(type:String, id:String):Promise<void> {
      }
  }
  

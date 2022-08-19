@@ -30,7 +30,7 @@
 
 "use strict";
 
-import {IOracleFinder, IOracleProvider, IParty} from "@mojaloop/account-lookup-bc-domain";
+import {IOracleFinder, IOracleProvider, IParty, IPartyAccount} from "@mojaloop/account-lookup-bc-domain";
 
 export class ExampleOracleFinder implements IOracleFinder{
     async getOracleForType(type:String):Promise<String>{
@@ -38,13 +38,14 @@ export class ExampleOracleFinder implements IOracleFinder{
     }
 }
 export class ExampleOracleProvider implements IOracleProvider{
+    id: String;
     async getParty(type:String, id:string):Promise<IParty|null>{
         throw new Error("not implemented");
     }
-    async associateParty(type:String, id:string):Promise<IParty|null>{
+    async associateParty(type:String, id:string):Promise<IPartyAccount | null>{
         throw new Error("not implemented");
     }
-    async disassociateParty(type:String, id:string):Promise<IParty|null>{
+    async disassociateParty(type:String, id:string):Promise<void>{
         throw new Error("not implemented");
     }
 
