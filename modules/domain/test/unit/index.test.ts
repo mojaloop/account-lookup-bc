@@ -43,9 +43,25 @@ import { MemoryOracleProvider } from "./mocks/memory_oracle_providers_mock";
 
  
 /* Constants. */
+// Repo.
+const REPO_HOST: string =
+	process.env.ACCOUNTS_AND_BALANCES_REPO_HOST ?? "localhost";
+const REPO_PORT_NO: number =
+	parseInt(process.env.ACCOUNTS_AND_BALANCES_REPO_PORT_NO ?? "") || 27017;
+const REPO_URL: string = `mongodb://${REPO_HOST}:${REPO_PORT_NO}`;
+const DB_NAME: string = "AccountsAndBalances";
+const ACCOUNTS_COLLECTION_NAME: string = "OracleProviders";
+
 const logger: ILogger = new ConsoleLogger();
 
 // Infrastructure.
+const accountsRepo: IAccountsRepo = new MemoryAccountsRepo(
+	logger,
+	REPO_URL,
+	DB_NAME,
+	ACCOUNTS_COLLECTION_NAME
+);
+
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
 );

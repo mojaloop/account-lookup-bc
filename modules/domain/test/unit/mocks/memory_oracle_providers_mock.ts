@@ -54,16 +54,30 @@
  
      async destroy(): Promise<void> {
      }
- 
-     async getParty(type:String, id:String):Promise<IParty|null> {
-        return id as unknown as IParty;
-     }
-     
-     async associateParty(type:String, id:String):Promise<IPartyAccount|null> {
-        return id as unknown as IPartyAccount;
+
+
+     getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null> {
+        return partyId as unknown as Promise<IParty>;
      }
 
-     async disassociateParty(type:String, id:String):Promise<void> {
+     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null> {
+        return partyId as unknown as Promise<IParty>;
+     }
+
+     associatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null> {
+        return partyId as unknown as Promise<IPartyAccount>;
+     }
+     
+     associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null> {
+        return partyId as unknown as Promise<IPartyAccount>;
+     }
+
+     disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null> {
+        return partyId as unknown as Promise<IPartyAccount>;
+     }
+     
+     disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null> {
+        return partyId as unknown as Promise<IPartyAccount>;
      }
  }
  

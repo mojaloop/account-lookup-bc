@@ -54,5 +54,4 @@ export class MemoryOracleFinder implements IOracleFinder {
     async getOracleForType(type: String): Promise<String> {
         return type;
     }
-
 }

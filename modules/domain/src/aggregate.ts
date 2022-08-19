@@ -64,26 +64,42 @@ export class AccountLookupAggregate {
 
 	}
 
-    async getParty(partyType:String, partyId:String, partySubId?:String):Promise<IParty|null|undefined>{
+    async getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null|undefined>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        const party = await oracleProvider?.getParty(partyType, partyId);
+        const party = await oracleProvider?.getPartyByTypeAndId(partyType, partyId);
 
         return party;
     }
     
-    async associateParty(partyType:String, partyId:String, partySubId?:String):Promise<IPartyAccount|null|undefined>{
+    async associatePartyByTypeAndId(partyType:String, partyId:String):Promise<boolean>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        const party = await oracleProvider?.associateParty(partyType, partyId);
+        await oracleProvider?.associatePartyByTypeAndId(partyType, partyId);
 
-        return party;
+        return true;
     }
 
-    async disassociateParty(partyType:String, partyId:String, partySubId?:String):Promise<boolean>{
+    async associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<boolean>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        await oracleProvider?.disassociateParty(partyType, partyId);
+        await oracleProvider?.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        return true;
+    }
+
+    async disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<boolean>{
+        const oracleProvider = await this.getOracleProvider(partyType)
+
+        await oracleProvider?.disassociatePartyByTypeAndId(partyType, partyId);
+
+        return true;
+    }
+
+    async disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<boolean>{
+        const oracleProvider = await this.getOracleProvider(partyType)
+
+        await oracleProvider?.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         return true;
     }

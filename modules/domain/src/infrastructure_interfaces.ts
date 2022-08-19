@@ -42,7 +42,10 @@ export interface IOracleFinder{
 
 export interface IOracleProvider{
     id: String;
-    getParty(type:String, id:String):Promise<IParty|null>;
-    associateParty(type:String, id:String):Promise<IPartyAccount|null>;
-    disassociateParty(type:String, id:String):Promise<void>;
+    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
+    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
+    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
+    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
+    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
+    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
 }

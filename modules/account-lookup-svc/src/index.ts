@@ -34,34 +34,54 @@
 //import appConfigs from "./config";
 
 import {ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import {KafkaLogger} from "@mojaloop/logging-bc-client-lib/dist/index";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {ExampleOracleFinder, ExampleOracleProvider} from "@mojaloop/account-lookup-bc-infrastructure";
-import { MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaConsumer, MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 
-const BC_NAME = "participants-bc";
-const APP_NAME = "participants-svc";
-const APP_VERSION = "0.0.3";
-const LOGLEVEL = LogLevel.DEBUG;
-
-const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
-
-const KAFKA_LOGS_TOPIC = process.env["KAFKA_LOGS_TOPIC"] || "logs";
 
 let oracleFinder: IOracleFinder = new ExampleOracleFinder();
 let oracleProvider1: IOracleProvider = new ExampleOracleProvider();
 
 let accountLookupAgg: AccountLookupAggregate;
 
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {
+  MLKafkaConsumer,
+  MLKafkaConsumerOutputType
+} from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
+import {DefaultLogger, KafkaLogger} from "@mojaloop/logging-bc-client-lib";
+import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {SignedSourceAuditEntry} from "@mojaloop/auditing-bc-public-types-lib";
+
+const BC_NAME = "auditing-bc";
+const APP_NAME = "auditing-svc";
+const APP_VERSION = "0.0.1";
+const LOGLEVEL = LogLevel.DEBUG;
+
+const KAFKA_AUDITS_TOPIC = "audits";
+const KAFKA_LOGS_TOPIC = "logs";
+
+const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+
+
+
 // kafka logger
 const kafkaProducerOptions = {
-    kafkaBrokerList: KAFKA_URL
+  kafkaBrokerList: KAFKA_URL
 }
 
-const logger:KafkaLogger = new KafkaLogger(
+
+// Event Handler
+const kafkaConsumerOptions = {
+  kafkaBrokerList: KAFKA_URL,
+  kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
+  outputType: MLKafkaConsumerOutputType.Json
+}
+
+
+const logger:ILogger = new KafkaLogger(
         BC_NAME,
         APP_NAME,
         APP_VERSION,
@@ -70,26 +90,26 @@ const logger:KafkaLogger = new KafkaLogger(
         LOGLEVEL
 );
 
+let kafkaConsumer: MLKafkaConsumer;
 
-let consumerOptions: MLKafkaConsumerOptions = {
-    kafkaBrokerList: 'localhost:9092',
-    kafkaGroupId: 'test_consumer_group_'+Date.now(),
-    outputType: MLKafkaConsumerOutputType.Json
+async function processLogMessage (message: IMessage) : Promise<void> {
+    const value = message.value;
+  
+    console.log('processLogMessage: ',value)
+  }
+
+async function start():Promise<void> {
+  // todo create aggRepo
+  await (logger as KafkaLogger).start();
+
+  kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
+  kafkaConsumer.setTopics([KAFKA_AUDITS_TOPIC]);
+  kafkaConsumer.setCallbackFn(processLogMessage);
+  await kafkaConsumer.connect();
+  await kafkaConsumer.start();
+
+  logger.info("kafkaConsumer initialised");
 }
-
-let kafkaConsumer: MLKafkaConsumer = new MLKafkaConsumer(consumerOptions, logger)
-
-let producerOptions: MLKafkaProducerOptions = {
-    kafkaBrokerList: 'localhost:9092',
-}
-let kafkaProducer: MLKafkaProducer =  new MLKafkaProducer(producerOptions, logger)
-
-// example to get delivery reports
-kafkaProducer.on('deliveryReport', (topic: string, partition: number|null, offset: number|null) => {
-    console.log(`delivery report event - topic: ${topic}, partition: ${partition}, offset: ${offset}`)
-    return;
-})
-
 
 
 
@@ -104,35 +124,35 @@ function setupKafkaConsumer() {
     kafkaConsumer.setTopics(['myTopic'])
 }
 
-async function start():Promise<void>{
-    /// start logger
-    await logger.start();
-    accountLookupAgg = new AccountLookupAggregate(logger, oracleFinder, [oracleProvider1]);
+// async function start():Promise<void>{
+//     /// start logger
+//     await logger.start();
+//     accountLookupAgg = new AccountLookupAggregate(logger, oracleFinder, [oracleProvider1]);
 
-    // accountLookupAgg.init();
+//     // accountLookupAgg.init();
 
-    const msgs = []
+//     const msgs = []
 
-    for (let i = 0; i < 5; i++) {
-        msgs.push({
-            topic: 'myTopic',
-            value: { testProp: i },
-            key: null,
-            headers: [
-                { key1: 'testStr' }
-            ]
-        })
-    }
+//     for (let i = 0; i < 5; i++) {
+//         msgs.push({
+//             topic: 'myTopic',
+//             value: { testProp: i },
+//             key: null,
+//             headers: [
+//                 { key1: 'testStr' }
+//             ]
+//         })
+//     }
 
-    await kafkaProducer.connect()
-    await kafkaProducer.send(msgs)
+//     await kafkaProducer.connect()
+//     await kafkaProducer.send(msgs)
 
-    await kafkaConsumer.connect()
+//     await kafkaConsumer.connect()
 
-    // Start consuming to handler
-    await kafkaConsumer.start()
+//     // Start consuming to handler
+//     await kafkaConsumer.start()
 
-}
+// }
 
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
