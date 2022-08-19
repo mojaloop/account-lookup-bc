@@ -72,18 +72,18 @@ export class AccountLookupAggregate {
         return party;
     }
     
-    async createParty(partyType:String, partyId:String, partySubId?:String):Promise<IPartyAccount|null|undefined>{
+    async associateParty(partyType:String, partyId:String, partySubId?:String):Promise<IPartyAccount|null|undefined>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        const party = await oracleProvider?.createParty(partyType, partyId);
+        const party = await oracleProvider?.associateParty(partyType, partyId);
 
         return party;
     }
 
-    async deleteParty(partyType:String, partyId:String, partySubId?:String):Promise<boolean>{
+    async disassociateParty(partyType:String, partyId:String, partySubId?:String):Promise<boolean>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        await oracleProvider?.deleteParty(partyType, partyId);
+        await oracleProvider?.disassociateParty(partyType, partyId);
 
         return true;
     }

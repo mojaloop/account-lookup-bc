@@ -30,4 +30,4 @@
 
 "use strict";
 
-export * from "./interfaces-implementations";
+export * from "./interfaces_implementations";

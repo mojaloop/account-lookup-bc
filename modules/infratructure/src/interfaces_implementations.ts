@@ -41,4 +41,11 @@ export class ExampleOracleProvider implements IOracleProvider{
     async getParty(type:String, id:string):Promise<IParty|null>{
         throw new Error("not implemented");
     }
+    async associateParty(type:String, id:string):Promise<IParty|null>{
+        throw new Error("not implemented");
+    }
+    async disassociateParty(type:String, id:string):Promise<IParty|null>{
+        throw new Error("not implemented");
+    }
+
 }
