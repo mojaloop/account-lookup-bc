@@ -30,7 +30,7 @@
 
 "use strict";
 
-import { HttpResponse, IParty, IPartyAccount } from "./types";
+import { HttpResponse, IParty, IPartyAccount } from "../types";
 
 
 /* infratructure interfaces */

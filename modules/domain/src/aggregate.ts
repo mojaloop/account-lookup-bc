@@ -32,7 +32,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { NoSuchPartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
-import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
+import {IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
 import { IParty } from "./types";
 
 export class AccountLookupAggregate {
