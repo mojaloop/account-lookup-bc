@@ -33,11 +33,47 @@
 import {IOracleFinder, IOracleProvider, IParty, IPartyAccount} from "@mojaloop/account-lookup-bc-domain";
 
 export class ExampleOracleFinder implements IOracleFinder{
+    init(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    destroy(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
     async getOracleForType(type:String):Promise<String>{
         throw new Error("not implemented");
     }
 }
 export class ExampleOracleProvider implements IOracleProvider{
+    init(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    destroy(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    getPartyByTypeAndId(partyType: String, partyId: String): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+    getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
+        throw new Error("Method not implemented.");
+    }
+    associatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+    associatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+    disassociatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+    disassociatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+    createParty(type: String, id: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+    deleteParty(type: String, id: String): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
     id: String;
     async getParty(type:String, id:string):Promise<IParty|null>{
         throw new Error("not implemented");
