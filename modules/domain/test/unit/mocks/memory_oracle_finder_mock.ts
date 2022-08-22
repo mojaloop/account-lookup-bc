@@ -33,7 +33,7 @@ import {
     IOracleFinder
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleList } from './oracleList';
+import { mockedOracleList } from './oraclelist';
 
 interface IOracleType {
     id: String;

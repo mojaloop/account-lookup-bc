@@ -30,7 +30,7 @@
 
  "use strict";
 
- import { InvalidPartyCurrencyError, InvalidPartyExtensionListError, InvalidPartyIdError, InvalidPartyTypeError } from "../errors";
+ import { InvalidPartyAccountCurrencyError, InvalidPartyAccountTypeError, InvalidPartyAcountExtensionListError, InvalidPartyIdError } from "../errors";
  import { IPartyAccount } from "../types";
  
  export class PartyAccount implements IPartyAccount{
@@ -53,22 +53,22 @@
 
     // logic
 
-    static validateParty(partyAccount: PartyAccount): void {
+    static validatePartyAccount(partyAccount: PartyAccount): void {
         // id.
         if (partyAccount.id === "") {
             throw new InvalidPartyIdError();
         }
         // fspId.
         if (!(partyAccount.fspId === "")) {
-            throw new InvalidPartyTypeError();
+            throw new InvalidPartyAccountTypeError();
         }
         // currency.
         if (!(Array.isArray(partyAccount.currency))) {
-            throw new InvalidPartyCurrencyError();
+            throw new InvalidPartyAccountCurrencyError();
         }
         // extensionList.
         if (!(Array.isArray(partyAccount.extensionList))) {
-            throw new InvalidPartyExtensionListError();
+            throw new InvalidPartyAcountExtensionListError();
         }
     }
  }

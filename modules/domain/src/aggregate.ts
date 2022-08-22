@@ -31,9 +31,9 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { NoSuchPartyAssociationError, NoSuchPartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { NoSuchPartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
-import { IParty, IPartyAccount } from "./types";
+import { IParty } from "./types";
 
 export class AccountLookupAggregate {
 	private readonly logger: ILogger;
@@ -70,7 +70,6 @@ export class AccountLookupAggregate {
 	}
 
     async getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null|undefined>{
-        // try {
             const oracleProvider = await this.getOracleProvider(partyType)
 
             const party = await oracleProvider?.getPartyByTypeAndId(partyType, partyId);
@@ -79,11 +78,8 @@ export class AccountLookupAggregate {
                 throw new NoSuchPartyError();
             }
             
-            return party.result as unknown as IParty;
-		// } catch (e: unknown) {
-		// 	this.logger.error(e);
-		// 	throw e;
-		// }
+            return party.result as IParty;
+	
     }
 
     async getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null|undefined>{
