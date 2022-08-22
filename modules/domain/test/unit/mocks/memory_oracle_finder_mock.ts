@@ -33,25 +33,35 @@ import {
     IOracleFinder
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { mockedOracleList } from './oracleList';
+
+interface IOracleType {
+    id: String;
+    type: String;
+}
 
 export class MemoryOracleFinder implements IOracleFinder {
     // Properties received through the constructor.
     private readonly logger: ILogger;
+    private oracleList: IOracleType[];
 
     constructor(
         logger: ILogger,
     ) {
         this.logger = logger;
-
     }
 
     async init(): Promise<void> {
+        this.oracleList = mockedOracleList;
     }
 
     async destroy(): Promise<void> {
+        this.oracleList = [];
     }
 
-    async getOracleForType(type: String): Promise<String> {
-        return type;
+    async getOracleForType(type: String): Promise<String | undefined> {
+        const foundOracle = this.oracleList.find(oracle => oracle.type === type);
+
+        return foundOracle?.id;
     }
 }

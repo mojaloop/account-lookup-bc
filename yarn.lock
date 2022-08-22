@@ -973,11 +973,13 @@ __metadata:
   resolution: "@mojaloop/account-lookup-bc-domain@workspace:modules/domain"
   dependencies:
     "@mojaloop/logging-bc-public-types-lib": ^0.0.3
+    "@types/uuid": ^8.3.4
     eslint: ^8.17.0
     jest: ^28.1.1
     npm-check-updates: ^13.1.2
     ts-jest: ^28.0.4
     typescript: ^4.7.3
+    uuid: ^8.3.2
   languageName: unknown
   linkType: soft
 
@@ -1400,6 +1402,13 @@ __metadata:
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
   checksum: 205fdbe3326b7046d7eaf5e494d8084f2659086a266f3f9cf00bccc549c8e36e407f88168ad4383c8b07099957ad669f75f2532ed4bc70be2b037330f7bae019
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^8.3.4":
+  version: 8.3.4
+  resolution: "@types/uuid@npm:8.3.4"
+  checksum: 6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
   languageName: node
   linkType: hard
 

@@ -30,22 +30,32 @@
 
 "use strict";
 
-import { IParty, IPartyAccount } from "./types";
+import { HttpResponse, IParty, IPartyAccount } from "./types";
 
 
 /* infratructure interfaces */
 
 export interface IOracleFinder{
-    getOracleForType(type:String):Promise<String>;
+    // Init and destroy.
+	init(): Promise<void>;
+	destroy(): Promise<void>;
+    // Gets.
+    getOracleForType(type:String):Promise<String | undefined>;
 }
 
 
 export interface IOracleProvider{
     id: String;
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
+    // Init and destroy.
+	init(): Promise<void>;
+	destroy(): Promise<void>;
+    // Gets.
+    getPartyByTypeAndId(partyType:String, partyId:String):Promise<HttpResponse|null>;
     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
+    // Stores.
     associatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
     associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
+    // Updates.
     disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
     disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
 }

@@ -31,7 +31,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { NoSuchPartyAssociationError, NoSuchPartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import {IOracleFinder, IOracleProvider} from "./infrastructure_interfaces";
 import { IParty, IPartyAccount } from "./types";
 
@@ -52,22 +52,44 @@ export class AccountLookupAggregate {
 
     async init(): Promise<void> {
 		try {
-	
+            this.oracleFinder.init();
+            for(let i=0; i<this.oracleProviders.length ; i+=1){
+                await this.oracleProviders[i].init();
+            }
 		} catch (e: unknown) {
 			this.logger.fatal(e);
 			throw e;
 		}
 	}
 
-	// DONE.
 	async destroy(): Promise<void> {
-
+		await this.oracleFinder.destroy();
+        for(let i=0; i<this.oracleProviders.length ; i+=1){
+            await this.oracleProviders[i].destroy();
+        }
 	}
 
     async getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null|undefined>{
+        // try {
+            const oracleProvider = await this.getOracleProvider(partyType)
+
+            const party = await oracleProvider?.getPartyByTypeAndId(partyType, partyId);
+
+            if (!party || party?.result === null) {
+                throw new NoSuchPartyError();
+            }
+            
+            return party.result as unknown as IParty;
+		// } catch (e: unknown) {
+		// 	this.logger.error(e);
+		// 	throw e;
+		// }
+    }
+
+    async getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null|undefined>{
         const oracleProvider = await this.getOracleProvider(partyType)
 
-        const party = await oracleProvider?.getPartyByTypeAndId(partyType, partyId);
+        const party = await oracleProvider?.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         return party;
     }

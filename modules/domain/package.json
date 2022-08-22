@@ -22,9 +22,11 @@
     "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.0.3"
+    "@mojaloop/logging-bc-public-types-lib": "^0.0.3",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/uuid": "^8.3.4",
     "eslint": "^8.17.0",
     "jest": "^28.1.1",
     "npm-check-updates": "^13.1.2",

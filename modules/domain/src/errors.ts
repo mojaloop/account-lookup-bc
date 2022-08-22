@@ -32,7 +32,17 @@ optionally within square brackets <email>.
 // Party.
 export class InvalidPartyIdError extends Error {}
 export class InvalidPartyTypeError extends Error {}
+export class InvalidPartyCurrencyError extends Error {}
+export class InvalidPartyExtensionListError extends Error {}
+
 // Gets.
 export class UnableToGetOracleError extends Error {}
 export class UnableToGetOracleProviderError extends Error {}
 
+// Repo.
+export class UnableToInitRepoError extends Error {}
+// Item already exists.
+export class PartyAssociationAlreadyExistsError extends Error {}
+// No such item.
+export class NoSuchPartyError extends Error {}
+export class NoSuchPartyAssociationError extends Error {}

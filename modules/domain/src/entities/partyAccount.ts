@@ -27,36 +27,49 @@
 
  --------------
  ******/
+
+ "use strict";
+
+ import { InvalidPartyCurrencyError, InvalidPartyExtensionListError, InvalidPartyIdError, InvalidPartyTypeError } from "../errors";
+ import { IPartyAccount } from "../types";
  
-"use strict";
-
-export enum CurrencyType {
-	DOLLAR = "dollar",
-	EURO = "euro",
-}
-
-export interface IParty {
+ export class PartyAccount implements IPartyAccount{
     id: string;
-    type: string;
-    currency: string | null;
-    subId: string | null;
-}
+    fspId: string;
+    currency: string[];
+    extensionList: string[];
 
-export interface IPartyAccount {
-	fspId: string;
-	currency: string[];
-	extensionList: string[];
-}
+    constructor(
+    id: string,
+    fspId: string,
+    currency: string[],
+    extensionList: string[]
+    ) {
+        this.id = id;
+        this.fspId = fspId;
+        this.currency = currency;
+        this.extensionList = extensionList;
+    }
 
-export enum HttpStatusCode {
-    OK = 200,
-    CREATED = 201,
-    ACCEPTED = 202,
-	FORBIDDEN = 403,
-    NOT_FOUND = 404,
-}
+    // logic
 
-export interface HttpResponse {
-	status: HttpStatusCode,
-	result: any;
-}
+    static validateParty(partyAccount: PartyAccount): void {
+        // id.
+        if (partyAccount.id === "") {
+            throw new InvalidPartyIdError();
+        }
+        // fspId.
+        if (!(partyAccount.fspId === "")) {
+            throw new InvalidPartyTypeError();
+        }
+        // currency.
+        if (!(Array.isArray(partyAccount.currency))) {
+            throw new InvalidPartyCurrencyError();
+        }
+        // extensionList.
+        if (!(Array.isArray(partyAccount.extensionList))) {
+            throw new InvalidPartyExtensionListError();
+        }
+    }
+ }
+ 

@@ -53,14 +53,13 @@ import {
 } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {DefaultLogger, KafkaLogger} from "@mojaloop/logging-bc-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {SignedSourceAuditEntry} from "@mojaloop/auditing-bc-public-types-lib";
 
-const BC_NAME = "auditing-bc";
-const APP_NAME = "auditing-svc";
+const BC_NAME = "account-lookup-bc";
+const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
 const LOGLEVEL = LogLevel.DEBUG;
 
-const KAFKA_AUDITS_TOPIC = "audits";
+const KAFKA_ORACLES_TOPIC = "audits";
 const KAFKA_LOGS_TOPIC = "logs";
 
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
@@ -103,15 +102,13 @@ async function start():Promise<void> {
   await (logger as KafkaLogger).start();
 
   kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
-  kafkaConsumer.setTopics([KAFKA_AUDITS_TOPIC]);
+  kafkaConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
   kafkaConsumer.setCallbackFn(processLogMessage);
   await kafkaConsumer.connect();
   await kafkaConsumer.start();
 
   logger.info("kafkaConsumer initialised");
 }
-
-
 
 
 function setupKafkaConsumer() {

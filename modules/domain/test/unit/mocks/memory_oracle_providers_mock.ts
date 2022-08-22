@@ -30,54 +30,100 @@
  "use strict";
 
  import {
+	 CurrencyType,
+	 HttpResponse,
+	 HttpStatusCode,
      IOracleProvider,
      IParty,
-     IPartyAccount
+     IPartyAccount,
+     NoSuchPartyAssociationError,
+     PartyAssociationAlreadyExistsError
  } from "../../../src";
+ import {Party} from '../../../src/entities/party'
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
- 
- export class MemoryOracleProvider implements IOracleProvider {
-     // Properties received through the constructor.
-     id: String;
-     private readonly logger: ILogger;
- 
-     constructor(
-         logger: ILogger,
-     ) {
-         this.logger = logger;
+ import * as uuid from "uuid";
 
- 
-     }
- 
-     async init(): Promise<void> {
-     }
- 
-     async destroy(): Promise<void> {
-     }
+ export class PartyAccount implements IPartyAccount {
+	fspId: string;
+	currency: string[];
+	extensionList: string[];
+}
+
+export class MemoryOracleProvider implements IOracleProvider {
+	// Properties received through the constructor.
+	id: string;
+	private readonly logger: ILogger;
+
+	// Other properties.
+	private readonly parties: Map<string, IParty>;
+	private readonly partyAssociations: Map<string, IPartyAccount>;
+
+	constructor(
+		logger: ILogger,
+	) {
+		this.logger = logger;
+
+		this.parties = new Map<string, IParty>();
+		this.partyAssociations = new Map<string, IPartyAccount>();
+	}
 
 
-     getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null> {
-        return partyId as unknown as Promise<IParty>;
-     }
+	async init(): Promise<void> {
+	}
 
-     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null> {
-        return partyId as unknown as Promise<IParty>;
-     }
+	async destroy(): Promise<void> {
+	}
 
-     associatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null> {
-        return partyId as unknown as Promise<IPartyAccount>;
-     }
-     
-     associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null> {
-        return partyId as unknown as Promise<IPartyAccount>;
-     }
+	async getPartyByTypeAndId(partyType:string, partyId:string):Promise<HttpResponse|null> {
+		const partyIdentifier = partyType.concat(partyId);
+		
+		const partyAssociation = this.parties.get(partyIdentifier);
 
-     disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null> {
-        return partyId as unknown as Promise<IPartyAccount>;
-     }
-     
-     disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null> {
-        return partyId as unknown as Promise<IPartyAccount>;
-     }
- }
- 
+		if (!partyAssociation) {
+			throw new NoSuchPartyAssociationError();
+		}
+
+		return {
+			status: HttpStatusCode.OK,
+			result: partyAssociation
+		};
+	}
+
+	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
+		return partyId as unknown as Promise<IParty>;
+	}
+
+	async associatePartyByTypeAndId(partyType:string, partyId:string):Promise<IPartyAccount|null> {
+		const partyIdentifier = partyType.concat(partyId);
+		
+		if (this.partyAssociations.has(partyIdentifier)) {
+			throw new PartyAssociationAlreadyExistsError();
+		}
+
+		
+		const party = new Party(partyId,partyType,CurrencyType.EURO)
+
+		const partyAssociationAccount = new PartyAccount()
+
+		partyAssociationAccount.fspId = uuid.v4();
+		partyAssociationAccount.currency = [];
+		partyAssociationAccount.extensionList = [];
+
+		this.parties.set(partyIdentifier, party);
+		this.partyAssociations.set(partyIdentifier, partyAssociationAccount);
+
+		return partyAssociationAccount;
+	}
+
+	async associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IPartyAccount|null> {
+		return partyId as unknown as Promise<IPartyAccount>;
+	}
+
+	async disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<IPartyAccount|null> {
+		return partyId as unknown as Promise<IPartyAccount>;
+	}
+
+	async disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IPartyAccount|null> {
+		return partyId as unknown as Promise<IPartyAccount>;
+	}
+}
