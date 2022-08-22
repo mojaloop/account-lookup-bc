@@ -27,9 +27,18 @@
 
  --------------
  ******/
-
 "use strict";
+import { IOracleFinder } from "@mojaloop/account-lookup-bc-domain";
 
-export * from "./oracleprovider";
-export * from "./oraclefinder";
 
+export class ExampleOracleFinder implements IOracleFinder {
+    init(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    destroy(): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+    async getOracleForType(type: String): Promise<String> {
+        throw new Error("not implemented");
+    }
+}

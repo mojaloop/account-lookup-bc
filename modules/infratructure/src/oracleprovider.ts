@@ -30,19 +30,8 @@
 
 "use strict";
 
-import {IOracleFinder, IOracleProvider, IParty, IPartyAccount} from "@mojaloop/account-lookup-bc-domain";
+import {IOracleProvider, IParty, IPartyAccount} from "@mojaloop/account-lookup-bc-domain";
 
-export class ExampleOracleFinder implements IOracleFinder{
-    init(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    destroy(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    async getOracleForType(type:String):Promise<String>{
-        throw new Error("not implemented");
-    }
-}
 export class ExampleOracleProvider implements IOracleProvider{
     init(): Promise<void> {
         throw new Error("Method not implemented.");
