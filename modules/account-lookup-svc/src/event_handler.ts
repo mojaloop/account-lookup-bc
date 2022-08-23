@@ -22,42 +22,42 @@ export interface IEventAccountLookUpServiceHandler{
 export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServiceHandler{
     
 
-    private acountLookUpEventEmitter: EventEmitter;
-    private accountLookUpAggregate:AccountLookupAggregate;
+    private _acountLookUpEventEmitter: EventEmitter;
+    private _accountLookUpAggregate:AccountLookupAggregate;
 
     constructor(accountLookUpAggregate: AccountLookupAggregate){
-        this.accountLookUpAggregate= accountLookUpAggregate;
+        this._accountLookUpAggregate= accountLookUpAggregate;
     }
     
 
     init(){
-        this.acountLookUpEventEmitter = new events.EventEmitter();
+        this._acountLookUpEventEmitter = new events.EventEmitter();
         this.setAccountLookUpEvents();
     }
 
     private setAccountLookUpEvents() {
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this.accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId);
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this.accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this.accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId);
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this.accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this.accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId);
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this.accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
         });
     }
 
     publishAccountLookUpEvent(message:IMessage): void {
-        this.acountLookUpEventEmitter.emit(message.key as string,message.value);
+        this._acountLookUpEventEmitter.emit(message.key as string,message.value);
     }
     
     
@@ -67,7 +67,7 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
 
     private removeAccountLookUpEvents() {
        for (const event in AccountLookUpServiceEvents){
-           this.acountLookUpEventEmitter.removeAllListeners(event);
+           this._acountLookUpEventEmitter.removeAllListeners(event);
        }
     }
 }

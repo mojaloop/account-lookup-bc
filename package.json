@@ -20,7 +20,7 @@
     "clean:dist": "yarn workspaces foreach --parallel -v run clean",
     "pretest": "echo 'FIX ME'",
     "lint": "yarn workspaces foreach -v run lint",
-    "lint:fix": "yarn workspaces foreach -v run lint:fix",
+    "lint:fix": "yarn workspaces foreach -v run lint:fix --ignore-pattern node_modules",
     "test:unit": "yarn workspaces foreach -v run test:unit",
     "test:coverage": "yarn workspaces foreach --parallel -v run test:coverage",
     "test:coverage-check": "yarn workspaces foreach --parallel -v run test:coverage-check",
