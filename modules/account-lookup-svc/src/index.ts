@@ -36,16 +36,6 @@
 import {ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {ExampleOracleFinder, ExampleOracleProvider} from "@mojaloop/account-lookup-bc-infrastructure";
-
-
-const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
-
-
-let oracleFinder: IOracleFinder = new ExampleOracleFinder();
-let oracleProvider1: IOracleProvider = new ExampleOracleProvider();
-
-let accountLookupAgg: AccountLookupAggregate;
-
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
   MLKafkaConsumer,
@@ -53,7 +43,12 @@ import {
 } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {DefaultLogger, KafkaLogger} from "@mojaloop/logging-bc-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
+
+
+
+const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
@@ -65,6 +60,11 @@ const KAFKA_LOGS_TOPIC = "logs";
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 
 
+let oracleFinder: IOracleFinder = new ExampleOracleFinder();
+let oracleProvider: IOracleProvider[] = [new ExampleOracleProvider()];
+let accountLookupAggregate: AccountLookupAggregate;
+let accountLookUpEventHandler : IEventAccountLookUpServiceHandler;
+
 
 // kafka logger
 const kafkaProducerOptions = {
@@ -72,7 +72,7 @@ const kafkaProducerOptions = {
 }
 
 
-// Event Handler
+// Kafka Event Handler
 const kafkaConsumerOptions = {
   kafkaBrokerList: KAFKA_URL,
   kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
@@ -91,14 +91,28 @@ const logger:ILogger = new KafkaLogger(
 
 let kafkaConsumer: MLKafkaConsumer;
 
-async function processLogMessage (message: IMessage) : Promise<void> {
-    const value = message.value;
-  
-    console.log('processLogMessage: ',value)
-  }
+
 
 async function start():Promise<void> {
   // todo create aggRepo
+
+  accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
+  accountLookupAggregate.init();
+  accountLookUpEventHandler = new AccountLookUpServiceEventHandler(accountLookupAggregate);
+  accountLookUpEventHandler.init();
+  
+  await setupKafkaConsumer();
+  
+  
+}
+
+async function processLogMessage (message: IMessage) : Promise<void> {
+  const value = message.value;
+
+  console.log('processLogMessage: ',value)
+}
+
+async function setupKafkaConsumer() {
   await (logger as KafkaLogger).start();
 
   kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
@@ -108,49 +122,14 @@ async function start():Promise<void> {
   await kafkaConsumer.start();
 
   logger.info("kafkaConsumer initialised");
-}
-
-
-function setupKafkaConsumer() {
-    async function handler(message: any): Promise<void> {
-        logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`)
-        return
+    async function handler(message: IMessage): Promise<void> {
+        logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
+        accountLookUpEventHandler.publishAccountLookUpEvent(message);
     }
     
     kafkaConsumer.setCallbackFn(handler)
     kafkaConsumer.setTopics(['myTopic'])
 }
-
-// async function start():Promise<void>{
-//     /// start logger
-//     await logger.start();
-//     accountLookupAgg = new AccountLookupAggregate(logger, oracleFinder, [oracleProvider1]);
-
-//     // accountLookupAgg.init();
-
-//     const msgs = []
-
-//     for (let i = 0; i < 5; i++) {
-//         msgs.push({
-//             topic: 'myTopic',
-//             value: { testProp: i },
-//             key: null,
-//             headers: [
-//                 { key1: 'testStr' }
-//             ]
-//         })
-//     }
-
-//     await kafkaProducer.connect()
-//     await kafkaProducer.send(msgs)
-
-//     await kafkaConsumer.connect()
-
-//     // Start consuming to handler
-//     await kafkaConsumer.start()
-
-// }
-
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     logger.info(`Service - ${signal} received - cleaning up...`);
@@ -166,6 +145,8 @@ process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 //do something when app is closing
 process.on('exit', () => {
     logger.info("Example server - exiting...");
+    accountLookUpEventHandler.destroy();
+    accountLookupAggregate.destroy();
 });
 
 
