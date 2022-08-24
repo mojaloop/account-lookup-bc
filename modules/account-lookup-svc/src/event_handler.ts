@@ -11,17 +11,6 @@ export interface IEventAccountLookUpServiceHandler{
     destroy(): void
 }
 
-function keepIfInEnum<T>(
-    value: string,
-    enumObject: { [key: string]: T }
-) {
-    if (Object.values(enumObject).includes((value as unknown) as T)) {
-        return (value as unknown) as T;
-    } else {
-        return undefined;
-    }
-}
-
 export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServiceHandler{
     
 
@@ -63,12 +52,17 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
 
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
         console.log('message published', message);
-        if(! (keepIfInEnum<AccountLookUpServiceEventsType>(message.value.type, AccountLookUpServiceEventsType))){
+        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value.type)){
             this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             throw new Error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             
         }
-        this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
+        try{
+            this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
+        }
+        catch(error){
+            this._logger.error(error);
+        }
     }
     
     
