@@ -141,9 +141,7 @@ async function setupKafkaConsumer() {
   
   async function handler(message: IMessage): Promise<void> {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      accountLookUpEventHandler.publishAccountLookUpEvent(message).catch((err: any) => {
-        logger.error(`Error in accountLookUpEventHandler.publishAccountLookUpEvent: ${err}`);
-      });
+      accountLookUpEventHandler.publishAccountLookUpEvent(message);
   }
     
     kafkaConsumer.setCallbackFn(handler)
@@ -163,9 +161,13 @@ process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
 process.on('exit', () => {
-    logger.info("Example server - exiting...");
-    accountLookUpEventHandler.destroy();
-    accountLookupAggregate.destroy();
+    logger.info("Example server - exiting..."); 
+    setTimeout(async ()=>{
+      accountLookUpEventHandler.destroy();
+      accountLookupAggregate.destroy();
+      await kafkaConsumer.destroy(true);
+    }, 0);
+    
 });
 
 

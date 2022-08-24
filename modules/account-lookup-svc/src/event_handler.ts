@@ -31,30 +31,43 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
 
     private setAccountLookUpEvents() {
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId);
+            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`GetPartyByTypeAndId: ${err}`);
+            });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`GetPartyByTypeAndIdAndSubId: ${err}`)
+            });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId);
+            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`AssociatePartyByTypeAndId: ${err}`);
+            });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`AssociatePartyByTypeAndIdAndSubId: ${err}`);
+            });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId);
+            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`DisassociatePartyByTypeAndId: ${err}`);
+            });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`DisassociatePartyByTypeAndIdAndSubId: ${err}`);
+            });
         });
     }
 
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
         console.log('message published', message);
-        if(! (message.value.type in AccountLookUpServiceEventsType)){
+        
+        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value.type)){
             this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
-            throw new Error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
+            return;
             
         }
         this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
