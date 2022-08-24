@@ -54,7 +54,7 @@ const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
 const LOGLEVEL = LogLevel.DEBUG;
 
-const KAFKA_ORACLES_TOPIC = "audits";
+const KAFKA_ORACLES_TOPIC = "account-lookup";
 const KAFKA_LOGS_TOPIC = "logs";
 
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
@@ -94,7 +94,6 @@ let kafkaConsumer: MLKafkaConsumer;
 
 
 async function start():Promise<void> {
-  // todo create aggRepo
 
   accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
   accountLookupAggregate.init();
@@ -122,10 +121,11 @@ async function setupKafkaConsumer() {
   await kafkaConsumer.start();
 
   logger.info("kafkaConsumer initialised");
-    async function handler(message: IMessage): Promise<void> {
-        logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-        accountLookUpEventHandler.publishAccountLookUpEvent(message);
-    }
+  
+  async function handler(message: IMessage): Promise<void> {
+      logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
+      accountLookUpEventHandler.publishAccountLookUpEvent(message);
+  }
     
     kafkaConsumer.setCallbackFn(handler)
     kafkaConsumer.setTopics(['myTopic'])
