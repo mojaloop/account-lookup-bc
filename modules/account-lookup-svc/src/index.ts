@@ -97,7 +97,7 @@ async function start():Promise<void> {
 
   accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
   accountLookupAggregate.init();
-  accountLookUpEventHandler = new AccountLookUpServiceEventHandler(accountLookupAggregate);
+  accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
   accountLookUpEventHandler.init();
   
   await setupKafkaConsumer();
