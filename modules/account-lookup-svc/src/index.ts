@@ -57,11 +57,14 @@ const KAFKA_LOGS_TOPIC = "logs";
 
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 
+const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
+const DB_PORT_NO: number =
+    parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
+const DB_URL: string = `mongodb://${DB_HOST}:${DB_PORT_NO}`;
+const DB_NAME: string = "account-lookup";
+const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
+const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
-let oracleFinder: IOracleFinder = new MongoOracleFinderRepo();
-let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo()];
-let accountLookupAggregate: AccountLookupAggregate;
-let accountLookUpEventHandler : IEventAccountLookUpServiceHandler;
 
 
 // kafka logger
@@ -86,6 +89,22 @@ const logger:ILogger = new KafkaLogger(
         KAFKA_LOGS_TOPIC,
         LOGLEVEL
 );
+
+let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
+  logger,
+	DB_URL,
+	DB_NAME,
+	ORACLE_PROVIDERS_COLLECTION_NAME
+);
+let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
+  logger,
+	DB_URL,
+	DB_NAME,
+	ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
+)];
+let accountLookupAggregate: AccountLookupAggregate;
+let accountLookUpEventHandler : IEventAccountLookUpServiceHandler;
+
 
 let kafkaConsumer: MLKafkaConsumer;
 

@@ -52,10 +52,10 @@ export class AccountLookupAggregate {
 
     async init(): Promise<void> {
 		try {
-            // this.oracleFinder.init();
-            // for(let i=0; i<this.oracleProviders.length ; i+=1){
-            //     await this.oracleProviders[i].init();
-            // }
+            this.oracleFinder.init();
+            for(let i=0; i<this.oracleProviders.length ; i+=1){
+                await this.oracleProviders[i].init();
+            }
 		} catch (e: unknown) {
 			this.logger.fatal(e);
 			throw e;

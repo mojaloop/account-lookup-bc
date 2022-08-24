@@ -43,7 +43,11 @@
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
  import * as uuid from "uuid";
 
- export class PartyAccount implements IPartyAccount {
+ // Used so we can store and track the party associations, which has a different 
+ // responsibility and format from the participant POST requests, as we want 
+ // to keep track of association and disassociation of different parties
+ // https://docs.mojaloop.io/api/fspiop/v1.1/api-definition.html#post-participants-type-id
+export class PartyAccount implements IPartyAccount {
 	fspId: string;
 	currency: string[];
 	extensionList: string[];

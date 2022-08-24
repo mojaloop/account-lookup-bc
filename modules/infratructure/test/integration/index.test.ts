@@ -32,7 +32,7 @@ optionally within square brackets <email>.
 
 import {ILogger,ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupClient} from "@mojaloop/account-lookup-bc-client";
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParty, UnableToGetOracleError} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParty, UnableToGetOracleError, UnableToGetOracleProviderError} from "@mojaloop/account-lookup-bc-domain";
 import * as uuid from "uuid";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 
@@ -53,10 +53,17 @@ const DB_NAME: string = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
- /* ********** Constants End ********** */
+ /* ********** Test Interfaces ********** */
+ interface IOracleFinderWrite {
+    storeNewOracleProvider(partyType: String): Promise<void>;
+ }
+ interface IOracleFinderTest extends IOracleFinder, IOracleFinderWrite {}
+
+
+ /* ********** Constants ********** */
  
  const logger: ILogger = new ConsoleLogger();
- const oracleFinderRepo: IOracleFinder = new MongoOracleFinderRepo(
+ const oracleFinderRepo: IOracleFinderTest = new MongoOracleFinderRepo(
 	logger,
 	DB_URL,
 	DB_NAME,
@@ -70,43 +77,65 @@ const oracleProviderRepo: IOracleProvider = new MongoOracleProviderRepo(
 	ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
 );
 
- let accountLookupClient: any;
- let aggregate: AccountLookupAggregate;
+let accountLookupClient: AccountLookupClient;
+let aggregate: AccountLookupAggregate;
 
- describe("account lookup - integration tests", () => {
-     beforeAll(async () => {
+describe("account lookup - integration tests", () => {
+    beforeAll(async () => {
         accountLookupClient = new AccountLookupClient(
-			logger,
-			ACCOUNT_LOOKUP_URL,
-			HTTP_CLIENT_TIMEOUT_MS
-		);
+            logger,
+            ACCOUNT_LOOKUP_URL,
+            HTTP_CLIENT_TIMEOUT_MS
+        );
         aggregate = new AccountLookupAggregate(
-			logger,
+            logger,
             oracleFinderRepo,
             [oracleProviderRepo]
-		);
+        );
         await aggregate.init();
-     });
- 
-     afterAll(async () => {
-         await aggregate.destroy();
-     });
- 
-     // Get party.
-     test("associate party by type and id should throw error of oracle not found", async () => {
+    });
+
+    afterAll(async () => {
+        await aggregate.destroy();
+        await oracleFinderRepo.destroy();
+    });
+
+    // Get party.
+    test("associate party by type and id should throw error of oracle not found", async () => {
         const partyId: string = uuid.v4();
-         const party: IParty = {
-             id: partyId,
-             type: "BANK",
-             currency: "EUR",
-             subId: null
-         };
-         
-         await expect(
+            const party: IParty = {
+                id: partyId,
+                type: "BANK",
+                currency: "EUR",
+                subId: null
+            };
+            
+            await expect(
             async () => {
                 await aggregate.associatePartyByTypeAndId(party.type, party.id);
             }
         ).rejects.toThrow(UnableToGetOracleError);
-     });
- 
- });
+    });
+    test("associate party by type and id should throw error of oracle provider not found", async () => {
+        insertOracleProviderType("BANK")
+        const partyId: string = uuid.v4();
+            const party: IParty = {
+                id: partyId,
+                type: "BANK",
+                currency: "EUR",
+                subId: null
+            };
+            
+            await expect(
+            async () => {
+                await aggregate.associatePartyByTypeAndId(party.type, party.id);
+            }
+        ).rejects.toThrow(UnableToGetOracleProviderError);
+    });
+
+});
+
+
+async function insertOracleProviderType(type: String): Promise<void> {
+    await oracleFinderRepo.storeNewOracleProvider(type)
+}
