@@ -28,17 +28,78 @@
  --------------
  ******/
 "use strict";
-import { IOracleFinder } from "@mojaloop/account-lookup-bc-domain";
 
 
-export class ExampleOracleFinder implements IOracleFinder {
-    init(): Promise<void> {
-        throw new Error("Method not implemented.");
+"use strict";
+
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {MongoClient, Collection, UpdateResult} from "mongodb";
+import {
+    IOracleFinder,
+	UnableToInitRepoError,
+	UnableToGetOracleTypeError,
+	IParty
+} from "@mojaloop/account-lookup-bc-domain";
+import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
+
+export class MongoOracleFinderRepo implements IOracleFinder{
+	// Properties received through the constructor.
+	private readonly logger: ILogger;
+	private readonly DB_URL: string;
+	private readonly DB_NAME: string;
+	private readonly COLLECTION_NAME: string;
+	// Other properties.
+	private readonly mongoClient: MongoClient;
+	private oracleProviders: Collection;
+
+	constructor(
+		logger: ILogger,
+		DB_URL: string,
+		DB_NAME: string,
+		COLLECTION_NAME: string
+	) {
+		this.logger = logger;
+		this.DB_URL = DB_URL;
+		this.DB_NAME = DB_NAME;
+		this.COLLECTION_NAME = COLLECTION_NAME;
+
+		this.mongoClient = new MongoClient(this.DB_URL);
+	}
+
+	async init(): Promise<void> {
+		try {
+			await this.mongoClient.connect();
+		} catch (e: unknown) {
+			throw new UnableToInitRepoError((e as any)?.message);
+		}
+		
+		this.oracleProviders = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+	}
+
+	async destroy(): Promise<void> {
+		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
+	}
+
+    async getOracleForType(type: String): Promise<String | undefined> {
+		// await this.storeNewOracleProvider(type)
+        try {
+			const foundOracle: any = await this.oracleProviders.findOne(
+				{type: type},
+			);
+
+			return foundOracle as String;
+		} catch (e: unknown) {
+			throw new UnableToGetOracleTypeError();
+		}
     }
-    destroy(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    async getOracleForType(type: String): Promise<String> {
-        throw new Error("not implemented");
-    }
+
+	async storeNewOracleProvider(oracleProvider: String): Promise<void> {
+		try {
+			await this.oracleProviders.insertOne({
+				type: oracleProvider
+			});
+		} catch (e: unknown) {
+			throw new Error((e as any)?.message);
+		}
+	}
 }

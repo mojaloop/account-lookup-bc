@@ -44,7 +44,7 @@ import { MemoryOracleFinder } from "./mocks/memory_oracle_finder_mock";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers_mock";
 import * as uuid from "uuid";
 import { OracleCurrency, OracleType } from "./enums";
-import { mockedOracleListTest } from "./mocks/oracleList";
+import { mockedOracleList } from "./mocks/oracleList";
 
 /* Constants. */
 const logger: ILogger = new ConsoleLogger();
@@ -56,11 +56,11 @@ const oracleFinder: IOracleFinder = new MemoryOracleFinder(
 
 const oracleProviderList: IOracleProvider[] = [];
 
-for(let i=0 ; i<mockedOracleListTest.length ; i+=1) {
+for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     const oracleProvider: IOracleProvider = new MemoryOracleProvider(
         logger,
     );
-    oracleProvider.id = mockedOracleListTest[i].id;
+    oracleProvider.id = mockedOracleList[i].id;
     oracleProviderList.push(oracleProvider);
 }
 
@@ -157,7 +157,7 @@ describe("party lookup service - unit tests", () => {
     });
     test("associate party by type and id and subId should throw error of oracle provider not found", async () => {
         const party: IParty = {
-            id: oracleProviderList[2].id as string,
+            id: "NonExistingOracleId",
             type: OracleType.CREDIT_UNION,
             currency: OracleCurrency.EURO,
             subId: null

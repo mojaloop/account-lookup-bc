@@ -38,13 +38,17 @@ export class InvalidPartyAccountTypeError extends Error {}
 export class InvalidPartyAccountCurrencyError extends Error {}
 export class InvalidPartyAcountExtensionListError extends Error {}
 
+// Party Association.
+export class UnableToStorePartyAssociationError extends Error {}
 
 // Gets.
 export class UnableToGetOracleError extends Error {}
 export class UnableToGetOracleProviderError extends Error {}
+export class UnableToGetPartyError extends Error {}
 
 // Repo.
 export class UnableToInitRepoError extends Error {}
+export class UnableToGetOracleTypeError extends Error {}
 
 // Item already exists.
 export class PartyAssociationAlreadyExistsError extends Error {}
