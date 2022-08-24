@@ -140,11 +140,15 @@ async function setupKafkaConsumer() {
   logger.info("kafkaConsumer initialised");
   
   async function handler(message: IMessage): Promise<void> {
-      logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      accountLookUpEventHandler.publishAccountLookUpEvent(message).catch((err: any) => {
-        logger.error(`Error in accountLookUpEventHandler.publishAccountLookUpEvent: ${err}`);
-      });
-  }
+    logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
+    try{
+      accountLookUpEventHandler.publishAccountLookUpEvent(message);
+    }
+    catch(error){
+      logger.error(`Error in accountLookUpEventHandler.publishAccountLookUpEvent: ${error}`);
+    }
+
+}
     
     kafkaConsumer.setCallbackFn(handler)
     kafkaConsumer.setTopics(['myTopic'])
