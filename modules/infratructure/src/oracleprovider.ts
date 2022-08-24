@@ -30,48 +30,198 @@
 
 "use strict";
 
-import {IOracleProvider, IParty, IPartyAccount} from "@mojaloop/account-lookup-bc-domain";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {MongoClient, Collection, UpdateResult} from "mongodb";
+import {
+	IParty,
+	IPartyAccount,
+	PartyAssociationAlreadyExistsError,
+	UnableToGetPartyError,
+	UnableToStorePartyAssociationError,
+	UnableToInitRepoError,
+} from "@mojaloop/account-lookup-bc-domain";
+import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
 
-export class ExampleOracleProvider implements IOracleProvider{
-    init(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    destroy(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    getPartyByTypeAndId(partyType: String, partyId: String): Promise<any> {
-        throw new Error("Method not implemented.");
-    }
-    getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
-        throw new Error("Method not implemented.");
-    }
-    associatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
-    }
-    associatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
-    }
-    disassociatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
-    }
-    disassociatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
-    }
-    createParty(type: String, id: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
-    }
-    deleteParty(type: String, id: String): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    id: String;
-    async getParty(type:String, id:string):Promise<IParty|null>{
-        throw new Error("not implemented");
-    }
-    async associateParty(type:String, id:string):Promise<IPartyAccount | null>{
-        throw new Error("not implemented");
-    }
-    async disassociateParty(type:String, id:string):Promise<void>{
-        throw new Error("not implemented");
+export class MongoOracleProviderRepo implements IOracleProvider{
+	// Properties received through the constructor.
+	private readonly logger: ILogger;
+	private readonly DB_URL: string;
+	private readonly DB_NAME: string;
+	private readonly COLLECTION_NAME: string;
+	// Other properties.
+	private readonly mongoClient: MongoClient;
+	private partyAssociations: Collection;
+
+	id: String;
+
+	constructor(
+		logger: ILogger,
+		DB_URL: string,
+		DB_NAME: string,
+		COLLECTION_NAME: string
+	) {
+		this.logger = logger;
+		this.DB_URL = DB_URL;
+		this.DB_NAME = DB_NAME;
+		this.COLLECTION_NAME = COLLECTION_NAME;
+
+		this.mongoClient = new MongoClient(this.DB_URL);
+	}
+
+	async init(): Promise<void> {
+		try {
+			await this.mongoClient.connect(); // Throws if the repo is unreachable.
+		} catch (e: unknown) {
+			throw new UnableToInitRepoError((e as any)?.message);
+		}
+		// The following doesn't throw if the repo is unreachable, nor if the db or collection don't exist.
+		this.partyAssociations = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+	}
+
+	async destroy(): Promise<void> {
+		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
+	}
+
+	
+    async getPartyByTypeAndId(partyType: String, partyId: String): Promise<IParty | null> {
+        try {
+			// This will throw if not found
+			const foundParty: any = await this.partyAssociations.findOne(
+				{
+					id: partyId,
+					type: partyType
+				},
+			);
+
+			return foundParty as IParty;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError();
+		}
     }
 
+    async getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
+        try {
+			const foundParty: any = await this.partyAssociations.findOne(
+				{
+					id: partyId,
+					type: partyType,
+					subId: partySubId
+				},
+			);
+
+			return foundParty as IParty;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError();
+		}
+    }
+    async associatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
+		let partyAssociationExists: boolean;
+		try {
+			partyAssociationExists = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError((e as any)?.message);
+		}
+		if (partyAssociationExists) {
+			throw new PartyAssociationAlreadyExistsError();
+		}
+		try {
+			return await this.partyAssociations.insertOne({
+				id: partyId,
+				type: partyType,
+			}) as unknown as IPartyAccount;
+		} catch (e: unknown) {
+			throw new Error((e as any)?.message);
+		}
+    }
+
+    async associatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
+		let partyAssociationExists: boolean;
+		try {
+			partyAssociationExists = await this.associatedPartyExistsByTypeAndIdAndSubId(partyType, partyId, partySubId);
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError((e as any)?.message);
+		}
+		if (partyAssociationExists) {
+			throw new PartyAssociationAlreadyExistsError();
+		}
+		try {
+			return await this.partyAssociations.insertOne({
+				id: partyId,
+				type: partyType,
+				subId: partySubId
+			}) as unknown as IPartyAccount;
+		} catch (e: unknown) {
+			throw new Error((e as any)?.message);
+		}
+    }
+
+    async disassociatePartyByTypeAndId(partyType: String, partyId: String): Promise<IPartyAccount | null> {
+		let partyAssociationExists: boolean;
+		try {
+			partyAssociationExists = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError((e as any)?.message);
+		}
+		try {
+			return await this.partyAssociations.deleteOne({
+				id: partyId,
+				type: partyType,
+			}) as unknown as IPartyAccount;
+		} catch (e: unknown) {
+			throw new Error((e as any)?.message);
+		}
+    }
+
+    async disassociatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IPartyAccount | null> {
+		let partyAssociationExists: boolean;
+		try {
+			partyAssociationExists = await this.associatedPartyExistsByTypeAndIdAndSubId(partyType, partyId, partySubId);
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError((e as any)?.message);
+		}
+
+		try {
+			return await this.partyAssociations.deleteOne({
+				id: partyId,
+				type: partyType,
+				subId: partySubId
+			}) as unknown as IPartyAccount;
+		} catch (e: unknown) {
+			throw new Error((e as any)?.message);
+		}
+    }
+
+    async createParty(type: String, id: String): Promise<IPartyAccount | null> {
+        throw new Error("Method not implemented.");
+    }
+
+    async deleteParty(type: String, id: String): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+	private async associatedPartyExistsByTypeAndId(partyType: String, partyId: String): Promise<boolean> {
+		try {
+			const partyAssociation: any = await this.partyAssociations.findOne({
+				id: partyId,
+				type: partyType
+			}); 
+			return partyAssociation !== null;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError((e as any)?.message);
+		}
+	}
+
+	private async associatedPartyExistsByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<boolean> {
+		try {
+			const partyAssociation: any = await this.partyAssociations.findOne({
+				id: partyId,
+				type: partyType,
+				subId: partySubId
+			}); 
+			return partyAssociation !== null;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError((e as any)?.message);
+		}
+	}
 }
+

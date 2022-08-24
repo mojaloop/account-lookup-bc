@@ -35,7 +35,7 @@
 
 import {ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
-import {ExampleOracleFinder, ExampleOracleProvider} from "@mojaloop/account-lookup-bc-infrastructure";
+import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
   MLKafkaConsumer,
@@ -60,8 +60,8 @@ const KAFKA_LOGS_TOPIC = "logs";
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 
 
-let oracleFinder: IOracleFinder = new ExampleOracleFinder();
-let oracleProvider: IOracleProvider[] = [new ExampleOracleProvider()];
+let oracleFinder: IOracleFinder = new MongoOracleFinderRepo();
+let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo()];
 let accountLookupAggregate: AccountLookupAggregate;
 let accountLookUpEventHandler : IEventAccountLookUpServiceHandler;
 
