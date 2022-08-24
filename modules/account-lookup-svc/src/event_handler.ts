@@ -69,12 +69,7 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
             return;
             
         }
-        try{
             this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
-        }
-        catch(error){
-            this._logger.error(error);
-        }
     }
     
     
