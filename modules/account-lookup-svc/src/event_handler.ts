@@ -7,7 +7,7 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export interface IEventAccountLookUpServiceHandler{
     init():void,
-    publishAccountLookUpEvent(message:IMessage):void,
+    publishAccountLookUpEvent(message:IMessage):any,
     destroy(): void
 }
 

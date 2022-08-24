@@ -81,8 +81,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
     async getOracleForType(type: String): Promise<String | undefined> {
-		// await this.storeNewOracleProvider(type)
-        try {
+		try {
 			const foundOracle: any = await this.oracleProviders.findOne(
 				{type: type},
 			);

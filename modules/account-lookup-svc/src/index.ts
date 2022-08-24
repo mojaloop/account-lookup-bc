@@ -46,8 +46,6 @@ import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
 
-
-
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
@@ -124,7 +122,9 @@ async function setupKafkaConsumer() {
   
   async function handler(message: IMessage): Promise<void> {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      accountLookUpEventHandler.publishAccountLookUpEvent(message);
+      accountLookUpEventHandler.publishAccountLookUpEvent(message).catch((err: any) => {
+        logger.error(`Error in accountLookUpEventHandler.publishAccountLookUpEvent: ${err}`);
+      });
   }
     
     kafkaConsumer.setCallbackFn(handler)
