@@ -21,7 +21,14 @@ export const mockedOracleList = [
         id: mockedPartyIds[2],
         type: mockedPartyTypes[2],
     },
-    
+    {
+        id: "error",
+        type: "error"
+    },
+    {
+        id:"not_found_oracle",
+        type:"not_found_oracle"
+    }
 ];
 
 
@@ -34,9 +41,9 @@ mockedParties.set({partyId:mockedPartyIds[3],partyType:mockedPartyTypes[2], part
 
 
 
-export const mockedPartyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| undefined> = new Map();
+export const mockedPartyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error> = new Map();
 mockedPartyAssociations.set({partyId:mockedPartyIds[0],partyType:mockedPartyTypes[0]}, null);
-mockedPartyAssociations.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:"subId2"}, null);
-mockedPartyAssociations.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:"subId3"}, undefined);
+mockedPartyAssociations.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:mockedPartySubIds[0]}, null);
+mockedPartyAssociations.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:mockedPartySubIds[1]}, new Error());
 
 

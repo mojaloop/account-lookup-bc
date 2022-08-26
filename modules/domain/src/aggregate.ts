@@ -133,7 +133,7 @@ export class AccountLookupAggregate {
 
         await oracleProvider.disassociatePartyByTypeAndId(partyType, partyId).catch(error=>{
             this.logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
-            throw new UnableToAssociatePartyError(error);
+            throw new UnableToDisassociatePartyError(error);
         });
     }
 
@@ -154,14 +154,14 @@ export class AccountLookupAggregate {
 
         if(!oracleId) {
             this.logger.debug(`No oracle found for type: ${partyType}`);
-            throw new UnableToGetOracleError(`oracle not found for partyType: ${partyType}`);
+            throw new UnableToGetOracleError(`Oracle not found for partyType: ${partyType}`);
         }
 
         const oracleProvider = this.oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
 
         if(!oracleProvider) {
             this.logger.debug(`No oracle provider found for id: ${oracleId}`);
-            throw new UnableToGetOracleProviderError(`oracle provider not found for oracleId: ${oracleId}`);
+            throw new UnableToGetOracleProviderError(`Oracle provider not found for oracleId: ${oracleId}`);
         }
 
 		return oracleProvider;

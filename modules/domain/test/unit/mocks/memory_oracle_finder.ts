@@ -57,6 +57,14 @@ export class MemoryOracleFinder implements IOracleFinder {
 
     async getOracleForType(type: String): Promise<String | undefined> {
         const foundOracle = this.oracleList.find(oracle => oracle.type === type);
+        if(foundOracle?.type === "error") {
+            throw new Error();
+        }
+
+        if(foundOracle?.type === "not_found_oracle") {
+            return "non existing id";
+        }
+
 
         return foundOracle?.id;
     }

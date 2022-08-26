@@ -44,8 +44,8 @@ import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc
 	private readonly logger: ILogger;
 
 	// Other properties.
-	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error | undefined>;
-	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| undefined>;
+	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
+	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error>;
 
 	constructor(
 		logger: ILogger,
@@ -85,7 +85,7 @@ import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc
 	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
 		let party:IParty| Error | undefined;
 
-		mockedParties.forEach((partyFound:IParty|Error | undefined, key) => {
+		mockedParties.forEach((partyFound:IParty|Error, key) => {
 			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
 				party=partyFound;
 			}
@@ -104,9 +104,9 @@ import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc
 	}
 
 	async associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		let association:null| undefined;
+		let association:null| Error | undefined;
 
-		mockedPartyAssociations.forEach((partyFound:null|undefined, key) => {
+		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
 			if(key.partyId === partyId && key.partyType === partyType){
 				association=partyFound;
 			}
@@ -120,21 +120,25 @@ import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc
 	}
 
 	async associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		let association:null| undefined;
+		let association:null| Error | undefined;
 
-		mockedPartyAssociations.forEach((partyFound:null|undefined, key) => {
+		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
 			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
 				association=partyFound;
 			}
 		});
+
+		if(association===null){
+			return null;
+		}
 		
 		throw new UnableToCreatePartyAssociationError();
 	}
 
 	async disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		let association:null| undefined;
+		let association:null| Error | undefined;
 
-		mockedPartyAssociations.forEach((partyFound:null|undefined, key) => {
+		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
 			if(key.partyId === partyId && key.partyType === partyType){
 				association=partyFound;
 			}
@@ -148,9 +152,9 @@ import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc
 	}
 
 	async disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		let association:null| undefined;
+		let association:null| Error | undefined;
 
-		mockedPartyAssociations.forEach((partyFound:null|undefined, key) => {
+		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
 			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
 				association=partyFound;
 			}

@@ -37,6 +37,10 @@
      IOracleFinder,
      IOracleProvider,
      NoSuchPartyError,
+     UnableToAssociatePartyError,
+     UnableToDisassociatePartyError,
+     UnableToGetOracleError,
+     UnableToGetOracleProviderError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
@@ -67,12 +71,57 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 describe("Party Lookup Domain", () => {
     
     beforeAll(async () => {
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'debug').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
         await aggregate.init();
     });
 
     afterAll(async () => {
         await aggregate.destroy();
     });
+
+    test("should throw error if is unable to get oracle", async () => {
+       //Arrange 
+       const partyType = "error";
+       const partyId = mockedPartyIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getPartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToGetOracleError);
+        
+    });
+
+    test("should throw error if is unable to find oracle for partyType", async () => {
+        //Arrange 
+        const partyType = "non-exisiting-oracle-type";
+        const partyId = mockedPartyIds[0];
+ 
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyByTypeAndId(partyType, partyId);
+             }
+         ).rejects.toThrow(UnableToGetOracleError);
+         
+     });
+
+     test("should throw error if oracle returned is not present in the oracle providers list", async () => {
+        //Arrange 
+        const partyType = "not_found_oracle";
+        const partyId = mockedPartyIds[0];
+ 
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyByTypeAndId(partyType, partyId);
+             }
+         ).rejects.toThrow(UnableToGetOracleProviderError);
+         
+     });
 
 
     test("should get party by partyType and partyId", async () => {
@@ -165,162 +214,119 @@ describe("Party Lookup Domain", () => {
     });
 
 
+    test("should associate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
 
-    // Associate party by type and id.
-    // test("associate party by type and id", async () => {
-    //     const party: IParty = {
-    //         id: oracleProviderList[0].id as string,
-    //         type: OracleType.BANK,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
-    //     const partyReceived: boolean = await aggregate.associatePartyByTypeAndId(party.type, party.id);
-    //     expect(partyReceived).toBeTruthy();
-    // });
-    // test("associate party by type and id should throw error of oracle not found", async () => {
-    //     const NonExistingOracleType: string = Date.now().toString();
-    //     const party: IParty = {
-    //         id: oracleProviderList[0].id as string,
-    //         type: NonExistingOracleType,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndId(party.type, party.id);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-    // });
-    // test("associate party by type and id should throw error of oracle provider not found", async () => {
-    //     const party: IParty = {
-    //         id: "2" as string,
-    //         type: OracleType.CREDIT_UNION,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndId(party.type, party.id);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleProviderError);
-    // });
-    // test("associate party by type and id should return true if successful", async () => {
-    //     const party: IParty = {
-    //         id: oracleProviderList[1].id as string,
-    //         type: OracleType.BANK,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
+        //Act
+        const association= await aggregate.associatePartyByTypeAndId(partyType, partyId);
 
-    //     const partyAssociation = await aggregate.associatePartyByTypeAndId(party.type, party.id);
-    //     expect(partyAssociation).toBeTruthy();
-    // });
+        //Assert
+        expect(association).toBeUndefined();
+  
+    });
 
-    // // Associate party by type and id and subId.
-    // test("associate party by type and id and subId", async () => {
-    //     const party: IParty = {
-    //         id: oracleProviderList[0].id as string,
-    //         type: OracleType.BANK,
-    //         currency: OracleCurrency.EURO,
-    //         subId: uuid.v4()
-    //     };
-    //     const partyReceived: boolean = await aggregate.associatePartyByTypeAndIdAndSubId(party.type, party.id, party.subId as string);
-    //     expect(partyReceived).toBeTruthy();
-    // });
-    // test("associate party by type and id and subId should throw error of oracle not found", async () => {
-    //     const NonExistingOracleType: string = Date.now().toString();
-    //     const party: IParty = {
-    //         id: oracleProviderList[0].id as string,
-    //         type: NonExistingOracleType,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndIdAndSubId(party.type, party.id, party.subId as string);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-    // });
-    // test("associate party by type and id and subId should throw error of oracle provider not found", async () => {
-    //     const party: IParty = {
-    //         id: "NonExistingOracleId",
-    //         type: OracleType.CREDIT_UNION,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndIdAndSubId(party.type, party.id, party.subId as string);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleProviderError);
-    // });
-    // test("associate party by type and id and subId should return true if successful", async () => {
-    //     const party: IParty = {
-    //         id: oracleProviderList[1].id as string,
-    //         type: OracleType.BANK,
-    //         currency: OracleCurrency.EURO,
-    //         subId: null
-    //     };
+    test("should throw error if is unable to associate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
 
-    //     const partyAssociation = await aggregate.associatePartyByTypeAndIdAndSubId(party.type, party.id, party.subId as string);
-    //     expect(partyAssociation).toBeTruthy();
-    // });
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.associatePartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToAssociatePartyError);
+        
+    });
 
-    // // Get party by type and id.
-	// test("get associate party by type and id should throw error of oracle not found ", async () => {
-    //     const partyType: string = Date.now().toString();
-    //     const partyId: string = Date.now().toString();
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-	// });
-    // test("get associate party by type and id should throw error of party association not found ", async () => {
-    //     const partyType: string = OracleType.BANK;
-    //     const partyId: string = Date.now().toString();
-      
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndId(partyType, partyId)
-    //         }
-    //     ).rejects.toThrow(NoSuchPartyAssociationError);
-	// });
-    // test("get associate party by type and id should return a party association ", async () => {
-    //     const partyType: string = OracleType.BANK;
-    //     const partyId: string = Date.now().toString();
-      
-    //     // Create party association first
-    //     await aggregate.associatePartyByTypeAndId(partyType, partyId);
-    //     const party = await aggregate.getPartyByTypeAndId(partyType, partyId);
-    //     /*
-    //         {
-    //             "currency": "euro", 
-    //             "id": "1661171497915", 
-    //             "subId": null, 
-    //             "type": "BANK"
-    //         }
-    //     */
-    //     expect(party?.id).toEqual(partyId);
-	// });
-    
-    // // Get party by type and id and subid.
-	// test("get associate party by type and id and subId should throw error of oracle not found ", async () => {
-    //     const partyType: string = Date.now().toString();
-    //     const partyId: string = Date.now().toString();
-    //     const partySubId: string = Date.now().toString();
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-	// });
-    // // test("get associate party by type and id and subId should throw error of party association not found ", async () => {
-    // //     const partyType: string = OracleType.BANK;
-    // //     const partyId: string = Date.now().toString();
-    // //     const partySubId: string = Date.now().toString();
-      
-    // //     const partyAssociation =                 await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    // //     expect(partyAssociation).toEqual(1);
-	// // });
+
+    test("should associate party by partyType, partyId and partySubId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[1];
+        const partyId = mockedPartyIds[1];
+        const partySubId = mockedPartySubIds[0];
+        
+
+        //Act
+        const association= await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Assert
+        expect(association).toBeUndefined();
+  
+    });
+
+
+    test("should throw error if is unable to associate party by partyType, partyId and partySubId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        const partySubId = mockedPartyIds[1];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(UnableToAssociatePartyError);
+        
+    });
+
+    test("should disassociate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+
+        //Act
+        const association= await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
+
+        //Assert
+        expect(association).toBeUndefined();
+  
+    });
+
+    test("should throw error if is unable to disassociate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToDisassociatePartyError);
+        
+    });
+
+    test("should disassociate party by partyType, partyId and partySubId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[1];
+        const partyId = mockedPartyIds[1];
+        const partySubId = mockedPartySubIds[0];
+
+        //Act
+        const association= await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Assert
+        expect(association).toBeUndefined();
+  
+    });
+
+    test("should throw error if is unable to disassociate party by partyType, partyId and partySubId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        const partySubId = mockedPartySubIds[1];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(UnableToDisassociatePartyError);
+        
+    });
+
 });
