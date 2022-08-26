@@ -148,16 +148,19 @@ export class AccountLookupAggregate {
 
     private async getOracleProvider(partyType:String): Promise<IOracleProvider> {
         const oracleId = await this.oracleFinder.getOracleForType(partyType).catch(error=>{
+            this.logger.error(`Unable to get oracle for type: ${partyType} ` + error);
             throw new UnableToGetOracleError(error);
         });
 
         if(!oracleId) {
+            this.logger.debug(`No oracle found for type: ${partyType}`);
             throw new UnableToGetOracleError(`oracle not found for partyType: ${partyType}`);
         }
 
         const oracleProvider = this.oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
 
         if(!oracleProvider) {
+            this.logger.debug(`No oracle provider found for id: ${oracleId}`);
             throw new UnableToGetOracleProviderError(`oracle provider not found for oracleId: ${oracleId}`);
         }
 
