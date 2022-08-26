@@ -33,7 +33,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection, UpdateResult} from "mongodb";
+import {MongoClient, Collection, UpdateResult, InsertOneResult, Document} from "mongodb";
 import {
     IOracleFinder,
 	UnableToInitRepoError,
@@ -86,19 +86,24 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 				{type: type},
 			);
 
-			return foundOracle as String;
+			return foundOracle.id;
 		} catch (e: unknown) {
 			throw new UnableToGetOracleTypeError();
 		}
     }
 
-	async storeNewOracleProvider(oracleProvider: String): Promise<void> {
+	async storeNewOracleProvider(partyType: String, partyId: String): Promise<InsertOneResult<Document>> {
 		try {
-			await this.oracleProviders.insertOne({
-				type: oracleProvider
+			return await this.oracleProviders.insertOne({
+				id: partyId,
+				type: partyType
 			});
 		} catch (e: unknown) {
 			throw new Error((e as any)?.message);
 		}
+	}
+
+	async deleteAll() {
+		await this.oracleProviders.deleteMany({});
 	}
 }

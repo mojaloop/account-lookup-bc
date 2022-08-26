@@ -47,6 +47,7 @@ export class UnableToStorePartyAssociationError extends Error {};
 
 // Party Dissociation  
 export class UnableToDisassociatePartyError extends Error {};
+export class PartyAssociationDoesntExistsError extends Error {};
 
 // Oracle
 export class UnableToGetOracleError extends Error {};

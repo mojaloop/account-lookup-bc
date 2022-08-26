@@ -45,12 +45,12 @@ export interface IOracleFinder{
 
 
 export interface IOracleProvider{
+    // Properties.
     id: String;
     // Init and destroy.
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    // getPartyByTypeAndId(partyType:String, partyId:String):Promise<HttpResponse|null>;
     getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
     // Stores.
