@@ -30,7 +30,7 @@
 
 "use strict";
 
-import { HttpResponse, IParty, IPartyAccount } from "../types";
+import { IParty } from "../types";
 
 
 /* infratructure interfaces */
@@ -54,9 +54,9 @@ export interface IOracleProvider{
     getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
     // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
+    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
+    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
     // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<IPartyAccount|null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IPartyAccount|null>;
+    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
+    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
 }

@@ -29,30 +29,31 @@ optionally within square brackets <email>.
 
 "use strict";
 
-// Party.
-export class InvalidPartyIdError extends Error {}
-export class InvalidPartyTypeError extends Error {}
+// Party
+export class InvalidPartyIdError extends Error {};
+export class InvalidPartyTypeError extends Error {};
+export class NoSuchPartyError extends Error {};
+export class GetPartyError extends Error {};
 
 // Party Account.
-export class InvalidPartyAccountTypeError extends Error {}
-export class InvalidPartyAccountCurrencyError extends Error {}
-export class InvalidPartyAcountExtensionListError extends Error {}
+export class InvalidPartyAccountTypeError extends Error {};
+export class InvalidPartyAccountCurrencyError extends Error {};
+export class InvalidPartyAcountExtensionListError extends Error {};
 
-// Party Association.
-export class UnableToStorePartyAssociationError extends Error {}
+// Party Association
+export class UnableToAssociatePartyError extends Error {};
+export class PartyAssociationAlreadyExistsError extends Error {};
+export class UnableToStorePartyAssociationError extends Error {};
 
-// Gets.
-export class UnableToGetOracleError extends Error {}
-export class UnableToGetOracleProviderError extends Error {}
-export class UnableToGetPartyError extends Error {}
+// Party Dissociation  
+export class UnableToDisassociatePartyError extends Error {};
 
-// Repo.
-export class UnableToInitRepoError extends Error {}
-export class UnableToGetOracleTypeError extends Error {}
+// Oracle
+export class UnableToGetOracleError extends Error {};
+export class UnableToGetOracleProviderError extends Error {};
+export class UnableToGetPartyError extends Error {};
 
-// Item already exists.
-export class PartyAssociationAlreadyExistsError extends Error {}
+// Repositories - This should be in infrastructure
+export class UnableToInitRepoError extends Error {};
+export class UnableToGetOracleTypeError extends Error {};
 
-// No such item.
-export class NoSuchPartyError extends Error {}
-export class NoSuchPartyAssociationError extends Error {}
