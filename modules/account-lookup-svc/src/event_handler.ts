@@ -7,7 +7,7 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export interface IEventAccountLookUpServiceHandler{
     init():void,
-    publishAccountLookUpEvent(message:IMessage):any,
+    publishAccountLookUpEvent(message:IMessage):void,
     destroy(): void
 }
 
@@ -63,7 +63,6 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     }
 
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
-        console.log('message published', message);
         if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value.type)){
             this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             return;
