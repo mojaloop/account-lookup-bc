@@ -1,8 +1,8 @@
 import { IParty } from "@mojaloop/account-lookup-bc-domain";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
-export const mockedPartyResultIds = ["receivedParty1", "receivedParty2", "receivedParty3"];
-export const mockedPartyResultSubIds = ["receivedPartySub1", "receivedPartySub2", "receivedPartySub3"];
+export const mockedPartyResultIds = ["party1", "party2", "party3"];
+export const mockedPartyResultSubIds = ["subId1", "subId2", "subId3"];
 
 export const mockedPartySubIds = ["subId2","subId3"];
 export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];

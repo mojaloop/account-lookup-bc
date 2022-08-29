@@ -29,27 +29,7 @@ optionally within square brackets <email>.
 
 "use strict";
 
-// Party
-export class InvalidPartyIdError extends Error {};
-export class InvalidPartyTypeError extends Error {};
-export class NoSuchPartyError extends Error {};
-export class GetPartyError extends Error {};
+// Repo
+export class UnableToInitRepoError extends Error {};
+export class UnableToGetOracleTypeError extends Error {};
 
-// Party Account.
-export class InvalidPartyAccountTypeError extends Error {};
-export class InvalidPartyAccountCurrencyError extends Error {};
-export class InvalidPartyAcountExtensionListError extends Error {};
-
-// Party Association
-export class UnableToAssociatePartyError extends Error {};
-export class PartyAssociationAlreadyExistsError extends Error {};
-export class UnableToStorePartyAssociationError extends Error {};
-
-// Party Dissociation  
-export class UnableToDisassociatePartyError extends Error {};
-export class PartyAssociationDoesntExistsError extends Error {};
-
-// Oracle
-export class UnableToGetOracleError extends Error {};
-export class UnableToGetOracleProviderError extends Error {};
-export class UnableToGetPartyError extends Error {};

@@ -36,11 +36,10 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, UpdateResult, InsertOneResult, Document} from "mongodb";
 import {
     IOracleFinder,
-	UnableToInitRepoError,
-	UnableToGetOracleTypeError,
 	IParty
 } from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
+import { UnableToGetOracleTypeError, UnableToInitRepoError } from "./errors";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
 	// Properties received through the constructor.

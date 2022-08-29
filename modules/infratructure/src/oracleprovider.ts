@@ -39,10 +39,10 @@ import {
 	PartyAssociationDoesntExistsError,
 	UnableToGetPartyError,
 	UnableToStorePartyAssociationError,
-	UnableToInitRepoError,
 	UnableToDisassociatePartyError,
 } from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
+import { UnableToInitRepoError } from "./errors";
 
 export class MongoOracleProviderRepo implements IOracleProvider{
 	// Properties received through the constructor.
@@ -52,12 +52,10 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	private readonly COLLECTION_NAME: string;
 	// Other properties.
 	private readonly mongoClient: MongoClient;
-	parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error | undefined>;
-	// private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| undefined>;
 	private partyAssociations: Collection;
+	private parties: Collection;
 
 	id: String;
-	private _type: String;
 
 	constructor(
 		logger: ILogger,
@@ -82,55 +80,47 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		}
 		// The following doesn't throw if the repo is unreachable, nor if the db or collection don't exist.
 		this.partyAssociations = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+		this.parties = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
 	}
 
 	async destroy(): Promise<void> {
 		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
 	}
 
-
-	
-	async getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null> {
-		
+	async getPartyByTypeAndId(partyType: String, partyId: String): Promise<IParty | null> {
 		let party:IParty|Error | undefined;
 
-		this.parties.forEach((partyFound:any, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
+        try {
+			// This will throw if not found
+			party = await this.parties.findOne(
+				{
+					id: partyId,
+					type: partyType
+				},
+			) as unknown as IParty;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError();
 		}
-		
-		if (!party) {
-			return null;
-		}
-		return party;
-	}
-
-	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
-		let party:IParty| Error | undefined;
-
-		this.parties.forEach((partyFound:IParty|Error | undefined, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-
-		if (!party) {
-			return null;
-		}
-
 
 		return party;
-	}
-	
+    }
+
+    async getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
+        try {
+			const foundParty: any = await this.parties.findOne(
+				{
+					id: partyId,
+					type: partyType,
+					subId: partySubId
+				},
+			);
+
+			return foundParty as IParty;
+		} catch (e: unknown) {
+			throw new UnableToGetPartyError();
+		}
+    }
+
     async associatePartyByTypeAndId(partyType: String, partyId: String): Promise<null> {
 		let association: boolean;
 
@@ -176,30 +166,30 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 
 		association = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
 
-		if (association) {
-			throw new PartyAssociationAlreadyExistsError();
+		if (!association) {
+			throw new UnableToDisassociatePartyError();
 		}
 		try {
-			await this.partyAssociations.insertOne({
+			await this.partyAssociations.deleteOne({
 				id: partyId,
 				type: partyType,
 			}) as unknown as IPartyAccount;
 
 			return null;
 		} catch (e: unknown) {
-			throw new UnableToStorePartyAssociationError();
+			throw new UnableToDisassociatePartyError();
 		}
     }
 
     async disassociatePartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<null> {
-		let partyAssociationExists: boolean;
+		let association: boolean;
 		try {
-			partyAssociationExists = await this.associatedPartyExistsByTypeAndIdAndSubId(partyType, partyId, partySubId);
+			association = await this.associatedPartyExistsByTypeAndIdAndSubId(partyType, partyId, partySubId);
 		} catch (e: unknown) {
 			throw new UnableToDisassociatePartyError((e as any)?.message);
 		}
 
-		if(partyAssociationExists) {
+		if(!association) {
 			throw new PartyAssociationDoesntExistsError();
 		}			
 	
@@ -216,24 +206,33 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		}
     }
 
-    async createParty(type: String, id: String): Promise<IPartyAccount | null> {
-        throw new Error("Method not implemented.");
+    async createPartyWithTypeAndId(partyType: String, partyId: String): Promise<null> {
+		try {
+			await this.partyAssociations.insertOne({
+				id: partyId,
+				type: partyType,
+			}) as unknown as IPartyAccount;
+
+			return null;
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError();
+		}
     }
 
-    async deleteParty(type: String, id: String): Promise<void> {
-        throw new Error("Method not implemented.");
+	async createPartyWithTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<null> {
+		try {
+			await this.partyAssociations.insertOne({
+				id: partyId,
+				type: partyType,
+				subId: partySubId
+			}) as unknown as IPartyAccount;
+
+			return null;
+		} catch (e: unknown) {
+			throw new UnableToStorePartyAssociationError();
+		}
     }
 
-	// Public.
-	public get type() {
-        return this._type;
-    }
-
-    public set type(value: String) {
-
-        this._type = value;
-    }
-	
 	// Private.
 	private async associatedPartyExistsByTypeAndId(partyType: String, partyId: String): Promise<boolean> {
 		try {

@@ -31,29 +31,21 @@ optionally within square brackets <email>.
 "use strict";
 
 import {ILogger,ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
-import {AccountLookupClient} from "@mojaloop/account-lookup-bc-client";
 import {
     AccountLookupAggregate, 
     IOracleFinder, 
     IOracleProvider, 
-    IParty, 
-    UnableToGetOracleError, 
-    UnableToGetOracleProviderError, 
-    GetPartyError,
-    NoSuchPartyError
+    UnableToGetOracleError,
+    UnableToGetOracleProviderError,
+    NoSuchPartyError,
+    UnableToAssociatePartyError,
+    UnableToDisassociatePartyError
 } from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
-import { mockedOracleList, mockedParties, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { InsertOneResult, Document } from "mongodb";
 
-// Web server.
-const WEB_SERVER_HOST: string = process.env.ACCOUNT_LOOKUP_WEB_SERVER_HOST ?? "localhost";
-const WEB_SERVER_PORT_NO: number =
-    parseInt(process.env.ACCOUNT_LOOKUP_WEB_SERVER_PORT_NO ?? "") || 1234;
-
-// Account Lookup Client.
-const ACCOUNT_LOOKUP_URL: string = `http://${WEB_SERVER_HOST}:${WEB_SERVER_PORT_NO}`;
-const HTTP_CLIENT_TIMEOUT_MS: number = 10_000;
+ /* ********** Constants ********** */
 
 const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
 const DB_PORT_NO: number =
@@ -71,14 +63,15 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
  interface IOracleFinderTest extends IOracleFinder, IOracleFinderWrite {}
 
  interface IOracleProviderWrite {
-    parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error | undefined>;
+    createPartyWithTypeAndId(partyType:String, partyId:String): Promise<null>;
+    createPartyWithTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String): Promise<null>;
     deleteAll(): void;
     setParties(parties: any): void;
  }
  interface IOracleProviderTest extends IOracleProvider, IOracleProviderWrite {}
 
 
- /* ********** Constants ********** */
+ /* ********** Repos ********** */
  
  const logger: ILogger = new ConsoleLogger();
  const oracleFinderRepo: IOracleFinderTest = new MongoOracleFinderRepo(
@@ -87,8 +80,6 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
 	DB_NAME,
 	ORACLE_PROVIDERS_COLLECTION_NAME
 );
-
-
 
 const oracleProviderList: IOracleProviderTest[] = [];
 
@@ -110,26 +101,39 @@ const fakeOracleProviderRepo: IOracleProviderTest = new MongoOracleProviderRepo(
     ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
 );
 
-let accountLookupClient: AccountLookupClient;
 let aggregate: AccountLookupAggregate;
+
+ /* ********** Helper Functions ********** */
+ 
+ async function insertOracleProviderType({ 
+    oracleProvider, 
+    partyType, 
+    partyId, 
+}: { 
+    oracleProvider: IOracleProviderTest, 
+    partyType: String, 
+    partyId: String, 
+    addParties?: boolean
+}): Promise<null> {
+    await oracleFinderRepo.storeNewOracleProvider(partyType, partyId)
+
+    oracleProvider.id = partyId;
+    
+    return null;
+}
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
-        accountLookupClient = new AccountLookupClient(
-            logger,
-            ACCOUNT_LOOKUP_URL,
-            HTTP_CLIENT_TIMEOUT_MS
-        );
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'debug').mockImplementation(() => {});
+        jest.spyOn(console, 'warn').mockImplementation(() => {});
+
         aggregate = new AccountLookupAggregate(
             logger,
             oracleFinderRepo,
             oracleProviderList.concat(fakeOracleProviderRepo)
         );
         await aggregate.init();
-    });
-
-    afterAll(async () => {
-        await aggregate.destroy();
     });
 
     afterEach(async () => {
@@ -139,8 +143,63 @@ describe("account lookup - integration tests", () => {
             oracleProviderList[i].deleteAll();
         }
     });
+    
+    afterAll(async () => {
+        await aggregate.destroy();
+    });
+
 
     // Get party.
+    test("should throw error if is unable to get oracle", async () => {
+        //Arrange 
+        const partyType = "error";
+        const partyId = mockedPartyIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getPartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToGetOracleError);
+        
+    });
+
+    test("should throw error if is unable to find oracle for partyType", async () => {
+        //Arrange 
+        const partyType = "non-exisiting-oracle-type";
+        const partyId = mockedPartyIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getPartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToGetOracleError);
+        
+    });
+ 
+    test("should throw error if oracle returned is not present in the oracle providers list", async () => {
+        //Arrange 
+        const partyType = "not_found_oracle";
+        const partyId = mockedPartyIds[0];
+        await insertOracleProviderType({ 
+            oracleProvider: fakeOracleProviderRepo, 
+            partyType, 
+            partyId, 
+        })
+        
+        // Act && Assert
+
+        // Changing oracle provider id in runtime to not match it when trying to find it
+        fakeOracleProviderRepo.id = "runtime-id";
+        await expect(
+            async () => {
+                await aggregate.getPartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToGetOracleProviderError);
+          
+    });
+
     test("should get party by partyType and partyId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
@@ -150,9 +209,31 @@ describe("account lookup - integration tests", () => {
             partyType, 
             partyId, 
         })
+        await oracleProviderList[0].createPartyWithTypeAndId(partyType, partyId);
 
         //Act
         const party= await aggregate.getPartyByTypeAndId(partyType, partyId);
+
+        //Assert
+        expect(party?.id).toBe(mockedPartyResultIds[0]);
+        expect(party?.subId).toBeUndefined();
+
+    });
+
+    test("should get party by partyType and partyId and subId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const partySubId = mockedPartyResultSubIds[0];
+        await insertOracleProviderType({ 
+            oracleProvider: oracleProviderList[0], 
+            partyType, 
+            partyId, 
+        })
+        await oracleProviderList[0].createPartyWithTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Act
+        const party= await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[0]);
@@ -160,24 +241,6 @@ describe("account lookup - integration tests", () => {
 
     });
 
-    test("should throw error if is unable to get party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[3];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
-        })
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndId(partyType, partyId);
-            }
-        ).rejects.toThrow(GetPartyError);
-        
-    });
 
     test("should throw error if no party found for partyType and partyId", async () => {
         //Arrange 
@@ -209,6 +272,7 @@ describe("account lookup - integration tests", () => {
             partyType, 
             partyId, 
         })
+        await oracleProviderList[1].createPartyWithTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         //Act
         const party= await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
@@ -219,7 +283,7 @@ describe("account lookup - integration tests", () => {
 
     });
 
-    test("associate party by type and id should throw error of oracle not found", async () => {
+    test("should throw error of oracle not found when associating party by type and id", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[3];
@@ -233,7 +297,7 @@ describe("account lookup - integration tests", () => {
         
     });
 
-    test("associate party by type and id should throw error of oracle provider not found", async () => {
+    test("should throw error of oracle provider not found when associating party by type and id", async () => {
         //Arrange 
         const partyType = "non-existent-party-type";
         const partyId = "non-existent-partyd-id";
@@ -244,31 +308,15 @@ describe("account lookup - integration tests", () => {
         })
         
         // Act && Assert
+
+        // Changing oracle provider id in runtime to not match it when trying to find it
+        fakeOracleProviderRepo.id = "runtime-id";
+
         await expect(
             async () => {
                 await aggregate.getPartyByTypeAndId(partyType, partyId);
             }
         ).rejects.toThrow(UnableToGetOracleProviderError);
-        
-    });
-
-    test("should throw error if is unable to get party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[3];
-        const partySubId = mockedPartySubIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[2], 
-            partyType, 
-            partyId, 
-        })
-        
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-            }
-        ).rejects.toThrow(GetPartyError);
         
     });
 
@@ -281,15 +329,39 @@ describe("account lookup - integration tests", () => {
             oracleProvider: oracleProviderList[0], 
             partyType, 
             partyId, 
-        })
+        });
 
         //Act
         const party = await aggregate.associatePartyByTypeAndId(partyType, partyId);
 
         //Assert
-        expect(party).toBe(undefined);
+        expect(party).toBeUndefined();
 
     });
+
+    test("should throw error if is unable to associate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        await insertOracleProviderType({ 
+            oracleProvider: oracleProviderList[0], 
+            partyType, 
+            partyId,
+            addParties: true
+        });
+
+        
+        // Act && Assert
+        await aggregate.associatePartyByTypeAndId(partyType, partyId);
+        
+        await expect(
+            async () => {
+                await aggregate.associatePartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(UnableToAssociatePartyError);
+        
+    });
+
 
     // Associate party by type and id and subId.
     test("should associate party by partyType and partyId", async () => {
@@ -307,7 +379,7 @@ describe("account lookup - integration tests", () => {
         const party = await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         //Assert
-        expect(party).toBe(undefined);
+        expect(party).toBeUndefined();
 
     });
 
@@ -325,9 +397,10 @@ describe("account lookup - integration tests", () => {
         ).rejects.toThrow(UnableToGetOracleError);
         
     });
+    
 
     // Disassociate party by type and id.
-    test("should associate party by partyType and partyId", async () => {
+    test("should disassociate party by partyType and partyId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
@@ -338,14 +411,16 @@ describe("account lookup - integration tests", () => {
         })
 
         //Act
+        await aggregate.associatePartyByTypeAndId(partyType, partyId);
+
         const party = await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
 
         //Assert
-        expect(party).toBe(undefined);
+        expect(party).toBeUndefined();
 
     });
 
-    test("disassociate party by type and id should throw error of oracle not found", async () => {
+    test("should throw an error if trying to disassociate party by type and id with oracle not found", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[3];
@@ -360,7 +435,7 @@ describe("account lookup - integration tests", () => {
     });
 
     // Disassociate party by type and id and subId.
-    test("should associate party by partyType and partyId", async () => {
+    test("should disassociate party by partyType and partyId and subId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
@@ -372,15 +447,18 @@ describe("account lookup - integration tests", () => {
             partyId,
         })
 
-        //Act
-        const party = await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-        //Assert
-        expect(party).toBe(undefined);
+        // Act && Assert
+        await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+        
+        await expect(
+            async () => {
+                await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(UnableToDisassociatePartyError);
 
     });
 
-    test("disassociate party by type and id should throw error of oracle not found", async () => {
+    test("should throw error of oracle not found when disassociating party by type and id and subId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[3];
@@ -395,26 +473,3 @@ describe("account lookup - integration tests", () => {
         
     });
 });
-
-// Helper Functions.
-async function insertOracleProviderType({ 
-    oracleProvider, 
-    partyType, 
-    partyId, 
-    addParties = true
-}: { 
-    oracleProvider: IOracleProviderTest, 
-    partyType: String, 
-    partyId: String, 
-    addParties?: boolean
-}): Promise<null> {
-    await oracleFinderRepo.storeNewOracleProvider(partyType, partyId)
-
-    oracleProvider.id = partyId;
-    oracleProvider.type = partyType;
-    
-    if(addParties) {
-        oracleProvider.parties = mockedParties;
-    }
-    return null;
-}

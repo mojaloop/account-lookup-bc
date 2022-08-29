@@ -18,7 +18,6 @@
     "start": "yarn run service",
     "service": "tsc && node dist/application/index.js",
     "build": "tsc",
-    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
     "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
