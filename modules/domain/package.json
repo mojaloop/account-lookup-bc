@@ -7,7 +7,10 @@
   "bugs": {
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },
-  "contributors": [],
+  "contributors": [
+    "Jose Antunes <jose.antunes@arg.software>",
+    "Rui Rocha <rui.rocha@arg.software>"
+  ],
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
