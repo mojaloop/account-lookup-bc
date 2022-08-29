@@ -109,37 +109,6 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		}
 		return party;
 	}
-    // async getPartyByTypeAndId(partyType: String, partyId: String): Promise<IParty | null> {
-    //     try {
-	// 		// This will throw if not found
-	// 		const foundParty: any = await this.partyAssociations.findOne(
-	// 			{
-	// 				id: partyId,
-	// 				type: partyType
-	// 			},
-	// 		);
-
-	// 		return foundParty as IParty;
-	// 	} catch (e: unknown) {
-	// 		throw new UnableToGetPartyError();
-	// 	}
-    // }
-
-    // async getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
-    //     try {
-	// 		const foundParty: any = await this.parties.findOne(
-	// 			{
-	// 				id: partyId,
-	// 				type: partyType,
-	// 				subId: partySubId
-	// 			},
-	// 		);
-
-	// 		return foundParty as IParty;
-	// 	} catch (e: unknown) {
-	// 		throw new UnableToGetPartyError();
-	// 	}
-    // }
 
 	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
 		let party:IParty| Error | undefined;

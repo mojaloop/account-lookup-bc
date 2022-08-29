@@ -39,11 +39,9 @@ import {
     IParty, 
     UnableToGetOracleError, 
     UnableToGetOracleProviderError, 
-    UnableToGetOracleTypeError, 
     GetPartyError,
     NoSuchPartyError
 } from "@mojaloop/account-lookup-bc-domain";
-import * as uuid from "uuid";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParties, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { InsertOneResult, Document } from "mongodb";
@@ -420,7 +418,3 @@ async function insertOracleProviderType({
     }
     return null;
 }
-
-// async function insertOradcleProviderType(type: String): Promise<void> {
-//     await oracleFinderRepo.storeNewOracleProvider(type)
-// }
