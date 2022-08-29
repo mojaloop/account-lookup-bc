@@ -31,7 +31,7 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
@@ -39,7 +39,7 @@ import {
   MLKafkaConsumer,
   MLKafkaConsumerOutputType
 } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
-import {DefaultLogger, KafkaLogger} from "@mojaloop/logging-bc-client-lib";
+import { KafkaLogger} from "@mojaloop/logging-bc-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
@@ -120,30 +120,22 @@ async function start():Promise<void> {
   
 }
 
-async function processLogMessage (message: IMessage) : Promise<void> {
-  const value = message.value;
-
-  console.log('processLogMessage: ',value)
-}
-
 async function setupKafkaConsumer() {
   await (logger as KafkaLogger).start();
 
   kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
   kafkaConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
-  kafkaConsumer.setCallbackFn(processLogMessage);
+  kafkaConsumer.setCallbackFn(processMessage);
   await kafkaConsumer.connect();
   await kafkaConsumer.start();
 
   logger.info("kafkaConsumer initialised");
   
-  async function handler(message: IMessage): Promise<void> {
+  async function processMessage(message: IMessage): Promise<void> {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       accountLookUpEventHandler.publishAccountLookUpEvent(message);
   }
-    
-    kafkaConsumer.setCallbackFn(handler)
-    kafkaConsumer.setTopics(['myTopic'])
+  
 }
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {

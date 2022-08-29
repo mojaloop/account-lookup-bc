@@ -33,12 +33,11 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection, UpdateResult, InsertOneResult, Document} from "mongodb";
+import {MongoClient, Collection, InsertOneResult, Document} from "mongodb";
 import {
     IOracleFinder,
 	IParty
 } from "@mojaloop/account-lookup-bc-domain";
-import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
 import { UnableToGetOracleTypeError, UnableToInitRepoError } from "./errors";
 
 export class MongoOracleFinderRepo implements IOracleFinder{

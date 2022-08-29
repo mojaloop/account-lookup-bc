@@ -51,8 +51,8 @@ export class AccountLookupAggregate {
     async init(): Promise<void> {
 		try {
             this.oracleFinder.init();
-            for(let i=0; i<this.oracleProviders.length ; i+=1){
-                await this.oracleProviders[i].init();
+            for await (const oracle of this.oracleProviders) {
+                oracle.init();
             }
 		} catch (error: unknown) {
 			this.logger.fatal("Unable to intialize account lookup aggregate" + error);
@@ -63,8 +63,8 @@ export class AccountLookupAggregate {
 	async destroy(): Promise<void> {
         try{
 		await this.oracleFinder.destroy();
-        for(let i=0; i<this.oracleProviders.length ; i+=1){
-            await this.oracleProviders[i].destroy();
+        for await (const oracle of this.oracleProviders) {
+            oracle.destroy();
         }
         }
         catch(error){

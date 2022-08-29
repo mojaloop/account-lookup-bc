@@ -30,7 +30,7 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import {ILogger,ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
+import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {
     AccountLookupAggregate, 
     IOracleFinder, 
@@ -57,7 +57,7 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
 
  /* ********** Test Interfaces ********** */
  interface IOracleFinderWrite {
-    deleteAll(): void;
+    deleteAll(): Promise<void>;
     storeNewOracleProvider(partyType: String, partyId: String): Promise<InsertOneResult<Document>>;
  }
  interface IOracleFinderTest extends IOracleFinder, IOracleFinderWrite {}
@@ -74,6 +74,8 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
  /* ********** Repos ********** */
  
  const logger: ILogger = new ConsoleLogger();
+ logger.setLogLevel(LogLevel.FATAL);
+
  const oracleFinderRepo: IOracleFinderTest = new MongoOracleFinderRepo(
 	logger,
 	DB_URL,
@@ -124,10 +126,6 @@ let aggregate: AccountLookupAggregate;
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
-        jest.spyOn(console, 'error').mockImplementation(() => {});
-        jest.spyOn(console, 'debug').mockImplementation(() => {});
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
-
         aggregate = new AccountLookupAggregate(
             logger,
             oracleFinderRepo,
@@ -138,9 +136,8 @@ describe("account lookup - integration tests", () => {
 
     afterEach(async () => {
         await oracleFinderRepo.deleteAll();
-
-        for(let i=0 ; i<oracleProviderList.length ; i+=1) {
-            oracleProviderList[i].deleteAll();
+        for await (const oracleProvider of oracleProviderList) {
+            oracleProvider.deleteAll();
         }
     });
     

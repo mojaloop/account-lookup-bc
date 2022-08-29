@@ -29,7 +29,7 @@
  "use strict";
 
  // Logger.
- import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
+ import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
  import {
      AccountLookupAggregate,
      GetPartyError,
@@ -46,6 +46,7 @@ import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 
 const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
@@ -69,12 +70,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 
 describe("Account Lookup Domain", () => {
     
-    beforeEach(async () => {
-        jest.spyOn(console, 'error').mockImplementation(() => {});
-        jest.spyOn(console, 'debug').mockImplementation(() => {});
-        jest.spyOn(console, 'warn').mockImplementation(() => {});
-    });
-
+   
     afterEach(async () => {
         jest.resetAllMocks();
     });
