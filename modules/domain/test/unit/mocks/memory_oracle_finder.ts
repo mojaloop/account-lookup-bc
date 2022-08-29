@@ -45,14 +45,15 @@ export class MemoryOracleFinder implements IOracleFinder {
         logger: ILogger,
     ) {
         this.logger = logger;
-    }
-
-    async init(): Promise<void> {
         this.oracleList = mockedOracleList;
     }
 
+    async init(): Promise<void> {
+        
+    }
+
     async destroy(): Promise<void> {
-        this.oracleList = [];
+ 
     }
 
     async getOracleForType(type: String): Promise<String | undefined> {

@@ -68,18 +68,40 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     oracleProviderList
 );
 
-describe("Party Lookup Domain", () => {
+describe("Account Lookup Domain", () => {
     
-    beforeAll(async () => {
+    beforeEach(async () => {
         jest.spyOn(console, 'error').mockImplementation(() => {});
         jest.spyOn(console, 'debug').mockImplementation(() => {});
         jest.spyOn(console, 'warn').mockImplementation(() => {});
-        await aggregate.init();
     });
 
-    afterAll(async () => {
-        await aggregate.destroy();
+    afterEach(async () => {
+        jest.resetAllMocks();
     });
+
+    test("should throw error if couldnt init aggregate", async () => {
+        // Arrange
+        jest.spyOn(oracleFinder, "init").mockImplementation(() => {throw new Error();});
+
+        // Act && Assert
+
+        await expect(aggregate.init()).rejects.toThrowError();
+
+        
+    });
+
+    test("should throw error if couldnt destroy aggregate", async () => {
+
+        // Arrange
+        jest.spyOn(oracleFinder, "destroy").mockImplementation(() => {throw new Error();});
+
+        // Act && Assert
+
+        await expect(aggregate.destroy()).rejects.toThrowError();
+        
+    });
+
 
     test("should throw error if is unable to get oracle", async () => {
        //Arrange 
