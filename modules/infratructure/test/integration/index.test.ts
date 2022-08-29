@@ -45,12 +45,7 @@ import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { InsertOneResult, Document } from "mongodb";
 
-// Web server.
-const WEB_SERVER_HOST: string = process.env.ACCOUNT_LOOKUP_WEB_SERVER_HOST ?? "localhost";
-const WEB_SERVER_PORT_NO: number =
-    parseInt(process.env.ACCOUNT_LOOKUP_WEB_SERVER_PORT_NO ?? "") || 1234;
-
-// Account Lookup Client.
+ /* ********** Constants ********** */
 
 const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
 const DB_PORT_NO: number =
@@ -76,7 +71,7 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
  interface IOracleProviderTest extends IOracleProvider, IOracleProviderWrite {}
 
 
- /* ********** Constants ********** */
+ /* ********** Repos ********** */
  
  const logger: ILogger = new ConsoleLogger();
  const oracleFinderRepo: IOracleFinderTest = new MongoOracleFinderRepo(
