@@ -31,7 +31,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection, InsertOneResult, Document} from "mongodb";
+import {MongoClient, Collection} from "mongodb";
 import {
     IOracleFinder,
 	UnableToInitOracleFinderError,
