@@ -82,14 +82,13 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	}
 
 	async destroy(): Promise<void> {
-		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
+		await this.mongoClient.close();
 	}
 
 	async getPartyByTypeAndId(partyType: String, partyId: String): Promise<IParty | null> {
 		let party:IParty|Error | undefined;
 
         try {
-			// This will throw if not found
 			party = await this.parties.findOne(
 				{
 					id: partyId,
@@ -104,19 +103,22 @@ export class MongoOracleProviderRepo implements IOracleProvider{
     }
 
     async getPartyByTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<IParty | null> {
+		let party:IParty|Error | undefined;
+
         try {
-			const foundParty: any = await this.parties.findOne(
+			party = await this.parties.findOne(
 				{
 					id: partyId,
 					type: partyType,
 					subId: partySubId
-				},
-			);
 
-			return foundParty as IParty;
+				},
+			) as unknown as IParty;
 		} catch (e: unknown) {
 			throw new UnableToGetPartyError();
 		}
+
+		return party;
     }
 
     async associatePartyByTypeAndId(partyType: String, partyId: String): Promise<null> {
