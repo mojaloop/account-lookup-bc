@@ -40,7 +40,10 @@ import {
     NoSuchPartyError,
     UnableToAssociatePartyError,
     UnableToDisassociatePartyError,
-    GetPartyError
+    GetPartyError,
+    UnableToGetPartyError,
+    PartyAssociationAlreadyExistsError,
+    PartyAssociationDoesntExistsError
 } from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
@@ -126,6 +129,19 @@ describe("account lookup - integration tests", () => {
     });
 
     // Get oracle type.
+    test("should throw error if is unable to get oracle type", async () => {
+        //Arrange 
+        const partyType = "non-existent-party-type";
+ 
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleFinderRepo.getOracleForType(partyType);
+            }
+        ).rejects.toThrow(UnableToGetOracleError);
+        
+    });
+
     test("should be able to get oracle type", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
@@ -148,479 +164,320 @@ describe("account lookup - integration tests", () => {
         expect(oracle).toEqual(partyId);
     });
 
-    test("should throw error if is unable to get oracle type", async () => {
-       //Arrange 
-       const partyType = "non-existent-party-type";
 
-       // Act && Assert
-       await expect(
-           async () => {
-               await oracleFinderRepo.getOracleForType(partyType);
-           }
-       ).rejects.toThrow(UnableToGetOracleError);
-       
-    });
-
-    // Get party.
-    test("should throw error if is unable to get party", async () => {
+    // Get party by type and id.
+    test("should throw error if is unable to find party for partyType", async () => {
         //Arrange 
-        const partyType = "non-existing-party-type";
+        const partyType = "non-exisiting-oracle-type";
+        const partyId = mockedPartyIds[0];
 
         // Act && Assert
         await expect(
             async () => {
-                await oracleFinderRepo.getOracleForType(partyType);
+                await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
             }
-        ).rejects.toThrow(UnableToGetOracleError);
+        ).rejects.toThrow(UnableToGetPartyError);
         
     });
 
-    // test("should throw error if is unable to find oracle for partyType", async () => {
-    //     //Arrange 
-    //     const partyType = "non-exisiting-oracle-type";
-    //     const partyId = mockedPartyIds[0];
+    test("should get party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+        })
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
+        //Act
+        const party = await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
+
+        //Assert
+        expect(party?.id).toBe(mockedPartyResultIds[0]);
+        expect(party?.subId).toBeUndefined();
+
+    });
+
+    // Get party by type and id and subId.
+    test("should throw error if is unable to find party for partyType", async () => {
+        //Arrange 
+        const partyType = "non-exisiting-oracle-type";
+        const partyId = mockedPartyIds[0];
+        const partySubId = mockedPartyResultSubIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(UnableToGetPartyError);
         
-    // });
- 
-    // test("should throw error if oracle returned is not present in the oracle providers list", async () => {
-    //     //Arrange 
-    //     const partyType = "not_found_oracle";
-    //     const partyId = mockedPartyIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //     })
+    });
+
+    test("should get party by partyType and partyId and subId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const partySubId = mockedPartyResultSubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType,
+                subId: partySubId
+            },
+        })
+
+        //Act
+        const party = await oracleProviderListRepo[0].getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Assert
+        expect(party?.id).toBe(mockedPartyResultIds[0]);
+        expect(party?.subId).toBe(mockedPartyResultSubIds[0]);
         
-    //     // Act && Assert
-
-    //     // Changing oracle provider id in runtime to not match it when trying to find it
-    //     fakeOracleProviderRepo.id = "runtime-id";
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleProviderError);
-          
-    // });
-
-    // test("should get party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //     })
-
-    //     //Act
-    //     const party = await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
-
-    //     //Assert
-    //     expect(party?.id).toBe(mockedPartyResultIds[0]);
-    //     expect(party?.subId).toBeUndefined();
-
-    // });
-
-    // test("should get party by partyType and partyId and subId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const partySubId = mockedPartyResultSubIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType,
-    //             subId: partySubId
-    //         },
-    //     })
-
-    //     //Act
-    //     const party = await oracleProviderListRepo[0].getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(party?.id).toBe(mockedPartyResultIds[0]);
-    //     expect(party?.subId).toBe(mockedPartyResultSubIds[0]);
-
-    // });
-
-
-    // test("should throw error if no party found for partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = "non-existent-party-id";
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
-        
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(GetPartyError);
-        
-    // });
-
+    });
     
-    // test("should get party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-    //     const partySubId = mockedPartySubIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[1].id = partyId
-    //         }
-    //     })
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType,
-    //             subId: partySubId
-    //         },
-    //     })
-
-    //     //Act
-    //     const party = await oracleProviderListRepo[1].getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(party?.id).toBe(mockedPartyResultIds[1]);
-    //     expect(party?.subId).toBe(mockedPartyResultSubIds[1]);
-
-    // });
-
-    // test("should throw error of oracle not found when associating party by type and id", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-        
-    // });
-
-    // test("should throw error of oracle provider not found when associating party by type and id", async () => {
-    //     //Arrange 
-    //     const partyType = "non-existent-party-type";
-    //     const partyId = "non-existent-partyd-id";
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             fakeOracleProviderRepo.id = partyId
-    //         }
-    //     })
-        
-    //     // Act && Assert
-
-    //     // Changing oracle provider id in runtime to not match it when trying to find it
-    //     fakeOracleProviderRepo.id = "runtime-id";
-
-    //     await expect(
-    //         async () => {
-    //             await fakeOracleProviderRepo.getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleProviderError);
-        
-    // });
-
-    // // Associate party by type and id.
-    // test("should associate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
-
-    //     //Act
-    //     const party = await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
-
-    //     //Assert
-    //     expect(party).toBeUndefined();
-
-    // });
-
-    // test("should throw error if is unable to associate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[2];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
+    // Associate party by type and id.
+    test("should throw error if party association by partyType and partyId already exists", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
 
         
-    //     // Act && Assert
-    //     await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
+        // Act && Assert
+        await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
         
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToAssociatePartyError);
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(PartyAssociationAlreadyExistsError);
         
-    // });
+    });
+    
+    test("should associate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
+
+        //Act
+        const party = await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
+
+        //Assert
+        expect(party).toBeNull();
+
+    });
 
 
-    // // Associate party by type and id and subId.
-    // test("should associate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const partySubId = mockedPartySubIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
 
-    //     //Act
-    //     const party = await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+     // Associate party by type and id and subId.
+     test("should throw error if party association by partyType and partyId already exists", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        const partySubId = mockedPartySubIds[2];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
 
-    //     //Assert
-    //     expect(party).toBeUndefined();
-
-    // });
-
-    // test("associate party by type and id and subId should throw error of party not found", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-    //     const partySubId = mockedPartySubIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
         
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].getPartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(GetPartyError);
+        // Act && Assert
+        await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
         
-    // });
-
-    // test("associate party by type and id and subId should throw error of oracle not found", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-    //     const partySubId = mockedPartySubIds[0];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(PartyAssociationAlreadyExistsError);
         
-    // });
+    });
+    
+    test("should associate party by partyType and partyId and subId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const partySubId = mockedPartySubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
+
+        //Act
+        const party = await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Assert
+        expect(party).toBeNull();
+
+    });
     
 
-    // // Disassociate party by type and id.
-    // test("should disassociate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
+    // Disassociate party by type and id.
+    test("should throw an error if trying to disassociate party by type and id", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[3];
 
-    //     //Act
-    //     await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
-
-    //     const party = await oracleProviderListRepo[0].disassociatePartyByTypeAndId(partyType, partyId);
-
-    //     //Assert
-    //     expect(party).toBeUndefined();
-
-    // });
-
-    // test("should throw an error if trying to disassociate party by type and id with oracle not found", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].disassociatePartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].disassociatePartyByTypeAndId(partyType, partyId);
+            }
+        ).rejects.toThrow(PartyAssociationDoesntExistsError);
         
-    // });
+    });
 
-    // // Disassociate party by type and id and subId.
-    // test("should disassociate party by partyType and partyId and subId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const partySubId = mockedPartySubIds[0];
-    //     await mongoQuery({ 
-    //         dbUrl: DB_URL,
-    //         dbName: DB_NAME,
-    //         dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
-    //         operation: MongoDbOperationEnum.INSERT_ONE,
-    //         query: {
-    //             id: partyId,
-    //             type: partyType
-    //         },
-    //         cb: () => { 
-    //             oracleProviderListRepo[0].id = partyId
-    //         }
-    //     })
+    test("should disassociate party by partyType and partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
 
-    //     // Act && Assert
-    //     await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+        //Act
+        await oracleProviderListRepo[0].associatePartyByTypeAndId(partyType, partyId);
+
+        const party = await oracleProviderListRepo[0].disassociatePartyByTypeAndId(partyType, partyId);
+
+        //Assert
+        expect(party).toBeNull();
+
+    });
+
+
+    // Disassociate party by type and id and subId.
+    test("should throw error of oracle not found when disassociating party by type and id and subId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[3];
+        const partySubId = mockedPartySubIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+            }
+        ).rejects.toThrow(PartyAssociationDoesntExistsError);
         
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToDisassociatePartyError);
+    });
 
-    // });
+    test("should disassociate party by partyType and partyId and subId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const partySubId = mockedPartySubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = partyId
+            }
+        })
 
-    // test("should throw error of oracle not found when disassociating party by type and id and subId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-    //     const partySubId = mockedPartySubIds[0];
+        //Act
+        await oracleProviderListRepo[0].associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await oracleProviderListRepo[0].disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-        
-    // });
+        const party = await oracleProviderListRepo[0].disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+        //Assert
+        expect(party).toBeNull();
+
+    });
+
 });
