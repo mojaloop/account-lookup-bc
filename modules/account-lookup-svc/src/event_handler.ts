@@ -91,7 +91,13 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     }
 
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
-        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value.type)){
+        if(!message){
+            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message is null`);
+            return;
+        }
+
+
+        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value?.type)){
             this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             return;
             
