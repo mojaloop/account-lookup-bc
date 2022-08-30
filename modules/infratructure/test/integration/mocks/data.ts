@@ -1,5 +1,3 @@
-import { IParty } from "@mojaloop/account-lookup-bc-domain";
-
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 export const mockedPartyResultIds = ["party1", "party2", "party3"];
 export const mockedPartyResultSubIds = ["subId1", "subId2", "subId3"];
@@ -21,6 +19,4 @@ export const mockedOracleList = [
         id: mockedPartyIds[2],
         type: mockedPartyTypes[2],
     },
-    
 ];
-

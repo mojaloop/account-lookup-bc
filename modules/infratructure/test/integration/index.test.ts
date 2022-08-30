@@ -331,8 +331,8 @@ describe("account lookup - integration tests", () => {
 
 
 
-     // Associate party by type and id and subId.
-     test("should throw error if party association by partyType and partyId already exists", async () => {
+    // Associate party by type and id and subId.
+    test("should throw error if party association by partyType and partyId and subId already exists", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[2];
@@ -436,7 +436,7 @@ describe("account lookup - integration tests", () => {
 
 
     // Disassociate party by type and id and subId.
-    test("should throw error of oracle not found when disassociating party by type and id and subId", async () => {
+    test("should throw an error if trying to disassociate party by type and id and subId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[3];
