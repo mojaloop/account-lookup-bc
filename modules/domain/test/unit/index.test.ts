@@ -1,4 +1,4 @@
-/*****
+/**
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -12,27 +12,42 @@
  --------------
  This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '*' in the first column. People who have
+ should be listed with a '' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Coil
+ - Jason Bruwer <jason.bruwer@coil.com>
+
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
+
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- ******/
+ **/
 
  "use strict";
 
+
  // Logger.
  import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+ import {Party} from "../../src/entities/party";
  import {
      AccountLookupAggregate,
      GetPartyError,
+     InvalidPartyIdError,
+     InvalidPartyTypeError,
      IOracleFinder,
      IOracleProvider,
      NoSuchPartyError,
@@ -74,6 +89,66 @@ describe("Account Lookup Domain", () => {
     afterEach(async () => {
         jest.resetAllMocks();
     });
+
+
+    test("should create a new party entity", async()=>{
+        // Arrange 
+        const id="fakeId";
+	    const type="fake type";
+        const currency= "fake currency";
+	    const subId="fake sub id";
+
+        // Act
+        const party = new Party(id, type, currency, subId);
+
+        // Assert
+
+        expect(party.id).toBe(id);
+        expect(party.type).toBe(type);
+        expect(party.currency).toBe(currency);
+        expect(party.subId).toBe(subId);
+        
+    });
+
+    test("should throw error if party id is not valid", async()=>{
+        // Arrange 
+        const id="";
+	    const type="fake type";
+        const currency= "fake currency";
+	    const subId="fake sub id";
+
+        // Act
+        const party = new Party(id, type, currency, subId);
+
+
+        // Assert
+        expect(() => {
+            Party.validateParty(party);
+          }).toThrowError(InvalidPartyIdError);
+        
+        
+    });
+
+
+    test("should throw error if party type is not valid", async()=>{
+        // Arrange 
+        const id="fake id";
+	    const type="";
+        const currency= "fake currency";
+	    const subId="fake sub id";
+
+        // Act
+        const party = new Party(id, type, currency, subId);
+
+
+        // Assert
+
+        expect(() => {
+            Party.validateParty(party);
+          }).toThrowError(InvalidPartyTypeError);
+        
+    });
+
 
     test("should throw error if couldnt init aggregate", async () => {
         // Arrange

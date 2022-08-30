@@ -1,4 +1,4 @@
-/*****
+/**
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -12,21 +12,33 @@
  --------------
  This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '*' in the first column. People who have
+ should be listed with a '' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Coil
+ - Jason Bruwer <jason.bruwer@coil.com>
+
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
+
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- ******/
+ **/
 
  "use strict";
+
 
  import {
      IOracleProvider,
@@ -38,11 +50,9 @@ import { mockedParties, mockedPartyAssociations } from "./data";
 import { UnableToCreatePartyAssociationError } from "@mojaloop/account-lookup-bc-client";
 
  export class MemoryOracleProvider implements IOracleProvider {
-	// Properties received through the constructor.
 	id: string;
 	private readonly logger: ILogger;
 
-	// Other properties.
 	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
 	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error>;
 

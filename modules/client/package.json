@@ -8,7 +8,10 @@
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },
   "contributors": [
+    "Gonçalo Garcia <goncalogarcia99@gmail.com>",
+    "Jason Bruwer <jason.bruwer@coil.com>",
     "Jose Antunes <jose.antunes@arg.software>",
+    "Pedro Sousa Barreto <pedrob@crosslaketech.com>",
     "Rui Rocha <rui.rocha@arg.software>"
   ],
   "main": "./dist/index.js",
