@@ -37,12 +37,11 @@ import {
     IOracleProvider, 
     UnableToGetOracleError,
     UnableToGetOracleProviderError,
-    NoSuchPartyError,
     UnableToAssociatePartyError,
     UnableToDisassociatePartyError,
     GetPartyError
 } from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '@mojaloop/account-lookup-bc-infrastructure';
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
