@@ -32,15 +32,9 @@ optionally within square brackets <email>.
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {
-    AccountLookupAggregate, 
     IOracleFinder, 
     IOracleProvider, 
     UnableToGetOracleError,
-    UnableToGetOracleProviderError,
-    NoSuchPartyError,
-    UnableToAssociatePartyError,
-    UnableToDisassociatePartyError,
-    GetPartyError,
     UnableToGetPartyError,
     PartyAssociationAlreadyExistsError,
     PartyAssociationDoesntExistsError
@@ -85,13 +79,6 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 
     oracleProviderListRepo.push(oracleProviderRepo);
 }
-
-const fakeOracleProviderRepo: IOracleProvider = new MongoOracleProviderRepo(
-    logger,
-    DB_URL,
-    DB_NAME,
-    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
-);
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
