@@ -31,10 +31,10 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
-import { logger, setupKafkaConsumer } from "./kafka_setup";
+import { setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
 
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -51,24 +51,28 @@ const DB_NAME: string = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
-let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
-  logger,
-	DB_URL,
-	DB_NAME,
-	ORACLE_PROVIDERS_COLLECTION_NAME
-);
-let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
-  logger,
-	DB_URL,
-	DB_NAME,
-	ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
-)];
+
 
 let accountLookupAggregate: AccountLookupAggregate;
-
+let logger: ILogger;
 
 async function start():Promise<void> {
+  
+  logger = await setupKafkaLogger();
 
+  let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
+    logger,
+    DB_URL,
+    DB_NAME,
+    ORACLE_PROVIDERS_COLLECTION_NAME
+  );
+  let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
+    logger,
+    DB_URL,
+    DB_NAME,
+    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
+  )];
+ 
   accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
   accountLookupAggregate.init();
     
@@ -95,7 +99,6 @@ process.on('exit', () => {
     }, 0);
     
 });
-
 
 start().catch((err:unknown) => {
     logger.fatal(err);

@@ -91,18 +91,20 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     }
 
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
-        if(!message){
-            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message is null`);
+        
+        if(!message.value){
+            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
             return;
         }
 
 
-        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message.value?.type)){
+        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message?.value?.type)){
             this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             return;
             
         }
-            this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
+        
+        this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
     }
     
     

@@ -10,10 +10,14 @@ const KAFKA_ORACLES_TOPIC = "account-lookup";
 const KAFKA_LOGS_TOPIC = "logs";
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 
-const kafkaProducerOptions = {
-    kafkaBrokerList: KAFKA_URL
-  }
-    
+
+let kafkaConsumer:MLKafkaConsumer;
+let accountLookUpEventHandler: IEventAccountLookUpServiceHandler;
+let logger:ILogger;
+
+
+export async function setupKafkaConsumer(aggregate: AccountLookupAggregate): Promise<void> {
+ 
   // Kafka Event Handler
   const kafkaConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
@@ -21,21 +25,6 @@ const kafkaProducerOptions = {
     outputType: MLKafkaConsumerOutputType.Json
   }
 
-export const logger:ILogger = new KafkaLogger(
-    BC_NAME,
-    APP_NAME,
-    APP_VERSION,
-    kafkaProducerOptions,
-    KAFKA_LOGS_TOPIC,
-    LOGLEVEL
-);
-
-let kafkaConsumer:MLKafkaConsumer;
-let accountLookUpEventHandler: IEventAccountLookUpServiceHandler;
-  
-  
-export async function setupKafkaConsumer(aggregate: AccountLookupAggregate): Promise<void> {
-    await (logger as KafkaLogger).start();
 
     accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,aggregate);
     accountLookUpEventHandler.init();
@@ -54,12 +43,30 @@ export async function setupKafkaConsumer(aggregate: AccountLookupAggregate): Pro
       }
 }
 
-  process.on('exit', () => {
-    logger.info("Example server - Disconecting Kafka and Events..."); 
-    setTimeout(async ()=>{
-      accountLookUpEventHandler.destroy();
-      await kafkaConsumer.destroy(true);
-    }, 0);
-    
-});
+export async function setupKafkaLogger(): Promise<ILogger> {
+  const kafkaProducerOptions = {
+    kafkaBrokerList: KAFKA_URL
+  };
+  
+  logger = new KafkaLogger(
+    BC_NAME,
+    APP_NAME,
+    APP_VERSION,
+    kafkaProducerOptions,
+    KAFKA_LOGS_TOPIC,
+    LOGLEVEL
+  );
 
+  await (logger as KafkaLogger).start();
+
+  return logger;
+}
+
+process.on('exit', () => {
+  logger.info("Example server - Disconecting Kafka and Events..."); 
+  setTimeout(async ()=>{
+    accountLookUpEventHandler.destroy();
+    await kafkaConsumer.destroy(true);
+  }, 0);
+  
+});
