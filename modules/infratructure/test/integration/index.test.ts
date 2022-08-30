@@ -121,13 +121,7 @@ describe("account lookup - integration tests", () => {
         await oracleFinderRepo.destroy();
 
         for await (const _oracleProvider of oracleProviderListRepo) {
-            await mongoQuery({
-                dbUrl: DB_URL,
-                dbName: DB_NAME,
-                dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
-                operation: MongoDbOperationEnum.DELETE_MANY,
-                query: {}
-            });
+            _oracleProvider.destroy();
         }
     });
 
