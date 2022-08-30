@@ -36,9 +36,10 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, InsertOneResult, Document} from "mongodb";
 import {
     IOracleFinder,
-	IParty
+	IParty,
+	UnableToInitOracleFinderError,
+	UnableToGetOracleError
 } from "@mojaloop/account-lookup-bc-domain";
-import { UnableToGetOracleTypeError, UnableToInitRepoError } from "./errors";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
 	// Properties received through the constructor.
@@ -68,7 +69,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		try {
 			await this.mongoClient.connect();
 		} catch (e: unknown) {
-			throw new UnableToInitRepoError((e as any)?.message);
+			throw new UnableToInitOracleFinderError((e as any)?.message);
 		}
 		
 		this.oracleProviders = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
@@ -86,7 +87,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 
 			return foundOracle.id;
 		} catch (e: unknown) {
-			throw new UnableToGetOracleTypeError();
+			throw new UnableToGetOracleError();
 		}
     }
 

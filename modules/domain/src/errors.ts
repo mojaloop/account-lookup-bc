@@ -48,7 +48,11 @@ export class UnableToStorePartyAssociationError extends Error {};
 export class UnableToDisassociatePartyError extends Error {};
 export class PartyAssociationDoesntExistsError extends Error {};
 
-// Oracle
+// Oracle Finder
+export class UnableToInitOracleFinderError extends Error {};
+
+// Oracle Provider
+export class UnableToInitOracleProviderError extends Error {};
 export class UnableToGetOracleError extends Error {};
 export class UnableToGetOracleProviderError extends Error {};
 export class UnableToGetPartyError extends Error {};

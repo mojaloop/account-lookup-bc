@@ -35,14 +35,14 @@ import {MongoClient, Collection, UpdateResult} from "mongodb";
 import {
 	IParty,
 	IPartyAccount,
+	UnableToInitOracleProviderError,
 	PartyAssociationAlreadyExistsError,
 	PartyAssociationDoesntExistsError,
 	UnableToGetPartyError,
 	UnableToStorePartyAssociationError,
-	UnableToDisassociatePartyError,
+	UnableToDisassociatePartyError
 } from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
-import { UnableToInitRepoError } from "./errors";
 
 export class MongoOracleProviderRepo implements IOracleProvider{
 	// Properties received through the constructor.
@@ -76,7 +76,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		try {
 			await this.mongoClient.connect(); // Throws if the repo is unreachable.
 		} catch (e: unknown) {
-			throw new UnableToInitRepoError((e as any)?.message);
+			throw new UnableToInitOracleProviderError((e as any)?.message);
 		}
 		// The following doesn't throw if the repo is unreachable, nor if the db or collection don't exist.
 		this.partyAssociations = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
