@@ -36,7 +36,6 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, InsertOneResult, Document} from "mongodb";
 import {
     IOracleFinder,
-	IParty,
 	UnableToInitOracleFinderError,
 	UnableToGetOracleError
 } from "@mojaloop/account-lookup-bc-domain";
@@ -90,19 +89,4 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			throw new UnableToGetOracleError();
 		}
     }
-
-	async storeNewOracleProvider(partyType: String, partyId: String): Promise<InsertOneResult<Document>> {
-		try {
-			return await this.oracleProviders.insertOne({
-				id: partyId,
-				type: partyType
-			});
-		} catch (e: unknown) {
-			throw new Error((e as any)?.message);
-		}
-	}
-
-	async deleteAll() {
-		await this.oracleProviders.deleteMany({});
-	}
 }

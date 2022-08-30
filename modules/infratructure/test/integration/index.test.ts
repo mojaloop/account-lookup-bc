@@ -43,7 +43,7 @@ import {
 } from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
-import { InsertOneResult, Document } from "mongodb";
+import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
  /* ********** Constants ********** */
 
@@ -55,20 +55,6 @@ const DB_NAME: string = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
- /* ********** Test Interfaces ********** */
- interface IOracleFinderWrite {
-    deleteAll(): Promise<void>;
-    storeNewOracleProvider(partyType: String, partyId: String): Promise<InsertOneResult<Document>>;
- }
- interface IOracleFinderTest extends IOracleFinder, IOracleFinderWrite {}
-
- interface IOracleProviderWrite {
-    createPartyWithTypeAndId(partyType:String, partyId:String): Promise<null>;
-    createPartyWithTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String): Promise<null>;
-    deleteAll(): void;
-    setParties(parties: any): void;
- }
- interface IOracleProviderTest extends IOracleProvider, IOracleProviderWrite {}
 
 
  /* ********** Repos ********** */
@@ -76,17 +62,17 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
  const logger: ILogger = new ConsoleLogger();
  logger.setLogLevel(LogLevel.FATAL);
 
- const oracleFinderRepo: IOracleFinderTest = new MongoOracleFinderRepo(
+ const oracleFinderRepo: IOracleFinder = new MongoOracleFinderRepo(
 	logger,
 	DB_URL,
 	DB_NAME,
 	ORACLE_PROVIDERS_COLLECTION_NAME
 );
 
-const oracleProviderList: IOracleProviderTest[] = [];
+const oracleProviderList: IOracleProvider[] = [];
 
 for(let i=0 ; i<mockedOracleList.length ; i+=1) {
-    const oracleProviderRepo: IOracleProviderTest = new MongoOracleProviderRepo(
+    const oracleProviderRepo: IOracleProvider = new MongoOracleProviderRepo(
         logger,
         DB_URL,
         DB_NAME,
@@ -96,7 +82,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     oracleProviderList.push(oracleProviderRepo);
 }
 
-const fakeOracleProviderRepo: IOracleProviderTest = new MongoOracleProviderRepo(
+const fakeOracleProviderRepo: IOracleProvider = new MongoOracleProviderRepo(
     logger,
     DB_URL,
     DB_NAME,
@@ -104,25 +90,6 @@ const fakeOracleProviderRepo: IOracleProviderTest = new MongoOracleProviderRepo(
 );
 
 let aggregate: AccountLookupAggregate;
-
- /* ********** Helper Functions ********** */
- 
- async function insertOracleProviderType({ 
-    oracleProvider, 
-    partyType, 
-    partyId, 
-}: { 
-    oracleProvider: IOracleProviderTest, 
-    partyType: String, 
-    partyId: String, 
-    addParties?: boolean
-}): Promise<null> {
-    await oracleFinderRepo.storeNewOracleProvider(partyType, partyId)
-
-    oracleProvider.id = partyId;
-    
-    return null;
-}
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
@@ -135,9 +102,21 @@ describe("account lookup - integration tests", () => {
     });
 
     afterEach(async () => {
-        await oracleFinderRepo.deleteAll();
-        for await (const oracleProvider of oracleProviderList) {
-            oracleProvider.deleteAll();
+        await mongoQuery({
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.DELETE_MANY,
+            query: {}
+        });
+        for await (const _oracleProvider of oracleProviderList) {
+            await mongoQuery({
+                dbUrl: DB_URL,
+                dbName: DB_NAME,
+                dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+                operation: MongoDbOperationEnum.DELETE_MANY,
+                query: {}
+            });
         }
     });
     
@@ -179,10 +158,15 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = "not_found_oracle";
         const partyId = mockedPartyIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: fakeOracleProviderRepo, 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
         })
         
         // Act && Assert
@@ -201,15 +185,32 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
-        await oracleProviderList[0].createPartyWithTypeAndId(partyType, partyId);
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+        })
 
         //Act
-        const party= await aggregate.getPartyByTypeAndId(partyType, partyId);
+        const party = await aggregate.getPartyByTypeAndId(partyType, partyId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[0]);
@@ -222,15 +223,33 @@ describe("account lookup - integration tests", () => {
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const partySubId = mockedPartyResultSubIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
-        await oracleProviderList[0].createPartyWithTypeAndIdAndSubId(partyType, partyId, partySubId);
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType,
+                subId: partySubId
+            },
+        })
 
         //Act
-        const party= await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+        const party = await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[0]);
@@ -243,10 +262,18 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = "non-existent-party-id";
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
         
         // Act && Assert
@@ -264,15 +291,33 @@ describe("account lookup - integration tests", () => {
         const partyType = mockedPartyTypes[1];
         const partyId = mockedPartyIds[1];
         const partySubId = mockedPartySubIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[1], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[1].id = partyId
+            }
         })
-        await oracleProviderList[1].createPartyWithTypeAndIdAndSubId(partyType, partyId, partySubId);
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType,
+                subId: partySubId
+            },
+        })
 
         //Act
-        const party= await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+        const party = await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[1]);
@@ -298,10 +343,18 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = "non-existent-party-type";
         const partyId = "non-existent-partyd-id";
-        await insertOracleProviderType({ 
-            oracleProvider: fakeOracleProviderRepo, 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                fakeOracleProviderRepo.id = partyId
+            }
         })
         
         // Act && Assert
@@ -322,11 +375,19 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
-        });
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
+        })
 
         //Act
         const party = await aggregate.associatePartyByTypeAndId(partyType, partyId);
@@ -340,12 +401,19 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[2];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId,
-            addParties: true
-        });
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
+        })
 
         
         // Act && Assert
@@ -366,10 +434,18 @@ describe("account lookup - integration tests", () => {
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const partySubId = mockedPartySubIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
 
         //Act
@@ -401,10 +477,18 @@ describe("account lookup - integration tests", () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId, 
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
 
         //Act
@@ -437,11 +521,18 @@ describe("account lookup - integration tests", () => {
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const partySubId = mockedPartySubIds[0];
-
-        await insertOracleProviderType({ 
-            oracleProvider: oracleProviderList[0], 
-            partyType, 
-            partyId,
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: partyId,
+                type: partyType
+            },
+            cb: () => { 
+                oracleProviderList[0].id = partyId
+            }
         })
 
         // Act && Assert

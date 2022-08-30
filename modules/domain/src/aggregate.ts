@@ -52,7 +52,7 @@ export class AccountLookupAggregate {
 		try {
             this.oracleFinder.init();
             for await (const oracle of this.oracleProviders) {
-                oracle.init();
+                await oracle.init();
             }
 		} catch (error: unknown) {
 			this.logger.fatal("Unable to intialize account lookup aggregate" + error);

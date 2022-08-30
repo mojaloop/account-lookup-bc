@@ -206,33 +206,6 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		}
     }
 
-    async createPartyWithTypeAndId(partyType: String, partyId: String): Promise<null> {
-		try {
-			await this.partyAssociations.insertOne({
-				id: partyId,
-				type: partyType,
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToStorePartyAssociationError();
-		}
-    }
-
-	async createPartyWithTypeAndIdAndSubId(partyType: String, partyId: String, partySubId: String): Promise<null> {
-		try {
-			await this.partyAssociations.insertOne({
-				id: partyId,
-				type: partyType,
-				subId: partySubId
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToStorePartyAssociationError();
-		}
-    }
-
 	// Private.
 	private async associatedPartyExistsByTypeAndId(partyType: String, partyId: String): Promise<boolean> {
 		try {
@@ -257,14 +230,6 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		} catch (e: unknown) {
 			throw new UnableToGetPartyError((e as any)?.message);
 		}
-	}
-
-	async setParties(parties: any) {
-		this.parties = parties;
-	}
-
-	async deleteAll() {
-		await this.partyAssociations.deleteMany({});
 	}
 }
 
