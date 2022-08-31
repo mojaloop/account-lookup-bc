@@ -40,33 +40,48 @@
  "use strict";
 
 
-import { IParty } from "../types";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
+import {
+	UnableToCreatePartyAssociationError,
+	UnableToReachServerError
+} from "./errors";
+import {IPartyDTO, IPartyAssociationDTO, IResponse} from "./types";
 
+export class AccountLookupClient {
+	// Properties received through the constructor.
+	private readonly logger: ILogger;
+	// Other properties.
+	private readonly httpClient: AxiosInstance;
 
-/* infratructure interfaces */
+	constructor(
+		logger: ILogger,
+		ACCOUNT_LOOKUP_URL: string,
+		HTTP_CLIENT_TIMEOUT_MS: number
+	) {
+		this.logger = logger;
 
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
-}
+		this.httpClient = axios.create({
+			baseURL: ACCOUNT_LOOKUP_URL,
+			timeout: HTTP_CLIENT_TIMEOUT_MS
+		});
+	}
 
-
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+	async associatePartyByTypeAndId(party: IPartyDTO): Promise<string> {
+		try {
+			const axiosResponse: AxiosResponse = await this.httpClient.post("/parties", party);
+			// axiosResponse.data can only be an IResponse.
+			const serverSuccessResponse: IResponse = axiosResponse.data;
+			return serverSuccessResponse.data.partyId;
+		} catch (e: unknown) {
+			const axiosError: AxiosError = e as AxiosError; // e can only be an AxiosError.
+			if (axiosError.response === undefined) {
+				this.logger.error(e);
+				throw new UnableToReachServerError();
+			}
+			// axiosError.response.data can only be an IResponse.
+			const serverErrorResponse: IResponse = axiosError.response.data as IResponse;
+			throw new UnableToCreatePartyAssociationError(serverErrorResponse.data.message);
+		}
+	}
 }

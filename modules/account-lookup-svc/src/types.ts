@@ -39,34 +39,20 @@
 
  "use strict";
 
+import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-import { IParty } from "../types";
-
-
-/* infratructure interfaces */
-
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
+export enum AccountLookUpServiceEventsType  {
+    GetPartyByTypeAndId = "[Account Lookup] Get Party By Type And Id",
+    GetPartyByTypeAndIdAndSubId ="[Account Lookup] Get Party By Type And Id And SubId",
+    AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
+    AssociatePartyByTypeAndIdAndSubId = "[Account Lookup]  Associate Party By Type And Id And SubId",
+    DisassociatePartyByTypeAndId = "[Account Lookup]  Disassociate Party By Type And Id",
+    DisassociatePartyByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Party By Type And Id And SubId"
 }
 
-
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+export interface IAccountLookUpMessage extends IMessage {
+    value: {
+        type:AccountLookUpServiceEventsType,
+        payload: object
+    }
 }

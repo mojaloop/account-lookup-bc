@@ -37,24 +37,46 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
+import { MongoClient } from "mongodb";
 
-export enum CurrencyType {
-	DOLLAR = "dollar",
-	EURO = "euro",
+export enum MongoDbOperationEnum {
+    INSERT_ONE = 'insertOne',
+    DELETE_MANY = 'deleteMany'
 }
 
-export interface IParty {
-    id: string;
-    type: string;
-    currency: string | null;
-    subId: string | null;
+interface IMongoDBQuery {
+    dbUrl: string;
+    dbName: string;
+    dbCollection: string;
+    operation: MongoDbOperationEnum;
+    query: object;
+    cb?: Function
 }
 
-export interface IPartyAccount {
-	fspId: string;
-	currency: string[];
-	extensionList: string[];
-}
+export async function mongoQuery({
+    dbUrl,
+    dbName,
+    dbCollection,
+    operation,
+    query = {},
+    cb = Function
+}: IMongoDBQuery) {
+    const client = new MongoClient(dbUrl);
+    
+    try {
+        const database = client.db(dbName);
 
+        const collection = database.collection(dbCollection);
+
+        await collection[operation](query);
+
+        if(cb) {
+            cb();
+        }
+        
+      } finally {
+        await client.close();
+      }
+}

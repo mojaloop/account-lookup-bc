@@ -8,8 +8,10 @@
   "bugs": {
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },
-  "contributors": [],
-  "scripts": {
+  "contributors": [
+    "Jose Antunes <jose.antunes@arg.software>",
+    "Rui Rocha <rui.rocha@arg.software>"
+  ],  "scripts": {
     "prepare": "husky install",
     "start": "yarn workspaces foreach --parallel -v run start",
     "start:account-lookup-svc": "yarn workspace @mojaloop/account-lookup-svc run start",

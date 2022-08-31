@@ -39,34 +39,6 @@
 
  "use strict";
 
-
-import { IParty } from "../types";
-
-
-/* infratructure interfaces */
-
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
-}
-
-
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-}
+export * from "./account_lookup_client";
+export * from "./errors";
+export * from "./types";

@@ -1,17 +1,50 @@
+/**
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+ Contributors
+ --------------
+ This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Coil
+ - Jason Bruwer <jason.bruwer@coil.com>
+
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
+
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
+ * Arg Software
+ - José Antunes <jose.antunes@arg.software>
+ - Rui Rocha <rui.rocha@arg.software>
+
+ --------------
+ **/
+
+ "use strict";
+
 import EventEmitter from "events";
 import events from "events";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
-
-export enum AccountLookUpServiceEvents  {
-    GetPartyByTypeAndId = "[Account Lookup] Get Party By Type And Id",
-    GetPartyByTypeAndIdAndSubId ="[Account Lookup] Get Party By Type And Id And SubId",
-    AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
-    AssociatePartyByTypeAndIdAndSubId = "[Account Lookup]  Associate Party By Type And Id And SubId",
-    DisassociatePartyByTypeAndId = "[Account Lookup]  Disassociate Party By Type And Id",
-    DisassociatePartyByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Party By Type And Id And SubId"
-}
-
+import { AccountLookUpServiceEventsType, IAccountLookUpMessage } from "./types";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export interface IEventAccountLookUpServiceHandler{
     init():void,
@@ -22,42 +55,69 @@ export interface IEventAccountLookUpServiceHandler{
 export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServiceHandler{
     
 
-    private _acountLookUpEventEmitter: EventEmitter;
-    private _accountLookUpAggregate:AccountLookupAggregate;
+    private acountLookUpEventEmitter: EventEmitter;
+    private readonly _accountLookUpAggregate:AccountLookupAggregate;
+    private readonly _logger: ILogger;
 
-    constructor(accountLookUpAggregate: AccountLookupAggregate){
+    constructor(logger: ILogger,accountLookUpAggregate: AccountLookupAggregate){
         this._accountLookUpAggregate= accountLookUpAggregate;
+        this._logger = logger
     }
     
 
     init(){
-        this._acountLookUpEventEmitter = new events.EventEmitter();
+        this.acountLookUpEventEmitter = new events.EventEmitter();
         this.setAccountLookUpEvents();
     }
 
     private setAccountLookUpEvents() {
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.GetPartyByTypeAndId}: ${err}`);
+            });
         });
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.GetPartyByTypeAndIdAndSubId}: ${err}`)
+            });
         });
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.AssociatePartyByTypeAndId}: ${err}`);
+            });
         });
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.AssociatePartyByTypeAndIdAndSubId}: ${err}`);
+            });
         });
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
+            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.DisassociatePartyByTypeAndId}: ${err}`);
+            });
         });
-        this._acountLookUpEventEmitter.on(AccountLookUpServiceEvents.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId);
+        this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+                this._logger.error(`${AccountLookUpServiceEventsType.DisassociatePartyByTypeAndIdAndSubId}: ${err}`);
+            });
         });
     }
 
-    publishAccountLookUpEvent(message:IMessage): void {
-        this._acountLookUpEventEmitter.emit(message.key as string,message.value);
+    publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
+        
+        if(!message.value){
+            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
+            return;
+        }
+
+
+        if(! Object.values(AccountLookUpServiceEventsType).some(event => event === message?.value?.type)){
+            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
+            return;
+            
+        }
+        
+        this.acountLookUpEventEmitter.emit(message.value.type,message.value.payload);
     }
     
     
@@ -66,8 +126,8 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     }
 
     private removeAccountLookUpEvents() {
-       for (const event in AccountLookUpServiceEvents){
-           this._acountLookUpEventEmitter.removeAllListeners(event);
+       for (const event in AccountLookUpServiceEventsType){
+           this.acountLookUpEventEmitter.removeAllListeners(event);
        }
     }
 }

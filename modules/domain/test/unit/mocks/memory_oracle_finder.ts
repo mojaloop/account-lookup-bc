@@ -40,33 +40,43 @@
  "use strict";
 
 
-import { IParty } from "../types";
+import {
+    IOracleFinder
+} from "../../../src";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { mockedOracleList } from "./data";
 
 
-/* infratructure interfaces */
+export class MemoryOracleFinder implements IOracleFinder {
+    private readonly logger: ILogger;
+    private oracleList: {id:string, type:string}[];
 
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
-}
+    constructor(
+        logger: ILogger,
+    ) {
+        this.logger = logger;
+        this.oracleList = mockedOracleList;
+    }
+
+    async init(): Promise<void> {
+        
+    }
+
+    async destroy(): Promise<void> {
+ 
+    }
+
+    async getOracleForType(type: String): Promise<String | undefined> {
+        const foundOracle = this.oracleList.find(oracle => oracle.type === type);
+        if(foundOracle?.type === "error") {
+            throw new Error();
+        }
+
+        if(foundOracle?.type === "not_found_oracle") {
+            return "non existing id";
+        }
 
 
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+        return foundOracle?.id;
+    }
 }

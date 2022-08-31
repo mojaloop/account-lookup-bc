@@ -1,4 +1,4 @@
-/*****
+/**
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -12,7 +12,7 @@
  --------------
  This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '*' in the first column. People who have
+ should be listed with a '' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
  Gates Foundation organization for an example). Those individuals should have
@@ -25,10 +25,19 @@
  * Coil
  - Jason Bruwer <jason.bruwer@coil.com>
 
- --------------
- ******/
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
-"use strict";
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
+ * Arg Software
+ - José Antunes <jose.antunes@arg.software>
+ - Rui Rocha <rui.rocha@arg.software>
+
+ --------------
+ **/
+
+ "use strict";
 
 export * from "./oracleprovider";
 export * from "./oraclefinder";

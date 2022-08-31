@@ -40,33 +40,24 @@
  "use strict";
 
 
-import { IParty } from "../types";
-
-
-/* infratructure interfaces */
-
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
+export interface IPartyDTO {
+	id: string;
+	type: string;
+	currency: string;
 }
 
+export interface IPartyAssociationDTO {
+	id: string;
+	type: string;
+	currency: string;
+}
 
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+export interface IResponse {
+	result: ResponseResult;
+	data: any;
+}
+
+export enum ResponseResult {
+	ERROR = "ERROR",
+	SUCCESS = "SUCCESS"
 }

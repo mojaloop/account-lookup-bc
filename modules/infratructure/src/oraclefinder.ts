@@ -1,4 +1,4 @@
-/*****
+/**
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -12,7 +12,7 @@
  --------------
  This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '*' in the first column. People who have
+ should be listed with a '' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
  Gates Foundation organization for an example). Those individuals should have
@@ -25,20 +25,75 @@
  * Coil
  - Jason Bruwer <jason.bruwer@coil.com>
 
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
+
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
+ * Arg Software
+ - José Antunes <jose.antunes@arg.software>
+ - Rui Rocha <rui.rocha@arg.software>
+
  --------------
- ******/
-"use strict";
-import { IOracleFinder } from "@mojaloop/account-lookup-bc-domain";
+ **/
 
+ "use strict";
 
-export class ExampleOracleFinder implements IOracleFinder {
-    init(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    destroy(): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-    async getOracleForType(type: String): Promise<String> {
-        throw new Error("not implemented");
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {MongoClient, Collection} from "mongodb";
+import {
+    IOracleFinder,
+	UnableToInitOracleFinderError,
+	UnableToGetOracleError
+} from "@mojaloop/account-lookup-bc-domain";
+
+export class MongoOracleFinderRepo implements IOracleFinder{
+	// Properties received through the constructor.
+	private readonly logger: ILogger;
+	private readonly DB_URL: string;
+	private readonly DB_NAME: string;
+	private readonly COLLECTION_NAME: string;
+	// Other properties.
+	private readonly mongoClient: MongoClient;
+	private oracleProviders: Collection;
+
+	constructor(
+		logger: ILogger,
+		DB_URL: string,
+		DB_NAME: string,
+		COLLECTION_NAME: string
+	) {
+		this.logger = logger;
+		this.DB_URL = DB_URL;
+		this.DB_NAME = DB_NAME;
+		this.COLLECTION_NAME = COLLECTION_NAME;
+
+		this.mongoClient = new MongoClient(this.DB_URL);
+	}
+
+	async init(): Promise<void> {
+		try {
+			await this.mongoClient.connect();
+		} catch (e: unknown) {
+			throw new UnableToInitOracleFinderError((e as any)?.message);
+		}
+		
+		this.oracleProviders = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+	}
+
+	async destroy(): Promise<void> {
+		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
+	}
+
+    async getOracleForType(type: String): Promise<String | undefined> {
+		try {
+			const foundOracle: any = await this.oracleProviders.findOne(
+				{type: type},
+			);
+
+			return foundOracle.id;
+		} catch (e: unknown) {
+			throw new UnableToGetOracleError();
+		}
     }
 }

@@ -37,36 +37,27 @@
  --------------
  **/
 
- "use strict";
+"use strict";
+
+export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
+export const mockedPartyResultIds = ["party1", "party2", "party3"];
+export const mockedPartyResultSubIds = ["subId1", "subId2", "subId3"];
+
+export const mockedPartySubIds = ["subId2","subId3"];
+export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
 
 
-import { IParty } from "../types";
-
-
-/* infratructure interfaces */
-
-export interface IOracleFinder{
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
-}
-
-
-export interface IOracleProvider{
-    // Properties.
-    id: String;
-    // Init and destroy.
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-}
+export const mockedOracleList = [
+    {
+        id: mockedPartyIds[0],
+        type: mockedPartyTypes[0],
+    },
+    {
+        id: mockedPartyIds[1],
+        type: mockedPartyTypes[1],
+    },
+    {
+        id: mockedPartyIds[2],
+        type: mockedPartyTypes[2],
+    },
+];
