@@ -11,7 +11,8 @@
   "contributors": [
     "Jose Antunes <jose.antunes@arg.software>",
     "Rui Rocha <rui.rocha@arg.software>"
-  ],  "scripts": {
+  ],
+  "scripts": {
     "prepare": "husky install",
     "start": "yarn workspaces foreach --parallel -v run start",
     "start:account-lookup-svc": "yarn workspace @mojaloop/account-lookup-svc run start",
@@ -35,8 +36,8 @@
     "@types/jest": "^27.0.3",
     "@types/node": "^16.11.9",
     "@types/node-cache": "^4.2.5",
-    "@typescript-eslint/eslint-plugin": "^5.22.0",
-    "@typescript-eslint/parser": "^5.22.0",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
+    "@typescript-eslint/parser": "^5.36.1",
     "eslint": "^8.14.0",
     "husky": "^7.0.4",
     "jest": "^27.3.1",
