@@ -46,7 +46,7 @@ import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
 import { setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
-
+import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 export const BC_NAME = "account-lookup-bc";
@@ -63,8 +63,8 @@ const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
 
-
 let accountLookupAggregate: AccountLookupAggregate;
+let accountLookUpEventHandler: IEventAccountLookUpServiceHandler;
 let logger: ILogger;
 
 async function start():Promise<void> {
@@ -86,8 +86,12 @@ async function start():Promise<void> {
  
   accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
   accountLookupAggregate.init();
+
+  accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
+  accountLookUpEventHandler.init();
+  
     
-  await setupKafkaConsumer(accountLookupAggregate);
+  await setupKafkaConsumer(accountLookupAggregate, accountLookUpEventHandler);
   
 }
 
@@ -106,6 +110,7 @@ process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 process.on('exit', () => {
     logger.info("Example server - exiting..."); 
     setTimeout(async ()=>{
+      accountLookUpEventHandler.destroy();
       accountLookupAggregate.destroy();
     }, 0);
     

@@ -45,9 +45,10 @@
      IParty,
 	 UnableToAssociatePartyError,
 	 UnableToDisassociatePartyError,
- } from "../../../src";
+ } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedParties, mockedPartyAssociations } from "./data";
+
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;

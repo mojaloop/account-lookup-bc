@@ -39,6 +39,44 @@
 
  "use strict";
 
-export * from "./account_lookup_client";
-export * from "./errors";
-export * from "./types";
+
+import {
+    IOracleFinder
+} from "@mojaloop/account-lookup-bc-domain";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { mockedOracleList } from "./data";
+
+
+export class MemoryOracleFinder implements IOracleFinder {
+    private readonly logger: ILogger;
+    private oracleList: {id:string, type:string}[];
+
+    constructor(
+        logger: ILogger,
+    ) {
+        this.logger = logger;
+        this.oracleList = mockedOracleList;
+    }
+
+    async init(): Promise<void> {
+        
+    }
+
+    async destroy(): Promise<void> {
+ 
+    }
+
+    async getOracleForType(type: String): Promise<String | undefined> {
+        const foundOracle = this.oracleList.find(oracle => oracle.type === type);
+        if(foundOracle?.type === "error") {
+            throw new Error();
+        }
+
+        if(foundOracle?.type === "not_found_oracle") {
+            return "non existing id";
+        }
+
+
+        return foundOracle?.id;
+    }
+}
