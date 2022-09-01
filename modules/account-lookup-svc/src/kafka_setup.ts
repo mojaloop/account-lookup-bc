@@ -41,12 +41,11 @@
  "use strict";
 
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { ConsoleLogger, ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { BC_NAME, APP_NAME, APP_VERSION, LOGLEVEL } from ".";
 import { IEventAccountLookUpServiceHandler } from "./event_handler";
-import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
 
 const KAFKA_ORACLES_TOPIC = "account-lookup";
 const KAFKA_LOGS_TOPIC = "logs";
@@ -58,8 +57,9 @@ let kafkaConsumer:MLKafkaConsumer;
 let logger:ILogger;
 
 
-export async function setupKafkaConsumer(aggregate: AccountLookupAggregate, accountLookUpEventHandler: IEventAccountLookUpServiceHandler): Promise<void> {
+export async function setupKafkaConsumer(accountLookUpEventHandler: IEventAccountLookUpServiceHandler): Promise<void> {
  
+  try{
   // Kafka Event Handler
   const kafkaConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
@@ -73,39 +73,51 @@ export async function setupKafkaConsumer(aggregate: AccountLookupAggregate, acco
     await kafkaConsumer.connect();
     await kafkaConsumer.start();
   
-    logger.info("kafkaConsumer initialised");
+    logger.info("kafka consumer initialised");
     
     // Callback function to process messages
     async function processMessage(message: IMessage): Promise<void> {
         logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-        accountLookUpEventHandler.publishAccountLookUpEvent(message);
+        try{
+          accountLookUpEventHandler.publishAccountLookUpEvent(message);
+        }
+        catch(err){
+          logger.error("Error processing message", err);
+        }
       }
+    }
+    catch(err){
+      logger.error("Error initialising kafka consumer", err);
+      throw err;
+    }
 }
 
 
 export async function setupKafkaLogger(): Promise<ILogger> {
-  const kafkaProducerOptions = {
-    kafkaBrokerList: KAFKA_URL
-  };
+  try{
+    const kafkaProducerOptions = {
+      kafkaBrokerList: KAFKA_URL
+    };
+    
+    logger = new KafkaLogger(
+      BC_NAME,
+      APP_NAME,
+      APP_VERSION,
+      kafkaProducerOptions,
+      KAFKA_LOGS_TOPIC,
+      LOGLEVEL
+    );
+    
+    await (logger as KafkaLogger).start();
+    
+    return logger;
+  }
+  catch(err){
+    throw err;
+  }
   
-  logger = new KafkaLogger(
-    BC_NAME,
-    APP_NAME,
-    APP_VERSION,
-    kafkaProducerOptions,
-    KAFKA_LOGS_TOPIC,
-    LOGLEVEL
-  );
-
-  await (logger as KafkaLogger).start();
-
-  return logger;
 }
 
-process.on('exit', () => {
-  logger.info("Example server - Disconecting Kafka ..."); 
-  setTimeout(async ()=>{
-    await kafkaConsumer.destroy(true);
-  }, 0);
-  
-});
+export async function destroyKafka():Promise<void> {
+  await kafkaConsumer.destroy(true);
+}

@@ -43,10 +43,10 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
-import { setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
+import { destroyKafka, setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
 import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -70,35 +70,42 @@ let logger: ILogger;
 
 async function start():Promise<void> {
   
-  logger = await setupKafkaLogger();
+  try{
+    logger = await setupKafkaLogger();
 
-  let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
-    logger,
-    DB_URL,
-    DB_NAME,
-    ORACLE_PROVIDERS_COLLECTION_NAME
-  );
-  let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
-    logger,
-    DB_URL,
-    DB_NAME,
-    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
-  )];
- 
-  accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
-  accountLookupAggregate.init();
-
-  accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
-  accountLookUpEventHandler.init();
+    let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
+      logger,
+      DB_URL,
+      DB_NAME,
+      ORACLE_PROVIDERS_COLLECTION_NAME
+    );
+    let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
+      logger,
+      DB_URL,
+      DB_NAME,
+      ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
+    )];
   
+    accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
+    accountLookupAggregate.init();
+
+    accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
+    accountLookUpEventHandler.init();
     
-  await setupKafkaConsumer(accountLookupAggregate, accountLookUpEventHandler);
-  
+    await setupKafkaConsumer(accountLookUpEventHandler);
+  }
+  catch(err){
+    if(!logger) {
+      logger = new ConsoleLogger();
+    }
+    logger.fatal(err);
+    throw err;
+  }
+   
 }
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     logger.info(`Service - ${signal} received - cleaning up...`);
-    process.exit();
 }
 
 //catches ctrl+c event
@@ -109,14 +116,14 @@ process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
 process.on('exit', () => {
-    logger.info("Example server - exiting..."); 
-    setTimeout(async ()=>{
-      accountLookUpEventHandler.destroy();
-      accountLookupAggregate.destroy();
-    }, 0);
+  logger.info("Example server - exiting..."); 
+  setTimeout(async ()=>{
+    accountLookUpEventHandler.destroy();
+    accountLookupAggregate.destroy();
+    await destroyKafka();
+    process.exitCode = 1;
+  }, 0);
     
 });
 
-start().catch((err:unknown) => {
-    logger.fatal(err);
-});
+start();

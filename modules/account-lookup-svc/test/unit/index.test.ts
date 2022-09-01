@@ -37,3 +37,27 @@
 
  --------------
  **/
+ import {AccountLookupAggregate} from "@mojaloop/account-lookup-bc-domain";
+
+
+ jest.mock("@mojaloop/account-lookup-bc-domain");
+ jest.mock("@mojaloop/logging-bc-public-types-lib");
+ 
+ const accountLookUpAggregateMock = AccountLookupAggregate as jest.Mock;
+ accountLookUpAggregateMock.mockImplementation(
+     () => {
+         return {
+             init: jest.fn(),
+             destroy: jest.fn(),
+             getPartyByTypeAndId: jest.fn(),
+             getPartyByTypeAndIdAndSubId: jest.fn(),
+             associatePartyByTypeAndId: jest.fn(),
+             associatePartyByTypeAndIdAndSubId: jest.fn(),
+             disassociatePartyByTypeAndId: jest.fn(),
+             disassociatePartyByTypeAndIdAndSubId: jest.fn(),   
+     }    
+ });
+
+ describe("Account Lookup Service", () => {
+
+ });
