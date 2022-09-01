@@ -40,7 +40,7 @@
  "use strict";
 
 
-import { IParty } from "../types";
+import { IParticipant, IParty } from "../types";
 
 
 /* infratructure interfaces */
@@ -63,10 +63,16 @@ export interface IOracleProvider{
     // Gets.
     getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
     getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
+    getParticipantByTypeAndId(participantType:String, participantId:String):Promise<IParticipant|null>;
+    getParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<IParticipant|null>;
     // Stores.
     associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
     associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+    associateParticipantByTypeAndId(participantType:String, participantId:String):Promise<null>;
+    associateParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<null>;
     // Updates.
     disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
     disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
+    disassociateParticipantByTypeAndId(participantType:String, participantId:String):Promise<null>;
+    disassociateParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<null>;
 }

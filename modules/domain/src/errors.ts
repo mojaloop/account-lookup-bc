@@ -60,11 +60,35 @@ export class UnableToStorePartyAssociationError extends Error {};
 export class UnableToDisassociatePartyError extends Error {};
 export class PartyAssociationDoesntExistsError extends Error {};
 
+
+// Participant
+export class InvalidParticipantIdError extends Error {};
+export class InvalidParticipantTypeError extends Error {};
+export class NoSuchParticipantError extends Error {};
+export class GetParticipantError extends Error {};
+
+// Participant Account.
+export class InvalidParticipantAccountTypeError extends Error {};
+export class InvalidParticipantAccountCurrencyError extends Error {};
+export class InvalidParticipantAcountExtensionListError extends Error {};
+
+// Participant Association
+export class UnableToAssociateParticipantError extends Error {};
+export class ParticipantAssociationAlreadyExistsError extends Error {};
+export class UnableToStoreParticipantAssociationError extends Error {};
+
+// Participant Dissociation  
+export class UnableToDisassociateParticipantError extends Error {};
+export class ParticipantAssociationDoesntExistsError extends Error {};
+
+
 // Oracle Finder
 export class UnableToInitOracleFinderError extends Error {};
+
 
 // Oracle Provider
 export class UnableToInitOracleProviderError extends Error {};
 export class UnableToGetOracleError extends Error {};
 export class UnableToGetOracleProviderError extends Error {};
 export class UnableToGetPartyError extends Error {};
+export class UnableToGetParticipantError extends Error {};

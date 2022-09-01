@@ -40,7 +40,7 @@
  "use strict";
 
 
-import { IParty } from "../../../src/types";
+import { IParticipant, IParty } from "../../../src/types";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 export const mockedPartyResultIds = ["receivedParty1", "receivedParty2", "receivedParty3"];
@@ -88,4 +88,18 @@ mockedPartyAssociations.set({partyId:mockedPartyIds[0],partyType:mockedPartyType
 mockedPartyAssociations.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:mockedPartySubIds[0]}, null);
 mockedPartyAssociations.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:mockedPartySubIds[1]}, new Error());
 
+
+export const mockedParticipants: Map<{participantId:string, participantType:string, participantSubId?:string}, IParticipant| Error> = new Map();
+mockedParticipants.set({participantId:mockedPartyIds[0],participantType:mockedPartyTypes[0]},{id: mockedPartyResultIds[0], subId: mockedPartyResultSubIds[0],type: "individual"});
+mockedParticipants.set({participantId:mockedPartyIds[1],participantType:mockedPartyTypes[1],participantSubId:mockedPartySubIds[0]}, {id: mockedPartyResultIds[1], subId: mockedPartyResultSubIds[1],type: "individual"});
+mockedParticipants.set({participantId:mockedPartyIds[2],participantType:mockedPartyTypes[2],participantSubId:mockedPartySubIds[1]}, {id: mockedPartyResultIds[2], subId: mockedPartyResultSubIds[2],type: "individual"});
+mockedParticipants.set({participantId:mockedPartyIds[3],participantType:mockedPartyTypes[2]}, new Error());
+mockedParticipants.set({participantId:mockedPartyIds[3],participantType:mockedPartyTypes[2], participantSubId:mockedPartySubIds[0]}, new Error());
+
+
+
+export const mockedParticipantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error> = new Map();
+mockedParticipantAssociations.set({participantId:mockedPartyIds[0],participantType:mockedPartyTypes[0]}, null);
+mockedParticipantAssociations.set({participantId:mockedPartyIds[1],participantType:mockedPartyTypes[1],participantSubId:mockedPartySubIds[0]}, null);
+mockedParticipantAssociations.set({participantId:mockedPartyIds[2],participantType:mockedPartyTypes[2],participantSubId:mockedPartySubIds[1]}, new Error());
 

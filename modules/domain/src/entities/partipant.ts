@@ -40,31 +40,34 @@
  "use strict";
 
 
-export enum CurrencyType {
-	DOLLAR = "dollar",
-	EURO = "euro",
-}
+import { InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
+import { IParticipant } from "../types"
 
-export interface IParty {
-    id: string;
-    type: string;
-    currency: string | null;
-    subId: string | null;
-}
+export class Participant implements IParticipant{
+	id: string;
+	type: string;
+    currency: string;
+	subId: string | null;
 
-export interface IPartyAccount {
-	fspId: string;
-	currency: string[];
-	extensionList: string[];
-}
+	constructor(
+		id: string,
+		type: string,
+        currency: string,
+        subId: string | null = null,
+	) {
+		this.id = id;
+		this.type = type;
+        this.currency = currency;
+        this.subId = subId;
+	}
 
-export interface IParticipant {
-    id: string;
-    type: string;
-    subId: string | null;
-}
 
-export interface IParticipantAccount {
-	fspId: string;
-	extensionList: string[];
+    static validateParticipant(party: Participant): void {
+		if (!party.id) {
+			throw new InvalidParticipantIdError();
+		}
+		if (!party.type) {
+			throw new InvalidParticipantTypeError();
+		}
+	}
 }

@@ -44,3 +44,4 @@ export class UnableToReachServerError extends Error{}
 
 export class UnableToGetOracleError extends Error{}
 export class UnableToCreatePartyAssociationError extends Error{}
+export class UnableToCreateParticipantAssociationError extends Error{}
