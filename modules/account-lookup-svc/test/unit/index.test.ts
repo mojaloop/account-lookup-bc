@@ -86,7 +86,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         eventHandler.init();
 
         // Assert
-        expect(eventHandler.handler().eventNames()).toEqual(eventNames);
+        expect(eventHandler.get().eventNames()).toEqual(eventNames);
 
     });
 
@@ -433,9 +433,9 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
 
         // Assert
         eventNames.forEach(eventName => {
-            expect(eventHandler.handler().listenerCount(eventName)).toBe(0);
+            expect(eventHandler.get().listenerCount(eventName)).toBe(0);
         });
-        expect(eventHandler.handler().eventNames().length).toEqual(0);
+        expect(eventHandler.get().eventNames().length).toEqual(0);
         
     });
 

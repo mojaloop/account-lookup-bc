@@ -49,7 +49,7 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export interface IAccountLookUpEventHandler{
     init():void,
-    handler():EventEmitter,
+    get():EventEmitter,
     publishAccountLookUpEvent(message:IMessage):void,
     destroy(): void
 }
@@ -65,7 +65,7 @@ export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
         this._logger = logger
     }
 
-    handler(): EventEmitter {
+    get(): EventEmitter {
         return this.acountLookUpEventEmitter;
     }
 
