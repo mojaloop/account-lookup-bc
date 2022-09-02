@@ -44,17 +44,17 @@ import EventEmitter from "events";
 import events from "events";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
-import { AccountLookUpEventsType, IAccountLookUpMessage } from "./types";
+import { AccountLookUpEventsType, IAccountLookUpMessage } from "../types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
-export interface IEventAccountLookUpServiceHandler{
-    init():Promise<void>,
+export interface IAccountLookUpEventHandler{
+    init():void,
     handler():EventEmitter,
     publishAccountLookUpEvent(message:IMessage):void,
     destroy(): void
 }
 
-export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServiceHandler{
+export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
     
     private acountLookUpEventEmitter: EventEmitter;
     private readonly _accountLookUpAggregate:AccountLookupAggregate;
@@ -69,12 +69,12 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
         return this.acountLookUpEventEmitter;
     }
 
-    async init():Promise<void>{
+    init():void{
         this.acountLookUpEventEmitter = new events.EventEmitter();
-        await this.setAccountLookUpEvents();
+        this.setAccountLookUpEvents();
     }
 
-    async setAccountLookUpEvents() {
+    private setAccountLookUpEvents():void {
         this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndId, async (payload: { partyType: string; partyId: string; }) => {
             await this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId)
                 .catch(err => {
@@ -111,13 +111,13 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     publishAccountLookUpEvent(message:IAccountLookUpMessage): void {
         
         if(!message.value){
-            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
+            this._logger.error(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
             return;
         }
 
 
         if(! Object.values(AccountLookUpEventsType).some(event => event === message?.value?.type)){
-            this._logger.error(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
+            this._logger.error(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
             return;
         }
         
@@ -126,7 +126,15 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
     
     
     destroy(){
-        this.acountLookUpEventEmitter.removeAllListeners();
+        try{
+            this._logger.info("Destroying events from AccountLookUpEventHandler");
+            this.acountLookUpEventEmitter.removeAllListeners();
+        }
+        catch(err){
+            this._logger.error("Error destroying events from AccountLookUpEventHandler");
+            throw err;
+        }
+       
     }
 
 }

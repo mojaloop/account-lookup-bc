@@ -43,70 +43,57 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
-import { destroyKafka, setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
-import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
+import {AccountLookupAggregate} from "@mojaloop/account-lookup-bc-domain";
+import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./modules/event_handler";
+import { EventAccountLookupKafka, IEventAccountLookUpKafka } from "./modules/kafka";
+import { EventAccountLookupLogger, IEventAccountLookUpLogger } from "./modules/logger";
+import { AccountLookUpOracles, IAccountLookUpOracles } from "./modules/oracles";
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 export const BC_NAME = "account-lookup-bc";
 export const APP_NAME = "account-lookup-svc";
 export const APP_VERSION = "0.0.1";
-export const LOGLEVEL = LogLevel.DEBUG;
-
-const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
-const DB_PORT_NO: number =
-    parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
-const DB_URL: string = `mongodb://${DB_HOST}:${DB_PORT_NO}`;
-const DB_NAME: string = "account-lookup";
-const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
-const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
-
 
 let accountLookupAggregate: AccountLookupAggregate;
-let accountLookUpEventHandler: IEventAccountLookUpServiceHandler;
-let logger: ILogger;
+let accountLookUpEventHandler: IAccountLookUpEventHandler;
+let oracles: IAccountLookUpOracles;
+let kafka : IEventAccountLookUpKafka;
+let logger: IEventAccountLookUpLogger;
 
 async function start():Promise<void> {
   
   try{
-    logger = await setupKafkaLogger();
+    // Create the logger
+    logger = new EventAccountLookupLogger();
+    await logger.init();
 
-    let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
-      logger,
-      DB_URL,
-      DB_NAME,
-      ORACLE_PROVIDERS_COLLECTION_NAME
-    );
-    let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
-      logger,
-      DB_URL,
-      DB_NAME,
-      ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
-    )];
+    // Create oracles
+    oracles = new AccountLookUpOracles(logger.get());
+    await oracles.init();
   
-    accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
-    accountLookupAggregate.init();
+    // Create the aggregate
+    accountLookupAggregate = new AccountLookupAggregate(logger.get(), oracles.getOracleFinder(), oracles.getOracleProvider());
+    await accountLookupAggregate.init();
 
-    accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
+    // Create the event handler
+    accountLookUpEventHandler = new AccountLookUpEventHandler(logger.get(), accountLookupAggregate);
     accountLookUpEventHandler.init();
     
-    await setupKafkaConsumer((message:IMessage)=>accountLookUpEventHandler.publishAccountLookUpEvent(message));
+    // Create the kafka
+    kafka = new EventAccountLookupKafka(logger.get());
+    await kafka.init();
+    kafka.setKakfaCallback((message:IMessage)=>accountLookUpEventHandler.publishAccountLookUpEvent(message));
   }
   catch(err){
-    if(!logger) {
-      logger = new ConsoleLogger();
-    }
-    logger.fatal(err);
+    logger.get().fatal(err);
     throw err;
   }
    
 }
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
-    logger.info(`Service - ${signal} received - cleaning up...`);
+    logger.get().info(`Service - ${signal} received - cleaning up...`);
     await cleanUpAndExit();
 }
 
@@ -114,7 +101,7 @@ async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<voi
 async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
     accountLookUpEventHandler.destroy();
     await accountLookupAggregate.destroy();
-    await destroyKafka();
+    await kafka.destroy();
     process.exitCode = exitCode;
 }
 
@@ -126,11 +113,10 @@ process.once("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
 process.on('exit', (code) => {
-  logger.info("Example server - exiting...");
+  logger.get().info("Example server - exiting...");
   setTimeout(async ()=>{
     await cleanUpAndExit(code);
   }, 0);
-    
 });
 
 start();
