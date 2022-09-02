@@ -44,6 +44,7 @@
 //import appConfigs from "./config";
 
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
 import { destroyKafka, setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
@@ -92,7 +93,7 @@ async function start():Promise<void> {
     accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
     accountLookUpEventHandler.init();
     
-    await setupKafkaConsumer(accountLookUpEventHandler);
+    await setupKafkaConsumer((message:IMessage)=>accountLookUpEventHandler.publishAccountLookUpEvent(message));
   }
   catch(err){
     if(!logger) {
@@ -106,22 +107,28 @@ async function start():Promise<void> {
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     logger.info(`Service - ${signal} received - cleaning up...`);
+    await cleanUpAndExit();
+}
+
+
+async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
+    accountLookUpEventHandler.destroy();
+    await accountLookupAggregate.destroy();
+    await destroyKafka();
+    process.exitCode = exitCode;
 }
 
 //catches ctrl+c event
-process.on("SIGINT", _handle_int_and_term_signals.bind(this));
+process.once("SIGINT", _handle_int_and_term_signals.bind(this));
 
 //catches program termination event
-process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
+process.once("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
-process.on('exit', () => {
-  logger.info("Example server - exiting..."); 
+process.on('exit', (code) => {
+  logger.info("Example server - exiting...");
   setTimeout(async ()=>{
-    accountLookUpEventHandler.destroy();
-    accountLookupAggregate.destroy();
-    await destroyKafka();
-    process.exitCode = 1;
+    await cleanUpAndExit(code);
   }, 0);
     
 });

@@ -45,7 +45,6 @@ import { ConsoleLogger, ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { BC_NAME, APP_NAME, APP_VERSION, LOGLEVEL } from ".";
-import { IEventAccountLookUpServiceHandler } from "./event_handler";
 
 const KAFKA_ORACLES_TOPIC = "account-lookup";
 const KAFKA_LOGS_TOPIC = "logs";
@@ -57,15 +56,15 @@ let kafkaConsumer:MLKafkaConsumer;
 let logger:ILogger;
 
 
-export async function setupKafkaConsumer(accountLookUpEventHandler: IEventAccountLookUpServiceHandler): Promise<void> {
+export async function setupKafkaConsumer(processMessageCallback:Function): Promise<void> {
  
-  try{
+  try {
   // Kafka Event Handler
-  const kafkaConsumerOptions = {
-    kafkaBrokerList: KAFKA_URL,
-    kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
-    outputType: MLKafkaConsumerOutputType.Json
-  }
+    const kafkaConsumerOptions = {
+      kafkaBrokerList: KAFKA_URL,
+      kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
+      outputType: MLKafkaConsumerOutputType.Json
+    }
    
     kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
     kafkaConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
@@ -75,11 +74,10 @@ export async function setupKafkaConsumer(accountLookUpEventHandler: IEventAccoun
   
     logger.info("kafka consumer initialised");
     
-    // Callback function to process messages
     async function processMessage(message: IMessage): Promise<void> {
         logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
         try{
-          accountLookUpEventHandler.publishAccountLookUpEvent(message);
+          processMessageCallback(message);
         }
         catch(err){
           logger.error("Error processing message", err);
@@ -113,6 +111,8 @@ export async function setupKafkaLogger(): Promise<ILogger> {
     return logger;
   }
   catch(err){
+    logger = new ConsoleLogger();
+    logger.error("Error setting up kafka logger", err);
     throw err;
   }
   

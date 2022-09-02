@@ -42,7 +42,7 @@
 
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-export enum AccountLookUpServiceEventsType  {
+export enum AccountLookUpEventsType  {
     GetPartyByTypeAndId = "[Account Lookup] Get Party By Type And Id",
     GetPartyByTypeAndIdAndSubId ="[Account Lookup] Get Party By Type And Id And SubId",
     AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
@@ -53,7 +53,7 @@ export enum AccountLookUpServiceEventsType  {
 
 export interface IAccountLookUpMessage extends IMessage {
     value: {
-        type:AccountLookUpServiceEventsType,
+        type:AccountLookUpEventsType,
         payload: object
     }
 }
