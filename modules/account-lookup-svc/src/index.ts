@@ -92,18 +92,18 @@ async function start():Promise<void> {
    
 }
 
+async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
+  accountLookUpEventHandler.destroy();
+  await accountLookupAggregate.destroy();
+  await kafka.destroy();
+  process.exitCode = exitCode;
+}
+
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     logger.get().info(`Service - ${signal} received - cleaning up...`);
     await cleanUpAndExit();
 }
 
-
-async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
-    accountLookUpEventHandler.destroy();
-    await accountLookupAggregate.destroy();
-    await kafka.destroy();
-    process.exitCode = exitCode;
-}
 
 //catches ctrl+c event
 process.once("SIGINT", _handle_int_and_term_signals.bind(this));
