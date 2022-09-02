@@ -44,14 +44,12 @@
  import {
      IOracleProvider,
      IParty,
-	 IParticipant,
 	 UnableToAssociatePartyError,
 	 UnableToDisassociatePartyError,
-	 UnableToDisassociateParticipantError,
-	 UnableToCreateParticipantAssociationError,
- } from "../../../src";
+ } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations } from "./data";
+import { mockedParties, mockedPartyAssociations } from "./data";
+
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
@@ -59,8 +57,6 @@ import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations }
 
 	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
 	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error>;
-	private readonly participants: Map<{participantId:string, participantType:string, participantSubId?:string}, IParty|Error>;
-	private readonly participantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error>;
 
 	constructor(
 		logger: ILogger,
@@ -180,111 +176,5 @@ import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations }
 		}
 		
 		throw new UnableToDisassociatePartyError();
-	}
-
-	//Participant
-	async getParticipantByTypeAndId(partyType:string, partyId:string):Promise<IParticipant|null> {
-		
-		let party:IParticipant|Error | undefined;
-
-		mockedParties.forEach((partyFound:IParticipant| Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-		
-		if (!party) {
-			return null;
-		}
-		return party;
-	}
-
-	async getParticipantByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParticipant|null> {
-		let party:IParticipant| Error | undefined;
-
-		mockedParties.forEach((partyFound:IParticipant|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-
-		if (!party) {
-			return null;
-		}
-
-
-		return party;
-	}
-
-	async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToCreateParticipantAssociationError();
-	}
-
-	async associateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToCreateParticipantAssociationError();
-	}
-
-	async disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociateParticipantError();
-	}
-
-	async disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociateParticipantError();
 	}
 }

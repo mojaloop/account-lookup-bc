@@ -1,10 +1,11 @@
 /**
  License
  --------------
- Copyright © 2017 Bill & Melinda Gates Foundation
- The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ Copyright © 2021 Mojaloop Foundation
 
- http://www.apache.org/licenses/LICENSE-2.0
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
+
+ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
@@ -41,7 +42,7 @@
 
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-export enum AccountLookUpServiceEventsType  {
+export enum AccountLookUpEventsType  {
     GetPartyByTypeAndId = "[Account Lookup] Get Party By Type And Id",
     GetPartyByTypeAndIdAndSubId ="[Account Lookup] Get Party By Type And Id And SubId",
     AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
@@ -52,7 +53,7 @@ export enum AccountLookUpServiceEventsType  {
 
 export interface IAccountLookUpMessage extends IMessage {
     value: {
-        type:AccountLookUpServiceEventsType,
+        type:AccountLookUpEventsType,
         payload: object
     }
 }

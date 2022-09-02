@@ -1,10 +1,11 @@
 /**
  License
  --------------
- Copyright © 2017 Bill & Melinda Gates Foundation
- The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+ Copyright © 2021 Mojaloop Foundation
 
- http://www.apache.org/licenses/LICENSE-2.0
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
+
+ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
@@ -42,11 +43,12 @@
 //TODO re-enable configs
 //import appConfigs from "./config";
 
-import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo, KafkaMessagePublisher} from "@mojaloop/account-lookup-bc-infrastructure";
-import { setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
-
+import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
+import { destroyKafka, setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
+import { AccountLookUpServiceEventHandler, IEventAccountLookUpServiceHandler } from "./event_handler";
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 export const BC_NAME = "account-lookup-bc";
@@ -63,58 +65,75 @@ const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
 
 
-
 let accountLookupAggregate: AccountLookupAggregate;
+let accountLookUpEventHandler: IEventAccountLookUpServiceHandler;
 let logger: ILogger;
 
 async function start():Promise<void> {
   
-  logger = await setupKafkaLogger();
+  try{
+    logger = await setupKafkaLogger();
 
-  let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
-    logger,
-    DB_URL,
-    DB_NAME,
-    ORACLE_PROVIDERS_COLLECTION_NAME
-  );
-  let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
-    logger,
-    DB_URL,
-    DB_NAME,
-    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
-  )];
- 
-  let messagePublisher: IMessagePublisher = new KafkaMessagePublisher(
-    logger,
-  );
-
-  accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
-  accountLookupAggregate.init();
-    
-  await setupKafkaConsumer(accountLookupAggregate);
+    let oracleFinder: IOracleFinder = new MongoOracleFinderRepo(
+      logger,
+      DB_URL,
+      DB_NAME,
+      ORACLE_PROVIDERS_COLLECTION_NAME
+    );
+    let oracleProvider: IOracleProvider[] = [new MongoOracleProviderRepo(
+      logger,
+      DB_URL,
+      DB_NAME,
+      ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
+    )];
+    let messagePublisher: IMessagePublisher = new KafkaMessagePublisher(
+      logger,
+    );
   
+    accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
+    accountLookupAggregate.init();
+
+    accountLookUpEventHandler = new AccountLookUpServiceEventHandler(logger,accountLookupAggregate);
+    accountLookUpEventHandler.init();
+    
+    await setupKafkaConsumer((message:IMessage)=>accountLookUpEventHandler.publishAccountLookUpEvent(message));
+  }
+  catch(err){
+    if(!logger) {
+      logger = new ConsoleLogger();
+    }
+    logger.fatal(err);
+    throw err;
+  }
+   
 }
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     logger.info(`Service - ${signal} received - cleaning up...`);
-    process.exit();
+    await cleanUpAndExit();
+}
+
+
+async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
+    accountLookUpEventHandler.destroy();
+    await accountLookupAggregate.destroy();
+    await destroyKafka();
+    process.exitCode = exitCode;
 }
 
 //catches ctrl+c event
-process.on("SIGINT", _handle_int_and_term_signals.bind(this));
+process.once("SIGINT", _handle_int_and_term_signals.bind(this));
 
 //catches program termination event
-process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
+process.once("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
-process.on('exit', () => {
-    logger.info("Example server - exiting..."); 
-    setTimeout(async ()=>{
-      accountLookupAggregate.destroy();
-    }, 0);
+process.on('exit', (code) => {
+  logger.info("Example server - exiting...");
+  setTimeout(async ()=>{
+    await cleanUpAndExit(code);
+  }, 0);
     
 });
 
-start().catch((err:unknown) => {
-    logger.fatal(err);
-});
+start();
