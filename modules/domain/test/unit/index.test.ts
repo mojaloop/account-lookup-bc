@@ -88,7 +88,7 @@ describe("Account Lookup Domain", () => {
     
    
     afterEach(async () => {
-        jest.restoreAllMocks();
+        jest.resetAllMocks();
     });
 
 

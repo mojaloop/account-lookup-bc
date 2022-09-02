@@ -48,7 +48,7 @@ import { AccountLookUpEventsType, IAccountLookUpMessage } from "./types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export interface IEventAccountLookUpServiceHandler{
-    init():void,
+    init():Promise<void>,
     handler():EventEmitter,
     publishAccountLookUpEvent(message:IMessage):void,
     destroy(): void
@@ -69,39 +69,40 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
         return this.acountLookUpEventEmitter;
     }
 
-    init(){
+    async init():Promise<void>{
         this.acountLookUpEventEmitter = new events.EventEmitter();
-        this.setAccountLookUpEvents();
+        await this.setAccountLookUpEvents();
     }
 
-    private setAccountLookUpEvents() {
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
-                this._logger.error(`${AccountLookUpEventsType.GetPartyByTypeAndId}: ${err}`);
-            });
+    async setAccountLookUpEvents() {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndId, async (payload: { partyType: string; partyId: string; }) => {
+            await this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId)
+                .catch(err => {
+                    this._logger.error(`${AccountLookUpEventsType.GetPartyByTypeAndId}: ${err}`);
+                });
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId, async (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            await this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${err}`)
             });
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociatePartyByTypeAndId, async (payload: { partyType: string; partyId: string; }) => {
+            await this._accountLookUpAggregate.associatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.AssociatePartyByTypeAndId}: ${err}`);
             });
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociatePartyByTypeAndIdAndSubId, async (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            await this._accountLookUpAggregate.associatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.AssociatePartyByTypeAndIdAndSubId}: ${err}`);
             });
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociatePartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociatePartyByTypeAndId, async (payload: { partyType: string; partyId: string; }) => {
+            await this._accountLookUpAggregate.disassociatePartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.DisassociatePartyByTypeAndId}: ${err}`);
             });
         });
-        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociatePartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+        this.acountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociatePartyByTypeAndIdAndSubId, async (payload: { partyType: string; partyId: string; partySubId: string; }) => {
+            await this._accountLookUpAggregate.disassociatePartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.DisassociatePartyByTypeAndIdAndSubId}: ${err}`);
             });
         });
