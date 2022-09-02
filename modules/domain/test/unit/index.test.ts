@@ -46,6 +46,7 @@
  import {
      AccountLookupAggregate,
      GetPartyError,
+     IMessagePublisher,
      InvalidPartyIdError,
      InvalidPartyTypeError,
      IOracleFinder,
@@ -57,8 +58,9 @@
      UnableToGetOracleProviderError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
-import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
+import { MemoryMessagePublisher } from "./mocks/message_publisher";
 import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -76,11 +78,16 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     oracleProviderList.push(oracleProvider);
 }
 
+const messagePublisher: IMessagePublisher = new MemoryMessagePublisher(
+    logger,
+);
+
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
-    oracleProviderList
+    oracleProviderList,
+    messagePublisher
 );
 
 describe("Account Lookup Domain", () => {
@@ -181,7 +188,7 @@ describe("Account Lookup Domain", () => {
         // Act && Assert
         await expect(
             async () => {
-                await aggregate.getPartyByTypeAndId(partyType, partyId);
+                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
             }
         ).rejects.toThrow(UnableToGetOracleError);
         
@@ -195,7 +202,7 @@ describe("Account Lookup Domain", () => {
          // Act && Assert
          await expect(
              async () => {
-                 await aggregate.getPartyByTypeAndId(partyType, partyId);
+                 await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
              }
          ).rejects.toThrow(UnableToGetOracleError);
          
@@ -209,7 +216,7 @@ describe("Account Lookup Domain", () => {
          // Act && Assert
          await expect(
              async () => {
-                 await aggregate.getPartyByTypeAndId(partyType, partyId);
+                 await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
              }
          ).rejects.toThrow(UnableToGetOracleProviderError);
          
@@ -222,7 +229,7 @@ describe("Account Lookup Domain", () => {
         const partyId = mockedPartyIds[0];
 
         //Act
-        const party= await aggregate.getPartyByTypeAndId(partyType, partyId);
+        const party= await aggregate.getPartyByTypeAndIdResponse(partyType, partyId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[0]);
@@ -238,7 +245,7 @@ describe("Account Lookup Domain", () => {
         // Act && Assert
         await expect(
             async () => {
-                await aggregate.getPartyByTypeAndId(partyType, partyId);
+                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
             }
         ).rejects.toThrow(GetPartyError);
         
@@ -253,7 +260,7 @@ describe("Account Lookup Domain", () => {
         // Act && Assert
         await expect(
             async () => {
-                await aggregate.getPartyByTypeAndId(partyType, partyId);
+                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
             }
         ).rejects.toThrow(NoSuchPartyError);
         
@@ -266,7 +273,7 @@ describe("Account Lookup Domain", () => {
         const partySubId = mockedPartySubIds[0];
 
         //Act
-        const party= await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+        const party= await aggregate.getPartyByTypeAndIdAndSubIdResponse(partyType, partyId, partySubId);
 
         //Assert
         expect(party?.id).toBe(mockedPartyResultIds[1]);
@@ -283,7 +290,7 @@ describe("Account Lookup Domain", () => {
         // Act && Assert
         await expect(
             async () => {
-                await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+                await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
             }
         ).rejects.toThrow(GetPartyError);
         
@@ -299,7 +306,7 @@ describe("Account Lookup Domain", () => {
         // Act && Assert
         await expect(
             async () => {
-                await aggregate.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+                await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
             }
         ).rejects.toThrow(NoSuchPartyError);
         

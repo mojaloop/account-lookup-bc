@@ -72,12 +72,12 @@ export class AccountLookUpServiceEventHandler implements IEventAccountLookUpServ
 
     private setAccountLookUpEvents() {
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndId, (payload: { partyType: string; partyId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndId(payload.partyType, payload.partyId).catch(err => {
+            this._accountLookUpAggregate.getPartyByTypeAndIdRequest(payload.partyType, payload.partyId).catch(err => {
                 this._logger.error(`${AccountLookUpServiceEventsType.GetPartyByTypeAndId}: ${err}`);
             });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpServiceEventsType.GetPartyByTypeAndIdAndSubId, (payload: { partyType: string; partyId: string; partySubId: string; }) => {
-            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubId(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
+            this._accountLookUpAggregate.getPartyByTypeAndIdAndSubIdRequest(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
                 this._logger.error(`${AccountLookUpServiceEventsType.GetPartyByTypeAndIdAndSubId}: ${err}`)
             });
         });

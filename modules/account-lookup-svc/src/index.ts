@@ -43,8 +43,8 @@
 //import appConfigs from "./config";
 
 import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo} from "@mojaloop/account-lookup-bc-infrastructure";
+import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {MongoOracleFinderRepo, MongoOracleProviderRepo, KafkaMessagePublisher} from "@mojaloop/account-lookup-bc-infrastructure";
 import { setupKafkaConsumer, setupKafkaLogger } from "./kafka_setup";
 
 
@@ -81,10 +81,14 @@ async function start():Promise<void> {
     logger,
     DB_URL,
     DB_NAME,
-    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
+    ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
   )];
  
-  accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider);
+  let messagePublisher: IMessagePublisher = new KafkaMessagePublisher(
+    logger,
+  );
+
+  accountLookupAggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
   accountLookupAggregate.init();
     
   await setupKafkaConsumer(accountLookupAggregate);

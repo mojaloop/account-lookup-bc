@@ -76,3 +76,20 @@ export interface IOracleProvider{
     disassociateParticipantByTypeAndId(participantType:String, participantId:String):Promise<null>;
     disassociateParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<null>;
 }
+
+export interface IMessageHeader {
+    [key: string]: string | Buffer;
+}
+export interface IMessage {
+    value: Buffer | string | object | null;
+    topic: string;
+    key: Buffer | string | null;
+    timestamp: number | null;
+    headers: IMessageHeader[] | null;
+}
+
+export interface IMessagePublisher {
+    init(): Promise<void>;
+	destroy(): Promise<void>;
+    send(message: IMessage | IMessage[] | any): Promise<void>;
+}

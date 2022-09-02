@@ -39,7 +39,30 @@
 
  "use strict";
 
-export * from "./oracleprovider";
-export * from "./oraclefinder";
-export * from "./messagepublisher";
 
+ import {
+	 IMessagePublisher,
+	 IMessage,
+ } from "../../../src";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+
+ export class MemoryMessagePublisher implements IMessagePublisher {
+	private readonly logger: ILogger;
+
+	constructor(
+		logger: ILogger,
+	) {
+		this.logger = logger;
+	}
+
+
+	async init(): Promise<void> {
+	}
+
+	async destroy(): Promise<void> {
+	}
+
+	async send(message: IMessage | IMessage[] | any):Promise<void> {
+
+	}
+}

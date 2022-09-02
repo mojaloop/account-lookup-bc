@@ -46,10 +46,11 @@
 	 IParticipant,
 	 UnableToDisassociatePartyError,
 	 UnableToDisassociateParticipantError,
+	 UnableToCreateParticipantAssociationError,
+	 UnableToCreatePartyAssociationError,
  } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedParties, mockedPartyAssociations, mockedParticipants, mockedParticipantAssociations } from "./data";
-import { UnableToCreatePartyAssociationError, UnableToCreateParticipantAssociationError } from "@mojaloop/account-lookup-bc-client";
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
