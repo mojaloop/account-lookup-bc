@@ -43,7 +43,7 @@ import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/m
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { IEventAccountLookUpServiceHandler, AccountLookUpServiceEventHandler } from "../../src/event_handler";
+import { IAccountLookUpEventHandler, AccountLookUpEventHandler } from "../../src/modules/event_handler";
 import { AccountLookUpEventsType, IAccountLookUpMessage } from "../../src/types";
 
 
@@ -69,7 +69,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     oracleProviderList
 );
 
-const eventHandler: IEventAccountLookUpServiceHandler = new AccountLookUpServiceEventHandler(logger, mockedAggregate);
+const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
 
  describe("Account Lookup Service", () => {
 
@@ -86,7 +86,7 @@ const eventHandler: IEventAccountLookUpServiceHandler = new AccountLookUpService
         eventHandler.init();
 
         // Assert
-        expect(eventHandler.handler().eventNames()).toEqual(eventNames);
+        expect(eventHandler.get().eventNames()).toEqual(eventNames);
 
     });
 
@@ -433,9 +433,9 @@ const eventHandler: IEventAccountLookUpServiceHandler = new AccountLookUpService
 
         // Assert
         eventNames.forEach(eventName => {
-            expect(eventHandler.handler().listenerCount(eventName)).toBe(0);
+            expect(eventHandler.get().listenerCount(eventName)).toBe(0);
         });
-        expect(eventHandler.handler().eventNames().length).toEqual(0);
+        expect(eventHandler.get().eventNames().length).toEqual(0);
         
     });
 
