@@ -51,7 +51,7 @@
 	 UnableToCreateParticipantAssociationError,
  } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations } from "./data";
+import { mockedParticipantAssociations, mockedParticipants, mockedParties, mockedPartyAssociations } from "./data";
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
@@ -68,6 +68,7 @@ import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations }
 		this.logger = logger;
 		this.parties = mockedParties;
 		this.partyAssociations = mockedPartyAssociations;
+		this.participantAssociations = mockedParticipantAssociations;
 	}
 
 
@@ -183,45 +184,45 @@ import { mockedParticipantAssociations, mockedParties, mockedPartyAssociations }
 	}
 
 	//Participant
-	async getParticipantByTypeAndId(partyType:string, partyId:string):Promise<IParticipant|null> {
+	async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null> {
 		
-		let party:IParticipant|Error | undefined;
+		let participant:IParticipant|Error | undefined;
 
-		mockedParties.forEach((partyFound:IParticipant| Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				party=partyFound;
+		mockedParticipants.forEach((participantFound:IParticipant| Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType){
+				participant=participantFound;
 			}
 		});
 
-		if(party instanceof Error){
-			throw party;
+		if(participant instanceof Error){
+			throw participant;
 		}
 		
-		if (!party) {
+		if (!participant) {
 			return null;
 		}
-		return party;
+		return participant;
 	}
 
-	async getParticipantByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParticipant|null> {
-		let party:IParticipant| Error | undefined;
+	async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null> {
+		let participant:IParticipant| Error | undefined;
 
-		mockedParties.forEach((partyFound:IParticipant|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				party=partyFound;
+		mockedParticipants.forEach((participantFound:IParticipant|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
+				participant=participantFound;
 			}
 		});
 
-		if(party instanceof Error){
-			throw party;
+		if(participant instanceof Error){
+			throw participant;
 		}
 
-		if (!party) {
+		if (!participant) {
 			return null;
 		}
 
 
-		return party;
+		return participant;
 	}
 
 	async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {

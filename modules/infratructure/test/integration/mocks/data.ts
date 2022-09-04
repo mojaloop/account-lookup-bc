@@ -38,7 +38,7 @@
  --------------
  **/
 
-"use strict";
+ "use strict";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 export const mockedPartyResultIds = ["party1", "party2", "party3"];
@@ -48,8 +48,8 @@ export const mockedPartySubIds = ["subId2","subId3"];
 export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
 
 export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError"];
-export const mockedParticipantResultIds = ["receivedParticipant1", "receivedParticipant2", "receivedParticipant3"];
-export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receivedParticipantSub2", "receivedParticipantSub3"];
+export const mockedParticipantResultIds = ["participant1", "participant2", "participant3"];
+export const mockedParticipantResultSubIds = ["subId1", "subId2", "subId3"];
 
 export const mockedParticipantSubIds = ["subId2","subId3"];
 export const mockedParticipantTypes = ["bank", "creditUnion", "insurance"];
@@ -67,4 +67,12 @@ export const mockedOracleList = [
         id: mockedPartyIds[2],
         type: mockedPartyTypes[2],
     },
+    {
+        id: "error",
+        type: "error"
+    },
+    {
+        id:"not_found_oracle",
+        type:"not_found_oracle"
+    }
 ];

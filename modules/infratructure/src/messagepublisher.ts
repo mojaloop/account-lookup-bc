@@ -39,10 +39,12 @@
 
  "use strict";
 
-import { IMessage, IMessagePublisher } from "@mojaloop/account-lookup-bc-domain";
+
+
+import { IMessagePublisher, IMessage } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
- export class KafkaMessagePublisher implements IMessagePublisher {
+ export class MemoryMessagePublisher implements IMessagePublisher {
 	private readonly logger: ILogger;
 
 	constructor(
@@ -59,5 +61,6 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	}
 
 	async send(message: IMessage | IMessage[] | any):Promise<void> {
+
 	}
 }
