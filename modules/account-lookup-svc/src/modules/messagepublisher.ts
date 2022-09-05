@@ -54,6 +54,7 @@
        
     private KAFKA_PRODUCER_CLIENT_ID = "account-lookup";
     private KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+    private KAFKA_TOPIC = 'account-lookup';
   
      private readonly _logger: ILogger;
      private readonly _messagePublisher: IMessagePublisher;
@@ -66,6 +67,7 @@
                 kafkaBrokerList: this.KAFKA_URL,
                 producerClientId: this.KAFKA_PRODUCER_CLIENT_ID,
                 skipAcknowledgements: true,
+                kafkaTopic: this.KAFKA_TOPIC
             }
            );
      }

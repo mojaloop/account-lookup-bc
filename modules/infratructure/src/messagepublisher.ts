@@ -45,21 +45,24 @@ import { IMessagePublisher, IMessage, UnableToInitMessageProducerError, UnableTo
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
+type KafkaProducerOptions =  MLKafkaProducerOptions & { kafkaTopic: string }
+
  export class KafkaMessagePublisher implements IMessagePublisher {
 
 	private kafkaProducer: MLKafkaProducer;
 	private readonly _logger: ILogger;
-	private readonly _kafkaProducerOptions: MLKafkaProducerOptions;
+	private readonly _kafkaProducerOptions: KafkaProducerOptions;
 
 	constructor(
 		logger: ILogger,
-		opts: MLKafkaProducerOptions
+		opts: KafkaProducerOptions
 	) {
 		this._logger = logger;
 		this._kafkaProducerOptions = {
 			kafkaBrokerList: opts.kafkaBrokerList,
 			producerClientId: opts.producerClientId,
 			skipAcknowledgements: opts.skipAcknowledgements,
+			kafkaTopic: opts.kafkaTopic,
 		};
 	}
 
@@ -80,12 +83,19 @@ import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shar
 
 	async send(message: IMessageValue[]):Promise<void> {
 		try {
-			const kafkaMessage: IMessage = {
-				topic: 'test_topic',
-				value: message,
-			}
+			const kafkaMessages: IMessage[] = [];
 
-			await this.kafkaProducer.send(kafkaMessage);
+			for await (const _message of message) {
+				const kafkaMessage: IMessage = {
+					topic: this._kafkaProducerOptions.kafkaTopic,
+					value: _message as IMessageValue,
+				};
+	
+				kafkaMessages.push(kafkaMessage);
+			}
+			
+			await this.kafkaProducer.send(kafkaMessages);
+
 		} catch (e: unknown) {
 			this._logger.error("Error destroying kafka producer", e);
 			throw new UnableToSendMessageProducerError();

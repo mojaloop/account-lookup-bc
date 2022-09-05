@@ -54,7 +54,6 @@ import {
     UnableToInitMessageProducerError,
     UnableToDestroyMessageProducerError,
     UnableToSendMessageProducerError,
-    IMessage,
     IMessageValue
 } from "@mojaloop/account-lookup-bc-domain";
 import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
@@ -178,6 +177,7 @@ describe("account lookup - integration tests", () => {
             kafkaBrokerList: 'non-existing-host',
             producerClientId: 'test_producer',
             skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
         });
 
 
@@ -190,26 +190,66 @@ describe("account lookup - integration tests", () => {
 
     });
 
-    test("should initiate a new message publisher and send a message", async()=>{
+    test("should throw error for being unable to send message in message publisher", async()=>{
 
         // Arrange 
         const messagePublisher = new KafkaMessagePublisher(logger, {
             kafkaBrokerList: 'localhost:9092',
             producerClientId: 'test_producer',
             skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
         });
 
         const message: IMessageValue = { 
             testValue: 1
         }
 
-        //Act
-        const initiatedMessagePublisher = await messagePublisher.init();
-        await messagePublisher.send([message]);
-        await messagePublisher.destroy();
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.send([message]);
+            }
+        ).rejects.toThrow(UnableToSendMessageProducerError);
 
-        //Assert
-        expect(initiatedMessagePublisher).toBeUndefined();
+    });
+
+    test("should throw error for being unable to destroy message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.destroy();
+            }
+        ).rejects.toThrow(UnableToDestroyMessageProducerError);
+
+    });
+
+    test("should initiate a new message publisher and send a message", async()=>{
+        //Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+        const message: IMessageValue = { 
+            testValue: 1
+        }
+
+        //Act && Assert
+        await messagePublisher.init();
+        await expect(messagePublisher.send([message])).resolves.not.toThrow();
+        await messagePublisher.destroy();
 
     });
 

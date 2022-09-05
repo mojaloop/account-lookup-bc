@@ -43,7 +43,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { GetParticipantError, GetPartyError, NoSuchParticipantError, NoSuchPartyError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
-import {IMessage, IMessagePublisher, IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
+import { IMessagePublisher, IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
 import { IParticipant, IParty } from "./types";
 
 export class AccountLookupAggregate {
