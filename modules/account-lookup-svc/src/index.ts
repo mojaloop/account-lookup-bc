@@ -51,6 +51,7 @@ import { EventAccountLookupLogger, IEventAccountLookUpLogger } from "./modules/l
 import { AccountLookUpOracles, IAccountLookUpOracles } from "./modules/oracles";
 import { EventAccountLookupMessagePublisher, IEventAccountLookupMessagePublisher } from "./modules/messagepublisher";
 
+// eslint-disable-next-line
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 export const BC_NAME = "account-lookup-bc";
 export const APP_NAME = "account-lookup-svc";
@@ -98,7 +99,7 @@ async function start():Promise<void> {
    
 }
 
-async function cleanUpAndExit(exitCode: number = 0): Promise<void> { 
+async function cleanUpAndExit(exitCode = 0): Promise<void> { 
   accountLookUpEventHandler.destroy();
   await accountLookupAggregate.destroy();
   await kafka.destroy();

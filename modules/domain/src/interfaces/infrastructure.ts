@@ -51,45 +51,50 @@ export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getOracleForType(type:String):Promise<String | undefined>;
+    getOracleForType(type:string):Promise<string | undefined>;
 }
 
 
 export interface IOracleProvider{
     // Properties.
-    id: String;
+    id: string;
     // Init and destroy.
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getPartyByTypeAndId(partyType:String, partyId:String):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<IParty|null>;
-    getParticipantByTypeAndId(participantType:String, participantId:String):Promise<IParticipant|null>;
-    getParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<IParticipant|null>;
+    getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null>;
+    getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null>;
+    getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null>;
+    getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null>;
     // Stores.
-    associatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    associateParticipantByTypeAndId(participantType:String, participantId:String):Promise<null>;
-    associateParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<null>;
+    associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null>;
+    associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
+    associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null>;
+    associateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
     // Updates.
-    disassociatePartyByTypeAndId(partyType:String, partyId:String):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:String, partyId:String, partySubId:String):Promise<null>;
-    disassociateParticipantByTypeAndId(participantType:String, participantId:String):Promise<null>;
-    disassociateParticipantByTypeAndIdAndSubId(participantType:String, participantId:String, participantSubId:String):Promise<null>;
+    disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null>;
+    disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
+    disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null>;
+    disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
 }
 
 export interface IMessageHeader {
     [key: string]: string | Buffer;
 }
+
+export interface IMessageValue {
+    [key: string]: string | number | object | null;
+}
+
 export interface IMessage {
     value: Buffer | string | object | null;
     topic: string;
-    key: Buffer | string | null;
-    headers: IMessageHeader[] | null;
+    key?: Buffer | string | null;
+    headers?: IMessageHeader[] | null;
 }
 
 export interface IMessagePublisher {
     init(): Promise<void>;
 	destroy(): Promise<void>;
-    send(message: IMessage | IMessage[] | any): Promise<void>;
+    send(message: IMessageValue | IMessageValue[]): Promise<void>;
 }

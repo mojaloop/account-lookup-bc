@@ -41,7 +41,7 @@
  "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection} from "mongodb";
+import {MongoClient, Collection, Document, WithId} from "mongodb";
 import {
     IOracleFinder,
 	UnableToInitOracleFinderError,
@@ -76,7 +76,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		try {
 			await this.mongoClient.connect();
 		} catch (e: unknown) {
-			throw new UnableToInitOracleFinderError((e as any)?.message);
+			throw new UnableToInitOracleFinderError();
 		}
 		
 		this.oracleProviders = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
@@ -86,13 +86,17 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
 	}
 
-    async getOracleForType(type: String): Promise<String | undefined> {
+    async getOracleForType(type: string): Promise<string | undefined> {
 		try {
-			const foundOracle: any = await this.oracleProviders.findOne(
+			const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
 				{type: type},
 			);
 
-			return foundOracle.id;
+			if(!foundOracle) {
+				throw new UnableToGetOracleError();
+			}
+			
+			return foundOracle?.id;
 		} catch (e: unknown) {
 			throw new UnableToGetOracleError();
 		}

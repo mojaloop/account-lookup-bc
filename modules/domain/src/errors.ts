@@ -42,61 +42,61 @@
 
 
 // Party
-export class InvalidPartyIdError extends Error {};
-export class InvalidPartyTypeError extends Error {};
-export class NoSuchPartyError extends Error {};
-export class GetPartyError extends Error {};
+export class InvalidPartyIdError extends Error {}
+export class InvalidPartyTypeError extends Error {}
+export class NoSuchPartyError extends Error {}
+export class GetPartyError extends Error {}
 
 // Party Account.
-export class InvalidPartyAccountTypeError extends Error {};
-export class InvalidPartyAccountCurrencyError extends Error {};
-export class InvalidPartyAcountExtensionListError extends Error {};
+export class InvalidPartyAccountTypeError extends Error {}
+export class InvalidPartyAccountCurrencyError extends Error {}
+export class InvalidPartyAcountExtensionListError extends Error {}
 
 // Party Association
-export class UnableToAssociatePartyError extends Error {};
-export class PartyAssociationAlreadyExistsError extends Error {};
-export class UnableToStorePartyAssociationError extends Error {};
+export class UnableToAssociatePartyError extends Error {}
+export class PartyAssociationAlreadyExistsError extends Error {}
+export class UnableToStorePartyAssociationError extends Error {}
 
 // Party Dissociation  
-export class UnableToDisassociatePartyError extends Error {};
-export class PartyAssociationDoesntExistsError extends Error {};
+export class UnableToDisassociatePartyError extends Error {}
+export class PartyAssociationDoesntExistsError extends Error {}
 
 // Participant
-export class InvalidParticipantIdError extends Error {};
-export class InvalidParticipantTypeError extends Error {};
-export class NoSuchParticipantError extends Error {};
-export class GetParticipantError extends Error {};
-export class UnableToCreatePartyAssociationError extends Error {};
+export class InvalidParticipantIdError extends Error {}
+export class InvalidParticipantTypeError extends Error {}
+export class NoSuchParticipantError extends Error {}
+export class GetParticipantError extends Error {}
+export class UnableToCreatePartyAssociationError extends Error {}
 
 // Participant Account.
-export class InvalidParticipantAccountTypeError extends Error {};
-export class InvalidParticipantAccountCurrencyError extends Error {};
-export class InvalidParticipantAcountExtensionListError extends Error {};
+export class InvalidParticipantAccountTypeError extends Error {}
+export class InvalidParticipantAccountCurrencyError extends Error {}
+export class InvalidParticipantAcountExtensionListError extends Error {}
 
 // Participant Association
-export class UnableToAssociateParticipantError extends Error {};
-export class ParticipantAssociationAlreadyExistsError extends Error {};
-export class UnableToStoreParticipantAssociationError extends Error {};
-export class UnableToCreateParticipantAssociationError extends Error {};
+export class UnableToAssociateParticipantError extends Error {}
+export class ParticipantAssociationAlreadyExistsError extends Error {}
+export class UnableToStoreParticipantAssociationError extends Error {}
+export class UnableToCreateParticipantAssociationError extends Error {}
 
 // Participant Dissociation  
-export class UnableToDisassociateParticipantError extends Error {};
-export class ParticipantAssociationDoesntExistsError extends Error {};
+export class UnableToDisassociateParticipantError extends Error {}
+export class ParticipantAssociationDoesntExistsError extends Error {}
 
 
 // Oracle Finder
-export class UnableToInitOracleFinderError extends Error {};
+export class UnableToInitOracleFinderError extends Error {}
 
 
 // Oracle Provider
-export class UnableToInitOracleProviderError extends Error {};
-export class UnableToGetOracleError extends Error {};
-export class UnableToGetOracleProviderError extends Error {};
-export class UnableToGetPartyError extends Error {};
-export class UnableToGetParticipantError extends Error {};
+export class UnableToInitOracleProviderError extends Error {}
+export class UnableToGetOracleError extends Error {}
+export class UnableToGetOracleProviderError extends Error {}
+export class UnableToGetPartyError extends Error {}
+export class UnableToGetParticipantError extends Error {}
 
 // Message Producer
-export class UnableToInitMessageProducerError extends Error {};
-export class UnableToDestroyMessageProducerError extends Error {};
-export class UnableToSendMessageProducerError extends Error {};
+export class UnableToInitMessageProducerError extends Error {}
+export class UnableToDestroyMessageProducerError extends Error {}
+export class UnableToSendMessageProducerError extends Error {}
 

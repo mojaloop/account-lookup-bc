@@ -54,7 +54,8 @@ import {
     UnableToInitMessageProducerError,
     UnableToDestroyMessageProducerError,
     UnableToSendMessageProducerError,
-    IMessage
+    IMessage,
+    IMessageValue
 } from "@mojaloop/account-lookup-bc-domain";
 import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
@@ -198,15 +199,8 @@ describe("account lookup - integration tests", () => {
             skipAcknowledgements: true,
         });
 
-        const message: IMessage = {
-            topic: 'test_topic',
-            value: { 
-                testValue: 1 
-            },
-            key: null,
-            headers: [
-                { key1: 'testStr' }
-            ]
+        const message: IMessageValue = { 
+            testValue: 1
         }
 
         //Act

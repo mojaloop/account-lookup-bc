@@ -62,7 +62,7 @@ export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
 
     constructor(logger: ILogger,accountLookUpAggregate: AccountLookupAggregate){
         this._accountLookUpAggregate= accountLookUpAggregate;
-        this._logger = logger
+        this._logger = logger;
     }
 
     get(): EventEmitter {
@@ -83,7 +83,7 @@ export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
         });
         this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId, async (payload: { participantType: string; participantId: string; participantSubId: string; }) => {
             await this._accountLookUpAggregate.getParticipantByTypeAndIdAndSubId(payload.participantType, payload.participantId, payload.participantSubId).catch(err => {
-                this._logger.error(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${err}`)
+                this._logger.error(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${err}`);
             });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociateParticipantByTypeAndId, async (payload: { participantType: string; participantId: string; }) => {
@@ -114,7 +114,7 @@ export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
         });
         this.acountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId, async (payload: { partyType: string; partyId: string; partySubId: string; }) => {
             await this._accountLookUpAggregate.getPartyByTypeAndIdAndSubIdRequest(payload.partyType, payload.partyId, payload.partySubId).catch(err => {
-                this._logger.error(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${err}`)
+                this._logger.error(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${err}`);
             });
         });
         this.acountLookUpEventEmitter.on(AccountLookUpEventsType.AssociatePartyByTypeAndId, async (payload: { partyType: string; partyId: string; }) => {

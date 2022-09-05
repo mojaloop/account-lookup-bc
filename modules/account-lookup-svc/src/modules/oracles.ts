@@ -55,10 +55,10 @@ export class AccountLookUpOracles implements IAccountLookUpOracles{
       
     private DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
     private DB_PORT_NO: number = parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
-    private DB_URL: string = `mongodb://${this.DB_HOST}:${this.DB_PORT_NO}`;
-    private DB_NAME: string = "account-lookup";
-    private ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
-    private ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
+    private DB_URL = `mongodb://${this.DB_HOST}:${this.DB_PORT_NO}`;
+    private DB_NAME = "account-lookup";
+    private ORACLE_PROVIDERS_COLLECTION_NAME = "oracle-providers";
+    private ORACLE_PROVIDER_PARTIES_COLLECTION_NAME = "oracle-provider-parties";
 
     private readonly _logger: ILogger;
     private readonly _oracleFinder: IOracleFinder;

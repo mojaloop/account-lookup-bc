@@ -41,7 +41,7 @@
 
 
 
-import { IMessagePublisher, IMessage, UnableToInitMessageProducerError, UnableToDestroyMessageProducerError, UnableToSendMessageProducerError } from "@mojaloop/account-lookup-bc-domain";
+import { IMessagePublisher, IMessage, UnableToInitMessageProducerError, UnableToDestroyMessageProducerError, UnableToSendMessageProducerError, IMessageValue } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
@@ -60,7 +60,7 @@ import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shar
 			kafkaBrokerList: opts.kafkaBrokerList,
 			producerClientId: opts.producerClientId,
 			skipAcknowledgements: opts.skipAcknowledgements,
-		}
+		};
 	}
 
 
@@ -70,7 +70,7 @@ import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shar
 			this.kafkaProducer = new MLKafkaProducer(this._kafkaProducerOptions, this._logger);
 			
 			await this.kafkaProducer.connect();
-		  
+		
 			this._logger.info("kafka consumer initialised");
 		} catch (e: unknown) {
 			this._logger.error("Error initialising kafka consumer");
@@ -78,9 +78,14 @@ import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shar
 		}
 	}
 
-	async send(message: IMessage[]):Promise<void> {
+	async send(message: IMessageValue[]):Promise<void> {
 		try {
-			await this.kafkaProducer.send(message);
+			const kafkaMessage: IMessage = {
+				topic: 'test_topic',
+				value: message,
+			}
+
+			await this.kafkaProducer.send(kafkaMessage);
 		} catch (e: unknown) {
 			this._logger.error("Error destroying kafka producer", e);
 			throw new UnableToSendMessageProducerError();

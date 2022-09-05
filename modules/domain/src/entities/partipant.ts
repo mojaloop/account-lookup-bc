@@ -41,7 +41,7 @@
 
 
 import { InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
-import { IParticipant } from "../types"
+import { IParticipant } from "../types";
 
 export class Participant implements IParticipant{
 	id: string;

@@ -42,7 +42,7 @@
 
  import {
 	 IMessagePublisher,
-	 IMessage,
+	 IMessageValue,
  } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
@@ -62,7 +62,6 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	async destroy(): Promise<void> {
 	}
 
-	async send(message: IMessage | IMessage[] | any):Promise<void> {
-
+	async send(message: IMessageValue | IMessageValue[]):Promise<void> {
 	}
 }

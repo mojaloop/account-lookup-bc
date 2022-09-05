@@ -44,11 +44,11 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { BC_NAME, APP_NAME } from "..";
-
+import { CallbackFunction } from "../types";
 
 export interface IEventAccountLookUpKafka{
   init():Promise<void>;
-  setKakfaCallback(processMessageCallback:Function):void;
+  setKakfaCallback(processMessageCallback:CallbackFunction):void;
   destroy(): Promise<void>;
 }
 
@@ -67,7 +67,7 @@ export class EventAccountLookupKafka implements IEventAccountLookUpKafka{
       kafkaBrokerList: this.KAFKA_URL,
       kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
       outputType: MLKafkaConsumerOutputType.Json
-    }
+    };
   }
 
   async init(): Promise<void> {
@@ -89,7 +89,7 @@ export class EventAccountLookupKafka implements IEventAccountLookUpKafka{
 
   }
 
-  setKakfaCallback(processMessageCallback: Function): void {
+  setKakfaCallback(processMessageCallback: CallbackFunction): void {
     const processMessage = (message: IMessage): Promise<void> => {
       this._logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       try{
@@ -99,7 +99,7 @@ export class EventAccountLookupKafka implements IEventAccountLookUpKafka{
         this._logger.error("Error processing message", err);
       }
       return Promise.resolve();
-    }
+    };
     this.kafkaConsumer.setCallbackFn(processMessage);
   }
 
