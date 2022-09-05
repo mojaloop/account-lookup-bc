@@ -41,7 +41,7 @@
  "use strict";
 
 
-import { IParty } from "../../../src/types";
+import { IParticipant, IParty } from "../../../src/types";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 export const mockedPartyResultIds = ["receivedParty1", "receivedParty2", "receivedParty3"];
@@ -50,6 +50,12 @@ export const mockedPartyResultSubIds = ["receivedPartySub1", "receivedPartySub2"
 export const mockedPartySubIds = ["subId2","subId3"];
 export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
 
+export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError"];
+export const mockedParticipantResultIds = ["receivedParticipant1", "receivedParticipant2", "receivedParticipant3"];
+export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receivedParticipantSub2", "receivedParticipantSub3"];
+
+export const mockedParticipantSubIds = ["subId2","subId3"];
+export const mockedParticipantTypes = ["bank", "creditUnion", "insurance"];
 
 export const mockedOracleList = [
     {
@@ -89,4 +95,18 @@ mockedPartyAssociations.set({partyId:mockedPartyIds[0],partyType:mockedPartyType
 mockedPartyAssociations.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:mockedPartySubIds[0]}, null);
 mockedPartyAssociations.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:mockedPartySubIds[1]}, new Error());
 
+
+export const mockedParticipants: Map<{participantId:string, participantType:string, participantSubId?:string}, IParticipant| Error> = new Map();
+mockedParticipants.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]},{id: mockedParticipantResultIds[0], subId: mockedParticipantResultSubIds[0],type: "individual"});
+mockedParticipants.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, {id: mockedParticipantResultIds[1], subId: mockedParticipantResultSubIds[1],type: "individual"});
+mockedParticipants.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, {id: mockedParticipantResultIds[2], subId: mockedParticipantResultSubIds[2],type: "individual"});
+mockedParticipants.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2]}, new Error());
+mockedParticipants.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, new Error());
+
+
+
+export const mockedParticipantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error> = new Map();
+mockedParticipantAssociations.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]}, null);
+mockedParticipantAssociations.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, null);
+mockedParticipantAssociations.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, new Error());
 

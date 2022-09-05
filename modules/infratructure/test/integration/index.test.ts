@@ -47,10 +47,17 @@ import {
     UnableToGetOracleError,
     UnableToGetPartyError,
     PartyAssociationAlreadyExistsError,
-    PartyAssociationDoesntExistsError
+    PartyAssociationDoesntExistsError,
+    ParticipantAssociationDoesntExistsError,
+    ParticipantAssociationAlreadyExistsError,
+    UnableToGetParticipantError,
+    UnableToInitMessageProducerError,
+    UnableToDestroyMessageProducerError,
+    UnableToSendMessageProducerError,
+    IMessageValue
 } from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
-import { mockedOracleList, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
  /* ********** Constants ********** */
@@ -89,6 +96,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 
     oracleProviderListRepo.push(oracleProviderRepo);
 }
+jest.setTimeout(100000);
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
@@ -159,6 +167,90 @@ describe("account lookup - integration tests", () => {
 
         //Assert
         expect(oracle).toEqual(partyId);
+    });
+
+    // Publisher
+    test("should throw error for being unable to initiate message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.init();
+            }
+        ).rejects.toThrow(UnableToInitMessageProducerError);
+
+    });
+
+    test("should throw error for being unable to send message in message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+        const message: IMessageValue = { 
+            testValue: 1
+        }
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.send([message]);
+            }
+        ).rejects.toThrow(UnableToSendMessageProducerError);
+
+    });
+
+    test("should throw error for being unable to destroy message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.destroy();
+            }
+        ).rejects.toThrow(UnableToDestroyMessageProducerError);
+
+    });
+
+    test("should initiate a new message publisher and send a message", async()=>{
+        //Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+        const message: IMessageValue = { 
+            testValue: 1
+        }
+
+        //Act && Assert
+        await messagePublisher.init();
+        await expect(messagePublisher.send([message])).resolves.not.toThrow();
+        await messagePublisher.destroy();
+
     });
 
 
@@ -477,4 +569,318 @@ describe("account lookup - integration tests", () => {
 
     });
 
+    // Get participant by type and id.
+    test("should throw error if is unable to find participant for participantType", async () => {
+        //Arrange 
+        const participantType = "non-exisiting-oracle-type";
+        const participantId = mockedParticipantIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
+            }
+        ).rejects.toThrow(UnableToGetParticipantError);
+        
+    });
+
+    test("should get participant by participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+        })
+
+        //Act
+        const participant = await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
+
+        //Assert
+        expect(participant?.id).toBe(mockedParticipantResultIds[0]);
+        expect(participant?.subId).toBeUndefined();
+
+    });
+
+    // Get participant by type and id and subId.
+    test("should throw error if is unable to find participant for participantType", async () => {
+        //Arrange 
+        const participantType = "non-exisiting-oracle-type";
+        const participantId = mockedParticipantIds[0];
+        const participantSubId = mockedParticipantResultSubIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+            }
+        ).rejects.toThrow(UnableToGetParticipantError);
+        
+    });
+
+    test("should get participant by participantType and participantId and subId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantSubId = mockedParticipantResultSubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType,
+                subId: participantSubId
+            },
+        })
+
+        //Act
+        const participant = await oracleProviderListRepo[0].getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+
+        //Assert
+        expect(participant?.id).toBe(mockedParticipantResultIds[0]);
+        expect(participant?.subId).toBe(mockedParticipantResultSubIds[0]);
+        
+    });
+    
+    // Associate participant by type and id.
+    test("should throw error if participant association by participantType and participantId already exists", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[2];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        
+        // Act && Assert
+        await oracleProviderListRepo[0].associateParticipantByTypeAndId(participantType, participantId);
+        
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].associateParticipantByTypeAndId(participantType, participantId);
+            }
+        ).rejects.toThrow(ParticipantAssociationAlreadyExistsError);
+        
+    });
+    
+    test("should associate participant by participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        //Act
+        const participant = await oracleProviderListRepo[0].associateParticipantByTypeAndId(participantType, participantId);
+
+        //Assert
+        expect(participant).toBeNull();
+
+    });
+
+
+
+    // Associate participant by type and id and subId.
+    test("should throw error if participant association by participantType and participantId and subId already exists", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[2];
+        const participantSubId = mockedParticipantSubIds[2];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        
+        // Act && Assert
+        await oracleProviderListRepo[0].associateParticipantByTypeAndId(participantType, participantId);
+        
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+            }
+        ).rejects.toThrow(ParticipantAssociationAlreadyExistsError);
+        
+    });
+    
+    test("should associate participant by participantType and participantId and subId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantSubId = mockedParticipantSubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        //Act
+        const participant = await oracleProviderListRepo[0].associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+
+        //Assert
+        expect(participant).toBeNull();
+
+    });
+    
+
+    // Disassociate participant by type and id.
+    test("should throw an error if trying to disassociate participant by type and id", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[3];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].disassociateParticipantByTypeAndId(participantType, participantId);
+            }
+        ).rejects.toThrow(ParticipantAssociationDoesntExistsError);
+        
+    });
+
+    test("should disassociate participant by participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        //Act
+        await oracleProviderListRepo[0].associateParticipantByTypeAndId(participantType, participantId);
+
+        const participant = await oracleProviderListRepo[0].disassociateParticipantByTypeAndId(participantType, participantId);
+
+        //Assert
+        expect(participant).toBeNull();
+
+    });
+
+
+    // Disassociate participant by type and id and subId.
+    test("should throw an error if trying to disassociate participant by type and id and subId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[3];
+        const participantSubId = mockedParticipantSubIds[0];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+            }
+        ).rejects.toThrow(ParticipantAssociationDoesntExistsError);
+        
+    });
+
+    test("should disassociate participant by participantType and participantId and subId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantSubId = mockedParticipantSubIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+
+        //Act
+        await oracleProviderListRepo[0].associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+
+        const participant = await oracleProviderListRepo[0].disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+
+        //Assert
+        expect(participant).toBeNull();
+
+    });
 });

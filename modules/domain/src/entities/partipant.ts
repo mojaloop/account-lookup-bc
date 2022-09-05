@@ -1,11 +1,10 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
@@ -41,31 +40,34 @@
  "use strict";
 
 
-export enum CurrencyType {
-	DOLLAR = "dollar",
-	EURO = "euro",
-}
+import { InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
+import { IParticipant } from "../types";
 
-export interface IParty {
-    id: string;
-    type: string;
-    currency: string | null;
-    subId: string | null;
-}
+export class Participant implements IParticipant{
+	id: string;
+	type: string;
+    currency: string;
+	subId: string | null;
 
-export interface IPartyAccount {
-	fspId: string;
-	currency: string[];
-	extensionList: string[];
-}
+	constructor(
+		id: string,
+		type: string,
+        currency: string,
+        subId: string | null = null,
+	) {
+		this.id = id;
+		this.type = type;
+        this.currency = currency;
+        this.subId = subId;
+	}
 
-export interface IParticipant {
-    id: string;
-    type: string;
-    subId: string | null;
-}
 
-export interface IParticipantAccount {
-	fspId: string;
-	extensionList: string[];
+    static validateParticipant(party: Participant): void {
+		if (!party.id) {
+			throw new InvalidParticipantIdError();
+		}
+		if (!party.type) {
+			throw new InvalidParticipantTypeError();
+		}
+	}
 }

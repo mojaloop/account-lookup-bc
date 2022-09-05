@@ -40,29 +40,6 @@
 
  "use strict";
 
-import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-
-export enum AccountLookUpEventsType  {
-    GetParticipantByTypeAndId = "[Account Lookup] Get Participant By Type And Id",
-    GetParticipantByTypeAndIdAndSubId ="[Account Lookup] Get Participant By Type And Id And SubId",
-    AssociateParticipantByTypeAndId = "[Account Lookup]  Associate Participant By Type And Id",
-    AssociateParticipantByTypeAndIdAndSubId = "[Account Lookup]  Associate Participant By Type And Id And SubId",
-    DisassociateParticipantByTypeAndId = "[Account Lookup]  Disassociate Participant By Type And Id",
-    DisassociateParticipantByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Participant By Type And Id And SubId",
-    GetPartyByTypeAndId = "[Account Lookup] Get Party By Type And Id",
-    GetPartyByTypeAndIdAndSubId ="[Account Lookup] Get Party By Type And Id And SubId",
-    AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
-    AssociatePartyByTypeAndIdAndSubId = "[Account Lookup]  Associate Party By Type And Id And SubId",
-    DisassociatePartyByTypeAndId = "[Account Lookup]  Disassociate Party By Type And Id",
-    DisassociatePartyByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Party By Type And Id And SubId"
-}
-
-export interface IAccountLookUpMessage extends IMessage {
-    value: {
-        type:AccountLookUpEventsType,
-        payload: object
-    }
-}
-
-// eslint-disable-next-line
-export type CallbackFunction = (...args: any[]) => void;
+export type MongoQueryError = {
+    message: string
+};

@@ -24,11 +24,13 @@
     "start": "yarn run service",
     "service": "tsc && node dist/application/index.js",
     "build": "tsc",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
-    "@mojaloop/account-lookup-bc-client": "workspace:*",
     "@mojaloop/account-lookup-bc-domain": "workspace:*",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8",
     "mongodb": "^4.9.0"
   },
   "devDependencies": {

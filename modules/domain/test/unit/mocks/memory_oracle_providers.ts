@@ -44,11 +44,14 @@
  import {
      IOracleProvider,
      IParty,
+	 IParticipant,
 	 UnableToAssociatePartyError,
 	 UnableToDisassociatePartyError,
+	 UnableToDisassociateParticipantError,
+	 UnableToCreateParticipantAssociationError,
  } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedParties, mockedPartyAssociations } from "./data";
+import { mockedParticipantAssociations, mockedParticipants, mockedParties, mockedPartyAssociations } from "./data";
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
@@ -56,6 +59,8 @@ import { mockedParties, mockedPartyAssociations } from "./data";
 
 	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
 	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error>;
+	private readonly participants: Map<{participantId:string, participantType:string, participantSubId?:string}, IParty|Error>;
+	private readonly participantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error>;
 
 	constructor(
 		logger: ILogger,
@@ -63,6 +68,7 @@ import { mockedParties, mockedPartyAssociations } from "./data";
 		this.logger = logger;
 		this.parties = mockedParties;
 		this.partyAssociations = mockedPartyAssociations;
+		this.participantAssociations = mockedParticipantAssociations;
 	}
 
 
@@ -175,5 +181,111 @@ import { mockedParties, mockedPartyAssociations } from "./data";
 		}
 		
 		throw new UnableToDisassociatePartyError();
+	}
+
+	//Participant
+	async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null> {
+		
+		let participant:IParticipant|Error | undefined;
+
+		mockedParticipants.forEach((participantFound:IParticipant| Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType){
+				participant=participantFound;
+			}
+		});
+
+		if(participant instanceof Error){
+			throw participant;
+		}
+		
+		if (!participant) {
+			return null;
+		}
+		return participant;
+	}
+
+	async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null> {
+		let participant:IParticipant| Error | undefined;
+
+		mockedParticipants.forEach((participantFound:IParticipant|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
+				participant=participantFound;
+			}
+		});
+
+		if(participant instanceof Error){
+			throw participant;
+		}
+
+		if (!participant) {
+			return null;
+		}
+
+
+		return participant;
+	}
+
+	async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
+		let association:null| Error | undefined;
+
+		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType){
+				association=participantFound;
+			}
+		});
+
+		if(association===null){
+			return null;
+		}
+		
+		throw new UnableToCreateParticipantAssociationError();
+	}
+
+	async associateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
+		let association:null| Error | undefined;
+
+		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
+				association=participantFound;
+			}
+		});
+
+		if(association===null){
+			return null;
+		}
+		
+		throw new UnableToCreateParticipantAssociationError();
+	}
+
+	async disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
+		let association:null| Error | undefined;
+
+		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType){
+				association=participantFound;
+			}
+		});
+
+		if(association===null){
+			return null;
+		}
+		
+		throw new UnableToDisassociateParticipantError();
+	}
+
+	async disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
+		let association:null| Error | undefined;
+
+		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
+			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
+				association=participantFound;
+			}
+		});
+
+		if(association===null){
+			return null;
+		}
+		
+		throw new UnableToDisassociateParticipantError();
 	}
 }
