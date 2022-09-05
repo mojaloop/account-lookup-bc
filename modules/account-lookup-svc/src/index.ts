@@ -42,8 +42,8 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
@@ -61,12 +61,12 @@ const APP_VERSION = "0.0.1";
 let logger: ILogger;
 const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
 
-// Kafka Consumer 
+// Message Consumer 
 const KAFKA_LOGS_TOPIC = "logs";
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 const KAFKA_ORACLES_TOPIC = "account-lookup";
 
-let kafkaConsumer: MLKafkaConsumer;
+let kafkaConsumer: IMessageConsumer;
 const kafkaConsumerOptions: MLKafkaConsumerOptions = {
   kafkaBrokerList: KAFKA_URL,
   kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
@@ -92,22 +92,18 @@ let aggregate: AccountLookupAggregate;
 let eventHandler: IAccountLookUpEventHandler;
 
 
-async function start(loggerParam?:ILogger, oracleFinderParam?:IOracleFinder, oracleProviderParam?:IOracleProvider[], messagePublisherParam?:IMessagePublisher, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler ):Promise<void> {
-      
-    ({ logger, oracleFinder, oracleProvider, messagePublisher, aggregate, eventHandler } = setup(loggerParam, oracleFinderParam, oracleProviderParam, messagePublisherParam, aggregateParam, eventHandlerParam));
-
-    await (logger as KafkaLogger).start();
-    logger.info("kafka logger initialised");
-
-    kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
-    kafkaConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
-    
-    kafkaConsumer.connect();
-    await kafkaConsumer.start();
+async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, 
+  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler ):Promise<void> {
   
-    logger.info("kafka consumer initialised");
+  try{
+    
+    await init(loggerParam, messageConsumerParam, messagePublisherParam, oracleFinderParam, oracleProviderParam, aggregateParam, eventHandlerParam);
 
-    logger.info("Initializing Oracle Finder");
+    kafkaConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
+    await kafkaConsumer.connect();
+    await kafkaConsumer.start();
+    logger.info("Kafka Consumer Initialised");
+
     await oracleFinder.init();
     logger.info("Oracle Finder Initialized");
 
@@ -123,21 +119,28 @@ async function start(loggerParam?:ILogger, oracleFinderParam?:IOracleFinder, ora
 
     aggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
     await aggregate.init();
+    logger.info("Aggregate Initialized");
 
     eventHandler = new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();
+    logger.info("Event Handler Initialized");
 
     kafkaConsumer.setCallbackFn(async (message:IMessage) => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       eventHandler.publishAccountLookUpEvent(message);
       Promise.resolve();
-    });
-
-   
+    });  
+  }
+  catch(err){
+    logger.error(err);
+    throw err;
+  }
 }
 
-function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefined, oracleProvider: IOracleProvider[] | undefined, messagePublisher: IMessagePublisher | undefined, aggregate: AccountLookupAggregate | undefined, eventHandler: IAccountLookUpEventHandler | undefined) {
-  if (!logger) {
+async function init(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, oracleProviderParam?: IOracleProvider[], aggregateParam?:AccountLookupAggregate, 
+    eventHandlerParam?:IAccountLookUpEventHandler):Promise<void>  {
+
+  if (!loggerParam) {
     logger = new KafkaLogger(
       BC_NAME,
       APP_NAME,
@@ -148,6 +151,11 @@ function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefi
       KAFKA_LOGS_TOPIC,
       DEFAULT_LOGLEVEL
     );
+    await (logger as KafkaLogger).start();
+    logger.info("Kafka Logger Initialised");
+  }
+  else{
+    logger = loggerParam;
   }
 
   if (!oracleFinder) {
@@ -158,6 +166,9 @@ function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefi
       ORACLE_PROVIDERS_COLLECTION_NAME
     );
   }
+  else{
+    oracleFinder = oracleFinderParam as IOracleFinder;
+  }
 
   if (!oracleProvider) {
     oracleProvider = [new MongoOracleProviderRepo(
@@ -167,8 +178,18 @@ function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefi
       ORACLE_PROVIDER_PARTIES_COLLECTION_NAME
     )];
   }
+  else{
+    oracleProvider = oracleProviderParam as IOracleProvider[];
+  }
+  
+  if(!messageConsumerParam){
+    kafkaConsumer = new MLKafkaConsumer(kafkaConsumerOptions, logger);
+  }
+  else{
+    kafkaConsumer = messageConsumerParam;
+  }
 
-  if (!messagePublisher) {
+  if (!messagePublisherParam) {
     messagePublisher = new KafkaMessagePublisher(
       logger,
       {
@@ -179,9 +200,15 @@ function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefi
       }
     );
   }
+  else{
+    messagePublisher = messagePublisherParam;
+  }
 
   if (!aggregate) {
     aggregate = new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
+  }
+  else{
+    aggregate = aggregateParam as AccountLookupAggregate;
   }
 
   if (!eventHandler) {
@@ -190,7 +217,10 @@ function setup(logger: ILogger | undefined, oracleFinder: IOracleFinder | undefi
       aggregate
     );
   }
-  return { logger, oracleFinder, oracleProvider, messagePublisher, aggregate, eventHandler };
+  else{
+    eventHandler = eventHandlerParam as IAccountLookUpEventHandler;
+  }
+
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 
