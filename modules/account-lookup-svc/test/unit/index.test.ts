@@ -43,7 +43,7 @@ import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/m
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { IAccountLookUpEventHandler, AccountLookUpEventHandler } from "../../src/modules/event_handler";
+import { IAccountLookUpEventHandler, AccountLookUpEventHandler } from "../../src/event_handler";
 import { AccountLookUpEventsType, IAccountLookUpMessage } from "../../src/types";
 
 
@@ -78,7 +78,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.clearAllMocks();
     });
 
-
+    //#region AccountLookUpEventHandler
     test("should add all events for account lookup when init is called", async()=>{
         // Arrange
         const eventNames = Object.values(AccountLookUpEventsType);
@@ -741,5 +741,8 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         expect(eventHandler.get().eventNames().length).toEqual(0);
         
     });
+
+    //#endregion
+
 
  });
