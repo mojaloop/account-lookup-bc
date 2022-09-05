@@ -94,3 +94,9 @@ export class UnableToGetOracleError extends Error {};
 export class UnableToGetOracleProviderError extends Error {};
 export class UnableToGetPartyError extends Error {};
 export class UnableToGetParticipantError extends Error {};
+
+// Message Producer
+export class UnableToInitMessageProducerError extends Error {};
+export class UnableToDestroyMessageProducerError extends Error {};
+export class UnableToSendMessageProducerError extends Error {};
+

@@ -41,26 +41,59 @@
 
 
 
-import { IMessagePublisher, IMessage } from "@mojaloop/account-lookup-bc-domain";
+import { IMessagePublisher, IMessage, UnableToInitMessageProducerError, UnableToDestroyMessageProducerError, UnableToSendMessageProducerError } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
- export class MemoryMessagePublisher implements IMessagePublisher {
-	private readonly logger: ILogger;
+ export class KafkaMessagePublisher implements IMessagePublisher {
+
+	private kafkaProducer: MLKafkaProducer;
+	private readonly _logger: ILogger;
+	private readonly _kafkaProducerOptions: MLKafkaProducerOptions;
 
 	constructor(
 		logger: ILogger,
+		opts: MLKafkaProducerOptions
 	) {
-		this.logger = logger;
+		this._logger = logger;
+		this._kafkaProducerOptions = {
+			kafkaBrokerList: opts.kafkaBrokerList,
+			producerClientId: opts.producerClientId,
+			skipAcknowledgements: opts.skipAcknowledgements,
+		}
 	}
 
 
 	async init(): Promise<void> {
+		try {
+   
+			this.kafkaProducer = new MLKafkaProducer(this._kafkaProducerOptions, this._logger);
+			
+			await this.kafkaProducer.connect();
+		  
+			this._logger.info("kafka consumer initialised");
+		} catch (e: unknown) {
+			this._logger.error("Error initialising kafka consumer");
+			throw new UnableToInitMessageProducerError();
+		}
+	}
+
+	async send(message: IMessage[]):Promise<void> {
+		try {
+			await this.kafkaProducer.send(message);
+		} catch (e: unknown) {
+			this._logger.error("Error destroying kafka producer", e);
+			throw new UnableToSendMessageProducerError();
+		}
 	}
 
 	async destroy(): Promise<void> {
-	}
-
-	async send(message: IMessage | IMessage[] | any):Promise<void> {
-
+		try {
+			this._logger.info("Destroying kafka producer");
+			await this.kafkaProducer.destroy();
+		} catch (e: unknown) {
+			this._logger.error("Error destroying kafka producer", e);
+			throw new UnableToDestroyMessageProducerError();
+		}
 	}
 }

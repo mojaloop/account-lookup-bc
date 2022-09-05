@@ -85,7 +85,6 @@ export interface IMessage {
     value: Buffer | string | object | null;
     topic: string;
     key: Buffer | string | null;
-    timestamp: number | null;
     headers: IMessageHeader[] | null;
 }
 

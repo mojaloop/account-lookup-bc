@@ -49,6 +49,7 @@ import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./modules
 import { EventAccountLookupKafka, IEventAccountLookUpKafka } from "./modules/kafka";
 import { EventAccountLookupLogger, IEventAccountLookUpLogger } from "./modules/logger";
 import { AccountLookUpOracles, IAccountLookUpOracles } from "./modules/oracles";
+import { EventAccountLookupMessagePublisher, IEventAccountLookupMessagePublisher } from "./modules/messagepublisher";
 
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 export const BC_NAME = "account-lookup-bc";
@@ -59,6 +60,7 @@ let accountLookupAggregate: AccountLookupAggregate;
 let accountLookUpEventHandler: IAccountLookUpEventHandler;
 let oracles: IAccountLookUpOracles;
 let kafka : IEventAccountLookUpKafka;
+let kafkaMessagePublisher : IEventAccountLookupMessagePublisher;
 let logger: IEventAccountLookUpLogger;
 
 async function start():Promise<void> {
@@ -72,8 +74,12 @@ async function start():Promise<void> {
     oracles = new AccountLookUpOracles(logger.get());
     await oracles.init();
   
+    // Create the logger
+    kafkaMessagePublisher = new EventAccountLookupMessagePublisher(logger.get());
+    await kafkaMessagePublisher.init();
+    
     // Create the aggregate
-    accountLookupAggregate = new AccountLookupAggregate(logger.get(), oracles.getOracleFinder(), oracles.getOracleProvider());
+    accountLookupAggregate = new AccountLookupAggregate(logger.get(), oracles.getOracleFinder(), oracles.getOracleProvider(), kafkaMessagePublisher.getMessagePublisher());
     await accountLookupAggregate.init();
 
     // Create the event handler
@@ -96,6 +102,7 @@ async function cleanUpAndExit(exitCode: number = 0): Promise<void> {
   accountLookUpEventHandler.destroy();
   await accountLookupAggregate.destroy();
   await kafka.destroy();
+  await kafkaMessagePublisher.destroy();
   process.exitCode = exitCode;
 }
 

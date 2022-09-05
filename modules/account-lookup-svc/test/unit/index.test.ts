@@ -66,7 +66,8 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
-    oracleProviderList
+    oracleProviderList,
+    {} as any
 );
 
 const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
@@ -101,7 +102,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         eventHandler.publishAccountLookUpEvent(invalidMessage);
 
         // Assert
-        expect(logger.error).toBeCalledWith(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
         
     });
 
@@ -119,10 +120,312 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         eventHandler.publishAccountLookUpEvent(invalidMessage);
 
         // Assert
-        expect(logger.error).toBeCalledWith(`AccountLookUpServiceEventHandler: publishAccountLookUpEvent: message type ${invalidMessage.value.type} is not a valid event type`);
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${invalidMessage.value.type} is not a valid event type`);
         
     });
 
+    // Participant
+    test("should call getParticipantByTypeAndId aggregate method for GetParticipantByTypeAndId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "getParticipantByTypeAndId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.getParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
+        
+    });
+
+    test("should log error if getParticipantByTypeAndId aggregate method for GetParticipantByTypeAndId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "getParticipantByTypeAndId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndId}: ${errorMessage}`);
+        
+    });
+
+    test("should call getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "getParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.getParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
+        
+    });
+
+    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "getParticipantByTypeAndIdAndSubId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
+        
+    });
+
+    test("should call associateParticipantByTypeAndId aggregate method for AssociateParticipantByTypeAndId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.AssociateParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "associateParticipantByTypeAndId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.associateParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
+        
+    });
+
+    test("should log error if associateParticipantByTypeAndId aggregate method for AssociateParticipantByTypeAndId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.AssociateParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "associateParticipantByTypeAndId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.AssociateParticipantByTypeAndId}: ${errorMessage}`);
+        
+    });
+
+    test("should call associateParticipantByTypeAndIdAndSubId aggregate method for AssociateParticipantByTypeAndIdAndSubId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.AssociateParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "associateParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.associateParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
+        
+    });
+
+    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "getParticipantByTypeAndIdAndSubId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
+        
+    });
+
+    test("should call disassociateParticipantByTypeAndId aggregate method for DisassociateParticipantByTypeAndId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.DisassociateParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.disassociateParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
+        
+    });
+
+    test("should log error if disassociateParticipantByTypeAndId aggregate method for DisassociateParticipantByTypeAndId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.DisassociateParticipantByTypeAndId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParticipantByTypeAndId}: ${errorMessage}`);
+        
+    });
+
+    test("should call disassociateParticipantByTypeAndIdAndSubId aggregate method for DisassociateParticipantByTypeAndIdAndSubId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.DisassociateParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
+        
+        // Act
+        eventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.disassociateParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
+        
+    });
+
+    test("should log error if disassociateParticipantByTypeAndIdAndSubId aggregate method for DisassociateParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.DisassociateParticipantByTypeAndIdAndSubId,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndIdAndSubId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
+        
+    });
+
+    // Party
     test("should call getPartyByTypeAndId aggregate method for GetPartyByTypeAndId Event", async()=>{
         // Arrange
         const fakePayload = { partyType:"1", partyId: "2" };
@@ -137,13 +440,13 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
             }
         };
         
-        jest.spyOn(mockedAggregate, "getPartyByTypeAndId").mockResolvedValueOnce({} as any);
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdRequest").mockResolvedValueOnce({} as any);
         
         // Act
         eventHandler.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.getPartyByTypeAndId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
+       expect(mockedAggregate.getPartyByTypeAndIdRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
         
     });
 
@@ -162,7 +465,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         };
         const errorMessage = "execution error";
         
-        jest.spyOn(mockedAggregate, "getPartyByTypeAndId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdRequest").mockRejectedValueOnce(errorMessage);
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
@@ -187,13 +490,13 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
             }
         };
         
-        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockResolvedValueOnce({} as any);
         
         // Act
         eventHandler.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.getPartyByTypeAndIdAndSubId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
+       expect(mockedAggregate.getPartyByTypeAndIdAndSubIdRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
         
     });
 
@@ -212,7 +515,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         };
         const errorMessage = "execution error";
         
-        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockRejectedValueOnce(errorMessage);
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
@@ -312,7 +615,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         };
         const errorMessage = "execution error";
         
-        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubId").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockRejectedValueOnce(errorMessage);
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act

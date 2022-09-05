@@ -50,9 +50,13 @@ import {
     PartyAssociationDoesntExistsError,
     ParticipantAssociationDoesntExistsError,
     ParticipantAssociationAlreadyExistsError,
-    UnableToGetParticipantError
+    UnableToGetParticipantError,
+    UnableToInitMessageProducerError,
+    UnableToDestroyMessageProducerError,
+    UnableToSendMessageProducerError,
+    IMessage
 } from "@mojaloop/account-lookup-bc-domain";
-import {MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
@@ -92,6 +96,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 
     oracleProviderListRepo.push(oracleProviderRepo);
 }
+jest.setTimeout(100000);
 
 describe("account lookup - integration tests", () => {
     beforeAll(async () => {
@@ -162,6 +167,56 @@ describe("account lookup - integration tests", () => {
 
         //Assert
         expect(oracle).toEqual(partyId);
+    });
+
+    // Publisher
+    test("should throw error for being unable to initiate message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.init();
+            }
+        ).rejects.toThrow(UnableToInitMessageProducerError);
+
+    });
+
+    test("should initiate a new message publisher and send a message", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+        });
+
+        const message: IMessage = {
+            topic: 'test_topic',
+            value: { 
+                testValue: 1 
+            },
+            key: null,
+            headers: [
+                { key1: 'testStr' }
+            ]
+        }
+
+        //Act
+        const initiatedMessagePublisher = await messagePublisher.init();
+        await messagePublisher.send([message]);
+        await messagePublisher.destroy();
+
+        //Assert
+        expect(initiatedMessagePublisher).toBeUndefined();
+
     });
 
 
