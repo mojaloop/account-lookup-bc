@@ -1,9 +1,9 @@
 {
-  "name": "@mojaloop/account-lookup-bc-infrastructure",
+  "name": "@mojaloop/account-lookup-bc-svc",
   "version": "0.0.1",
-  "description": "Account Lookup BC infrastructure.",
+  "description": "Account Lookup BC service.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/modules/infrastructure",
+  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/account-lookup-svc",
   "bugs": {
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },
@@ -22,16 +22,21 @@
   ],
   "scripts": {
     "start": "yarn run service",
-    "service": "tsc && node dist/application/index.js",
+    "service": "tsc && node dist/index.js",
     "build": "tsc",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
+    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
     "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "workspace:*",
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8",
-    "mongodb": "^4.9.0"
+    "@mojaloop/account-lookup-bc-infrastructure": "workspace:*",
+    "@mojaloop/auditing-bc-client-lib": "^0.0.6",
+    "@mojaloop/auditing-bc-public-types-lib": "^0.0.7",
+    "@mojaloop/logging-bc-client-lib": "^0.0.10",
+    "@mojaloop/logging-bc-public-types-lib": "^0.0.3",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8"
   },
   "devDependencies": {
     "eslint": "^8.17.0",

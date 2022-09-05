@@ -1,9 +1,9 @@
 {
-  "name": "@mojaloop/account-lookup-bc-domain",
+  "name": "@mojaloop/account-lookup-bc-infrastructure",
   "version": "0.0.1",
-  "description": "Account Lookup BC domain.",
+  "description": "Account Lookup BC infrastructure.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/modules/domain",
+  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/infrastructure",
   "bugs": {
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },
@@ -26,14 +26,14 @@
     "build": "tsc",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
     "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.0.3"
+    "@mojaloop/account-lookup-bc-domain": "workspace:*",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8",
+    "mongodb": "^4.9.0"
   },
   "devDependencies": {
-    "@types/uuid": "^8.3.4",
     "eslint": "^8.17.0",
     "jest": "^28.1.1",
     "npm-check-updates": "^13.1.2",
