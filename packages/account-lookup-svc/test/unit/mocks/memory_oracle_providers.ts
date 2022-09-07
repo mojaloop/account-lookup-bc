@@ -43,138 +43,75 @@
 
  import {
      IOracleProvider,
+     IParticipant,
      IParty,
 	 UnableToAssociatePartyError,
 	 UnableToDisassociatePartyError,
  } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedParties, mockedPartyAssociations } from "./data";
 
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
 	private readonly logger: ILogger;
 
-	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
-	private readonly partyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error>;
+	
 
 	constructor(
 		logger: ILogger,
 	) {
 		this.logger = logger;
-		this.parties = mockedParties;
-		this.partyAssociations = mockedPartyAssociations;
 	}
 
-
 	async init(): Promise<void> {
+		return Promise.resolve();
 	}
 
 	async destroy(): Promise<void> {
+		return Promise.resolve();
 	}
+
+	getParticipantByTypeAndId(participantType: string, participantId: string): Promise<IParticipant | null> {
+		 throw new Error("Method not implemented.");
+	 }
+	 getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<IParticipant | null> {
+		 throw new Error("Method not implemented.");
+	 }
+	 associateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
+		 throw new Error("Method not implemented.");
+	 }
+	 associateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
+		 throw new Error("Method not implemented.");
+	 }
+	 disassociateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
+		 throw new Error("Method not implemented.");
+	 }
+	 disassociateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
+		 throw new Error("Method not implemented.");
+	 }
 
 	async getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null> {
 		
-		let party:IParty|Error | undefined;
-
-		mockedParties.forEach((partyFound:IParty| Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-		
-		if (!party) {
-			return null;
-		}
-		return party;
+		throw new Error("Method not implemented.");
 	}
 
 	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
-		let party:IParty| Error | undefined;
-
-		mockedParties.forEach((partyFound:IParty|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-
-		if (!party) {
-			return null;
-		}
-
-
-		return party;
+		throw new Error("Method not implemented.");
 	}
 
 	async associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToAssociatePartyError();
+		throw new Error("Method not implemented.");
 	}
 
 	async associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToAssociatePartyError();
+		throw new Error("Method not implemented.");
 	}
 
 	async disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociatePartyError();
+		throw new Error("Method not implemented.");
 	}
 
 	async disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociatePartyError();
+		throw new Error("Method not implemented.");
 	}
 }

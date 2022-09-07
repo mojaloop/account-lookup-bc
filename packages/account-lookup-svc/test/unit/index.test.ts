@@ -83,46 +83,49 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
 
  describe("Account Lookup Service", () => {
 
-    //#region region Index
-    describe("Index", () => {
-
-        afterEach(async () => {
-            jest.clearAllMocks();
-        });
-    
-        test("should be able to run start and init all variables", async()=>{
-            // Arrange
-            
-
-
-            // Act
-            await start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler);
-    
-            // Assert
-            expect(mockedConsumer.setTopics).toBeCalledTimes(1);
-            expect(mockedConsumer.connect).toBeCalledTimes(1);
-            expect(mockedConsumer.start).toBeCalledTimes(1);
-            expect(mockedConsumer.setCallbackFn).toHaveBeenNthCalledWith(1, (message: IMessage) => { 
-                logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-                mockedEventHandler.publishAccountLookUpEvent(message);
-                Promise.resolve();
-            });
-            expect(mockedPublisher.init).toBeCalledTimes(1);
-            expect(oracleFinder.init).toBeCalledTimes(1);
-            expect(oracleProviderList[0].init).toBeCalledTimes(1);
-            expect(mockedAggregate.init).toBeCalledTimes(1);
-            expect(mockedEventHandler.init).toBeCalledTimes(1);
-        });
-    
-    });
-
-
-    //#endregion
-    describe("Event Handlder", () => {
-
+  
     afterEach(async () => {
         jest.clearAllMocks();
     });
+
+    //#region region Index
+
+    test("should be able to run start and init all variables", async()=>{
+        // Arrange
+        const spyConsumerSetTopics = jest.spyOn(mockedConsumer, "setTopics");
+        const spyConsumerConnect = jest.spyOn(mockedConsumer, "connect");
+        const spyConsumerStart = jest.spyOn(mockedConsumer, "connect");
+        const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
+        const spyPublisherInit = jest.spyOn(mockedPublisher, "init");
+        const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
+        const spyEventHandlerInit = jest.spyOn(mockedEventHandler, "init");
+        
+        // Act
+        await start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler);
+
+        // Assert
+        expect(spyConsumerSetTopics).toBeCalledTimes(1); 
+        expect(spyConsumerConnect).toBeCalledTimes(1);
+        expect(spyConsumerStart).toBeCalledTimes(1);
+        expect(spyConsumerCallback).toBeCalledTimes(1); 
+        expect(spyPublisherInit).toBeCalledTimes(1);
+        expect(spyAggregateInit).toBeCalledTimes(1);
+        expect(spyEventHandlerInit).toBeCalledTimes(1);
+    });
+
+    test("should throw error if not able to start", async()=>{
+        // Arrange
+        const error = new Error("Error"); 
+        jest.spyOn(mockedConsumer, "setTopics").mockImplementationOnce(()=> {throw error;});
+        
+        // Act && Assert
+        await expect(
+            start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler))
+            .rejects.toThrowError(error);
+    });
+
+    //#endregion
+
 
     //#region AccountLookUpEventHandler
     test("should add all events for account lookup when init is called", async()=>{
@@ -787,8 +790,6 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         expect(mockedEventHandler.get().eventNames().length).toEqual(0);
         
         });
+        
+        //#endregion
     });
-    //#endregion
-
-
- });

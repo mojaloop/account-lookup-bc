@@ -45,7 +45,6 @@ import {
     IOracleFinder
 } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleList } from "./data";
 
 
 export class MemoryOracleFinder implements IOracleFinder {
@@ -56,28 +55,18 @@ export class MemoryOracleFinder implements IOracleFinder {
         logger: ILogger,
     ) {
         this.logger = logger;
-        this.oracleList = mockedOracleList;
+        this.oracleList = [];
+    }
+
+    getOracleForType(type: string): Promise<string | undefined> {
+        throw new Error("Method not implemented.");
     }
 
     async init(): Promise<void> {
-        
+        return Promise.resolve();
     }
 
     async destroy(): Promise<void> {
- 
-    }
-
-    async getOracleForType(type: String): Promise<String | undefined> {
-        const foundOracle = this.oracleList.find(oracle => oracle.type === type);
-        if(foundOracle?.type === "error") {
-            throw new Error();
-        }
-
-        if(foundOracle?.type === "not_found_oracle") {
-            return "non existing id";
-        }
-
-
-        return foundOracle?.id;
+        return Promise.resolve();
     }
 }

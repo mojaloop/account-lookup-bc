@@ -67,8 +67,10 @@ export class AccountLookupAggregate {
     async init(): Promise<void> {
 		try {
             this.oracleFinder.init();
+            this.logger.debug("Oracle finder initialized");
             for await (const oracle of this.oracleProviders) {
                 await oracle.init();
+                this.logger.debug("Oracle provider initialized with id" + oracle.id);
             }
             // this.messagePublisher.init()
 		} catch (error: unknown) {

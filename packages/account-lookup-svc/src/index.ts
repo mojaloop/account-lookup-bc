@@ -105,16 +105,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await messageConsumer.connect();
     await messageConsumer.start();
     logger.info("Kafka Consumer Initialised");
-
-    await oracleFinder.init();
-    logger.info("Oracle Finder Initialized");
-
-    oracleProvider.forEach(async oracleProvider => {
-      logger.info("Initializing Oracle Provider " + oracleProvider.id);
-      await oracleProvider.init();
-      logger.info("Oracle Provider " + oracleProvider.id + " Initialized");
-    });
-
+    
     logger.info("Initializing Message Publisher");
     await messagePublisher.init();
     logger.info("Message Publisher Initialized");
@@ -123,15 +114,18 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await aggregate.init();
     logger.info("Aggregate Initialized");
 
-    eventHandler =(eventHandlerParam)? eventHandler : new AccountLookUpEventHandler(logger, aggregate);
+    eventHandler =(eventHandlerParam)? eventHandlerParam : new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();
     logger.info("Event Handler Initialized");
 
-    messageConsumer.setCallbackFn(async (message:IMessage) => {
+    const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       eventHandler.publishAccountLookUpEvent(message);
       Promise.resolve();
-    });  
+    };
+    
+    messageConsumer.setCallbackFn(callbackFunction);  
+
   }
   catch(err){
     logger.error(err);
