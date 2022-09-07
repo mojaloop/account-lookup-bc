@@ -42,8 +42,13 @@
 
 import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCache } from "./../../src/localcache";
+import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+
 
  let localCache: ILocalCache<number>;
+
+ const logger: ILogger = new ConsoleLogger();
+ logger.setLogLevel(LogLevel.FATAL);
 
  describe("Infrastructure", () => {
     
@@ -51,7 +56,7 @@ import { LocalCache } from "./../../src/localcache";
     test("should create a new local cache instance", async()=>{ 
         
         //Arrange && Act 
-        localCache = new LocalCache<number>();
+        localCache = new LocalCache<number>(logger);
         localCache.set("key", 1);
         
         //Assert
@@ -62,7 +67,7 @@ import { LocalCache } from "./../../src/localcache";
     test("should return null if time to live for the specific entry is surpassed", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(1);
+        localCache = new LocalCache<number>(logger,1);
         localCache.set("key", 1);
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -76,7 +81,7 @@ import { LocalCache } from "./../../src/localcache";
     test("should return value if time to live for the specific entry is not surpassed", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(10);
+        localCache = new LocalCache<number>(logger,10);
         localCache.set("key", 1);
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -90,7 +95,7 @@ import { LocalCache } from "./../../src/localcache";
     test("should return null if no key is present", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>();
+        localCache = new LocalCache<number>(logger);
         localCache.set("key", 1);
         
         //Act
@@ -100,10 +105,21 @@ import { LocalCache } from "./../../src/localcache";
         expect(result).toBeNull();
     });
 
+    test("should throw error when try to set a entry that already exists", async()=>{ 
+        
+        //Arrange 
+        localCache = new LocalCache<number>(logger);
+        localCache.set("key", 1);
+        
+        //Act && Assert
+        expect(() => localCache.set("key", 1)).toThrowError();
+        
+    });
+
     test("should clear cache", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>();
+        localCache = new LocalCache<number>(logger);
         localCache.set("key", 1);
         localCache.destroy();
         

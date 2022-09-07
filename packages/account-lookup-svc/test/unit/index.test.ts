@@ -43,7 +43,7 @@ import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/m
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IAccountLookUpEventHandler, AccountLookUpEventHandler } from "../../src/event_handler";
 import { AccountLookUpEventsType, IAccountLookUpMessage } from "../../src/types";
 import { start } from "../../src/index";

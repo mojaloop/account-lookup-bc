@@ -51,20 +51,17 @@ export class AccountLookupAggregate {
 	private readonly oracleFinder: IOracleFinder;
 	private readonly oracleProviders: IOracleProvider[];
     private readonly messagePublisher: IMessagePublisher;  
-    private readonly cacheControl: ICacheControl;  
 
 	constructor(
 		logger: ILogger,
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
-        messagePublisher:IMessagePublisher,
-        cacheControl:ICacheControl
+        messagePublisher:IMessagePublisher
 	) {
 		this.logger = logger;
 		this.oracleFinder = oracleFinder;
 		this.oracleProviders = oracleProviders;
         this.messagePublisher = messagePublisher;
-        this.cacheControl = cacheControl;
     }
 
     async init(): Promise<void> {
@@ -209,11 +206,11 @@ export class AccountLookupAggregate {
 
     //Participant.
     async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null|undefined>{
-        const cachedParticipant:IParticipant = this.cacheControl.get(participantType, participantId);
+        // const cachedParticipant:IParticipant = this.cacheControl.get(participantType, participantId);
 
-        if(cachedParticipant) {
-            return cachedParticipant;
-        }
+        //if(cachedParticipant) {
+          //  return cachedParticipant;
+        //}
 
         const oracleProvider = await this.getOracleProvider(participantType);
 

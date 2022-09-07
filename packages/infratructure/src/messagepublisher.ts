@@ -43,6 +43,7 @@ import { IMessagePublisher, IMessage, UnableToInitMessageProducerError, UnableTo
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaProducer, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
+//TODO: export to types
 type KafkaProducerOptions =  MLKafkaProducerOptions & { kafkaTopic: string }
 
  export class KafkaMessagePublisher implements IMessagePublisher {

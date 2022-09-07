@@ -78,7 +78,7 @@ export interface IOracleProvider{
     disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
 }
 
-//TODO: remove Message interfaces
+//TODO: remove Message interfaces and use IMessage, check on event handler
 export interface IMessageHeader {
     [key: string]: string | Buffer;
 }
@@ -103,7 +103,6 @@ export interface IMessagePublisher {
 export interface ILocalCache<T> {
     get(key:string):T|null;
     set(key:string, value:T):void;
-    changeTTL(ttl:number):void;
     destroy():void;
 }
 

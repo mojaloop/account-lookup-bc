@@ -42,26 +42,33 @@
 
 import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCacheResult } from "./types";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
 export class LocalCache<T> implements ILocalCache<T>{
     private readonly _cache: Map<string, LocalCacheResult<T>>;
+    private readonly _logger: ILogger;
     // in seconds
     private ttl: number;
 
-    constructor(ttl: number=320) {
+    constructor(logger:ILogger, ttl: number=320) {
         this._cache = new Map<string, LocalCacheResult<T>>();
+        this._logger = logger;
         this.ttl = ttl;
     }
     
     get(key: string): T | null {
+        this._logger.debug(`LocalCache: get ${key}`);
         const currentTime = Math.round(Date.now() / 1000);
         const cacheResult = this._cache.get(key);
         if (cacheResult ) {
+            this._logger.debug(`LocalCache: get ${key} - found`);
             if(currentTime - cacheResult.timestamp  <= this.ttl)
             {
+                this._logger.debug(`LocalCache: get ${key} - found - not expired`);
                 return cacheResult.value;
             }
             else{
+                this._logger.debug(`LocalCache: get ${key} - found - expired`);
                 this._cache.delete(key);
             }
         }
@@ -70,14 +77,17 @@ export class LocalCache<T> implements ILocalCache<T>{
 
     set(key: string, value: T): void {
         if(this._cache.has(key)){
+            this._logger.error(`LocalCache: set ${key} - already exists`);
             throw new Error("Key already exists");
         }
         const currentTime = Math.round(Date.now() / 1000);
         this._cache.set(key, {timestamp: currentTime, value: value});
+        this._logger.debug(`LocalCache: set ${key} - ${value}`);
     }
 
     destroy(): void {
        this._cache.clear();
+       this._logger.debug(`LocalCache: destroyed`);
     }
 
 }
