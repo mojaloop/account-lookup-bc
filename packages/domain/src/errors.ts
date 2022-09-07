@@ -38,7 +38,7 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
 
 // Party
@@ -100,3 +100,6 @@ export class UnableToInitMessageProducerError extends Error {}
 export class UnableToDestroyMessageProducerError extends Error {}
 export class UnableToSendMessageProducerError extends Error {}
 
+//Local Cache
+
+export class LocalCacheError extends Error {}

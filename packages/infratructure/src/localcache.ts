@@ -38,13 +38,46 @@
  --------------
  **/
 
-"use strict";
+ "use strict";
 
-export type MongoQueryError = {
-    message: string
-};
+import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
+import { LocalCacheResult } from "./types";
 
-export interface LocalCacheResult<T> {
-    value: T | null;
-    timestamp: number;
+export class LocalCache<T> implements ILocalCache<T>{
+    private readonly _cache: Map<string, LocalCacheResult<T>>;
+    // in seconds
+    private ttl: number;
+
+    constructor(ttl: number=320) {
+        this._cache = new Map<string, LocalCacheResult<T>>();
+        this.ttl = ttl;
+    }
+    
+    get(key: string): T | null {
+        const currentTime = Math.round(Date.now() / 1000);
+        const cacheResult = this._cache.get(key);
+        if (cacheResult ) {
+            if(currentTime - cacheResult.timestamp  <= this.ttl)
+            {
+                return cacheResult.value;
+            }
+            else{
+                this._cache.delete(key);
+            }
+        }
+        return null;
+    }
+
+    set(key: string, value: T): void {
+        if(this._cache.has(key)){
+            throw new Error("Key already exists");
+        }
+        const currentTime = Math.round(Date.now() / 1000);
+        this._cache.set(key, {timestamp: currentTime, value: value});
+    }
+
+    destroy(): void {
+       this._cache.clear();
+    }
+
 }
