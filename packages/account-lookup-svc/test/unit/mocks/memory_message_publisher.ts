@@ -38,35 +38,20 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
+import {IMessagePublisher, IMessageValue} from "@mojaloop/account-lookup-bc-domain";
 
-import {
-    IOracleFinder
-} from "@mojaloop/account-lookup-bc-domain";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-
-
-export class MemoryOracleFinder implements IOracleFinder {
-    private readonly logger: ILogger;
-    private oracleList: {id:string, type:string}[];
-
-    constructor(
-        logger: ILogger,
-    ) {
-        this.logger = logger;
-        this.oracleList = [];
-    }
-
-    getOracleForType(type: string): Promise<string | undefined> {
-        throw new Error("Method not implemented.");
-    }
-
-    async init(): Promise<void> {
+export class MemoryMessagePublisher implements IMessagePublisher{
+    
+    init(): Promise<void> {
         return Promise.resolve();
     }
-
-    async destroy(): Promise<void> {
+    
+    destroy(): Promise<void> {
+        return Promise.resolve();
+    }
+    send(message: IMessageValue | IMessageValue[]): Promise<void> {
         return Promise.resolve();
     }
 }

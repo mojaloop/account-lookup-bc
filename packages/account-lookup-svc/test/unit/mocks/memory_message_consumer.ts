@@ -38,35 +38,43 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
+import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-import {
-    IOracleFinder
-} from "@mojaloop/account-lookup-bc-domain";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-
-
-export class MemoryOracleFinder implements IOracleFinder {
-    private readonly logger: ILogger;
-    private oracleList: {id:string, type:string}[];
-
-    constructor(
-        logger: ILogger,
-    ) {
-        this.logger = logger;
-        this.oracleList = [];
-    }
-
-    getOracleForType(type: string): Promise<string | undefined> {
-        throw new Error("Method not implemented.");
-    }
-
-    async init(): Promise<void> {
+export class MemoryMessageConsumer implements IMessageConsumer{
+    
+   
+    setCallbackFn(handlerCallback: (message: IMessage) => Promise<void>): void {
+        return;
+    };
+    
+   setFilteringFn(filterFn: (message: IMessage) => boolean): void{
+        return;
+   };
+    
+   setTopics(topics: string[]): void {
+        return;
+   };
+     
+    destroy(force: boolean) : Promise<void>{
+         return Promise.resolve();      
+    };
+    
+    connect() : Promise<void> {
+        return Promise.resolve();
+    };
+    
+    disconnect(force: boolean) : Promise<void> {
+        return Promise.resolve();
+    };
+    
+    start() : Promise<void> {
+        return Promise.resolve();
+    };
+    
+    stop (): Promise<void> {
         return Promise.resolve();
     }
 
-    async destroy(): Promise<void> {
-        return Promise.resolve();
-    }
 }

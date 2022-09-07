@@ -38,13 +38,18 @@
  --------------
  **/
 
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/data";
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IAccountLookUpEventHandler, AccountLookUpEventHandler } from "../../src/event_handler";
 import { AccountLookUpEventsType, IAccountLookUpMessage } from "../../src/types";
+import { start } from "../../src/index";
+import { MemoryMessagePublisher } from "./mocks/memory_message_publisher";
+import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
+
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -63,6 +68,10 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     oracleProviderList.push(oracleProvider);
 }
 
+const mockedPublisher: IMessagePublisher = new MemoryMessagePublisher();
+
+const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
+
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
@@ -70,13 +79,53 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     {} as any
 );
 
-const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
+const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
 
  describe("Account Lookup Service", () => {
 
+  
     afterEach(async () => {
         jest.clearAllMocks();
     });
+
+    //#region region Index
+
+    test("should be able to run start and init all variables", async()=>{
+        // Arrange
+        const spyConsumerSetTopics = jest.spyOn(mockedConsumer, "setTopics");
+        const spyConsumerConnect = jest.spyOn(mockedConsumer, "connect");
+        const spyConsumerStart = jest.spyOn(mockedConsumer, "connect");
+        const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
+        const spyPublisherInit = jest.spyOn(mockedPublisher, "init");
+        const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
+        const spyEventHandlerInit = jest.spyOn(mockedEventHandler, "init");
+        
+        // Act
+        await start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler);
+
+        // Assert
+        expect(spyConsumerSetTopics).toBeCalledTimes(1); 
+        expect(spyConsumerConnect).toBeCalledTimes(1);
+        expect(spyConsumerStart).toBeCalledTimes(1);
+        expect(spyConsumerCallback).toBeCalledTimes(1); 
+        expect(spyPublisherInit).toBeCalledTimes(1);
+        expect(spyAggregateInit).toBeCalledTimes(1);
+        expect(spyEventHandlerInit).toBeCalledTimes(1);
+    });
+
+    test("should throw error if not able to start", async()=>{
+        // Arrange
+        const error = new Error("Error"); 
+        jest.spyOn(mockedConsumer, "setTopics").mockImplementationOnce(()=> {throw error;});
+        
+        // Act && Assert
+        await expect(
+            start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler))
+            .rejects.toThrowError(error);
+    });
+
+    //#endregion
+
 
     //#region AccountLookUpEventHandler
     test("should add all events for account lookup when init is called", async()=>{
@@ -84,10 +133,10 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         const eventNames = Object.values(AccountLookUpEventsType);
 
         // Act
-        eventHandler.init();
+        mockedEventHandler.init();
 
         // Assert
-        expect(eventHandler.get().eventNames()).toEqual(eventNames);
+        expect(mockedEventHandler.get().eventNames()).toEqual(eventNames);
 
     });
 
@@ -99,7 +148,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        eventHandler.publishAccountLookUpEvent(invalidMessage);
+        mockedEventHandler.publishAccountLookUpEvent(invalidMessage);
 
         // Assert
         expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
@@ -117,7 +166,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        eventHandler.publishAccountLookUpEvent(invalidMessage);
+        mockedEventHandler.publishAccountLookUpEvent(invalidMessage);
 
         // Assert
         expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${invalidMessage.value.type} is not a valid event type`);
@@ -142,7 +191,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "getParticipantByTypeAndId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.getParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
@@ -168,7 +217,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndId}: ${errorMessage}`);
@@ -192,7 +241,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "getParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.getParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
@@ -218,7 +267,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -242,7 +291,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "associateParticipantByTypeAndId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.associateParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
@@ -268,7 +317,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.AssociateParticipantByTypeAndId}: ${errorMessage}`);
@@ -292,7 +341,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "associateParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.associateParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
@@ -318,7 +367,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -342,7 +391,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.disassociateParticipantByTypeAndId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
@@ -368,7 +417,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParticipantByTypeAndId}: ${errorMessage}`);
@@ -392,7 +441,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "disassociateParticipantByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.disassociateParticipantByTypeAndIdAndSubId).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
@@ -418,7 +467,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParticipantByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -443,7 +492,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "getPartyByTypeAndIdRequest").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.getPartyByTypeAndIdRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
@@ -469,7 +518,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndId}: ${errorMessage}`);
@@ -493,7 +542,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.getPartyByTypeAndIdAndSubIdRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
@@ -519,7 +568,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -543,7 +592,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "associatePartyByTypeAndId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.associatePartyByTypeAndId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
@@ -569,7 +618,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.AssociatePartyByTypeAndId}: ${errorMessage}`);
@@ -593,7 +642,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "associatePartyByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.associatePartyByTypeAndIdAndSubId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
@@ -619,7 +668,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -643,7 +692,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "disassociatePartyByTypeAndId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.disassociatePartyByTypeAndId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
@@ -669,7 +718,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociatePartyByTypeAndId}: ${errorMessage}`);
@@ -693,7 +742,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(mockedAggregate, "disassociatePartyByTypeAndIdAndSubId").mockResolvedValueOnce({} as any);
         
         // Act
-        eventHandler.publishAccountLookUpEvent(message);
+        mockedEventHandler.publishAccountLookUpEvent(message);
 
         // Assert
        expect(mockedAggregate.disassociatePartyByTypeAndIdAndSubId).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
@@ -719,7 +768,7 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
         
         // Act
-        await Promise.resolve(eventHandler.publishAccountLookUpEvent(message));
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
         expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociatePartyByTypeAndIdAndSubId}: ${errorMessage}`);
@@ -732,17 +781,15 @@ const eventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(l
         const eventNames = Object.values(AccountLookUpEventsType);
         
         // Act
-        eventHandler.destroy();
+        mockedEventHandler.destroy();
 
         // Assert
         eventNames.forEach(eventName => {
-            expect(eventHandler.get().listenerCount(eventName)).toBe(0);
+            expect(mockedEventHandler.get().listenerCount(eventName)).toBe(0);
         });
-        expect(eventHandler.get().eventNames().length).toEqual(0);
+        expect(mockedEventHandler.get().eventNames().length).toEqual(0);
         
+        });
+        
+        //#endregion
     });
-
-    //#endregion
-
-
- });
