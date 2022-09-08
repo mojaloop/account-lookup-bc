@@ -62,7 +62,7 @@ ParticipantAssociationAlreadyExistsError,
 UnableToStoreParticipantAssociationError
 } from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
-import { MongoQueryError } from "./types";
+import { MongoQueryError } from "./../types";
 
 export class MongoOracleProviderRepo implements IOracleProvider{
 	// Properties received through the constructor.

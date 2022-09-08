@@ -105,6 +105,34 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
         expect(result).toBeNull();
     });
 
+    test("should be able to store new value, after deleting the previous one with the same key", async()=>{ 
+        
+        //Arrange 
+        localCache = new LocalCache(logger);
+        localCache.set(1,"type","key");
+        localCache.delete("type:key");
+        
+        //Act
+        localCache.set(2,"type","key");
+
+        //Assert
+        const result = localCache.get("type:key");
+        expect(result).toBe(2);
+    });
+
+    test("should omit empty string from keys passed as argument", async()=>{ 
+        
+        //Arrange 
+        localCache = new LocalCache(logger);
+        localCache.set(1,"type","");
+        
+        //Act
+        const result = localCache.get("type");
+
+        //Assert
+        expect(result).toBe(1);
+    });
+
     test("should throw error when try to set a entry that already exists", async()=>{ 
         
         //Arrange 

@@ -40,7 +40,7 @@
 
  "use strict";
 
-import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
+import { ILocalCache, LocalCacheError } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCacheResult } from "./types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
@@ -55,9 +55,8 @@ export class LocalCache implements ILocalCache{
         this._logger = logger;
         this.ttl = ttl;
     }
-    
     get(...keys: string[]): object | string | number | null {
-        const key = keys.join(":");
+        const key = this.createKey(...keys);
         this._logger.debug(`LocalCache: get ${key}`);
         const currentTime = Math.round(Date.now() / 1000);
         const cacheResult = this._cache.get(key);
@@ -68,16 +67,16 @@ export class LocalCache implements ILocalCache{
                 this._logger.debug(`LocalCache: get ${key} - found - not expired`);
                 return cacheResult.value;
             }
-            else{
+            else {
                 this._logger.debug(`LocalCache: get ${key} - found - expired`);
-                this._cache.delete(key);
+                this.delete(...keys);
             }
         }
         return null;
     }
 
     set(value: NonNullable<string|number|object>,...keys: string[]): void {
-        const key = keys.join(":");
+        const key = this.createKey(...keys);
         if(this._cache.has(key)){
             this._logger.error(`LocalCache: set ${key} - already exists`);
             throw new Error("Key already exists");
@@ -87,9 +86,24 @@ export class LocalCache implements ILocalCache{
         this._logger.debug(`LocalCache: set ${key} - ${value}`);
     }
 
+    delete(...keys: string[]): void {
+        const key = this.createKey(...keys);
+        this._cache.delete(key);
+        this._logger.debug(`LocalCache: deleted ${key}`);
+    }
+
     destroy(): void {
        this._cache.clear();
        this._logger.debug(`LocalCache: destroyed`);
+    }
+
+    private createKey(...keys: string[]): string {
+        try{
+            return keys.filter(x => typeof x === 'string' && x.length > 0).join(":");
+        }
+        catch(err){
+            throw new LocalCacheError(`Error creating key: ${err}`);
+        }
     }
 
 }

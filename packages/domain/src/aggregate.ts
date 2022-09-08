@@ -51,7 +51,8 @@ export class AccountLookupAggregate {
 	private readonly _oracleFinder: IOracleFinder;
 	private readonly _oracleProviders: IOracleProvider[];
     private readonly _messagePublisher: IMessagePublisher;
-    private readonly _localCache: ILocalCache;  
+    private readonly _localCache: ILocalCache;
+    private participanyCacheKeyPrefix: LocalCacheKeyPrefix = "participant";  
 
 	constructor(
 		logger: ILogger,
@@ -209,8 +210,7 @@ export class AccountLookupAggregate {
 
     //Participant.
     async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null|undefined>{
-        const participanyCacheKeyPrefix: LocalCacheKeyPrefix = "participant";
-        const cachedParticipant = this._localCache.get(participanyCacheKeyPrefix, participantType, participantId) as IParticipant;
+        const cachedParticipant = this.extractParticipantFromCache(participantType, participantId);
         
         if(cachedParticipant) {
             return cachedParticipant;
@@ -236,6 +236,14 @@ export class AccountLookupAggregate {
     }
 
     async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null|undefined>{
+        const cachedParticipant = this.extractParticipantFromCache(participantType, participantId);
+        
+        if(cachedParticipant) {
+            return cachedParticipant;
+        }
+
+        //TODO: Needs to add to cache if not found.
+
         const oracleProvider = await this.getOracleProvider(participantType);
 
         const party = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
@@ -250,6 +258,20 @@ export class AccountLookupAggregate {
         }
 
         return party;
+    }
+
+    private extractParticipantFromCache(participantType: string, participantId: string, participantSubId?:string):IParticipant|null {
+        const cachedParticipant = this._localCache.get(this.participanyCacheKeyPrefix, participantType, participantId, participantSubId ?? "") as IParticipant;
+        return cachedParticipant;
+    }
+
+    private storeParticipantInCache(participant:IParticipant):void {
+        try{
+            this._localCache.set(participant, this.participanyCacheKeyPrefix, participant.type, participant.id, participant.subId ?? "");
+        }
+        catch(error){
+            this._logger.error("Unable to store participant in cache " + error);
+        }
     }
 
     async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<void>{

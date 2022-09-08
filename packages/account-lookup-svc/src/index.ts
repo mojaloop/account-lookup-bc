@@ -112,13 +112,13 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await messagePublisher.init();
     logger.info("Message Publisher Initialized");
 
-    localCache = (localCacheParam) ? localCacheParam : new LocalCache(logger);
+    localCache = localCacheParam ?? new LocalCache(logger);
 
-    aggregate = (aggregateParam)?aggregateParam : new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher, localCache);
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher, localCache);
     await aggregate.init();
     logger.info("Aggregate Initialized");
 
-    eventHandler =(eventHandlerParam)? eventHandlerParam : new AccountLookUpEventHandler(logger, aggregate);
+    eventHandler =eventHandlerParam ?? new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();
     logger.info("Event Handler Initialized");
 
@@ -139,18 +139,18 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
 async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, oracleProviderParam?: IOracleProvider[]):Promise<void>  {
 
-  logger = (loggerParam)? loggerParam : new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
+  logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
   if (!loggerParam) {
     await (logger as KafkaLogger).start();
     logger.info("Kafka Logger Initialised");
   }
   
-  oracleFinder = (oracleFinderParam)? oracleFinderParam : new MongoOracleFinderRepo(logger,DB_URL, DB_NAME, ORACLE_PROVIDERS_COLLECTION_NAME);
+  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,DB_URL, DB_NAME, ORACLE_PROVIDERS_COLLECTION_NAME);
 
-  oracleProvider = (oracleProviderParam)? oracleProviderParam : [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
+  oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
 
-  messagePublisher = (messagePublisherParam)? messagePublisherParam : messagePublisher = new KafkaMessagePublisher(logger,
+  messagePublisher = messagePublisherParam ??  new KafkaMessagePublisher(logger,
     {
       kafkaBrokerList: KAFKA_URL,
       producerClientId: `${BC_NAME}_${APP_NAME}`,
@@ -159,7 +159,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
     }
   );
 
-  messageConsumer = (messageConsumerParam)? messageConsumerParam : new MLKafkaConsumer(consumerOptions, logger);
+  messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 

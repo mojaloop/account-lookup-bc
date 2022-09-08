@@ -73,16 +73,18 @@ const mockedPublisher: IMessagePublisher = new MemoryMessagePublisher();
 
 const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
+const mockedLocalCache:ILocalCache = new MemoryLocalCache();
+
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
     oracleProviderList,
-    {} as any
+    mockedPublisher,
+    mockedLocalCache
 );
 
 const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
 
-const mockedLocalCache:ILocalCache = new MemoryLocalCache();
 
  describe("Account Lookup Service", () => {
 

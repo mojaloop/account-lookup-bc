@@ -40,7 +40,7 @@
 
  "use strict";
 
-export * from "./oracleprovider";
-export * from "./oraclefinder";
+export * from "./oracles/oracleprovider";
+export * from "./oracles/oraclefinder";
 export * from "./messagepublisher";
 export * from "./localcache";

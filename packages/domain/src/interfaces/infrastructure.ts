@@ -103,6 +103,7 @@ export interface IMessagePublisher {
 export interface ILocalCache {
     get(...keys: string[]):string|number|object|null;
     set(value:NonNullable<string|number|object>,...keys: string[]):void;
+    delete(...keys: string[]):void;
     destroy():void;
 }
 
