@@ -38,7 +38,7 @@
  --------------
  **/
 
-import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, ILocalCache, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/data";
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
@@ -49,6 +49,7 @@ import { AccountLookUpEventsType, IAccountLookUpMessage } from "../../src/types"
 import { start } from "../../src/index";
 import { MemoryMessagePublisher } from "./mocks/memory_message_publisher";
 import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
+import { MemoryLocalCache } from "./mocks/memory_local_cache";
 
 
 
@@ -81,6 +82,8 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
 
 const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHandler(logger, mockedAggregate);
 
+const mockedLocalCache:ILocalCache = new MemoryLocalCache();
+
  describe("Account Lookup Service", () => {
 
   
@@ -101,7 +104,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         const spyEventHandlerInit = jest.spyOn(mockedEventHandler, "init");
         
         // Act
-        await start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler);
+        await start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedLocalCache, mockedAggregate,mockedEventHandler);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1); 
@@ -120,7 +123,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         
         // Act && Assert
         await expect(
-            start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedAggregate,mockedEventHandler))
+            start(logger,mockedConsumer,mockedPublisher, oracleFinder,oracleProviderList, mockedLocalCache, mockedAggregate,mockedEventHandler))
             .rejects.toThrowError(error);
     });
 

@@ -43,51 +43,54 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { GetParticipantError, GetPartyError, NoSuchParticipantError, NoSuchPartyError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
-import { IMessagePublisher, IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
-import { IParticipant, IParty } from "./types";
+import { ILocalCache, IMessagePublisher, IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
+import { IParticipant, IParty, LocalCacheKeyPrefix } from "./types";
 
 export class AccountLookupAggregate {
-	private readonly logger: ILogger;
-	private readonly oracleFinder: IOracleFinder;
-	private readonly oracleProviders: IOracleProvider[];
-    private readonly messagePublisher: IMessagePublisher;  
+	private readonly _logger: ILogger;
+	private readonly _oracleFinder: IOracleFinder;
+	private readonly _oracleProviders: IOracleProvider[];
+    private readonly _messagePublisher: IMessagePublisher;
+    private readonly _localCache: ILocalCache;  
 
 	constructor(
 		logger: ILogger,
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
-        messagePublisher:IMessagePublisher
+        messagePublisher:IMessagePublisher,
+        localCache:ILocalCache
 	) {
-		this.logger = logger;
-		this.oracleFinder = oracleFinder;
-		this.oracleProviders = oracleProviders;
-        this.messagePublisher = messagePublisher;
+		this._logger = logger;
+		this._oracleFinder = oracleFinder;
+		this._oracleProviders = oracleProviders;
+        this._messagePublisher = messagePublisher;
+        this._localCache = localCache;
     }
 
     async init(): Promise<void> {
 		try {
-            this.oracleFinder.init();
-            this.logger.debug("Oracle finder initialized");
-            for await (const oracle of this.oracleProviders) {
+            this._oracleFinder.init();
+            this._logger.debug("Oracle finder initialized");
+            for await (const oracle of this._oracleProviders) {
                 await oracle.init();
-                this.logger.debug("Oracle provider initialized with id" + oracle.id);
+                this._logger.debug("Oracle provider initialized with id" + oracle.id);
             }
             // this.messagePublisher.init()
 		} catch (error: unknown) {
-			this.logger.fatal("Unable to intialize account lookup aggregate" + error);
+			this._logger.fatal("Unable to intialize account lookup aggregate" + error);
 			throw error;
 		}
 	}
 
 	async destroy(): Promise<void> {
         try{
-		await this.oracleFinder.destroy();
-        for await (const oracle of this.oracleProviders) {
+		await this._oracleFinder.destroy();
+        for await (const oracle of this._oracleProviders) {
             oracle.destroy();
         }
         }
         catch(error){
-            this.logger.fatal("Unable to destroy account lookup aggregate" + error);
+            this._logger.fatal("Unable to destroy account lookup aggregate" + error);
             throw error;
         }
 	}
@@ -98,16 +101,16 @@ export class AccountLookupAggregate {
 
         const party = await oracleProvider.getPartyByTypeAndId(partyType, partyId)
         .catch(error=>{
-            this.logger.error(`Unable to get party by type: ${partyType} and id: ${partyId} ` + error);
+            this._logger.error(`Unable to get party by type: ${partyType} and id: ${partyId} ` + error);
             throw new GetPartyError(error);
         });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${partyType} and id: ${partyId} found`);
+            this._logger.debug(`No party by type: ${partyType} and id: ${partyId} found`);
             throw new NoSuchPartyError();
         }
 
-        this.messagePublisher.send({ 
+        this._messagePublisher.send({ 
             id: partyId,
             type: partyType,
         });
@@ -118,12 +121,12 @@ export class AccountLookupAggregate {
 
         const party = await oracleProvider.getPartyByTypeAndId(partyType, partyId)
         .catch(error=>{
-            this.logger.error(`Unable to get party by type: ${partyType} and id: ${partyId} ` + error);
+            this._logger.error(`Unable to get party by type: ${partyType} and id: ${partyId} ` + error);
             throw new GetPartyError(error);
         });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${partyType} and id: ${partyId} found`);
+            this._logger.debug(`No party by type: ${partyType} and id: ${partyId} found`);
             throw new NoSuchPartyError();
         }
         
@@ -135,16 +138,16 @@ export class AccountLookupAggregate {
 
         const party = await oracleProvider.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId)
         .catch(error=>{
-            this.logger.error(`Unable to get party by type: ${partyType} and id: ${partyId}  and subId: ${partySubId} ` + error);
+            this._logger.error(`Unable to get party by type: ${partyType} and id: ${partyId}  and subId: ${partySubId} ` + error);
             throw new GetPartyError(error);
         });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${partyType} and id: ${partyId} and subId: ${partySubId} found`);
+            this._logger.debug(`No party by type: ${partyType} and id: ${partyId} and subId: ${partySubId} found`);
             throw new NoSuchPartyError();
         }
 
-        this.messagePublisher.send({ 
+        this._messagePublisher.send({ 
             id: partyId,
             type: partyType,
             subId: partySubId
@@ -156,12 +159,12 @@ export class AccountLookupAggregate {
 
         const party = await oracleProvider.getPartyByTypeAndIdAndSubId(partyType, partyId, partySubId)
         .catch(error=>{
-            this.logger.error(`Unable to get party by type: ${partyType} and id: ${partySubId} and subId: ${partySubId} ` + error);
+            this._logger.error(`Unable to get party by type: ${partyType} and id: ${partySubId} and subId: ${partySubId} ` + error);
             throw new GetPartyError(error);
         });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${partyType} and id: ${partyId} and subId: ${partySubId} found`);
+            this._logger.debug(`No party by type: ${partyType} and id: ${partyId} and subId: ${partySubId} found`);
             throw new NoSuchPartyError();
         }
         
@@ -172,7 +175,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(partyType);
 
         await oracleProvider.associatePartyByTypeAndId(partyType, partyId).catch(error=>{
-            this.logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} ` + error);
+            this._logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} ` + error);
             throw new UnableToAssociatePartyError(error);
         });
     }
@@ -181,7 +184,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(partyType);
 
         await oracleProvider.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId).catch(error=>{
-            this.logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} and subId:${partySubId} ` + error);
+            this._logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} and subId:${partySubId} ` + error);
             throw new UnableToAssociatePartyError(error);
         });
     }
@@ -190,7 +193,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(partyType);
 
         await oracleProvider.disassociatePartyByTypeAndId(partyType, partyId).catch(error=>{
-            this.logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
+            this._logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
             throw new UnableToDisassociatePartyError(error);
         });
     }
@@ -199,29 +202,32 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(partyType);
 
         await oracleProvider.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId).catch(error=>{
-            this.logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} and subId:${partySubId} ` + error);
+            this._logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} and subId:${partySubId} ` + error);
             throw new UnableToDisassociatePartyError(error);
         });
     }
 
     //Participant.
     async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null|undefined>{
-        // const cachedParticipant:IParticipant = this.cacheControl.get(participantType, participantId);
+        const participanyCacheKeyPrefix: LocalCacheKeyPrefix = "participant";
+        const cachedParticipant = this._localCache.get(participanyCacheKeyPrefix, participantType, participantId) as IParticipant;
+        
+        if(cachedParticipant) {
+            return cachedParticipant;
+        }
 
-        //if(cachedParticipant) {
-          //  return cachedParticipant;
-        //}
+        //TODO: Needs to add to cache if not found.
 
         const oracleProvider = await this.getOracleProvider(participantType);
 
         const party = await oracleProvider.getParticipantByTypeAndId(participantType, participantId)
         .catch(error=>{
-            this.logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} ` + error);
+            this._logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} ` + error);
             throw new GetParticipantError(error);
         });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${participantType} and id: ${participantId} found`);
+            this._logger.debug(`No party by type: ${participantType} and id: ${participantId} found`);
             throw new NoSuchParticipantError();
         }
         
@@ -234,12 +240,12 @@ export class AccountLookupAggregate {
 
         const party = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
             .catch(error=>{
-                this.logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
+                this._logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
                 throw new GetParticipantError(error);
             });
 
         if (!party) {
-            this.logger.debug(`No party by type: ${participantType} and id: ${participantId}  and subId:${participantSubId} found`);
+            this._logger.debug(`No party by type: ${participantType} and id: ${participantId}  and subId:${participantSubId} found`);
             throw new NoSuchParticipantError();
         }
 
@@ -250,7 +256,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(participantType);
 
         await oracleProvider.associateParticipantByTypeAndId(participantType, participantId).catch(error=>{
-            this.logger.error(`Unable to associate party by type: ${participantType} and id: ${participantId} ` + error);
+            this._logger.error(`Unable to associate party by type: ${participantType} and id: ${participantId} ` + error);
             throw new UnableToAssociateParticipantError(error);
         });
     }
@@ -259,7 +265,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(participantType);
 
         await oracleProvider.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId).catch(error=>{
-            this.logger.error(`Unable to associate party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
+            this._logger.error(`Unable to associate party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
             throw new UnableToAssociateParticipantError(error);
         });
     }
@@ -268,7 +274,7 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(participantType);
 
         await oracleProvider.disassociateParticipantByTypeAndId(participantType, participantId).catch(error=>{
-            this.logger.error(`Unable to disassociate party by type: ${participantType} and id: ${participantId} ` + error);
+            this._logger.error(`Unable to disassociate party by type: ${participantType} and id: ${participantId} ` + error);
             throw new UnableToDisassociateParticipantError(error);
         });
     }
@@ -277,27 +283,27 @@ export class AccountLookupAggregate {
         const oracleProvider = await this.getOracleProvider(participantType);
 
         await oracleProvider.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId).catch(error=>{
-            this.logger.error(`Unable to disassociate party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
+            this._logger.error(`Unable to disassociate party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
             throw new UnableToDisassociateParticipantError(error);
         });
     }
 
     //Private.
     private async getOracleProvider(partyType:string): Promise<IOracleProvider> {
-        const oracleId = await this.oracleFinder.getOracleForType(partyType).catch(error=>{
-            this.logger.error(`Unable to get oracle for type: ${partyType} ` + error);
+        const oracleId = await this._oracleFinder.getOracleForType(partyType).catch(error=>{
+            this._logger.error(`Unable to get oracle for type: ${partyType} ` + error);
             throw new UnableToGetOracleError(error);
         });
 
         if(!oracleId) {
-            this.logger.debug(`No oracle found for type: ${partyType}`);
+            this._logger.debug(`No oracle found for type: ${partyType}`);
             throw new UnableToGetOracleError(`Oracle not found for partyType: ${partyType}`);
         }
 
-        const oracleProvider = this.oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
+        const oracleProvider = this._oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
 
         if(!oracleProvider) {
-            this.logger.debug(`No oracle provider found for id: ${oracleId}`);
+            this._logger.debug(`No oracle provider found for id: ${oracleId}`);
             throw new UnableToGetOracleProviderError(`Oracle provider not found for oracleId: ${oracleId}`);
         }
 

@@ -38,13 +38,22 @@
  --------------
  **/
 
-"use strict";
+ "use strict";
 
-export type MongoQueryError = {
-    message: string
-};
+import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
 
-export interface LocalCacheResult {
-    value: NonNullable<string|number|object>;
-    timestamp: number;
+export class MemoryLocalCache implements ILocalCache {
+    
+    get(...keys: string[]): string | number | object | null {
+        throw new Error("Method not implemented.");
+    }
+    
+    set(value: string | number | object, ...keys: string[]): void {
+        throw new Error("Method not implemented.");
+    }
+    
+    destroy(): void {
+        return;
+    }
+
 }

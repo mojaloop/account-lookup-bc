@@ -44,19 +44,20 @@ import { ILocalCache } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCacheResult } from "./types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 
-export class LocalCache<T> implements ILocalCache<T>{
-    private readonly _cache: Map<string, LocalCacheResult<T>>;
+export class LocalCache implements ILocalCache{
+    private readonly _cache: Map<string, LocalCacheResult>;
     private readonly _logger: ILogger;
     // in seconds
     private ttl: number;
 
     constructor(logger:ILogger, ttl: number=320) {
-        this._cache = new Map<string, LocalCacheResult<T>>();
+        this._cache = new Map<string, LocalCacheResult>();
         this._logger = logger;
         this.ttl = ttl;
     }
     
-    get(key: string): T | null {
+    get(...keys: string[]): object | string | number | null {
+        const key = keys.join(":");
         this._logger.debug(`LocalCache: get ${key}`);
         const currentTime = Math.round(Date.now() / 1000);
         const cacheResult = this._cache.get(key);
@@ -75,7 +76,8 @@ export class LocalCache<T> implements ILocalCache<T>{
         return null;
     }
 
-    set(key: string, value: T): void {
+    set(value: NonNullable<string|number|object>,...keys: string[]): void {
+        const key = keys.join(":");
         if(this._cache.has(key)){
             this._logger.error(`LocalCache: set ${key} - already exists`);
             throw new Error("Key already exists");

@@ -100,9 +100,9 @@ export interface IMessagePublisher {
     send(message: IMessageValue | IMessageValue[]): Promise<void>;
 }
 
-export interface ILocalCache<T> {
-    get(key:string):T|null;
-    set(key:string, value:T):void;
+export interface ILocalCache {
+    get(...keys: string[]):string|number|object|null;
+    set(value:NonNullable<string|number|object>,...keys: string[]):void;
     destroy():void;
 }
 

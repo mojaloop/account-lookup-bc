@@ -42,13 +42,13 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, ILocalCache, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { KafkaMessagePublisher, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -87,15 +87,17 @@ let oracleFinder: IOracleFinder;
 let oracleProvider: IOracleProvider[];
 
 // Aggregate
-
 let aggregate: AccountLookupAggregate;
 
 // Event Handler
 let eventHandler: IAccountLookUpEventHandler;
 
+// Local Cache
+let localCache: ILocalCache;
+
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler):Promise<void> {
+  oracleProviderParam?:IOracleProvider[], localCacheParam?:ILocalCache, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler):Promise<void> {
   
   try{
     
@@ -110,7 +112,9 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await messagePublisher.init();
     logger.info("Message Publisher Initialized");
 
-    aggregate = (aggregateParam)?aggregateParam : new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher);
+    localCache = (localCacheParam) ? localCacheParam : new LocalCache(logger);
+
+    aggregate = (aggregateParam)?aggregateParam : new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher, localCache);
     await aggregate.init();
     logger.info("Aggregate Initialized");
 

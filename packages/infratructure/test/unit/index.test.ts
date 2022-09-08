@@ -45,7 +45,7 @@ import { LocalCache } from "./../../src/localcache";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 
 
- let localCache: ILocalCache<number>;
+ let localCache: ILocalCache;
 
  const logger: ILogger = new ConsoleLogger();
  logger.setLogLevel(LogLevel.FATAL);
@@ -56,23 +56,23 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
     test("should create a new local cache instance", async()=>{ 
         
         //Arrange && Act 
-        localCache = new LocalCache<number>(logger);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger);
+        localCache.set(1,"type","key");
         
         //Assert
         expect(localCache).toBeDefined();
-        expect(localCache.get("key")).toBe(1);
+        expect(localCache.get("type:key")).toBe(1);
     });
 
     test("should return null if time to live for the specific entry is surpassed", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(logger,1);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger,1);
+        localCache.set(1,"type","key");
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         //Act
-        const result = localCache.get("key");
+        const result = localCache.get("type:key");
 
         //Assert
         expect(result).toBeNull();
@@ -81,12 +81,12 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
     test("should return value if time to live for the specific entry is not surpassed", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(logger,10);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger,10);
+        localCache.set(1, "type", "key");
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         //Act
-        const result = localCache.get("key");
+        const result = localCache.get("type:key");
 
         //Assert
         expect(result).toBe(1);
@@ -95,8 +95,8 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
     test("should return null if no key is present", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(logger);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger);
+        localCache.set(1,"type","key");
         
         //Act
         const result = localCache.get("InvalidKey");
@@ -108,19 +108,19 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
     test("should throw error when try to set a entry that already exists", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(logger);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger);
+        localCache.set(1,"key");
         
         //Act && Assert
-        expect(() => localCache.set("key", 1)).toThrowError();
+        expect(() => localCache.set(1,"key")).toThrowError();
         
     });
 
     test("should clear cache", async()=>{ 
         
         //Arrange 
-        localCache = new LocalCache<number>(logger);
-        localCache.set("key", 1);
+        localCache = new LocalCache(logger);
+        localCache.set(1, "key");
         localCache.destroy();
         
         //Act
