@@ -63,6 +63,3 @@ export interface IAccountLookUpMessage extends IMessage {
         payload: object
     }
 }
-
-// eslint-disable-next-line
-export type CallbackFunction = (...args: any[]) => void;

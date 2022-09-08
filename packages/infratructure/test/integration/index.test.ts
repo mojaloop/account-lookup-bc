@@ -50,13 +50,9 @@ import {
     PartyAssociationDoesntExistsError,
     ParticipantAssociationDoesntExistsError,
     ParticipantAssociationAlreadyExistsError,
-    UnableToGetParticipantError,
-    UnableToInitMessageProducerError,
-    UnableToDestroyMessageProducerError,
-    UnableToSendMessageProducerError,
-    IMessageValue
+    UnableToGetParticipantError
 } from "@mojaloop/account-lookup-bc-domain";
-import {KafkaMessagePublisher, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import { MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
@@ -69,7 +65,6 @@ const DB_URL: string = `mongodb://${DB_HOST}:${DB_PORT_NO}`;
 const DB_NAME: string = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME: string = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties";
-
 
 
  /* ********** Repos ********** */
@@ -98,7 +93,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 }
 jest.setTimeout(100000);
 
-describe("account lookup - integration tests", () => {
+describe("account lookup - infrastructure integration tests", () => {
     beforeAll(async () => {
         oracleFinderRepo.init();
         for await (const oracleProviderRepo of oracleProviderListRepo) {
@@ -167,90 +162,6 @@ describe("account lookup - integration tests", () => {
 
         //Assert
         expect(oracle).toEqual(partyId);
-    });
-
-    // Publisher
-    test("should throw error for being unable to initiate message publisher", async()=>{
-
-        // Arrange 
-        const messagePublisher = new KafkaMessagePublisher(logger,{
-            kafkaBrokerList: 'non-existing-host',
-            producerClientId: 'test_producer',
-            skipAcknowledgements: true,
-            kafkaTopic: 'test_topic'
-        });
-
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await messagePublisher.init();
-            }
-        ).rejects.toThrow(UnableToInitMessageProducerError);
-
-    });
-
-    test("should throw error for being unable to send message in message publisher", async()=>{
-
-        // Arrange 
-        const messagePublisher = new KafkaMessagePublisher(logger, {
-            kafkaBrokerList: 'localhost:9092',
-            producerClientId: 'test_producer',
-            skipAcknowledgements: true,
-            kafkaTopic: 'test_topic'
-        });
-
-        const message: IMessageValue = { 
-            testValue: 1
-        }
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await messagePublisher.send([message]);
-            }
-        ).rejects.toThrow(UnableToSendMessageProducerError);
-
-    });
-
-    test("should throw error for being unable to destroy message publisher", async()=>{
-
-        // Arrange 
-        const messagePublisher = new KafkaMessagePublisher(logger,{
-            kafkaBrokerList: 'non-existing-host',
-            producerClientId: 'test_producer',
-            skipAcknowledgements: true,
-            kafkaTopic: 'test_topic'
-        });
-
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await messagePublisher.destroy();
-            }
-        ).rejects.toThrow(UnableToDestroyMessageProducerError);
-
-    });
-
-    test("should initiate a new message publisher and send a message", async()=>{
-        //Arrange 
-        const messagePublisher = new KafkaMessagePublisher(logger, {
-            kafkaBrokerList: 'localhost:9092',
-            producerClientId: 'test_producer',
-            skipAcknowledgements: true,
-            kafkaTopic: 'test_topic'
-        });
-
-        const message: IMessageValue = { 
-            testValue: 1
-        }
-
-        //Act && Assert
-        await messagePublisher.init();
-        await expect(messagePublisher.send([message])).resolves.not.toThrow();
-        await messagePublisher.destroy();
-
     });
 
 

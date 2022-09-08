@@ -51,7 +51,89 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
  logger.setLogLevel(LogLevel.FATAL);
 
  describe("Infrastructure", () => {
-    
+    test("should throw error for being unable to initiate message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.init();
+            }
+        ).rejects.toThrow(UnableToInitMessageProducerError);
+
+    });
+
+    test("should throw error for being unable to send message in message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+        const message: IMessageValue = { 
+            testValue: 1
+        }
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.send([message]);
+            }
+        ).rejects.toThrow(UnableToSendMessageProducerError);
+
+    });
+
+    test("should throw error for being unable to destroy message publisher", async()=>{
+
+        // Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger,{
+            kafkaBrokerList: 'non-existing-host',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await messagePublisher.destroy();
+            }
+        ).rejects.toThrow(UnableToDestroyMessageProducerError);
+
+    });
+
+    test("should initiate a new message publisher and send a message", async()=>{
+        //Arrange 
+        const messagePublisher = new KafkaMessagePublisher(logger, {
+            kafkaBrokerList: 'localhost:9092',
+            producerClientId: 'test_producer',
+            skipAcknowledgements: true,
+            kafkaTopic: 'test_topic'
+        });
+
+        const message: IMessageValue = { 
+            testValue: 1
+        }
+
+        //Act && Assert
+        await messagePublisher.init();
+        await expect(messagePublisher.send([message])).resolves.not.toThrow();
+        await messagePublisher.destroy();
+
+    });
+
 
     test("should create a new local cache instance", async()=>{ 
         

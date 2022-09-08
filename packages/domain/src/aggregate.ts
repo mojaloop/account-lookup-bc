@@ -43,14 +43,15 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { GetParticipantError, GetPartyError, NoSuchParticipantError, NoSuchParticipantFspIdError, NoSuchPartyError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
-import { ILocalCache, IMessagePublisher, IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
+import { ILocalCache, IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
+import { IMessage, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IParticipant, IParty, LocalCacheKeyPrefix } from "./types";
 
 export class AccountLookupAggregate {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
 	private readonly _oracleProviders: IOracleProvider[];
-    private readonly _messagePublisher: IMessagePublisher;
+    private readonly _messagePublisher: IMessageProducer;
     private readonly _localCache: ILocalCache;
     private readonly _participantService: IParticipantService;
     private participantCacheKeyPrefix: LocalCacheKeyPrefix = "participant";  
@@ -59,7 +60,7 @@ export class AccountLookupAggregate {
 		logger: ILogger,
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
-        messagePublisher:IMessagePublisher,
+        messagePublisher:IMessageProducer,
         localCache:ILocalCache,
         participantService: IParticipantService
 	) {

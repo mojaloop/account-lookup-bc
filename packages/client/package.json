@@ -1,5 +1,5 @@
 {
-  "name": "@mojaloop/accounts-lookup-bc-client",
+  "name": "@mojaloop/account-lookup-bc-client",
   "version": "0.0.2",
   "description": "Account Lookup BC - Client Library",
   "license": "Apache-2.0",
