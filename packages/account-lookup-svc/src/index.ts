@@ -42,13 +42,13 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, ILocalCache, IMessagePublisher, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
-import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {AccountLookupAggregate, ILocalCache, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { KafkaMessagePublisher, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { KafkaMessageProducer, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -72,7 +72,7 @@ const consumerOptions: MLKafkaConsumerOptions = {
   outputType: MLKafkaConsumerOutputType.Json
 };
 
-let messagePublisher: IMessagePublisher;
+let messageProducer: IMessageProducer;
 
 
 // Providers 
@@ -96,12 +96,12 @@ let eventHandler: IAccountLookUpEventHandler;
 let localCache: ILocalCache;
 
 
-export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, 
+export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
   oracleProviderParam?:IOracleProvider[], localCacheParam?:ILocalCache, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler):Promise<void> {
   
   try{
     
-    await initExternalDependencies(loggerParam, messageConsumerParam, messagePublisherParam, oracleFinderParam, oracleProviderParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderParam);
 
     messageConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
     await messageConsumer.connect();
@@ -109,12 +109,12 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     logger.info("Kafka Consumer Initialised");
     
     logger.info("Initializing Message Publisher");
-    await messagePublisher.init();
+    await messageProducer.connect();
     logger.info("Message Publisher Initialized");
 
     localCache = localCacheParam ?? new LocalCache(logger);
 
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messagePublisher, localCache);
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache);
     await aggregate.init();
     logger.info("Aggregate Initialized");
 
@@ -137,7 +137,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
   }
 }
 
-async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messagePublisherParam?:IMessagePublisher, oracleFinderParam?:IOracleFinder, oracleProviderParam?: IOracleProvider[]):Promise<void>  {
+async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, oracleProviderParam?: IOracleProvider[]):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
@@ -150,7 +150,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
 
-  messagePublisher = messagePublisherParam ??  new KafkaMessagePublisher(logger,
+  messageProducer = messageProducerParam ??  new KafkaMessageProducer(logger,
     {
       kafkaBrokerList: KAFKA_URL,
       producerClientId: `${BC_NAME}_${APP_NAME}`,

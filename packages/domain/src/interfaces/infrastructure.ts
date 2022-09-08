@@ -42,8 +42,7 @@
 
 
 import { IParticipant, IParty } from "../types";
-
-
+ 
 /* infratructure interfaces */
 
 export interface IOracleFinder{
@@ -76,28 +75,6 @@ export interface IOracleProvider{
     disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
     disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null>;
     disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
-}
-
-//TODO: remove Message interfaces and use IMessage, check on event handler
-export interface IMessageHeader {
-    [key: string]: string | Buffer;
-}
-
-export interface IMessageValue {
-    [key: string]: string | number | object | null;
-}
-
-export interface IMessage {
-    value: Buffer | string | object | null;
-    topic: string;
-    key?: Buffer | string | null;
-    headers?: IMessageHeader[] | null;
-}
-
-export interface IMessagePublisher {
-    init(): Promise<void>;
-	destroy(): Promise<void>;
-    send(message: IMessageValue | IMessageValue[]): Promise<void>;
 }
 
 export interface ILocalCache {

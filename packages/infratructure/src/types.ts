@@ -40,6 +40,8 @@
 
 "use strict";
 
+import { MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
+
 export type KafkaProducerOptions =  MLKafkaProducerOptions & { kafkaTopic: string }
 
 export type MongoQueryError = {
