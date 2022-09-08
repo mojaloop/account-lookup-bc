@@ -54,10 +54,6 @@ export class AccountLookupHttpClient {
 			timeout: timeoutMs
 		});
 	}
-	
-	setAccessToken(accessToken: string): void {
-		this.httpClient.defaults.headers.common = {"Authorization": `Bearer ${accessToken}`}; // TODO: verify.
-	}
 
 	async getParticipant(account: IParticipantDTO): Promise<string> {
 		try {

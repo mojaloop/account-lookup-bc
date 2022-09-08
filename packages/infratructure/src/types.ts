@@ -40,6 +40,8 @@
 
 "use strict";
 
+export type KafkaProducerOptions =  MLKafkaProducerOptions & { kafkaTopic: string }
+
 export type MongoQueryError = {
     message: string
 };

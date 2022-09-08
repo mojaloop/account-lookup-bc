@@ -19,10 +19,9 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Crosslake
- - Pedro Sousa Barreto <pedrob@crosslaketech.com>
-
- * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ * Arg Software
+ - José Antunes <jose.antunes@arg.software>
+ - Rui Rocha <rui.rocha@arg.software>
 
  --------------
  ******/
@@ -64,8 +63,8 @@ describe("account lookup client library - unit tests", () => {
 			id: participantId,
 			timestampLastJournalEntry: 0
 		};
-		const accountIdReceived: string =
+		const partyIdReceived: string =
 			await accountLookupHttpClient.getParticipant(participant,participantType);
-		expect(accountIdReceived).toEqual(participantId);
+		expect(partyIdReceived).toEqual(participantId);
 	});
 });

@@ -216,22 +216,22 @@ export class AccountLookupAggregate {
             return cachedParticipant;
         }
 
-        //TODO: Needs to add to cache if not found.
-
         const oracleProvider = await this.getOracleProvider(participantType);
 
-        const party = await oracleProvider.getParticipantByTypeAndId(participantType, participantId)
+        const participant = await oracleProvider.getParticipantByTypeAndId(participantType, participantId)
         .catch(error=>{
-            this._logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} ` + error);
+            this._logger.error(`Unable to get participant by type: ${participantType} and id: ${participantId} ` + error);
             throw new GetParticipantError(error);
         });
 
-        if (!party) {
-            this._logger.debug(`No party by type: ${participantType} and id: ${participantId} found`);
+        if (!participant) {
+            this._logger.debug(`No participant by type: ${participantType} and id: ${participantId} found`);
             throw new NoSuchParticipantError();
         }
+
+        this.storeParticipantInCache(participant)
         
-        return party;
+        return participant;
 
     }
 
@@ -242,22 +242,22 @@ export class AccountLookupAggregate {
             return cachedParticipant;
         }
 
-        //TODO: Needs to add to cache if not found.
-
         const oracleProvider = await this.getOracleProvider(participantType);
 
-        const party = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
+        const participant = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
             .catch(error=>{
-                this._logger.error(`Unable to get party by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
+                this._logger.error(`Unable to get participant by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
                 throw new GetParticipantError(error);
             });
 
-        if (!party) {
-            this._logger.debug(`No party by type: ${participantType} and id: ${participantId}  and subId:${participantSubId} found`);
+        if (!participant) {
+            this._logger.debug(`No participant by type: ${participantType} and id: ${participantId}  and subId:${participantSubId} found`);
             throw new NoSuchParticipantError();
         }
 
-        return party;
+        this.storeParticipantInCache(participant)
+
+        return participant;
     }
 
     private extractParticipantFromCache(participantType: string, participantId: string, participantSubId?:string):IParticipant|null {
