@@ -234,8 +234,8 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	}
 
 	//Participant
-	async getParticipantByTypeAndId(participantType: string, participantId: string): Promise<IParticipant | null> {
-		let participant:IParticipant|Error | undefined;
+	async getParticipantByTypeAndId(participantType: string, participantId: string): Promise<string | null> {
+		let participant:string | Error | undefined;
 
 		try {
 			const data = await this.parties.findOne({
@@ -247,7 +247,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 				throw new NoSuchParticipantError();
 			}
 
-			participant = data as unknown as IParticipant;
+			participant = data as unknown as string;
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}
@@ -255,8 +255,8 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		return participant;
 	}
 
-	async getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<IParticipant | null> {
-		let participant:IParticipant|Error | undefined;
+	async getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<string | null> {
+		let participant:string | Error | undefined;
 
 		try {
 			const data = await this.parties.findOne({
@@ -269,7 +269,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 				throw new NoSuchParticipantError();
 			}
 
-			participant = data as unknown as IParticipant;
+			participant = data as unknown as string;
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}

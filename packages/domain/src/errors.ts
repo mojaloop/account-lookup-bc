@@ -67,6 +67,7 @@ export class InvalidParticipantTypeError extends Error {}
 export class NoSuchParticipantError extends Error {}
 export class GetParticipantError extends Error {}
 export class UnableToCreatePartyAssociationError extends Error {}
+export class NoSuchParticipantFspIdError extends Error {}
 
 // Participant Account.
 export class InvalidParticipantAccountTypeError extends Error {}

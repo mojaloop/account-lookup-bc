@@ -61,7 +61,7 @@ export class AccountLookUpEventHandler implements IAccountLookUpEventHandler{
     private readonly _logger: ILogger;
 
     constructor(logger: ILogger,accountLookUpAggregate: AccountLookupAggregate){
-        this._accountLookUpAggregate= accountLookUpAggregate;
+        this._accountLookUpAggregate = accountLookUpAggregate;
         this._logger = logger;
     }
 

@@ -70,4 +70,5 @@ export interface IParticipantAccount {
 	extensionList: string[];
 }
 
+
 export type LocalCacheKeyPrefix = "party" | "participant";

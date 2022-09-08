@@ -28,7 +28,6 @@
 
 "use strict";
 
-export interface IParticipantDTO {
-	id: string;
-	timestampLastJournalEntry: number;
-}
+export * from "./participant_client";
+export * from "./errors";
+export * from "./types";
