@@ -147,7 +147,6 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
       HTTP_SERVER_HOST,
       HTTP_SERVER_PORT_NO,
       HTTP_SERVER_PATH_ROUTER,
-      aggregate
     );
 	  httpServer.init(); // No need to handle exceptions.
 
