@@ -33,7 +33,7 @@ import {ParticipantHttpServiceMock} from "./participant_http_service_mock";
 import {IParticipantDTO, ParticipantHttpClient} from "../participants/src";
 
 
-const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1337";
+const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1234";
 const TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT: number = 5000;
 
 let participantHttpServiceMock: ParticipantHttpServiceMock;
