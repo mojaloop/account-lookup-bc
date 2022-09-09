@@ -94,7 +94,7 @@ const HTTP_SERVER_PATH_ROUTER: string = "/";
 
 // Participants Lookup HTTP client.
 const BASE_URL_PARTICIPANTS_HTTP_SERVICE: string = `http://${HTTP_SERVER_HOST}:${HTTP_SERVER_PORT_NO}`;
-const TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT: number = 5_000;
+const TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT: number = 5000;
 
 let oracleFinder: IOracleFinder;
 let oracleProvider: IOracleProvider[];

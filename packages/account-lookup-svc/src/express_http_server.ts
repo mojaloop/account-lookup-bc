@@ -74,7 +74,6 @@ export class ExpressHttpServer {
 		this.app.use(this.PATH_ROUTER, this.routes.router);
 	}
 
-	// TODO: name; async?
 	public init(): void {
 		try {
 			this.server = this.app.listen(this.PORT_NO, () => {
@@ -89,7 +88,6 @@ export class ExpressHttpServer {
 		}
 	}
 
-	// TODO: name; async?
 	public destroy(): void {
 		this.server.close();
 	}

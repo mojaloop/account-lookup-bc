@@ -28,7 +28,7 @@
 
 "use strict";
 
-import { AccountLookupAggregate, IParticipant } from "@mojaloop/account-lookup-bc-domain";
+import { IParticipant } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import express from "express";
 
@@ -36,17 +36,14 @@ import express from "express";
 export class ExpressRoutes {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
-	private readonly aggregate: AccountLookupAggregate;
 	// Other properties.
 	private readonly _router: express.Router;
 	private readonly UNKNOWN_ERROR_MESSAGE: string = "unknown error";
 
 	constructor(
 		logger: ILogger,
-		aggregate: AccountLookupAggregate
 	) {
 		this.logger = logger;
-		this.aggregate = aggregate;
 
 		this._router = express.Router();
 
@@ -81,7 +78,7 @@ export class ExpressRoutes {
 	private async getParticipantById(req: express.Request, res: express.Response): Promise<void> {
 		try {
 			const participant: IParticipant | null | undefined =
-				await this.aggregate.getParticipantByTypeAndId(req.query.type as string, req.query.id as string);
+				null;
 			if (participant === null) {
 				this.sendErrorResponse(
 					res,
@@ -96,19 +93,11 @@ export class ExpressRoutes {
 				{participant: participant}
 			);
 		} catch (e: unknown) {
-			// if (e instanceof UnauthorizedError) {
-			// 	this.sendErrorResponse(
-			// 		res,
-			// 		403,
-			// 		"unauthorized" // TODO: verify.
-			// 	);
-			// } else {
-				this.sendErrorResponse(
-					res,
-					500,
-					this.UNKNOWN_ERROR_MESSAGE
-				);
-			// }
+			this.sendErrorResponse(
+				res,
+				500,
+				this.UNKNOWN_ERROR_MESSAGE
+			);
 		}
 	}
 
