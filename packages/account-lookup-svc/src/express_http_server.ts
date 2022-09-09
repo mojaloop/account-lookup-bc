@@ -32,7 +32,6 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {ExpressRoutes} from "./express_routes";
 import express from "express";
 import http from "http";
-import { AccountLookupAggregate, IParticipant } from "@mojaloop/account-lookup-bc-domain";
 
 export class ExpressHttpServer {
 	// Properties received through the constructor.
@@ -51,7 +50,6 @@ export class ExpressHttpServer {
 		host: string,
 		portNo: number,
 		pathRouter: string,
-		aggregate: AccountLookupAggregate
 	) {
 		this.logger = logger;
 		this.HOST = host;
@@ -62,7 +60,6 @@ export class ExpressHttpServer {
 		this.app = express();
 		this.routes = new ExpressRoutes(
 			logger,
-			aggregate
 		);
 
 		this.configure();
