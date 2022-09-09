@@ -29,68 +29,45 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {ExpressRoutes} from "./express_routes";
-import express from "express";
-import http from "http";
-import { AccountLookupAggregate, IParticipant } from "@mojaloop/account-lookup-bc-domain";
+import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
+import {
+	UnableToGetParticipantError,
+} from "./errors";
+import { IParticipant } from "@mojaloop/account-lookup-bc-domain";
 
-export class ExpressHttpServer {
+export class ParticipantHttpClient {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
-	private readonly HOST: string;
-	private readonly PORT_NO: number;
-	private readonly PATH_ROUTER: string;
 	// Other properties.
-	private readonly BASE_URL: string;
-	private readonly app: express.Express;
-	private readonly routes: ExpressRoutes;
-	private server: http.Server;
+	private readonly httpClient: AxiosInstance;
+	private readonly UNABLE_TO_REACH_SERVER_ERROR_MESSAGE: string = "unable to reach server";
 
 	constructor(
 		logger: ILogger,
-		host: string,
-		portNo: number,
-		pathRouter: string,
-		aggregate: AccountLookupAggregate
+		baseUrlHttpService: string,
+		timeoutMs: number
 	) {
 		this.logger = logger;
-		this.HOST = host;
-		this.PORT_NO = portNo;
-		this.PATH_ROUTER = pathRouter;
 
-		this.BASE_URL = `http://${this.HOST}:${this.PORT_NO}`;
-		this.app = express();
-		this.routes = new ExpressRoutes(
-			logger,
-			aggregate
-		);
-
-		this.configure();
+		this.httpClient = axios.create({
+			baseURL: baseUrlHttpService,
+			timeout: timeoutMs
+		});
 	}
 
-	private configure() {
-		this.app.use(express.json()); // For parsing application/json.
-		this.app.use(express.urlencoded({extended: true})); // For parsing application/x-www-form-urlencoded.
-		this.app.use(this.PATH_ROUTER, this.routes.router);
-	}
-
-	// TODO: name; async?
-	public init(): void {
+	async getParticipantInfo(fspId: string): Promise<IParticipant> {
 		try {
-			this.server = this.app.listen(this.PORT_NO, () => {
-				this.logger.info("Server on 🚀");
-				this.logger.info(`Host: ${this.HOST}`);
-				this.logger.info(`Port: ${this.PORT_NO}`);
-				this.logger.info(`Base URL: ${this.BASE_URL}`);
-			});
+			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId } });
+			return axiosResponse.data.id;
 		} catch (e: unknown) {
-			this.logger.fatal(e);
-			throw e;
+			if (axios.isAxiosError(e)) {
+				const axiosError: AxiosError = e as AxiosError;
+				if (axiosError.response !== undefined) {
+					throw new UnableToGetParticipantError((axiosError.response.data as any).message);
+				}
+				throw new UnableToGetParticipantError(this.UNABLE_TO_REACH_SERVER_ERROR_MESSAGE);
+			}
+			throw new UnableToGetParticipantError((e as any)?.message);
 		}
-	}
-
-	// TODO: name; async?
-	public destroy(): void {
-		this.server.close();
 	}
 }

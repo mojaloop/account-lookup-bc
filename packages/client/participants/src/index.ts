@@ -28,6 +28,6 @@
 
 "use strict";
 
-export * from "./participant_client";
+export * from "./participantclient";
 export * from "./errors";
 export * from "./types";

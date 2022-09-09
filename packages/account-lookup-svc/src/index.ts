@@ -48,10 +48,8 @@ import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_h
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { KafkaMessageProducer, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 import { ParticipantHttpClient } from "@mojaloop/account-lookup-bc-client";
-import { ExpressHttpServer } from "./express_http_server";
-
 
 
 // Global vars
@@ -92,17 +90,6 @@ const DB_NAME = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME = "oracle-provider-parties";
 
-
-// HTTP server.
-const HTTP_SERVER_HOST: string = process.env.PARTICIPANTS_HTTP_SERVER_HOST ?? "localhost";
-const HTTP_SERVER_PORT_NO: number =
-parseInt(process.env.PARTICIPANTS_HTTP_SERVER_PORT_NO ?? "") || 1234;
-const HTTP_SERVER_PATH_ROUTER: string = "/";
-
-// Participants Lookup HTTP client.
-const BASE_URL_PARTICIPANTS_HTTP_SERVICE: string = `http://${HTTP_SERVER_HOST}:${HTTP_SERVER_PORT_NO}`;
-const TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT: number = 5_000;
-
 let oracleFinder: IOracleFinder;
 let oracleProvider: IOracleProvider[];
 
@@ -116,13 +103,13 @@ let eventHandler: IAccountLookUpEventHandler;
 let localCache: ILocalCache;
 
 // Local express server
-let httpServer: ExpressHttpServer;
-
-let participantsHttpClient: ParticipantHttpClient;
+let participantService: IParticipantService;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[], localCacheParam?:ILocalCache, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler):Promise<void> {
+  oracleProviderParam?:IOracleProvider[], localCacheParam?:ILocalCache, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler,
+  participantServiceParam?:IParticipantService
+  ):Promise<void> {
   
   try{
     
@@ -141,25 +128,10 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     logger.info("Message Publisher Initialized");
 
     localCache = localCacheParam ?? new LocalCache(logger);
-
-    participantsHttpClient = new ParticipantHttpClient(
-			logger,
-			BASE_URL_PARTICIPANTS_HTTP_SERVICE,
-			TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT
-		);
     
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache, participantsHttpClient as IParticipantService);
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache, participantService);
     await aggregate.init();
     logger.info("Aggregate Initialized");
-
-    httpServer = new ExpressHttpServer(
-      logger,
-      HTTP_SERVER_HOST,
-      HTTP_SERVER_PORT_NO,
-      HTTP_SERVER_PATH_ROUTER,
-      aggregate
-    );
-	  httpServer.init(); // No need to handle exceptions.
 
     eventHandler =eventHandlerParam ?? new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();
@@ -180,7 +152,8 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
   }
 }
 
-async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, oracleProviderParam?: IOracleProvider[]):Promise<void>  {
+async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
+  oracleProviderParam?: IOracleProvider[], participantServiceParam?: IParticipantService):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
@@ -196,6 +169,8 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   messageProducer = messageProducerParam ??  new MLKafkaProducer(producerOptions,logger);
 
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
+
+  participantService = participantServiceParam ?? new ParticipantHttpClient(logger);
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 
