@@ -28,54 +28,69 @@
 
 "use strict";
 
-import nock from "nock";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {ExpressRoutes} from "./express_routes";
+import express from "express";
+import http from "http";
+import { AccountLookupAggregate, IParticipant } from "@mojaloop/account-lookup-bc-domain";
 
-export class AccountLookupHttpServiceMock {
+export class ExpressHttpServer {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
-	private readonly BASE_URL: string;
+	private readonly HOST: string;
+	private readonly PORT_NO: number;
+	private readonly PATH_ROUTER: string;
 	// Other properties.
-	public static readonly NON_EXISTENT_PARTICIPANT_PARTY_ID: string = "non-existing-participant-id";
+	private readonly BASE_URL: string;
+	private readonly app: express.Express;
+	private readonly routes: ExpressRoutes;
+	private server: http.Server;
 
 	constructor(
 		logger: ILogger,
-		baseUrl: string
+		host: string,
+		portNo: number,
+		pathRouter: string,
+		aggregate: AccountLookupAggregate
 	) {
 		this.logger = logger;
-		this.BASE_URL = baseUrl;
+		this.HOST = host;
+		this.PORT_NO = portNo;
+		this.PATH_ROUTER = pathRouter;
 
-		this.setUp();
+		this.BASE_URL = `http://${this.HOST}:${this.PORT_NO}`;
+		this.app = express();
+		this.routes = new ExpressRoutes(
+			logger,
+			aggregate
+		);
+
+		this.configure();
 	}
 
-	private setUp(): void {
-		// Get participant.
-		nock(this.BASE_URL)
-			.persist()
-			.get("/participant")
-			.query({ id: AccountLookupHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID })
-			.reply(
-				(_, requestBody: any) => {
-					if (requestBody.id === AccountLookupHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID) {
-						this.logger.error(`participant ${AccountLookupHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`);
-						return [
-							404,
-							{message: `participant ${AccountLookupHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`}
-						];
-					}
-					return [
-						404,
-						{partyId: requestBody.id}
-					];
-				}
-			);
+	private configure() {
+		this.app.use(express.json()); // For parsing application/json.
+		this.app.use(express.urlencoded({extended: true})); // For parsing application/x-www-form-urlencoded.
+		this.app.use(this.PATH_ROUTER, this.routes.router);
 	}
 
-	public disable(): void {
-		nock.restore();
+	// TODO: name; async?
+	public init(): void {
+		try {
+			this.server = this.app.listen(this.PORT_NO, () => {
+				this.logger.info("Server on 🚀");
+				this.logger.info(`Host: ${this.HOST}`);
+				this.logger.info(`Port: ${this.PORT_NO}`);
+				this.logger.info(`Base URL: ${this.BASE_URL}`);
+			});
+		} catch (e: unknown) {
+			this.logger.fatal(e);
+			throw e;
+		}
 	}
 
-	public enable(): void {
-		nock.activate();
+	// TODO: name; async?
+	public destroy(): void {
+		this.server.close();
 	}
 }

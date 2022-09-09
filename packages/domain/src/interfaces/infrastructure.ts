@@ -63,8 +63,8 @@ export interface IOracleProvider{
     // Gets.
     getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null>;
     getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null>;
-    getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null>;
-    getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null>;
+    getParticipantByTypeAndId(participantType:string, participantId:string):Promise<string|null>;
+    getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<string|null>;
     // Stores.
     associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null>;
     associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
@@ -82,5 +82,9 @@ export interface ILocalCache {
     set(value:NonNullable<string|number|object>,...keys: string[]):void;
     delete(...keys: string[]):void;
     destroy():void;
+}
+
+export interface IParticipantService {
+    getParticipantInfo(fspId: string):Promise<IParticipant>;
 }
 

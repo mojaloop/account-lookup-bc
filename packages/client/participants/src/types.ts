@@ -28,41 +28,7 @@
 
 "use strict";
 
-import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {ParticipantHttpServiceMock} from "./participant_http_service_mock";
-import {IParticipantDTO, ParticipantHttpClient} from "../participants/src";
-
-
-const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1337";
-const TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT: number = 5000;
-
-let participantHttpServiceMock: ParticipantHttpServiceMock;
-let participantHttpClient: ParticipantHttpClient;
-
-describe("account lookup client library - unit tests", () => {
-	beforeAll(async () => {
-		const logger: ILogger = new ConsoleLogger();
-		participantHttpServiceMock = new ParticipantHttpServiceMock(
-			logger,
-			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE
-		);
-		participantHttpClient = new ParticipantHttpClient(
-			logger,
-			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE,
-			TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT
-		);
-	});
-
-	// Get participant.
-	test("get non-existing participant", async () => {
-		const participantId: string = ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
-		const participantType: string = ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
-		const participant: IParticipantDTO = {
-			id: participantId,
-			timestamp: 0
-		};
-		const partyIdReceived =
-			await participantHttpClient.getParticipantInfo(participantId);
-		expect(partyIdReceived).toEqual(participantId);
-	});
-});
+export interface IParticipantDTO {
+	id: string;
+	timestamp: number;
+}

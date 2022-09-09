@@ -42,13 +42,17 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, ILocalCache, IOracleFinder, IOracleProvider} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, ILocalCache, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { KafkaMessageProducer, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { ParticipantHttpClient } from "@mojaloop/account-lookup-bc-client";
+import { ExpressHttpServer } from "./express_http_server";
+
+
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -88,6 +92,17 @@ const DB_NAME = "account-lookup";
 const ORACLE_PROVIDERS_COLLECTION_NAME = "oracle-providers";
 const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME = "oracle-provider-parties";
 
+
+// HTTP server.
+const HTTP_SERVER_HOST: string = process.env.PARTICIPANTS_HTTP_SERVER_HOST ?? "localhost";
+const HTTP_SERVER_PORT_NO: number =
+parseInt(process.env.PARTICIPANTS_HTTP_SERVER_PORT_NO ?? "") || 1234;
+const HTTP_SERVER_PATH_ROUTER: string = "/";
+
+// Participants Lookup HTTP client.
+const BASE_URL_PARTICIPANTS_HTTP_SERVICE: string = `http://${HTTP_SERVER_HOST}:${HTTP_SERVER_PORT_NO}`;
+const TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT: number = 5_000;
+
 let oracleFinder: IOracleFinder;
 let oracleProvider: IOracleProvider[];
 
@@ -99,6 +114,11 @@ let eventHandler: IAccountLookUpEventHandler;
 
 // Local Cache
 let localCache: ILocalCache;
+
+// Local express server
+let httpServer: ExpressHttpServer;
+
+let participantsHttpClient: ParticipantHttpClient;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
@@ -122,9 +142,24 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
     localCache = localCacheParam ?? new LocalCache(logger);
 
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache);
+    participantsHttpClient = new ParticipantHttpClient(
+			logger,
+			BASE_URL_PARTICIPANTS_HTTP_SERVICE,
+			TIMEOUT_MS_PARTICIPANTS_HTTP_CLIENT
+		);
+    
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache, participantsHttpClient as IParticipantService);
     await aggregate.init();
     logger.info("Aggregate Initialized");
+
+    httpServer = new ExpressHttpServer(
+      logger,
+      HTTP_SERVER_HOST,
+      HTTP_SERVER_PORT_NO,
+      HTTP_SERVER_PATH_ROUTER,
+      aggregate
+    );
+	  httpServer.init(); // No need to handle exceptions.
 
     eventHandler =eventHandlerParam ?? new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();

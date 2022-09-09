@@ -33,9 +33,9 @@ import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
 import {
 	UnableToGetParticipantError,
 } from "./errors";
-import {IParticipantDTO} from "./types";
+import { AccountLookupAggregate, IParticipant } from "@mojaloop/account-lookup-bc-domain";
 
-export class AccountLookupHttpClient {
+export class ParticipantHttpClient {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
 	// Other properties.
@@ -55,10 +55,10 @@ export class AccountLookupHttpClient {
 		});
 	}
 
-	async getParticipant(account: IParticipantDTO): Promise<string> {
+	async getParticipantInfo(fspId: string): Promise<IParticipant> {
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.post("/accounts", account);
-			return axiosResponse.data.accountId;
+			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId } });
+			return axiosResponse.data.id;
 		} catch (e: unknown) {
 			if (axios.isAxiosError(e)) {
 				const axiosError: AxiosError = e as AxiosError;

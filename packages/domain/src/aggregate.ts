@@ -53,20 +53,23 @@ export class AccountLookupAggregate {
 	private readonly _oracleProviders: IOracleProvider[];
     private readonly _messagePublisher: IMessageProducer;
     private readonly _localCache: ILocalCache;
-    private participanyCacheKeyPrefix: LocalCacheKeyPrefix = "participant";  
+    private readonly _participantService: IParticipantService;
+    private participantCacheKeyPrefix: LocalCacheKeyPrefix = "participant";  
 
 	constructor(
 		logger: ILogger,
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
         messagePublisher:IMessageProducer,
-        localCache:ILocalCache
+        localCache:ILocalCache,
+        participantService: IParticipantService
 	) {
 		this._logger = logger;
 		this._oracleFinder = oracleFinder;
 		this._oracleProviders = oracleProviders;
         this._messagePublisher = messagePublisher;
         this._localCache = localCache;
+        this._participantService = participantService;
     }
 
     async init(): Promise<void> {
@@ -211,19 +214,30 @@ export class AccountLookupAggregate {
 
     //Participant.
     async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null|undefined>{
-        const cachedParticipant = this.extractParticipantFromCache(participantType, participantId);
+        let participant: IParticipant | null; 
+       
+        participant = this.extractParticipantFromCache(participantType, participantId);
         
-        if(cachedParticipant) {
-            return cachedParticipant;
+        // Return a cached response
+        if(participant) {
+            return participant;
         }
 
+        
         const oracleProvider = await this.getOracleProvider(participantType);
-
-        const participant = await oracleProvider.getParticipantByTypeAndId(participantType, participantId)
+        
+        const fspId = await oracleProvider.getParticipantByTypeAndId(participantType, participantId)
         .catch(error=>{
             this._logger.error(`Unable to get participant by type: ${participantType} and id: ${participantId} ` + error);
             throw new GetParticipantError(error);
         });
+
+        if (!fspId) {
+            this._logger.debug(`No participant fspId by type: ${participantType} and id: ${participantId} found`);
+            throw new NoSuchParticipantFspIdError();
+        }
+        
+        participant = await this._participantService.getParticipantInfo(fspId)
 
         if (!participant) {
             this._logger.debug(`No participant by type: ${participantType} and id: ${participantId} found`);
@@ -237,42 +251,40 @@ export class AccountLookupAggregate {
     }
 
     async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null|undefined>{
-        const cachedParticipant = this.extractParticipantFromCache(participantType, participantId);
+        let participant: IParticipant | null; 
+       
+        participant = this.extractParticipantFromCache(participantType, participantId, participantSubId);
         
-        if(cachedParticipant) {
-            return cachedParticipant;
+        // Return a cached response
+        if(participant) {
+            return participant;
         }
 
+        
         const oracleProvider = await this.getOracleProvider(participantType);
+        
+        const fspId = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
+        .catch(error=>{
+            this._logger.error(`Unable to get participant by type: ${participantType} and id: ${participantId} and subId: ${participantSubId} ` + error);
+            throw new GetParticipantError(error);
+        });
 
-        const participant = await oracleProvider.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId)
-            .catch(error=>{
-                this._logger.error(`Unable to get participant by type: ${participantType} and id: ${participantId} and subId:${participantSubId} ` + error);
-                throw new GetParticipantError(error);
-            });
+        if (!fspId) {
+            this._logger.debug(`No participant fspId by type: ${participantType} and id: ${participantId} and subId: ${participantSubId} found`);
+            throw new NoSuchParticipantFspIdError();
+        }
+        
+        participant = await this._participantService.getParticipantInfo(fspId)
 
         if (!participant) {
-            this._logger.debug(`No participant by type: ${participantType} and id: ${participantId}  and subId:${participantSubId} found`);
+            this._logger.debug(`No participant by type: ${participantType} and id: ${participantId} and subId: ${participantSubId} found`);
             throw new NoSuchParticipantError();
         }
 
         this.storeParticipantInCache(participant)
-
+        
         return participant;
-    }
 
-    private extractParticipantFromCache(participantType: string, participantId: string, participantSubId?:string):IParticipant|null {
-        const cachedParticipant = this._localCache.get(this.participanyCacheKeyPrefix, participantType, participantId, participantSubId ?? "") as IParticipant;
-        return cachedParticipant;
-    }
-
-    private storeParticipantInCache(participant:IParticipant):void {
-        try{
-            this._localCache.set(participant, this.participanyCacheKeyPrefix, participant.type, participant.id, participant.subId ?? "");
-        }
-        catch(error){
-            this._logger.error("Unable to store participant in cache " + error);
-        }
     }
 
     async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<void>{
@@ -332,4 +344,18 @@ export class AccountLookupAggregate {
 
 		return oracleProvider;
 	}
+    
+    private extractParticipantFromCache(participantType: string, participantId: string, participantSubId?:string):IParticipant|null {
+        const cachedParticipant = this._localCache.get(this.participantCacheKeyPrefix, participantType, participantId, participantSubId ?? "") as IParticipant;
+        return cachedParticipant;
+    }
+
+    private storeParticipantInCache(participant:IParticipant):void {
+        try{
+            this._localCache.set(participant, this.participantCacheKeyPrefix, participant.type, participant.id, participant.subId ?? "");
+        }
+        catch(error){
+            this._logger.error("Unable to store participant in cache " + error);
+        }
+    }
 }

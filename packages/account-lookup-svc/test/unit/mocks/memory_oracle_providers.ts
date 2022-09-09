@@ -71,10 +71,10 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 		return Promise.resolve();
 	}
 
-	getParticipantByTypeAndId(participantType: string, participantId: string): Promise<IParticipant | null> {
+	getParticipantByTypeAndId(participantType: string, participantId: string): Promise<string | null> {
 		 throw new Error("Method not implemented.");
 	 }
-	 getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<IParticipant | null> {
+	 getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<string | null> {
 		 throw new Error("Method not implemented.");
 	 }
 	 associateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {

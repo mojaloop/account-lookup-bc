@@ -28,6 +28,54 @@
 
 "use strict";
 
-export * from "./account_lookup_http_client";
-export * from "./errors";
-export * from "./types";
+import nock from "nock";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+
+export class ParticipantHttpServiceMock {
+	// Properties received through the constructor.
+	private readonly logger: ILogger;
+	private readonly BASE_URL: string;
+	// Other properties.
+	public static readonly NON_EXISTENT_PARTICIPANT_PARTY_ID: string = "non-existing-participant-id";
+
+	constructor(
+		logger: ILogger,
+		baseUrl: string
+	) {
+		this.logger = logger;
+		this.BASE_URL = baseUrl;
+
+		this.setUp();
+	}
+
+	private setUp(): void {
+		// Get participant.
+		nock(this.BASE_URL)
+			.persist()
+			.get("/participants")
+			.query({ id: ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID })
+			.reply(
+				(_, requestBody: any) => {
+					if (requestBody.id === ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID) {
+						this.logger.error(`participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`);
+						return [
+							404,
+							{message: `participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`}
+						];
+					}
+					return [
+						404,
+						{partyId: requestBody.id}
+					];
+				}
+			);
+	}
+
+	public disable(): void {
+		nock.restore();
+	}
+
+	public enable(): void {
+		nock.activate();
+	}
+}
