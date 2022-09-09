@@ -57,7 +57,10 @@
      InvalidPartyTypeError,
      IOracleFinder,
      IOracleProvider,
+     IParticipant,
+     IParticipantService,
      NoSuchParticipantError,
+     NoSuchParticipantFspIdError,
      NoSuchPartyError,
      UnableToAssociateParticipantError,
      UnableToAssociatePartyError,
@@ -67,10 +70,11 @@
      UnableToGetOracleProviderError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
-import { MemoryMessagePublisher } from "./mocks/message_publisher";
-import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { MemoryMessageProducer } from "./mocks/memory_message_producer";
+import { mockedOracleList, mockedParticipantFspIds, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipants, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
-import { LocalCache } from "../../../infratructure/src";
+import { MemoryParticipantService } from "./mocks/memory_participant_service";
+import { MemoryLocalCache } from "./mocks/memory_local_cache";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -88,19 +92,24 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     oracleProviderList.push(oracleProvider);
 }
 
-const messagePublisher: IMessageProducer = new MemoryMessagePublisher(
+const messageProducer: IMessageProducer = new MemoryMessageProducer(
     logger,
 );
 
-const localCache: ILocalCache = new LocalCache(logger);
+const localCache: ILocalCache = new MemoryLocalCache(logger);
+
+const participantService: IParticipantService = new MemoryParticipantService(
+    logger,
+);
 
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
     oracleProviderList,
-    messagePublisher,
-    localCache
+    messageProducer,
+    localCache,
+    participantService
 );
 
 describe("Account Lookup Domain", () => {
@@ -181,17 +190,41 @@ describe("Account Lookup Domain", () => {
         
     });
 
-    test("should throw error if couldnt destroy aggregate", async () => {
+    test("should return participant from cache by type and id", async () => {
 
         // Arrange
-        jest.spyOn(oracleFinder, "destroy").mockImplementation(() => {throw new Error();});
+        const participant:IParticipant = { 
+            id: '1', 
+            type: '2', 
+            subId: null
+        };
+        jest.spyOn(localCache, "get").mockReturnValue(participant);
 
-        // Act && Assert
+        // Act 
+        const result = await aggregate.getParticipantByTypeAndId(participant.type, participant.id);
 
-        await expect(aggregate.destroy()).rejects.toThrowError();
+        // Assert
+        expect(result).toEqual(participant);
         
     });
+    
+    test("should return participant from cache by type and id and subid", async () => {
 
+        // Arrange
+        const participant:IParticipant = { 
+            id: '1', 
+            type: '2', 
+            subId: '3'
+        };
+        jest.spyOn(localCache, "get").mockReturnValue(participant);
+
+        // Act 
+        const result = await aggregate.getParticipantByTypeAndIdAndSubId(participant.type, participant.id, participant.subId as string);
+
+        // Assert
+        expect(result).toEqual(participant);
+        
+    });
 
     test("should throw error if is unable to get oracle", async () => {
        //Arrange 
@@ -279,6 +312,21 @@ describe("Account Lookup Domain", () => {
         
     });
 
+    test("should publish a message for party request for partyType, partyId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[1];
+        const partyId = mockedPartyIds[1];
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+        
+        //Act
+        await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
+    });
+
+
     test("should get party by partyType, partyId and partySubId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[1];
@@ -294,7 +342,7 @@ describe("Account Lookup Domain", () => {
 
     });
 
-    test("should throw error if is unable to get party by partyType, partyId and partySubId", async () => {
+    test("should throw error if is unable to get party by partyType, partyId and partySubId request", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[2];
         const partyId = mockedPartyIds[3];
@@ -310,7 +358,7 @@ describe("Account Lookup Domain", () => {
     });
 
 
-    test("should throw error if no party found for partyType, partyId and partySubId", async () => {
+    test("should throw error if no party found for partyType, partyId and partySubId request", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[1];
         const partyId = "non-existent-party-id";
@@ -325,6 +373,20 @@ describe("Account Lookup Domain", () => {
         
     });
 
+    test("should publish a message for party request for partyType, partyId and partySubId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[1];
+        const partyId = mockedPartyIds[1];
+        const partySubId = mockedPartySubIds[0];
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+        
+        //Act
+        await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
+    });
 
     test("should associate party by partyType and partyId", async () => {
         //Arrange 
@@ -581,6 +643,20 @@ describe("Account Lookup Domain", () => {
 
     });
 
+    test("should throw error if it's unable to get participant by fspid", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[5];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getParticipantByTypeAndId(participantType, participantId);
+            }
+        ).rejects.toThrow(NoSuchParticipantError);
+
+    });
+
     test("should throw error if is unable to get participant by participantType and participantId", async () => {
         //Arrange 
         const participantType = mockedParticipantTypes[2];
@@ -596,10 +672,25 @@ describe("Account Lookup Domain", () => {
     });
 
 
-    test("should throw error if no participant found for participantType and participantId", async () => {
+    test("should throw error if fspid not found for participantType and participantId", async () => {
         //Arrange 
         const participantType = mockedParticipantTypes[1];
         const participantId = "non-existent-participant-id";
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getParticipantByTypeAndId(participantType, participantId);
+            }
+        ).rejects.toThrow(NoSuchParticipantFspIdError);
+        
+    });
+
+    
+    test("should throw error if no participant found for participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[1];
+        const participantId = mockedParticipantIds[1];
 
         // Act && Assert
         await expect(
@@ -610,11 +701,26 @@ describe("Account Lookup Domain", () => {
         
     });
 
-    test("should get participant by participantType, participantId and participantSubId", async () => {
+    test("should throw error if fspid not found by participantType, participantId and participantSubId", async () => {
         //Arrange 
         const participantType = mockedParticipantTypes[1];
         const participantId = mockedParticipantIds[1];
-        const participantSubId = mockedParticipantSubIds[0];
+        const participantSubId = mockedParticipantSubIds[1];
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+            }
+        ).rejects.toThrow(NoSuchParticipantFspIdError);
+
+    });
+    
+    test("should get participant by participantType, participantId and participantSubId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[2];
+        const participantId = mockedParticipantIds[2];
+        const participantSubId = mockedParticipantSubIds[1];
 
         //Act
         const participant= await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
@@ -644,8 +750,8 @@ describe("Account Lookup Domain", () => {
     test("should throw error if no participant found for participantType, participantId and participantSubId", async () => {
         //Arrange 
         const participantType = mockedParticipantTypes[1];
-        const participantId = "non-existent-participant-id";
-        const participantSubId = "non-existent-participant-sub-id";
+        const participantId = mockedParticipantIds[1];
+        const participantSubId = mockedParticipantSubIds[0];
 
         // Act && Assert
         await expect(

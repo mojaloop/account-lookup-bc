@@ -85,6 +85,6 @@ export interface ILocalCache {
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant>;
+    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
 }
 

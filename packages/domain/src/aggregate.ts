@@ -51,7 +51,7 @@ export class AccountLookupAggregate {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
 	private readonly _oracleProviders: IOracleProvider[];
-    private readonly _messagePublisher: IMessageProducer;
+    private readonly _messageProducer: IMessageProducer;
     private readonly _localCache: ILocalCache;
     private readonly _participantService: IParticipantService;
     private participantCacheKeyPrefix: LocalCacheKeyPrefix = "participant";  
@@ -67,7 +67,7 @@ export class AccountLookupAggregate {
 		this._logger = logger;
 		this._oracleFinder = oracleFinder;
 		this._oracleProviders = oracleProviders;
-        this._messagePublisher = messagePublisher;
+        this._messageProducer = messagePublisher;
         this._localCache = localCache;
         this._participantService = participantService;
     }
@@ -115,7 +115,7 @@ export class AccountLookupAggregate {
             throw new NoSuchPartyError();
         }
 
-        this._messagePublisher.send({ 
+        this._messageProducer.send({ 
             id: partyId,
             type: partyType,
         });
@@ -152,7 +152,7 @@ export class AccountLookupAggregate {
             throw new NoSuchPartyError();
         }
 
-        this._messagePublisher.send({ 
+        this._messageProducer.send({ 
             id: partyId,
             type: partyType,
             subId: partySubId

@@ -113,7 +113,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
   
   try{
     
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderParam, participantServiceParam);
 
     messageConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
     await messageConsumer.connect();
@@ -122,10 +122,6 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
     await messageProducer.connect();
     logger.info("Kafka Producer Initialised");
-
-    logger.info("Initializing Message Publisher");
-    await messageProducer.connect();
-    logger.info("Message Publisher Initialized");
 
     localCache = localCacheParam ?? new LocalCache(logger);
     
@@ -170,7 +166,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantHttpClient(logger);
+  participantService = participantServiceParam ?? new ParticipantHttpClient(logger,'placeholderurl',5000);
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 

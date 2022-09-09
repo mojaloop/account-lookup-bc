@@ -51,7 +51,7 @@
 	 UnableToCreateParticipantAssociationError,
  } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedParticipantAssociations, mockedParticipants, mockedParties, mockedPartyAssociations } from "./data";
+import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsInfo, mockedParties, mockedPartyAssociations } from "./data";
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
@@ -184,45 +184,42 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParties, mocke
 	}
 
 	//Participant
-	async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<IParticipant|null> {
-		
-		let participant:IParticipant|Error | undefined;
+	async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<string|null> {
+		let fspId:string|Error | undefined;
 
-		mockedParticipants.forEach((participantFound:IParticipant| Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType){
-				participant=participantFound;
+		mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
+			if(key.participantType === participantType && key.participantId === participantId){
+				fspId=participantFspId;
 			}
 		});
 
-		if(participant instanceof Error){
-			throw participant;
+		if(fspId instanceof Error){
+			throw fspId;
 		}
 		
-		if (!participant) {
+		if (!fspId) {
 			return null;
 		}
-		return participant;
+		return fspId;
 	}
 
-	async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<IParticipant|null> {
-		let participant:IParticipant| Error | undefined;
+	async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<string|null> {
+		let fspId:string|Error | undefined;
 
-		mockedParticipants.forEach((participantFound:IParticipant|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
-				participant=participantFound;
+		mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
+			if(key.participantType === participantType && key.participantId === participantId && key.participantSubId === participantSubId){
+				fspId=participantFspId;
 			}
 		});
 
-		if(participant instanceof Error){
-			throw participant;
+		if(fspId instanceof Error){
+			throw fspId;
 		}
-
-		if (!participant) {
+		
+		if (!fspId) {
 			return null;
 		}
-
-
-		return participant;
+		return fspId;
 	}
 
 	async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
