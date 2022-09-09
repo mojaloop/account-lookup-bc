@@ -29,8 +29,8 @@
 "use strict";
 
 import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {ParticipantHttpServiceMock} from "./participant_http_service_mock";
-import {IParticipantDTO, ParticipantHttpClient} from "../participants/src";
+import {ParticipantHttpServiceMock} from "./mock/participant_http_service_mock";
+import {IParticipantDTO, ParticipantHttpClient} from "../../participants/src";
 
 
 const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1234";

@@ -235,7 +235,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 
 	//Participant
 	async getParticipantByTypeAndId(participantType: string, participantId: string): Promise<string | null> {
-		let participant:string | Error | undefined;
+		let participant:any | Error | undefined;
 
 		try {
 			const data = await this.parties.findOne({
@@ -247,16 +247,16 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 				throw new NoSuchParticipantError();
 			}
 
-			participant = data as unknown as string;
+			participant = data as unknown as any;
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}
 
-		return participant;
+		return participant.fspId;
 	}
 
 	async getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<string | null> {
-		let participant:string | Error | undefined;
+		let participant:any | Error | undefined;
 
 		try {
 			const data = await this.parties.findOne({
@@ -269,12 +269,12 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 				throw new NoSuchParticipantError();
 			}
 
-			participant = data as unknown as string;
+			participant = data as unknown as any;
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}
 
-		return participant;
+		return participant.fspId;
 	}
 
 	async associateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {

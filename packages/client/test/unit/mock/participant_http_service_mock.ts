@@ -57,10 +57,10 @@ export class ParticipantHttpServiceMock {
 			.reply(
 				(_, requestBody: any) => {
 					if (requestBody.id === ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID) {
-						this.logger.error(`participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`);
+						this.logger.error(`participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`);
 						return [
 							404,
-							{message: `participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exists`}
+							{message: `participant ${ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`}
 						];
 					}
 					return [

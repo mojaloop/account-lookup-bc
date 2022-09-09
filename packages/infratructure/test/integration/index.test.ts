@@ -50,10 +50,11 @@ import {
     PartyAssociationDoesntExistsError,
     ParticipantAssociationDoesntExistsError,
     ParticipantAssociationAlreadyExistsError,
-    UnableToGetParticipantError
+    UnableToGetParticipantError,
+    ILocalCache
 } from "@mojaloop/account-lookup-bc-domain";
-import { MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
-import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import { mockedOracleList, mockedParticipantFspIds, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
  /* ********** Constants ********** */
@@ -93,6 +94,10 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
 }
 jest.setTimeout(100000);
 
+const localCache: ILocalCache = new LocalCache(
+	logger,
+);
+
 describe("account lookup - infrastructure integration tests", () => {
     beforeAll(async () => {
         oracleFinderRepo.init();
@@ -118,6 +123,7 @@ describe("account lookup - infrastructure integration tests", () => {
                 query: {}
             });
         }
+        localCache.destroy();
     });
     
     afterAll(async () => {
@@ -164,6 +170,52 @@ describe("account lookup - infrastructure integration tests", () => {
         expect(oracle).toEqual(partyId);
     });
 
+    // Local Cache
+    test("should be able to get value from cache", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+        const participant = { id: participantId, type: participantType };
+
+        //Act
+        localCache.set(participant, participantFspId)
+
+        //Assert
+        expect(localCache.get(participantFspId)).toEqual(participant);
+    });
+
+    test("should throw error if trying to set an already existing key", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+        const participant = { id: participantId, type: participantType };
+
+        // Act && Assert
+        expect(
+            async () => {
+                localCache.set(participant, participantFspId)
+                localCache.set(participant, participantFspId)
+            }
+        ).rejects.toThrow(Error);
+    });
+
+    test("should be able to delete value from cache", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+        const participant = { id: participantId, type: participantType };
+
+        //Act
+        localCache.set(participant, participantFspId)
+        localCache.delete(participantFspId)
+
+        //Assert
+        expect(localCache.get(participantFspId)).toBeNull();
+    });
+    
 
     // Get party by type and id.
     test("should throw error if is unable to find party for partyType", async () => {
@@ -495,10 +547,12 @@ describe("account lookup - infrastructure integration tests", () => {
         
     });
 
-    test("should get participant by participantType and participantId", async () => {
+    test("should get fspId info with participant by participantType and participantId", async () => {
         //Arrange 
         const participantType = mockedParticipantTypes[0];
         const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+
         await mongoQuery({ 
             dbUrl: DB_URL,
             dbName: DB_NAME,
@@ -518,17 +572,94 @@ describe("account lookup - infrastructure integration tests", () => {
             dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
             operation: MongoDbOperationEnum.INSERT_ONE,
             query: {
+                fspId: participantFspId,
                 id: participantId,
                 type: participantType
             },
         })
 
         //Act
-        const participant = await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
+        const fspId = await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
 
         //Assert
-        expect(participant?.id).toBe(mockedParticipantResultIds[0]);
-        expect(participant?.subId).toBeUndefined();
+        expect(fspId).toBe(mockedParticipantFspIds[0]);
+
+
+    });
+
+    test("should get fspId info with participant by participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                fspId: participantFspId,
+                id: participantId,
+                type: participantType
+            },
+        })
+
+        //Act
+        const fspId = await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
+
+        //Assert
+        expect(fspId).toBe(mockedParticipantFspIds[0]);
+    });
+
+
+    test("should get participant by participantType and participantId", async () => {
+        //Arrange 
+        const participantType = mockedParticipantTypes[0];
+        const participantId = mockedParticipantIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDERS_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                id: participantId,
+                type: participantType
+            },
+            cb: () => { 
+                oracleProviderListRepo[0].id = participantId
+            }
+        })
+        await mongoQuery({ 
+            dbUrl: DB_URL,
+            dbName: DB_NAME,
+            dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
+            operation: MongoDbOperationEnum.INSERT_ONE,
+            query: {
+                fspId: participantFspId,
+                id: participantId,
+                type: participantType
+            },
+        })
+
+        //Act
+        const fspId = await oracleProviderListRepo[0].getParticipantByTypeAndId(participantType, participantId);
+
+        //Assert
+        expect(fspId).toBe(mockedParticipantFspIds[0]);
 
     });
 
@@ -553,6 +684,7 @@ describe("account lookup - infrastructure integration tests", () => {
         const participantType = mockedParticipantTypes[0];
         const participantId = mockedParticipantIds[0];
         const participantSubId = mockedParticipantResultSubIds[0];
+        const participantFspId = mockedParticipantFspIds[0];
         await mongoQuery({ 
             dbUrl: DB_URL,
             dbName: DB_NAME,
@@ -572,6 +704,7 @@ describe("account lookup - infrastructure integration tests", () => {
             dbCollection: ORACLE_PROVIDER_PARTIES_COLLECTION_NAME,
             operation: MongoDbOperationEnum.INSERT_ONE,
             query: {
+                fspId: participantFspId,
                 id: participantId,
                 type: participantType,
                 subId: participantSubId
@@ -579,11 +712,10 @@ describe("account lookup - infrastructure integration tests", () => {
         })
 
         //Act
-        const participant = await oracleProviderListRepo[0].getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+        const fspId = await oracleProviderListRepo[0].getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
 
         //Assert
-        expect(participant?.id).toBe(mockedParticipantResultIds[0]);
-        expect(participant?.subId).toBe(mockedParticipantResultSubIds[0]);
+        expect(fspId).toBe(mockedParticipantFspIds[0]);
         
     });
     

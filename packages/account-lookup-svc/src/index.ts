@@ -166,7 +166,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantHttpClient(logger,'placeholderurl',5000);
+  participantService = participantServiceParam ?? new ParticipantHttpClient(logger);
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 

@@ -47,6 +47,7 @@ export const mockedPartyResultSubIds = ["subId1", "subId2", "subId3"];
 export const mockedPartySubIds = ["subId2","subId3"];
 export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
 
+export const mockedParticipantFspIds = ["fspId1","fspId2","fspId3","fspId4","fspId5"];
 export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError"];
 export const mockedParticipantResultIds = ["participant1", "participant2", "participant3"];
 export const mockedParticipantResultSubIds = ["subId1", "subId2", "subId3"];

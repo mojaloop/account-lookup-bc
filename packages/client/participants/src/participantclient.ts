@@ -44,8 +44,8 @@ export class ParticipantHttpClient {
 
 	constructor(
 		logger: ILogger,
-		baseUrlHttpService: string,
-		timeoutMs: number
+		baseUrlHttpService?: string,
+		timeoutMs?: number
 	) {
 		this.logger = logger;
 
@@ -58,7 +58,7 @@ export class ParticipantHttpClient {
 	async getParticipantInfo(fspId: string): Promise<IParticipant> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId } });
-			return axiosResponse.data.id;
+			return axiosResponse.data;
 		} catch (e: unknown) {
 			if (axios.isAxiosError(e)) {
 				const axiosError: AxiosError = e as AxiosError;

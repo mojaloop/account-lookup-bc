@@ -493,7 +493,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
             topic: "account-lookup-service",
             headers: [],
             value: {
-                type:AccountLookUpEventsType.GetPartyByTypeAndId,
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdRequest,
                 payload: fakePayload
             }
         };
@@ -517,7 +517,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
             topic: "account-lookup-service",
             headers: [],
             value: {
-                type:AccountLookUpEventsType.GetPartyByTypeAndId,
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdRequest,
                 payload: fakePayload
             }
         };
@@ -530,11 +530,11 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndId}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdRequest}: ${errorMessage}`);
         
     });
 
-    test("should call getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubId Event", async()=>{
+    test("should call getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubIdRequest Event", async()=>{
         // Arrange
         const fakePayload = { partyType:"1", partyId: "2", partySubId:"3" };
         const message:IAccountLookUpMessage = {
@@ -543,7 +543,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
             topic: "account-lookup-service",
             headers: [],
             value: {
-                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId,
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdRequest,
                 payload: fakePayload
             }
         };
@@ -558,7 +558,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         
     });
 
-    test("should log error if getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubId Event throws error", async()=>{
+    test("should log error if getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubIdRequest Event throws error", async()=>{
         // Arrange
         const fakePayload = { partyType:"1", partyId: "2", partySubId:"3" };
         const message:IAccountLookUpMessage = {
@@ -567,7 +567,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
             topic: "account-lookup-service",
             headers: [],
             value: {
-                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId,
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdRequest,
                 payload: fakePayload
             }
         };
@@ -580,7 +580,58 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdRequest}: ${errorMessage}`);
+        
+    });
+
+    
+    test("should call getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubIdResponse Event", async()=>{
+        // Arrange
+        const fakePayload = { partyType:"1", partyId: "2", partySubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdResponse,
+                payload: fakePayload
+            }
+        };
+        
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockResolvedValueOnce({} as any);
+        
+        // Act
+        mockedEventHandler.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(mockedAggregate.getPartyByTypeAndIdAndSubIdRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId, fakePayload.partySubId);
+        
+    });
+
+    test("should log error if getPartyByTypeAndIdAndSubId aggregate method for GetPartyByTypeAndIdAndSubIdResponse Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { partyType:"1", partyId: "2", partySubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup-service",
+            timestamp: 12,
+            topic: "account-lookup-service",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdResponse,
+                payload: fakePayload
+            }
+        };
+        const errorMessage = "execution error";
+        
+        jest.spyOn(mockedAggregate, "getPartyByTypeAndIdAndSubIdRequest").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdResponse}: ${errorMessage}`);
         
     });
 
@@ -667,7 +718,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
             topic: "account-lookup-service",
             headers: [],
             value: {
-                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId,
+                type:AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdRequest,
                 payload: fakePayload
             }
         };
@@ -680,7 +731,7 @@ const mockedEventHandler: IAccountLookUpEventHandler = new AccountLookUpEventHan
         await Promise.resolve(mockedEventHandler.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubId}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetPartyByTypeAndIdAndSubIdRequest}: ${errorMessage}`);
         
     });
 
