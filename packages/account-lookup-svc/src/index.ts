@@ -46,9 +46,9 @@ import {AccountLookupAggregate, ILocalCache, IOracleFinder, IOracleProvider} fro
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
+import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { KafkaMessageProducer, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -73,6 +73,11 @@ const consumerOptions: MLKafkaConsumerOptions = {
 };
 
 let messageProducer: IMessageProducer;
+const producerOptions : MLKafkaProducerOptions = {
+  kafkaBrokerList: KAFKA_URL,
+  producerClientId: `${BC_NAME}_${APP_NAME}`,
+  skipAcknowledgements: true,
+}
 
 
 // Providers 
@@ -107,7 +112,10 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await messageConsumer.connect();
     await messageConsumer.start();
     logger.info("Kafka Consumer Initialised");
-    
+
+    await messageProducer.connect();
+    logger.info("Kafka Producer Initialised");
+
     logger.info("Initializing Message Publisher");
     await messageProducer.connect();
     logger.info("Message Publisher Initialized");
@@ -150,14 +158,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
 
-  messageProducer = messageProducerParam ??  new KafkaMessageProducer(logger,
-    {
-      kafkaBrokerList: KAFKA_URL,
-      producerClientId: `${BC_NAME}_${APP_NAME}`,
-      skipAcknowledgements: true,
-      kafkaTopic: KAFKA_ORACLES_TOPIC
-    }
-  );
+  messageProducer = messageProducerParam ??  new MLKafkaProducer(producerOptions,logger);
 
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 }
@@ -166,6 +167,7 @@ async function cleanUpAndExit(exitCode = 0): Promise<void> {
   eventHandler.destroy();
   await aggregate.destroy();
   await messageConsumer.destroy(true);
+  await messageProducer.destroy();
   process.exitCode = exitCode;
 }
 

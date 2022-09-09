@@ -42,9 +42,9 @@
 
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { GetParticipantError, GetPartyError, NoSuchParticipantError, NoSuchPartyError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { ILocalCache, IOracleFinder, IOracleProvider} from "./interfaces/infrastructure";
-import { IMessage, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IParticipant, IParty, LocalCacheKeyPrefix } from "./types";
 
 export class AccountLookupAggregate {

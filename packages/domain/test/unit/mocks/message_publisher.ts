@@ -40,13 +40,10 @@
  "use strict";
 
 
- import {
-	 IMessagePublisher,
-	 IMessageValue,
- } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
- export class MemoryMessagePublisher implements IMessagePublisher {
+ export class MemoryMessagePublisher implements IMessageProducer {
 	private readonly logger: ILogger;
 
 	constructor(
@@ -54,14 +51,23 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	) {
 		this.logger = logger;
 	}
-
-
-	async init(): Promise<void> {
+	
+	async connect (): Promise<void> {
+		return Promise.resolve();
+	}
+	
+	async disconnect(): Promise<void> {
+		return Promise.resolve();
 	}
 
 	async destroy(): Promise<void> {
+		return Promise.resolve();
 	}
 
-	async send(message: IMessageValue | IMessageValue[]):Promise<void> {
+	async send(message: any): Promise<void>{
+		return Promise.resolve();
 	}
+
+
+	
 }

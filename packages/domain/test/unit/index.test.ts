@@ -43,13 +43,14 @@
 
  // Logger.
  import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+ import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
  import {Party} from "../../src/entities/party";
  import {Participant} from "../../src/entities/partipant";
  import {
      AccountLookupAggregate,
      GetParticipantError,
      GetPartyError,
-     IMessagePublisher,
+     ILocalCache,
      InvalidParticipantIdError,
      InvalidParticipantTypeError,
      InvalidPartyIdError,
@@ -69,6 +70,7 @@ import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessagePublisher } from "./mocks/message_publisher";
 import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
+import { LocalCache } from "../../../infratructure/src";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -86,16 +88,19 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     oracleProviderList.push(oracleProvider);
 }
 
-const messagePublisher: IMessagePublisher = new MemoryMessagePublisher(
+const messagePublisher: IMessageProducer = new MemoryMessagePublisher(
     logger,
 );
+
+const localCache: ILocalCache = new LocalCache(logger);
 
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
     oracleProviderList,
-    messagePublisher
+    messagePublisher,
+    localCache
 );
 
 describe("Account Lookup Domain", () => {
