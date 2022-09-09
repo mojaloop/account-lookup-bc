@@ -50,7 +50,6 @@ import { MLKafkaConsumer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType } fr
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { KafkaMessageProducer, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 import { ParticipantHttpClient } from "@mojaloop/account-lookup-bc-client";
-import { ExpressHttpServer } from "./express_http_server";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
@@ -108,9 +107,6 @@ let eventHandler: IAccountLookUpEventHandler;
 // Local Cache
 let localCache: ILocalCache;
 
-// Local express server
-let httpServer: ExpressHttpServer;
-
 let participantsHttpClient: ParticipantHttpClient;
 
 
@@ -141,14 +137,6 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache, participantsHttpClient as IParticipantService);
     await aggregate.init();
     logger.info("Aggregate Initialized");
-
-    httpServer = new ExpressHttpServer(
-      logger,
-      HTTP_SERVER_HOST,
-      HTTP_SERVER_PORT_NO,
-      HTTP_SERVER_PATH_ROUTER,
-    );
-	  httpServer.init(); // No need to handle exceptions.
 
     eventHandler =eventHandlerParam ?? new AccountLookUpEventHandler(logger, aggregate);
     eventHandler.init();
