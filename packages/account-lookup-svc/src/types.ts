@@ -43,20 +43,10 @@
 import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export enum AccountLookUpEventsType  {
-    GetParticipantByTypeAndId = "[Account Lookup] Get Participant By Type And Id",
-    GetParticipantByTypeAndIdAndSubId ="[Account Lookup] Get Participant By Type And Id And SubId",
-    AssociateParticipantByTypeAndId = "[Account Lookup]  Associate Participant By Type And Id",
-    AssociateParticipantByTypeAndIdAndSubId = "[Account Lookup]  Associate Participant By Type And Id And SubId",
-    DisassociateParticipantByTypeAndId = "[Account Lookup]  Disassociate Participant By Type And Id",
-    DisassociateParticipantByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Participant By Type And Id And SubId",
-    GetPartyByTypeAndIdRequest = "[Account Lookup] Get Party By Type And Id Request",
-    GetPartyByTypeAndIdResponse = "[Account Lookup] Get Party By Type And Id Response",
-    GetPartyByTypeAndIdAndSubIdRequest ="[Account Lookup] Get Party By Type And Id And SubId Request",
-    GetPartyByTypeAndIdAndSubIdResponse ="[Account Lookup] Get Party By Type And Id And SubId Response",
-    AssociatePartyByTypeAndId = "[Account Lookup]  Associate Party By Type And Id",
-    AssociatePartyByTypeAndIdAndSubId = "[Account Lookup]  Associate Party By Type And Id And SubId",
-    DisassociatePartyByTypeAndId = "[Account Lookup]  Disassociate Party By Type And Id",
-    DisassociatePartyByTypeAndIdAndSubId= "[Account Lookup]  Disassociate Party By Type And Id And SubId"
+    GetParticipantByPartyType = "[Account Lookup] Get Participant",
+    GetPartyById = "[Account Lookup] Get Party By Id",
+    AssociateParty = "[Account Lookup] Associate Party",
+    DisassociateParty = "[Account Lookup] Disassociate Party",
 }
 
 export interface IAccountLookUpMessage extends IMessage {
