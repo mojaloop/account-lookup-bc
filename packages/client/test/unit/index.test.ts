@@ -29,40 +29,70 @@
 "use strict";
 
 import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {ParticipantServiceMock} from "./mock/participant_service_mock";
-import {IParticipantDTO, ParticipantClient} from "../../src/participants";
+import {ParticipantClientHttpMock} from "./mock/participantclient_http_mock";
+import { ParticipantClient} from "../../src/participants";
+import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
 
+const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
 
-const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1234";
-const TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT: number = 5000;
-
-let participantServiceMock: ParticipantServiceMock;
+let participantHttpServerMock: ParticipantClientHttpMock;
 let participantClient: ParticipantClient;
+let localCache: ILocalCache;
 
 describe("Account Lookup Client Library - Unit Tests", () => {
 	beforeAll(async () => {
 		const logger: ILogger = new ConsoleLogger();
-		participantServiceMock = new ParticipantServiceMock(
+		localCache = new LocalCache(logger);
+		participantHttpServerMock = new ParticipantClientHttpMock(
 			logger,
-			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE
+			BASE_URL_PARTICIPANT_CLIENT
 		);
+		participantHttpServerMock.setUp();
+		
+
 		participantClient = new ParticipantClient(
 			logger,
-			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE,
-			TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT
+			BASE_URL_PARTICIPANT_CLIENT,
+			localCache
 		);
 	});
 
 	// Get participant.
-	test("get non-existing participant", async () => {
-		const participantId: string = ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
-		const participantType: string = ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
-		const participant: IParticipantDTO = {
-			id: participantId,
-			timestamp: 0
-		};
-		const partyIdReceived =
+	test("should receive null if participant doesnt exist", async () => {
+		// Arrange
+		const participantId: string = ParticipantClientHttpMock.NON_EXISTING_PARTICIPANT_ID;
+
+		// Act
+		const participantInfo =
 			await participantClient.getParticipantInfo(participantId);
-		expect(partyIdReceived).toEqual(participantId);
+		
+		// Assert
+		expect(participantInfo).toBeNull();
 	});
+
+	test("should get participant info", async () => {
+		// Arrange
+		const participantId: string = ParticipantClientHttpMock.EXISTING_PARTICIPANT_ID;
+
+		// Act
+		const participantInfo =
+			await participantClient.getParticipantInfo(participantId);
+		
+		// Assert
+		expect(participantInfo).toEqual(ParticipantClientHttpMock.participant);
+	});
+
+	test("should retrieve participant from cache", async () => {
+		// Arrange
+		const participantId: string = ParticipantClientHttpMock.EXISTING_PARTICIPANT_ID;
+		jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
+
+		// Act
+		const participantInfo =
+			await participantClient.getParticipantInfo(participantId);
+		
+		// Assert
+		expect(participantInfo).toEqual({"id":1, "name":"cache"});
+	});
+
 });

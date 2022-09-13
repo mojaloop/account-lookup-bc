@@ -36,48 +36,44 @@ import {
 import { IParticipant } from "@mojaloop/account-lookup-bc-domain";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
 
-export class ParticipantClient {
+export class ParticipantClient  {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
 	// Other properties.
 	private readonly httpClient: AxiosInstance;
 	private readonly UNABLE_TO_REACH_SERVER_ERROR_MESSAGE: string = "unable to reach server";
 	private readonly _localCache: ILocalCache;
+	private validateStatus = (status: number): boolean => status === 200;
 
 	constructor(
 		logger: ILogger,
 		baseUrlHttpService?: string,
-		timeoutMs?: number
+		localCache?: ILocalCache,
 	) {
 		this.logger = logger;
 
 		this.httpClient = axios.create({
 			baseURL: baseUrlHttpService,
-			timeout: timeoutMs
 		});
 
-		this._localCache = new LocalCache(logger);
+		this._localCache = localCache ?? new LocalCache(logger);
 	}
 
-	async getParticipantInfo(fspId: string): Promise<IParticipant> {
+	async getParticipantInfo(fspId: string): Promise<IParticipant| null> {
 		const result = this._localCache.get("getParticipantInfo", fspId) as IParticipant;
 		
 		if (result) {
+			this.logger.debug(`getParticipantInfo: returning cached result for fspId: ${fspId}`);
 			return result;
 		}
 		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId } });
+			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId },validateStatus: this.validateStatus });
+			this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			if (axios.isAxiosError(e)) {
-				const axiosError: AxiosError = e as AxiosError;
-				if (axiosError.response !== undefined) {
-					throw new UnableToGetParticipantError((axiosError.response.data as any).message);
-				}
-				throw new UnableToGetParticipantError(this.UNABLE_TO_REACH_SERVER_ERROR_MESSAGE);
-			}
-			throw new UnableToGetParticipantError((e as any)?.message);
+			this.logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
+			return null;
 		}
 	}
 }

@@ -31,12 +31,15 @@
 import nock from "nock";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
-export class ParticipantServiceMock {
+export class ParticipantClientHttpMock {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
 	private readonly BASE_URL: string;
 	// Other properties.
-	public static readonly NON_EXISTENT_PARTICIPANT_PARTY_ID: string = "non-existing-participant-id";
+	public static readonly NON_EXISTING_PARTICIPANT_ID: string = "non-existing-participant-id";
+	public static readonly EXISTING_PARTICIPANT_ID: string = "existing-participant-id";
+	public static readonly participant = {id:1, name:"Test", currency:"USD", isActive:true, createdDate:"2019-01-01T00:00:00.000Z", modifiedDate:"2019-01-01T00:00:00.000Z"};
+	
 
 	constructor(
 		logger: ILogger,
@@ -44,31 +47,21 @@ export class ParticipantServiceMock {
 	) {
 		this.logger = logger;
 		this.BASE_URL = baseUrl;
-
-		this.setUp();
 	}
 
-	private setUp(): void {
+	public setUp(): void {
 		// Get participant.
 		nock(this.BASE_URL)
 			.persist()
 			.get("/participants")
-			.query({ id: ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID })
-			.reply(
-				(_, requestBody: any) => {
-					if (requestBody.id === ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID) {
-						this.logger.error(`participant ${ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`);
-						return [
-							404,
-							{message: `participant ${ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`}
-						];
-					}
-					return [
-						404,
-						{partyId: requestBody.id}
-					];
-				}
-			);
+			.query({ fspId: ParticipantClientHttpMock.NON_EXISTING_PARTICIPANT_ID })
+			.reply(404,"Participant not found");
+		nock(this.BASE_URL)
+			.persist()
+			.get("/participants")
+			.query({ fspId: ParticipantClientHttpMock.EXISTING_PARTICIPANT_ID })
+			.reply(200, ParticipantClientHttpMock.participant);
+		
 	}
 
 	public disable(): void {

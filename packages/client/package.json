@@ -24,7 +24,7 @@
     "dep:check": "ncu -e 2",
     "lint": "eslint ./src",
     "build": "tsc",
-    "test:unit": "jest",
+    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
     "publish": "npm run clean && npm run build && npm version patch && npm publish --tag latest --access public"
   },
   "devDependencies": {
