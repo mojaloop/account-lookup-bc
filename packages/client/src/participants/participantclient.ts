@@ -29,14 +29,11 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
-import {
-	UnableToGetParticipantError,
-} from "./errors";
-import { IParticipant } from "@mojaloop/account-lookup-bc-domain";
+import axios, {AxiosInstance, AxiosResponse} from "axios";
+import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
 
-export class ParticipantClient  {
+export class ParticipantClient implements IParticipantService {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
 	// Other properties.
