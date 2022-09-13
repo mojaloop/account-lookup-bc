@@ -69,6 +69,3 @@ export interface IParticipantAccount {
 	fspId: string;
 	extensionList: string[];
 }
-
-
-export type LocalCacheKeyPrefix = "party" | "participant";

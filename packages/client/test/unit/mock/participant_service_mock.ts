@@ -28,46 +28,54 @@
 
 "use strict";
 
+import nock from "nock";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
-import {
-	UnableToGetParticipantError,
-} from "./errors";
-import { IParticipant } from "@mojaloop/account-lookup-bc-domain";
 
-export class ParticipantHttpClient {
+export class ParticipantServiceMock {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
+	private readonly BASE_URL: string;
 	// Other properties.
-	private readonly httpClient: AxiosInstance;
-	private readonly UNABLE_TO_REACH_SERVER_ERROR_MESSAGE: string = "unable to reach server";
+	public static readonly NON_EXISTENT_PARTICIPANT_PARTY_ID: string = "non-existing-participant-id";
 
 	constructor(
 		logger: ILogger,
-		baseUrlHttpService?: string,
-		timeoutMs?: number
+		baseUrl: string
 	) {
 		this.logger = logger;
+		this.BASE_URL = baseUrl;
 
-		this.httpClient = axios.create({
-			baseURL: baseUrlHttpService,
-			timeout: timeoutMs
-		});
+		this.setUp();
 	}
 
-	async getParticipantInfo(fspId: string): Promise<IParticipant> {
-		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId } });
-			return axiosResponse.data;
-		} catch (e: unknown) {
-			if (axios.isAxiosError(e)) {
-				const axiosError: AxiosError = e as AxiosError;
-				if (axiosError.response !== undefined) {
-					throw new UnableToGetParticipantError((axiosError.response.data as any).message);
+	private setUp(): void {
+		// Get participant.
+		nock(this.BASE_URL)
+			.persist()
+			.get("/participants")
+			.query({ id: ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID })
+			.reply(
+				(_, requestBody: any) => {
+					if (requestBody.id === ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID) {
+						this.logger.error(`participant ${ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`);
+						return [
+							404,
+							{message: `participant ${ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID} doesn't exist`}
+						];
+					}
+					return [
+						404,
+						{partyId: requestBody.id}
+					];
 				}
-				throw new UnableToGetParticipantError(this.UNABLE_TO_REACH_SERVER_ERROR_MESSAGE);
-			}
-			throw new UnableToGetParticipantError((e as any)?.message);
-		}
+			);
+	}
+
+	public disable(): void {
+		nock.restore();
+	}
+
+	public enable(): void {
+		nock.activate();
 	}
 }

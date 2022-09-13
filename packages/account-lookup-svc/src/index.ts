@@ -42,14 +42,14 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, ILocalCache, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 import { ParticipantHttpClient } from "@mojaloop/account-lookup-bc-client";
+import { MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
 
 // Global vars
@@ -99,15 +99,13 @@ let aggregate: AccountLookupAggregate;
 // Event Handler
 let eventHandler: IAccountLookUpEventHandler;
 
-// Local Cache
-let localCache: ILocalCache;
 
 // Local express server
 let participantService: IParticipantService;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[], localCacheParam?:ILocalCache, aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler,
+  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler,
   participantServiceParam?:IParticipantService
   ):Promise<void> {
   
@@ -121,11 +119,8 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     logger.info("Kafka Consumer Initialised");
 
     await messageProducer.connect();
-    logger.info("Kafka Producer Initialised");
-
-    localCache = localCacheParam ?? new LocalCache(logger);
-    
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, localCache, participantService);
+    logger.info("Kafka Producer Initialised");    
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, participantService);
     await aggregate.init();
     logger.info("Aggregate Initialized");
 

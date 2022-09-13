@@ -40,9 +40,16 @@
 
  "use strict";
 
-import { ILocalCache, LocalCacheError } from "@mojaloop/account-lookup-bc-domain";
+import { LocalCacheError } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCacheResult } from "./types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+
+export interface ILocalCache {
+    get(...keys: string[]):string|number|object|null;
+    set(value:NonNullable<string|number|object>,...keys: string[]):void;
+    delete(...keys: string[]):void;
+    destroy():void;
+}
 
 export class LocalCache implements ILocalCache{
     private readonly _cache: Map<string, LocalCacheResult>;

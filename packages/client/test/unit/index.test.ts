@@ -29,24 +29,24 @@
 "use strict";
 
 import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {ParticipantHttpServiceMock} from "./mock/participant_http_service_mock";
-import {IParticipantDTO, ParticipantHttpClient} from "../../participants/src";
+import {ParticipantServiceMock} from "./mock/participant_service_mock";
+import {IParticipantDTO, ParticipantClient} from "../../src/participants";
 
 
 const BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE: string = "http://localhost:1234";
 const TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT: number = 5000;
 
-let participantHttpServiceMock: ParticipantHttpServiceMock;
-let participantHttpClient: ParticipantHttpClient;
+let participantServiceMock: ParticipantServiceMock;
+let participantClient: ParticipantClient;
 
-describe("account lookup client library - unit tests", () => {
+describe("Account Lookup Client Library - Unit Tests", () => {
 	beforeAll(async () => {
 		const logger: ILogger = new ConsoleLogger();
-		participantHttpServiceMock = new ParticipantHttpServiceMock(
+		participantServiceMock = new ParticipantServiceMock(
 			logger,
 			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE
 		);
-		participantHttpClient = new ParticipantHttpClient(
+		participantClient = new ParticipantClient(
 			logger,
 			BASE_URL_ACCOUNT_LOOKUP_HTTP_SERVICE,
 			TIMEOUT_MS_ACCOUNT_LOOKUP_HTTP_CLIENT
@@ -55,14 +55,14 @@ describe("account lookup client library - unit tests", () => {
 
 	// Get participant.
 	test("get non-existing participant", async () => {
-		const participantId: string = ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
-		const participantType: string = ParticipantHttpServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
+		const participantId: string = ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
+		const participantType: string = ParticipantServiceMock.NON_EXISTENT_PARTICIPANT_PARTY_ID;
 		const participant: IParticipantDTO = {
 			id: participantId,
 			timestamp: 0
 		};
 		const partyIdReceived =
-			await participantHttpClient.getParticipantInfo(participantId);
+			await participantClient.getParticipantInfo(participantId);
 		expect(partyIdReceived).toEqual(participantId);
 	});
 });

@@ -77,13 +77,6 @@ export interface IOracleProvider{
     disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
 }
 
-export interface ILocalCache {
-    get(...keys: string[]):string|number|object|null;
-    set(value:NonNullable<string|number|object>,...keys: string[]):void;
-    delete(...keys: string[]):void;
-    destroy():void;
-}
-
 export interface IParticipantService {
     getParticipantInfo(fspId: string):Promise<IParticipant|null>;
 }
