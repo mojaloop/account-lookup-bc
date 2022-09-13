@@ -34,11 +34,8 @@ import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-d
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
 
 export class ParticipantClient implements IParticipantService {
-	// Properties received through the constructor.
 	private readonly logger: ILogger;
-	// Other properties.
 	private readonly httpClient: AxiosInstance;
-	private readonly UNABLE_TO_REACH_SERVER_ERROR_MESSAGE: string = "unable to reach server";
 	private readonly _localCache: ILocalCache;
 	private validateStatus = (status: number): boolean => status === 200;
 
