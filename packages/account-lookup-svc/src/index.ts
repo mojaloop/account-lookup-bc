@@ -44,7 +44,6 @@
 //import appConfigs from "./config";
 import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { AccountLookUpEventHandler, IAccountLookUpEventHandler } from "./event_handler";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
@@ -96,16 +95,12 @@ let oracleProvider: IOracleProvider[];
 // Aggregate
 let aggregate: AccountLookupAggregate;
 
-// Event Handler
-let eventHandler: IAccountLookUpEventHandler;
-
-
 // Local express server
 let participantService: IParticipantService;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate, eventHandlerParam?:IAccountLookUpEventHandler,
+  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate,
   participantServiceParam?:IParticipantService
   ):Promise<void> {
   
@@ -124,13 +119,11 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     await aggregate.init();
     logger.info("Aggregate Initialized");
 
-    eventHandler =eventHandlerParam ?? new AccountLookUpEventHandler(logger, aggregate);
-    eventHandler.init();
-    logger.info("Event Handler Initialized");
 
     const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      eventHandler.publishAccountLookUpEvent(message);
+      //aggregate
+      
       Promise.resolve();
     };
     
@@ -165,7 +158,6 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 
-  eventHandler.destroy();
   await aggregate.destroy();
   await messageConsumer.destroy(true);
   await messageProducer.destroy();

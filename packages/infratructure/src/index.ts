@@ -43,4 +43,5 @@
 export * from "./oracles/oracleprovider";
 export * from "./oracles/oraclefinder";
 export * from "./localcache";
+export * from "./errors";
 

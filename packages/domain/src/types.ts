@@ -40,6 +40,7 @@
 
  "use strict";
 
+import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export enum CurrencyType {
 	DOLLAR = "dollar",
@@ -69,3 +70,19 @@ export interface IParticipantAccount {
 	fspId: string;
 	extensionList: string[];
 }
+
+
+export enum AccountLookUpEventsType  {
+    GetParticipantByPartyType = "[Account Lookup] Get Participant",
+    GetPartyById = "[Account Lookup] Get Party By Id",
+    AssociateParty = "[Account Lookup] Associate Party",
+    DisassociateParty = "[Account Lookup] Disassociate Party",
+}
+
+export interface IAccountLookUpMessage extends IMessage {
+    value: {
+        type:AccountLookUpEventsType,
+        payload: object
+    }
+}
+

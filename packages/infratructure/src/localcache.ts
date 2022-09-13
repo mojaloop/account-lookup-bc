@@ -40,9 +40,9 @@
 
  "use strict";
 
-import { LocalCacheError } from "@mojaloop/account-lookup-bc-domain";
 import { LocalCacheResult } from "./types";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { LocalCacheError } from "./errors";
 
 export interface ILocalCache {
     get(...keys: string[]):string|number|object|null;

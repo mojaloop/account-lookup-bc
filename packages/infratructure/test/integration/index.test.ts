@@ -50,10 +50,9 @@ import {
     PartyAssociationDoesntExistsError,
     ParticipantAssociationDoesntExistsError,
     ParticipantAssociationAlreadyExistsError,
-    UnableToGetParticipantError,
-    ILocalCache
+    UnableToGetParticipantError
 } from "@mojaloop/account-lookup-bc-domain";
-import { LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
+import { ILocalCache, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParticipantFspIds, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
 import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
 
