@@ -62,14 +62,15 @@ export class AccountLookupAggregate  {
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
         messagePublisher:IMessageProducer,
-        participantService: IParticipantService
+        participantService: IParticipantService,
+        accountLookUpEventEmitter?: EventEmitter
 	) {
         this._logger = logger;
 		this._oracleFinder = oracleFinder;
 		this._oracleProviders = oracleProviders;
         this._messageProducer = messagePublisher;
         this._participantService = participantService;
-        this._accountLookUpEventEmitter = new EventEmitter();
+        this._accountLookUpEventEmitter = accountLookUpEventEmitter ?? new EventEmitter();
     }
 
     async init(): Promise<void> {
