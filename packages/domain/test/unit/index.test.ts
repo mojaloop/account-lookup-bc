@@ -50,7 +50,6 @@
      AccountLookupAggregate,
      GetParticipantError,
      GetPartyError,
-     ILocalCache,
      InvalidParticipantIdError,
      InvalidParticipantTypeError,
      InvalidPartyIdError,
@@ -96,8 +95,6 @@ const messageProducer: IMessageProducer = new MemoryMessageProducer(
     logger,
 );
 
-const localCache: ILocalCache = new MemoryLocalCache(logger);
-
 const participantService: IParticipantService = new MemoryParticipantService(
     logger,
 );
@@ -108,7 +105,6 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     oracleFinder,
     oracleProviderList,
     messageProducer,
-    localCache,
     participantService
 );
 
@@ -190,691 +186,656 @@ describe("Account Lookup Domain", () => {
         
     });
 
-    test("should return participant from cache by type and id", async () => {
-
-        // Arrange
-        const participant:IParticipant = { 
-            id: '1', 
-            type: '2', 
-            subId: null
-        };
-        jest.spyOn(localCache, "get").mockReturnValue(participant);
-
-        // Act 
-        const result = await aggregate.getParticipantByTypeAndId(participant.type, participant.id);
-
-        // Assert
-        expect(result).toEqual(participant);
-        
-    });
-    
-    test("should return participant from cache by type and id and subid", async () => {
-
-        // Arrange
-        const participant:IParticipant = { 
-            id: '1', 
-            type: '2', 
-            subId: '3'
-        };
-        jest.spyOn(localCache, "get").mockReturnValue(participant);
-
-        // Act 
-        const result = await aggregate.getParticipantByTypeAndIdAndSubId(participant.type, participant.id, participant.subId as string);
-
-        // Assert
-        expect(result).toEqual(participant);
-        
-    });
-
-    test("should throw error if is unable to get oracle", async () => {
-       //Arrange 
-       const partyType = "error";
-       const partyId = mockedPartyIds[0];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-            }
-        ).rejects.toThrow(UnableToGetOracleError);
-        
-    });
-
-    test("should throw error if is unable to find oracle for partyType", async () => {
-        //Arrange 
-        const partyType = "non-exisiting-oracle-type";
-        const partyId = mockedPartyIds[0];
  
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-             }
-         ).rejects.toThrow(UnableToGetOracleError);
-         
-     });
+    // test("should throw error if is unable to get oracle", async () => {
+    //    //Arrange 
+    //    const partyType = "error";
+    //    const partyId = mockedPartyIds[0];
 
-     test("should throw error if oracle returned is not present in the oracle providers list", async () => {
-        //Arrange 
-        const partyType = "not_found_oracle";
-        const partyId = mockedPartyIds[0];
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+    //         }
+    //     ).rejects.toThrow(UnableToGetOracleError);
+        
+    // });
+
+    // test("should throw error if is unable to find oracle for partyType", async () => {
+    //     //Arrange 
+    //     const partyType = "non-exisiting-oracle-type";
+    //     const partyId = mockedPartyIds[0];
  
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-             }
-         ).rejects.toThrow(UnableToGetOracleProviderError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+    //          }
+    //      ).rejects.toThrow(UnableToGetOracleError);
          
-     });
-
-
-    test("should get party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-
-        //Act
-        const party= await aggregate.getPartyByTypeAndIdResponse(partyType, partyId);
-
-        //Assert
-        expect(party?.id).toBe(mockedPartyResultIds[0]);
-        expect(party?.subId).toBe(mockedPartyResultSubIds[0]);
-
-    });
-
-    test("should throw error if is unable to get party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[3];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-            }
-        ).rejects.toThrow(GetPartyError);
-        
-    });
-
-
-    test("should throw error if no party found for partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = "non-existent-party-id";
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-            }
-        ).rejects.toThrow(NoSuchPartyError);
-        
-    });
-
-    test("should publish a message for party request for partyType, partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = mockedPartyIds[1];
-
-        const messageProducerSpy = jest.spyOn(messageProducer, "send");
-        
-        //Act
-        await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-
-        //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
-    });
-
-
-    test("should get party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = mockedPartyIds[1];
-        const partySubId = mockedPartySubIds[0];
-
-        //Act
-        const party= await aggregate.getPartyByTypeAndIdAndSubIdResponse(partyType, partyId, partySubId);
-
-        //Assert
-        expect(party?.id).toBe(mockedPartyResultIds[1]);
-        expect(party?.subId).toBe(mockedPartyResultSubIds[1]);
-
-    });
-
-    test("should throw error if is unable to get party by partyType, partyId and partySubId request", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[3];
-        const partySubId = mockedPartySubIds[0];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-            }
-        ).rejects.toThrow(GetPartyError);
-        
-    });
-
-
-    test("should throw error if no party found for partyType, partyId and partySubId request", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = "non-existent-party-id";
-        const partySubId = "non-existent-party-sub-id";
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-            }
-        ).rejects.toThrow(NoSuchPartyError);
-        
-    });
-
-    test("should publish a message for party request for partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = mockedPartyIds[1];
-        const partySubId = mockedPartySubIds[0];
-
-        const messageProducerSpy = jest.spyOn(messageProducer, "send");
-        
-        //Act
-        await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-
-        //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
-    });
-
-    test("should associate party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-
-        //Act
-        const association= await aggregate.associatePartyByTypeAndId(partyType, partyId);
-
-        //Assert
-        expect(association).toBeUndefined();
-  
-    });
-
-    test("should throw error if is unable to associate party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[2];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.associatePartyByTypeAndId(partyType, partyId);
-            }
-        ).rejects.toThrow(UnableToAssociatePartyError);
-        
-    });
-
-
-    test("should associate party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = mockedPartyIds[1];
-        const partySubId = mockedPartySubIds[0];
-        
-
-        //Act
-        const association= await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-        //Assert
-        expect(association).toBeUndefined();
-  
-    });
-
-
-    test("should throw error if is unable to associate party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[2];
-        const partySubId = mockedPartyIds[1];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-            }
-        ).rejects.toThrow(UnableToAssociatePartyError);
-        
-    });
-
-    test("should disassociate party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-
-        //Act
-        const association= await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
-
-        //Assert
-        expect(association).toBeUndefined();
-  
-    });
-
-    test("should throw error if is unable to disassociate party by partyType and partyId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[2];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
-            }
-        ).rejects.toThrow(UnableToDisassociatePartyError);
-        
-    });
-
-    test("should disassociate party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[1];
-        const partyId = mockedPartyIds[1];
-        const partySubId = mockedPartySubIds[0];
-
-        //Act
-        const association= await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-        //Assert
-        expect(association).toBeUndefined();
-  
-    });
-
-    test("should throw error if is unable to disassociate party by partyType, partyId and partySubId", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[2];
-        const partyId = mockedPartyIds[2];
-        const partySubId = mockedPartySubIds[1];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-            }
-        ).rejects.toThrow(UnableToDisassociatePartyError);
-        
-    });
-
-    //Participant
-    test("should create a new participant entity", async()=>{
-        // Arrange 
-        const id="fakeId";
-	    const type="fake type";
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, currency, subId);
-
-        // Assert
-
-        expect(participant.id).toBe(id);
-        expect(participant.type).toBe(type);
-        expect(participant.currency).toBe(currency);
-        expect(participant.subId).toBe(subId);
-        
-    });
-
-    test("should throw error if participant id is not valid", async()=>{
-        // Arrange 
-        const id="";
-	    const type="fake type";
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, currency, subId);
-
-
-        // Assert
-        expect(() => {
-            Participant.validateParticipant(participant);
-          }).toThrowError(InvalidParticipantIdError);
-        
-        
-    });
-
-
-    test("should throw error if participant type is not valid", async()=>{
-        // Arrange 
-        const id="fake id";
-	    const type="";
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, currency, subId);
-
-
-        // Assert
-
-        expect(() => {
-            Participant.validateParticipant(participant);
-          }).toThrowError(InvalidParticipantTypeError);
-        
-    });
-
-
-    test("should throw error if couldnt init aggregate", async () => {
-        // Arrange
-        jest.spyOn(oracleFinder, "init").mockImplementation(() => {throw new Error();});
-
-        // Act && Assert
-
-        await expect(aggregate.init()).rejects.toThrowError();
-
-        
-    });
-
-    test("should throw error if couldnt destroy aggregate", async () => {
-
-        // Arrange
-        jest.spyOn(oracleFinder, "destroy").mockImplementation(() => {throw new Error();});
-
-        // Act && Assert
-
-        await expect(aggregate.destroy()).rejects.toThrowError();
-        
-    });
-
-
-    test("should throw error if is unable to get oracle", async () => {
-       //Arrange 
-       const participantType = "error";
-       const participantId = mockedParticipantIds[0];
-
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(UnableToGetOracleError);
-        
-    });
-
-    test("should throw error if is unable to find oracle for participantType", async () => {
-        //Arrange 
-        const participantType = "non-exisiting-oracle-type";
-        const participantId = mockedParticipantIds[0];
+    //  });
+
+    //  test("should throw error if oracle returned is not present in the oracle providers list", async () => {
+    //     //Arrange 
+    //     const partyType = "not_found_oracle";
+    //     const partyId = mockedPartyIds[0];
  
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParticipantByTypeAndId(participantType, participantId);
-             }
-         ).rejects.toThrow(UnableToGetOracleError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+    //          }
+    //      ).rejects.toThrow(UnableToGetOracleProviderError);
          
-     });
+    //  });
 
-     test("should throw error if oracle returned is not present in the oracle providers list", async () => {
-        //Arrange 
-        const participantType = "not_found_oracle";
-        const participantId = mockedParticipantIds[0];
+
+    // test("should get party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+
+    //     //Act
+    //     const party= await aggregate.getPartyByTypeAndIdResponse(partyType, partyId);
+
+    //     //Assert
+    //     expect(party?.id).toBe(mockedPartyResultIds[0]);
+    //     expect(party?.subId).toBe(mockedPartyResultSubIds[0]);
+
+    // });
+
+    // test("should throw error if is unable to get party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[3];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+    //         }
+    //     ).rejects.toThrow(GetPartyError);
+        
+    // });
+
+
+    // test("should throw error if no party found for partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = "non-existent-party-id";
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+    //         }
+    //     ).rejects.toThrow(NoSuchPartyError);
+        
+    // });
+
+    // test("should publish a message for party request for partyType, partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = mockedPartyIds[1];
+
+    //     const messageProducerSpy = jest.spyOn(messageProducer, "send");
+        
+    //     //Act
+    //     await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
+
+    //     //Assert
+    //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
+    // });
+
+
+    // test("should get party by partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = mockedPartyIds[1];
+    //     const partySubId = mockedPartySubIds[0];
+
+    //     //Act
+    //     const party= await aggregate.getPartyByTypeAndIdAndSubIdResponse(partyType, partyId, partySubId);
+
+    //     //Assert
+    //     expect(party?.id).toBe(mockedPartyResultIds[1]);
+    //     expect(party?.subId).toBe(mockedPartyResultSubIds[1]);
+
+    // });
+
+    // test("should throw error if is unable to get party by partyType, partyId and partySubId request", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[3];
+    //     const partySubId = mockedPartySubIds[0];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
+    //         }
+    //     ).rejects.toThrow(GetPartyError);
+        
+    // });
+
+
+    // test("should throw error if no party found for partyType, partyId and partySubId request", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = "non-existent-party-id";
+    //     const partySubId = "non-existent-party-sub-id";
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
+    //         }
+    //     ).rejects.toThrow(NoSuchPartyError);
+        
+    // });
+
+    // test("should publish a message for party request for partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = mockedPartyIds[1];
+    //     const partySubId = mockedPartySubIds[0];
+
+    //     const messageProducerSpy = jest.spyOn(messageProducer, "send");
+        
+    //     //Act
+    //     await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
+
+    //     //Assert
+    //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
+    // });
+
+    // test("should associate party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+
+    //     //Act
+    //     const association= await aggregate.associatePartyByTypeAndId(partyType, partyId);
+
+    //     //Assert
+    //     expect(association).toBeUndefined();
+  
+    // });
+
+    // test("should throw error if is unable to associate party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[2];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.associatePartyByTypeAndId(partyType, partyId);
+    //         }
+    //     ).rejects.toThrow(UnableToAssociatePartyError);
+        
+    // });
+
+
+    // test("should associate party by partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = mockedPartyIds[1];
+    //     const partySubId = mockedPartySubIds[0];
+        
+
+    //     //Act
+    //     const association= await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+    //     //Assert
+    //     expect(association).toBeUndefined();
+  
+    // });
+
+
+    // test("should throw error if is unable to associate party by partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[2];
+    //     const partySubId = mockedPartyIds[1];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+    //         }
+    //     ).rejects.toThrow(UnableToAssociatePartyError);
+        
+    // });
+
+    // test("should disassociate party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+
+    //     //Act
+    //     const association= await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
+
+    //     //Assert
+    //     expect(association).toBeUndefined();
+  
+    // });
+
+    // test("should throw error if is unable to disassociate party by partyType and partyId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[2];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
+    //         }
+    //     ).rejects.toThrow(UnableToDisassociatePartyError);
+        
+    // });
+
+    // test("should disassociate party by partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[1];
+    //     const partyId = mockedPartyIds[1];
+    //     const partySubId = mockedPartySubIds[0];
+
+    //     //Act
+    //     const association= await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+
+    //     //Assert
+    //     expect(association).toBeUndefined();
+  
+    // });
+
+    // test("should throw error if is unable to disassociate party by partyType, partyId and partySubId", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[2];
+    //     const partyId = mockedPartyIds[2];
+    //     const partySubId = mockedPartySubIds[1];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
+    //         }
+    //     ).rejects.toThrow(UnableToDisassociatePartyError);
+        
+    // });
+
+    // //Participant
+    // test("should create a new participant entity", async()=>{
+    //     // Arrange 
+    //     const id="fakeId";
+	//     const type="fake type";
+    //     const currency= "fake currency";
+	//     const subId="fake sub id";
+
+    //     // Act
+    //     const participant = new Participant(id, type, currency, subId);
+
+    //     // Assert
+
+    //     expect(participant.id).toBe(id);
+    //     expect(participant.type).toBe(type);
+    //     expect(participant.currency).toBe(currency);
+    //     expect(participant.subId).toBe(subId);
+        
+    // });
+
+    // test("should throw error if participant id is not valid", async()=>{
+    //     // Arrange 
+    //     const id="";
+	//     const type="fake type";
+    //     const currency= "fake currency";
+	//     const subId="fake sub id";
+
+    //     // Act
+    //     const participant = new Participant(id, type, currency, subId);
+
+
+    //     // Assert
+    //     expect(() => {
+    //         Participant.validateParticipant(participant);
+    //       }).toThrowError(InvalidParticipantIdError);
+        
+        
+    // });
+
+
+    // test("should throw error if participant type is not valid", async()=>{
+    //     // Arrange 
+    //     const id="fake id";
+	//     const type="";
+    //     const currency= "fake currency";
+	//     const subId="fake sub id";
+
+    //     // Act
+    //     const participant = new Participant(id, type, currency, subId);
+
+
+    //     // Assert
+
+    //     expect(() => {
+    //         Participant.validateParticipant(participant);
+    //       }).toThrowError(InvalidParticipantTypeError);
+        
+    // });
+
+
+    // test("should throw error if couldnt init aggregate", async () => {
+    //     // Arrange
+    //     jest.spyOn(oracleFinder, "init").mockImplementation(() => {throw new Error();});
+
+    //     // Act && Assert
+
+    //     await expect(aggregate.init()).rejects.toThrowError();
+
+        
+    // });
+
+    // test("should throw error if couldnt destroy aggregate", async () => {
+
+    //     // Arrange
+    //     jest.spyOn(oracleFinder, "destroy").mockImplementation(() => {throw new Error();});
+
+    //     // Act && Assert
+
+    //     await expect(aggregate.destroy()).rejects.toThrowError();
+        
+    // });
+
+
+    // test("should throw error if is unable to get oracle", async () => {
+    //    //Arrange 
+    //    const participantType = "error";
+    //    const participantId = mockedParticipantIds[0];
+
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(UnableToGetOracleError);
+        
+    // });
+
+    // test("should throw error if is unable to find oracle for participantType", async () => {
+    //     //Arrange 
+    //     const participantType = "non-exisiting-oracle-type";
+    //     const participantId = mockedParticipantIds[0];
  
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParticipantByTypeAndId(participantType, participantId);
-             }
-         ).rejects.toThrow(UnableToGetOracleProviderError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //          }
+    //      ).rejects.toThrow(UnableToGetOracleError);
          
-     });
+    //  });
+
+    //  test("should throw error if oracle returned is not present in the oracle providers list", async () => {
+    //     //Arrange 
+    //     const participantType = "not_found_oracle";
+    //     const participantId = mockedParticipantIds[0];
+ 
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //          }
+    //      ).rejects.toThrow(UnableToGetOracleProviderError);
+         
+    //  });
 
 
-    test("should get participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[0];
-        const participantId = mockedParticipantIds[0];
+    // test("should get participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[0];
+    //     const participantId = mockedParticipantIds[0];
 
-        //Act
-        const participant= await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //     //Act
+    //     const participant= await aggregate.getParticipantByTypeAndId(participantType, participantId);
 
-        //Assert
-        expect(participant?.id).toBe(mockedParticipantResultIds[0]);
-        expect(participant?.subId).toBe(mockedParticipantResultSubIds[0]);
+    //     //Assert
+    //     expect(participant?.id).toBe(mockedParticipantResultIds[0]);
+    //     expect(participant?.subId).toBe(mockedParticipantResultSubIds[0]);
 
-    });
+    // });
 
-    test("should throw error if it's unable to get participant by fspid", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[5];
+    // test("should throw error if it's unable to get participant by fspid", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[5];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(NoSuchParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(NoSuchParticipantError);
 
-    });
+    // });
 
-    test("should throw error if is unable to get participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[3];
+    // test("should throw error if is unable to get participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[3];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(GetParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(GetParticipantError);
         
-    });
+    // });
 
 
-    test("should throw error if fspid not found for participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = "non-existent-participant-id";
+    // test("should throw error if fspid not found for participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = "non-existent-participant-id";
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(NoSuchParticipantFspIdError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(NoSuchParticipantFspIdError);
         
-    });
+    // });
 
     
-    test("should throw error if no participant found for participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = mockedParticipantIds[1];
+    // test("should throw error if no participant found for participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = mockedParticipantIds[1];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(NoSuchParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(NoSuchParticipantError);
         
-    });
+    // });
 
-    test("should throw error if fspid not found by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = mockedParticipantIds[1];
-        const participantSubId = mockedParticipantSubIds[1];
+    // test("should throw error if fspid not found by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = mockedParticipantIds[1];
+    //     const participantSubId = mockedParticipantSubIds[1];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-            }
-        ).rejects.toThrow(NoSuchParticipantFspIdError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //         }
+    //     ).rejects.toThrow(NoSuchParticipantFspIdError);
 
-    });
+    // });
     
-    test("should get participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[2];
-        const participantSubId = mockedParticipantSubIds[1];
+    // test("should get participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[2];
+    //     const participantSubId = mockedParticipantSubIds[1];
 
-        //Act
-        const participant= await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //     //Act
+    //     const participant= await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
 
-        //Assert
-        expect(participant?.id).toBe(mockedParticipantResultIds[1]);
-        expect(participant?.subId).toBe(mockedParticipantResultSubIds[1]);
+    //     //Assert
+    //     expect(participant?.id).toBe(mockedParticipantResultIds[1]);
+    //     expect(participant?.subId).toBe(mockedParticipantResultSubIds[1]);
 
-    });
+    // });
 
-    test("should throw error if is unable to get participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[3];
-        const participantSubId = mockedParticipantSubIds[0];
+    // test("should throw error if is unable to get participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[3];
+    //     const participantSubId = mockedParticipantSubIds[0];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-            }
-        ).rejects.toThrow(GetParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //         }
+    //     ).rejects.toThrow(GetParticipantError);
         
-    });
+    // });
 
 
-    test("should throw error if no participant found for participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = mockedParticipantIds[1];
-        const participantSubId = mockedParticipantSubIds[0];
+    // test("should throw error if no participant found for participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = mockedParticipantIds[1];
+    //     const participantSubId = mockedParticipantSubIds[0];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-            }
-        ).rejects.toThrow(NoSuchParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //         }
+    //     ).rejects.toThrow(NoSuchParticipantError);
         
-    });
+    // });
 
 
-    test("should associate participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[0];
-        const participantId = mockedParticipantIds[0];
+    // test("should associate participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[0];
+    //     const participantId = mockedParticipantIds[0];
 
-        //Act
-        const association= await aggregate.associateParticipantByTypeAndId(participantType, participantId);
+    //     //Act
+    //     const association= await aggregate.associateParticipantByTypeAndId(participantType, participantId);
 
-        //Assert
-        expect(association).toBeUndefined();
+    //     //Assert
+    //     expect(association).toBeUndefined();
   
-    });
+    // });
 
-    test("should throw error if is unable to associate participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[2];
+    // test("should throw error if is unable to associate participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[2];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.associateParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(UnableToAssociateParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.associateParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(UnableToAssociateParticipantError);
         
-    });
+    // });
 
 
-    test("should associate participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = mockedParticipantIds[1];
-        const participantSubId = mockedParticipantSubIds[0];
+    // test("should associate participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = mockedParticipantIds[1];
+    //     const participantSubId = mockedParticipantSubIds[0];
         
 
-        //Act
-        const association= await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //     //Act
+    //     const association= await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
 
-        //Assert
-        expect(association).toBeUndefined();
+    //     //Assert
+    //     expect(association).toBeUndefined();
   
-    });
+    // });
 
 
-    test("should throw error if is unable to associate participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[2];
-        const participantSubId = mockedParticipantIds[1];
+    // test("should throw error if is unable to associate participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[2];
+    //     const participantSubId = mockedParticipantIds[1];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-            }
-        ).rejects.toThrow(UnableToAssociateParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //         }
+    //     ).rejects.toThrow(UnableToAssociateParticipantError);
         
-    });
+    // });
 
-    test("should disassociate participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[0];
-        const participantId = mockedParticipantIds[0];
+    // test("should disassociate participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[0];
+    //     const participantId = mockedParticipantIds[0];
 
-        //Act
-        const association= await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
+    //     //Act
+    //     const association= await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
 
-        //Assert
-        expect(association).toBeUndefined();
+    //     //Assert
+    //     expect(association).toBeUndefined();
   
-    });
+    // });
 
-    test("should throw error if is unable to disassociate participant by participantType and participantId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[2];
+    // test("should throw error if is unable to disassociate participant by participantType and participantId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[2];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
-            }
-        ).rejects.toThrow(UnableToDisassociateParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
+    //         }
+    //     ).rejects.toThrow(UnableToDisassociateParticipantError);
         
-    });
+    // });
 
-    test("should disassociate participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[1];
-        const participantId = mockedParticipantIds[1];
-        const participantSubId = mockedParticipantSubIds[0];
+    // test("should disassociate participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[1];
+    //     const participantId = mockedParticipantIds[1];
+    //     const participantSubId = mockedParticipantSubIds[0];
 
-        //Act
-        const association= await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //     //Act
+    //     const association= await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
 
-        //Assert
-        expect(association).toBeUndefined();
+    //     //Assert
+    //     expect(association).toBeUndefined();
   
-    });
+    // });
 
-    test("should throw error if is unable to disassociate participant by participantType, participantId and participantSubId", async () => {
-        //Arrange 
-        const participantType = mockedParticipantTypes[2];
-        const participantId = mockedParticipantIds[2];
-        const participantSubId = mockedParticipantSubIds[1];
+    // test("should throw error if is unable to disassociate participant by participantType, participantId and participantSubId", async () => {
+    //     //Arrange 
+    //     const participantType = mockedParticipantTypes[2];
+    //     const participantId = mockedParticipantIds[2];
+    //     const participantSubId = mockedParticipantSubIds[1];
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-            }
-        ).rejects.toThrow(UnableToDisassociateParticipantError);
+    //     // Act && Assert
+    //     await expect(
+    //         async () => {
+    //             await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
+    //         }
+    //     ).rejects.toThrow(UnableToDisassociateParticipantError);
         
-    });
+    // });
 });
