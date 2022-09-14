@@ -42,7 +42,7 @@
 
 
 import {
-    IOracleFinder
+    IOracleFinder, IOracleProvider
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleList } from "./data";
@@ -67,17 +67,12 @@ export class MemoryOracleFinder implements IOracleFinder {
  
     }
 
-    async getOracleProvider(type: string): Promise<string | undefined> {
-        const foundOracle = this.oracleList.find(oracle => oracle.type === type);
+    async getOracleProvider(partyType: string): Promise<IOracleProvider> {
+        const foundOracle = this.oracleList.find(oracle => oracle.type === partyType);
         if(foundOracle?.type === "error") {
             throw new Error();
         }
 
-        if(foundOracle?.type === "not_found_oracle") {
-            return "non existing id";
-        }
-
-
-        return foundOracle?.id;
+        return foundOracle;
     }
 }

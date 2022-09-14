@@ -54,7 +54,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsInfo, mockedParties, mockedPartyAssociations } from "./data";
 
  export class MemoryOracleProvider implements IOracleProvider {
-	id: string;
+	type: string;
 	private readonly logger: ILogger;
 
 	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
@@ -71,14 +71,13 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 		this.participantAssociations = mockedParticipantAssociations;
 	}
 
-
 	async init(): Promise<void> {
 	}
 
 	async destroy(): Promise<void> {
 	}
 
-	async getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null> {
+	async getParty(partyType:string, partyId:string):Promise<IParty|null> {
 		
 		let party:IParty|Error | undefined;
 
@@ -98,32 +97,11 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 		return party;
 	}
 
-	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
-		let party:IParty| Error | undefined;
-
-		mockedParties.forEach((partyFound:IParty|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				party=partyFound;
-			}
-		});
-
-		if(party instanceof Error){
-			throw party;
-		}
-
-		if (!party) {
-			return null;
-		}
-
-
-		return party;
-	}
-
-	async associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
+	async associateParty(partyId:string):Promise<null> {
 		let association:null| Error | undefined;
 
 		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
+			if(key.partyId === partyId) {
 				association=partyFound;
 			}
 		});
@@ -135,43 +113,11 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 		throw new UnableToAssociatePartyError();
 	}
 
-	async associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
+	async disassociateParty(partyId:string):Promise<null> {
 		let association:null| Error | undefined;
 
 		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToAssociatePartyError();
-	}
-
-	async disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType){
-				association=partyFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociatePartyError();
-	}
-
-	async disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
-			if(key.partyId === partyId && key.partyType === partyType && key.partySubId === partySubId){
+			if(key.partyId === partyId) {
 				association=partyFound;
 			}
 		});
@@ -184,105 +130,19 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 	}
 
 	//Participant
-	async getParticipantByTypeAndId(participantType:string, participantId:string):Promise<string|null> {
-		let fspId:string|Error | undefined;
+	async getParticipants(participantId:string):Promise<string[]> {
+		let fspIds:string[]= [];
 
 		mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
-			if(key.participantType === participantType && key.participantId === participantId){
-				fspId=participantFspId;
+			if(participantFspId instanceof Error) {
+				return;
+			}
+			if(key.participantId === participantId){
+				fspIds.push(participantFspId);
 			}
 		});
-
-		if(fspId instanceof Error){
-			throw fspId;
-		}
 		
-		if (!fspId) {
-			return null;
-		}
-		return fspId;
+		return fspIds;
 	}
 
-	async getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<string|null> {
-		let fspId:string|Error | undefined;
-
-		mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
-			if(key.participantType === participantType && key.participantId === participantId && key.participantSubId === participantSubId){
-				fspId=participantFspId;
-			}
-		});
-
-		if(fspId instanceof Error){
-			throw fspId;
-		}
-		
-		if (!fspId) {
-			return null;
-		}
-		return fspId;
-	}
-
-	async associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToCreateParticipantAssociationError();
-	}
-
-	async associateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToCreateParticipantAssociationError();
-	}
-
-	async disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociateParticipantError();
-	}
-
-	async disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null> {
-		let association:null| Error | undefined;
-
-		mockedParticipantAssociations.forEach((participantFound:null|Error, key) => {
-			if(key.participantId === participantId && key.participantType === participantType && key.participantSubId === participantSubId){
-				association=participantFound;
-			}
-		});
-
-		if(association===null){
-			return null;
-		}
-		
-		throw new UnableToDisassociateParticipantError();
-	}
 }

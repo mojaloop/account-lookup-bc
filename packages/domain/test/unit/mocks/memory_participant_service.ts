@@ -60,5 +60,17 @@ import { mockedParticipants } from "./data";
 		}
 		return Promise.resolve(participant);
 	}
+
+	async getParticipantsInfo(fspId: string): Promise<IParticipant[]> {
+		const participant:IParticipant[] = [];
+
+		mockedParticipants.forEach((participantFound:null|Error, key) => {
+			if(key.partyId === fspId) {
+				association=participantFound;
+			}
+		});
+
+		return Promise.resolve(participant);
+	}
 	
 }

@@ -87,7 +87,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     const oracleProvider: IOracleProvider = new MemoryOracleProvider(
         logger,
     );
-    oracleProvider.id = mockedOracleList[i].id;
+    oracleProvider.type = mockedOracleList[i].type;
     oracleProviderList.push(oracleProvider);
 }
 

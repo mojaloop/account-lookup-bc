@@ -56,7 +56,7 @@ export interface IOracleFinder{
 
 export interface IOracleProvider{
     // Properties.
-    id: string;
+    type: string;
     // Init and destroy.
 	init(): Promise<void>;
 	destroy(): Promise<void>;
@@ -69,7 +69,7 @@ export interface IOracleProvider{
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant>;
-    getParticipantsInfo(fspId: string[]):Promise<IParticipant[]>;
+    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
+    getParticipantsInfo(fspId: string[]):Promise<string[]>;
 }
 
