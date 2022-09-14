@@ -64,6 +64,7 @@ export interface IParticipant {
     id: string;
     type: string;
     subId: string | null;
+    isActive: boolean;
 }
 
 export interface IParticipantAccount {
@@ -86,3 +87,61 @@ export interface IAccountLookUpMessage extends IMessage {
     }
 }
 
+export type ParticipantQueryReceived = {
+    sourceFspId: string;
+    partyType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+    destinationFspId?: string;
+}
+
+export type ParticipantQueryResponse = {
+    fspId: string;
+    partyIdType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+}
+
+
+export type PartyQueryReceived = {
+    sourceFspId: string;
+    partyIdType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+    destinationFspId?: string;
+}
+
+export type PartyInfoRequested  = {
+    fspId: string;
+    partyIdType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+}
+
+export type PartyInfoAvailable = {
+    sourceFspId: string;
+    destinationFspId: string;
+    partyIdType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+    partyName?: string;
+    partyDoB?: string;
+
+}
+
+export type PartyQueryResponse = {
+    sourceFspId: string;
+    destinationFspId: string;
+    partyIdType: string;
+    partyId: string;
+    partySubType?: string;
+    currency?: string;
+    partyName?: string;
+    partyDoB?: string;
+
+}

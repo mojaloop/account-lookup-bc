@@ -141,7 +141,7 @@ describe("account lookup - infrastructure integration tests", () => {
         // Act && Assert
         await expect(
             async () => {
-                await oracleFinderRepo.getOracleForType(partyType);
+                await oracleFinderRepo.getOracleProvider(partyType);
             }
         ).rejects.toThrow(UnableToGetOracleError);
         
@@ -163,7 +163,7 @@ describe("account lookup - infrastructure integration tests", () => {
         })
 
         //Act
-        const oracle = await oracleFinderRepo.getOracleForType(partyType);
+        const oracle = await oracleFinderRepo.getOracleProvider(partyType);
 
         //Assert
         expect(oracle).toEqual(partyId);

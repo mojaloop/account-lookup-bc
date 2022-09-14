@@ -58,7 +58,7 @@ export class MemoryOracleFinder implements IOracleFinder {
         this.oracleList = [];
     }
 
-    getOracleForType(type: string): Promise<string | undefined> {
+    getOracleProvider(type: string): Promise<string | undefined> {
         throw new Error("Method not implemented.");
     }
 

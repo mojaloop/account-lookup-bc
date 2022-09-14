@@ -86,7 +86,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
 	}
 
-    async getOracleForType(type: string): Promise<string | undefined> {
+    async getOracleProvider(type: string): Promise<string | undefined> {
 		try {
 			const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
 				{type: type},

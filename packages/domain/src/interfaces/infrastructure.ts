@@ -41,7 +41,7 @@
  "use strict";
 
 
-import { IParticipant, IParty } from "../types";
+import { IParticipant, IParty, ParticipantQueryReceived, ParticipantQueryResponse, PartyQueryReceived } from "../types";
  
 /* infratructure interfaces */
 
@@ -50,7 +50,7 @@ export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getOracleForType(type:string):Promise<string | undefined>;
+    getOracleProvider(type:string, subType?:string):Promise<IOracleProvider>;
 }
 
 
@@ -61,23 +61,15 @@ export interface IOracleProvider{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null>;
-    getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null>;
-    getParticipantByTypeAndId(participantType:string, participantId:string):Promise<string|null>;
-    getParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<string|null>;
+    getParticipants(partyId: string):Promise<string[]>;
     // Stores.
-    associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null>;
-    associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
-    associateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null>;
-    associateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
+    associateParty(partyType:string, partyId:string):Promise<null>;
     // Updates.
-    disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null>;
-    disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null>;
-    disassociateParticipantByTypeAndId(participantType:string, participantId:string):Promise<null>;
-    disassociateParticipantByTypeAndIdAndSubId(participantType:string, participantId:string, participantSubId:string):Promise<null>;
+    disassociateParty(partyType:string, partyId:string):Promise<null>;
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
+    getParticipantInfo(fspId: string):Promise<IParticipant>;
+    getParticipantsInfo(fspId: string[]):Promise<IParticipant[]>;
 }
 
