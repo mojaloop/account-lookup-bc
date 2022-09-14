@@ -46,7 +46,7 @@ import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-
 import EventEmitter from "events";
 import { GetParticipantError, GetPartyError, NoSuchParticipantError, NoSuchParticipantFspIdError, NoSuchPartyError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
-import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived, PartyQueryResponse } from "./types";
+import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived, PartyQueryResponse } from "./types";
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
     private readonly _oracleFinder: IOracleFinder;
@@ -158,14 +158,6 @@ export class AccountLookupAggregate  {
   
         this.validateParticipant(sourceFsp);
 
-        // const party = await oracleProvider.getParty(partyId)
-        // .catch(error=>{
-        //     this._logger.error(`Unable to get party by type: ${partyType} and id: ${partyId} ` + error);
-        //     throw new GetPartyError(error);
-        // });
-
-
-
         this._messageProducer.send({ 
             sourceFspId: sourceFspId,
             destinationFspId: destinationFspId,
@@ -194,30 +186,40 @@ export class AccountLookupAggregate  {
             currency: currency,
             partyName: partyName,
             partyDoB: partyDoB
-        
         });
     }
 
-    async associateParty(partyType:string, partyId:string):Promise<void>{
-        const oracleProvider = await this.getOracleProvider(partyType);
+    async associateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceived):Promise<void>{
+        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
+  
+        this.validateParticipant(requesterFsp);
 
-        await oracleProvider.associateParty(partyType, partyId).catch(error=>{
+        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
+
+        await oracleProvider.associateParty(partyId).catch(error=>{
             this._logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} ` + error);
             throw new UnableToAssociatePartyError(error);
         });
+
+        this._messageProducer.send(null);
     }
 
-    async disassociateParty(partyType:string, partyId:string):Promise<void>{
-        const oracleProvider = await this.getOracleProvider(partyType);
+    async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
+        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
+  
+        this.validateParticipant(requesterFsp);
+        
+        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
 
-        await oracleProvider.disassociateParty(partyType, partyId).catch(error=>{
+        await oracleProvider.disassociateParty(partyType).catch(error=>{
             this._logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
             throw new UnableToDisassociatePartyError(error);
         });
+
+        this._messageProducer.send(null);
     }
 
     //Private methods.
-
     private setAccountLookUpEvents():void {
         this._accountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyById, async (payload: PartyQueryReceived) => {
             await this.getPartyRequest({ 
@@ -246,37 +248,40 @@ export class AccountLookupAggregate  {
                 this._logger.error(`${AccountLookUpEventsType.GetParticipantByPartyType}: ${err}`);
             });
         });
-        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.AssociateParty, async (payload: { requesterParticipantId:string, partyId:string, partyType:string, partySubType?:string }) => {
-            await this.associateParty(payload.partyType, payload.partyId, payload.partyType, payload.partySubType)
+        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.AssociateParty, async (payload: ParticipantAssociationRequestReceived) => {
+            await this.associateParty({
+                requesterFspId: payload.requesterFspId, 
+                partyType: payload.partyType, 
+                partyId: payload.partyId, 
+                partySubType: payload.partySubType
+            })
             .catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.AssociateParty}: ${err}`);
             });
         });
-        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociateParty, async (payload: { requesterParticipantId:string, partyId:string, partyType:string, partySubType?:string }) => {
-            await this.disassociateParty(payload.partyType, payload.partyId, payload.partyType, payload.partySubType)
+        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.DisassociateParty, async (payload: ParticipantDisassociationRequestReceived) => {
+            await this.disassociateParty({
+                requesterFspId: payload.requesterFspId, 
+                partyType: payload.partyType, 
+                partyId: payload.partyId, 
+                partySubType: payload.partySubType
+            })
             .catch(err => {
                 this._logger.error(`${AccountLookUpEventsType.DisassociateParty}: ${err}`);
             });
         });
     }
 
-    private async getOracleProvider(partyType:string): Promise<IOracleProvider> {
+    private async getOracleProvider(partyType:string, partySubType?:string): Promise<IOracleProvider> {
 
-        const oracleId = await this._oracleFinder.getOracleProvider(partyType).catch(error=>{
+        const oracleProvider = await this._oracleFinder.getOracleProvider(partyType, partySubType).catch(error=>{
             this._logger.error(`Unable to get oracle for type: ${partyType} ` + error);
             throw new UnableToGetOracleError(error);
         });
 
-        if(!oracleId) {
-            this._logger.debug(`No oracle found for type: ${partyType}`);
-            throw new UnableToGetOracleError(`Oracle not found for partyType: ${partyType}`);
-        }
-
-        const oracleProvider = this._oracleProviders.find(oracleProvider => oracleProvider.id === oracleId);
-
         if(!oracleProvider) {
-            this._logger.debug(`No oracle provider found for id: ${oracleId}`);
-            throw new UnableToGetOracleProviderError(`Oracle provider not found for oracleId: ${oracleId}`);
+            this._logger.debug(`No oracle provider found for partyType: ${partyType}`);
+            throw new UnableToGetOracleProviderError(`Oracle provider not found for partyType: ${partyType}`);
         }
 
 		return oracleProvider;
@@ -326,13 +331,13 @@ export class AccountLookupAggregate  {
     private validateParticipant(participant: IParticipant):void{
   
         if(!participant) {
-            this._logger.error(`fspId: ${fspId} does not exist`);
-            throw Error(`fspId: ${fspId} does not exist`);
+            this._logger.error(`fspId does not exist`);
+            throw Error(`fspId does not exist`);
         }
 
         if(!participant.isActive) {
-            this._logger.error(`fspId:${fspId} is not not active`);
-            throw Error(`fspId:${fspId} is not not active`);
+            this._logger.error(`fspId:${participant.id} is not not active`);
+            throw Error(`fspId:${participant.id} is not not active`);
         }
     }
 }

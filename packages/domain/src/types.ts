@@ -145,3 +145,17 @@ export type PartyQueryResponse = {
     partyDoB?: string;
 
 }
+
+export type ParticipantAssociationRequestReceived = {
+    requesterFspId: string; 
+    partyType: string; 
+    partyId: string;
+    partySubType?: string;
+}
+
+export type ParticipantDisassociationRequestReceived = {
+    requesterFspId: string; 
+    partyType: string; 
+    partyId: string;
+    partySubType?: string;
+}

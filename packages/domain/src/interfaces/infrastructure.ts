@@ -63,9 +63,9 @@ export interface IOracleProvider{
     // Gets.
     getParticipants(partyId: string):Promise<string[]>;
     // Stores.
-    associateParty(partyType:string, partyId:string):Promise<null>;
+    associateParty(partyId:string):Promise<null>;
     // Updates.
-    disassociateParty(partyType:string, partyId:string):Promise<null>;
+    disassociateParty(partyId:string):Promise<null>;
 }
 
 export interface IParticipantService {

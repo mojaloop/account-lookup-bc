@@ -48,6 +48,7 @@ export class Participant implements IParticipant{
 	type: string;
     currency: string;
 	subId: string | null;
+	isActive: boolean;
 
 	constructor(
 		id: string,
