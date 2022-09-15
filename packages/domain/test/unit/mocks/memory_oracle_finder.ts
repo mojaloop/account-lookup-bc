@@ -73,6 +73,6 @@ export class MemoryOracleFinder implements IOracleFinder {
             throw new Error();
         }
 
-        return foundOracle;
+        return foundOracle as unknown as IOracleProvider;
     }
 }

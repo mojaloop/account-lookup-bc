@@ -78,7 +78,7 @@ export class AccountLookupAggregate  {
             this._logger.debug("Oracle finder initialized");
             for await (const oracle of this._oracleProviders) {
                 await oracle.init();
-                this._logger.debug("Oracle provider initialized with id" + oracle.id);
+                this._logger.debug("Oracle provider initialized with type" + oracle.partyType);
             }
             this.setAccountLookUpEvents();
             // this.messagePublisher.init()
@@ -107,13 +107,12 @@ export class AccountLookupAggregate  {
 
     async destroy(): Promise<void> {
         try{
-		await this._oracleFinder.destroy();
-        for await (const oracle of this._oracleProviders) {
-            oracle.destroy();
-        }
-        this._accountLookUpEventEmitter.removeAllListeners();
-        }
-        catch(error){
+            await this._oracleFinder.destroy();
+            for await (const oracle of this._oracleProviders) {
+                oracle.destroy();
+            }
+            this._accountLookUpEventEmitter.removeAllListeners();
+        } catch(error) {
             this._logger.fatal("Unable to destroy account lookup aggregate" + error);
             throw error;
         }
@@ -134,9 +133,11 @@ export class AccountLookupAggregate  {
             
             this.validateParticipant(destinationFsp)
 
-            destinationFspList = [await this._participantService.getParticipantInfo(destinationFspId)];
+            if(destinationFsp) {
+                destinationFspList.push(destinationFsp);
+            }
         } else {
-            await this.getValidParticipants(partyId, partyType, partySubType);
+            destinationFspList = await this.getValidParticipants(partyId, partyType, partySubType);
         }  
         
         // Publish the same amount of messages as FSPs received
@@ -152,6 +153,36 @@ export class AccountLookupAggregate  {
     }
 
     //Party.
+    async associateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceived):Promise<void>{
+        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
+  
+        this.validateParticipant(requesterFsp);
+
+        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
+
+        await oracleProvider.associateParty(partyId).catch(error=>{
+            this._logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} ` + error);
+            throw new UnableToAssociatePartyError(error);
+        });
+
+        this._messageProducer.send(null);
+    }
+
+    async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
+        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
+  
+        this.validateParticipant(requesterFsp);
+        
+        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
+
+        await oracleProvider.disassociateParty(partyType).catch(error=>{
+            this._logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
+            throw new UnableToDisassociatePartyError(error);
+        });
+
+        this._messageProducer.send(null);
+    }
+
     async getPartyRequest({ sourceFspId, partyIdType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceived):Promise<void>{
 
         const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
@@ -189,35 +220,6 @@ export class AccountLookupAggregate  {
         });
     }
 
-    async associateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceived):Promise<void>{
-        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
-  
-        this.validateParticipant(requesterFsp);
-
-        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
-
-        await oracleProvider.associateParty(partyId).catch(error=>{
-            this._logger.error(`Unable to associate party by type: ${partyType} and id: ${partyId} ` + error);
-            throw new UnableToAssociatePartyError(error);
-        });
-
-        this._messageProducer.send(null);
-    }
-
-    async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
-        const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
-  
-        this.validateParticipant(requesterFsp);
-        
-        const oracleProvider = await this.getOracleProvider(partyType, partySubType);
-
-        await oracleProvider.disassociateParty(partyType).catch(error=>{
-            this._logger.error(`Unable to disassociate party by type: ${partyType} and id: ${partyId} ` + error);
-            throw new UnableToDisassociatePartyError(error);
-        });
-
-        this._messageProducer.send(null);
-    }
 
     //Private methods.
     private setAccountLookUpEvents():void {
@@ -292,7 +294,6 @@ export class AccountLookupAggregate  {
         const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
         
         if(!oracle) {
-            this._logger.error(`oracle for ${partyType} not found`);
             throw Error(`oracle for ${partyType} not found`);
         }
 
@@ -300,7 +301,7 @@ export class AccountLookupAggregate  {
         const fspIdList = await oracle.getParticipants(partyId);
 
         if(!(fspIdList.length > 0)) {
-            this._logger.error(`partyId:${partyId} has no existing fspId owner`);
+            throw Error(`partyId:${partyId} has no existing fspId owner`);
         }
 
         // The participants service returns a list of FSPs with 
@@ -310,7 +311,6 @@ export class AccountLookupAggregate  {
         //     isActive: Boolean;
         // }
         const fspList: IParticipant[]  = await this._participantService.getParticipantsInfo(fspIdList);
-        
         
         const validFspList: IParticipant[] = [];
 
@@ -322,21 +322,19 @@ export class AccountLookupAggregate  {
         }
         
         if(!(validFspList.length > 0)) {
-            this._logger.error(`getParticipant partyType:${partyType} has no valid fspId`);
+            throw Error(`getParticipant partyType:${partyType} has no valid fspIds`);
         }
 
         return validFspList;
     }
     
-    private validateParticipant(participant: IParticipant):void{
-  
+    private validateParticipant(participant: IParticipant | null):void{
+
         if(!participant) {
-            this._logger.error(`fspId does not exist`);
             throw Error(`fspId does not exist`);
         }
 
         if(!participant.isActive) {
-            this._logger.error(`fspId:${participant.id} is not not active`);
             throw Error(`fspId:${participant.id} is not not active`);
         }
     }

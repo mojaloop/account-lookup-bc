@@ -45,7 +45,8 @@ import {MongoClient, Collection, Document, WithId} from "mongodb";
 import {
     IOracleFinder,
 	UnableToInitOracleFinderError,
-	UnableToGetOracleError
+	UnableToGetOracleError,
+	IOracleProvider
 } from "@mojaloop/account-lookup-bc-domain";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
@@ -86,17 +87,20 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
 	}
 
-    async getOracleProvider(type: string): Promise<string | undefined> {
+    async getOracleProvider(partyType: string, subType?: string): Promise<IOracleProvider | null> {
 		try {
 			const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
-				{type: type},
+				{
+					partyType: partyType,
+					partySubType: subType
+				},
 			);
 
 			if(!foundOracle) {
 				throw new UnableToGetOracleError();
 			}
 			
-			return foundOracle?.id;
+			return foundOracle as unknown as IOracleProvider;
 		} catch (e: unknown) {
 			throw new UnableToGetOracleError();
 		}
