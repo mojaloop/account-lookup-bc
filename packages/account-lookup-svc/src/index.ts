@@ -78,7 +78,7 @@ const producerOptions : MLKafkaProducerOptions = {
   kafkaBrokerList: KAFKA_URL,
   producerClientId: `${BC_NAME}_${APP_NAME}`,
   skipAcknowledgements: true,
-}
+};
 
 
 // Providers 

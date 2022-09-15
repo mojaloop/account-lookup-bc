@@ -14,23 +14,22 @@
   ],
   "scripts": {
     "prepare": "husky install",
-    "start": "yarn workspaces foreach --parallel -v run start",
-    "start:account-lookup-svc": "yarn workspace @mojaloop/account-lookup-svc run start",
-    "build": "yarn workspaces foreach --parallel -v run build",
-    "watch": "yarn workspaces foreach --parallel -v run watch",
-    "clean": "yarn run clean:dist && yarn run clean:npm",
-    "clean:npm": "yarn workspaces foreach --parallel -v run clean",
-    "clean:dist": "yarn workspaces foreach --parallel -v run clean",
+    "build": "npm run build -ws",
+    "watch": "npm run watch -ws --parallel -v",
+    "clean": "npm run clean:dist && npm run clean:node-modules",
+    "clean:node-modules": "rm -Rf node_modules && npm run clean:node-modules -ws",
+    "clean:dist": "npm run clean:dist -ws",
     "pretest": "echo 'FIX ME'",
-    "lint": "yarn workspaces foreach -v run lint",
-    "lint:fix": "yarn workspaces foreach -v run lint:fix --ignore-pattern node_modules",
-    "test:unit": "yarn workspaces foreach -v run test:unit",
-    "test:coverage": "yarn workspaces foreach --parallel -v run test:coverage",
-    "test:coverage-check": "yarn workspaces foreach --parallel -v run test:coverage-check",
-    "test:integration": "yarn workspaces foreach --parallel -v run test:integration",
-    "audit:check": "yarn workspaces foreach --parallel -v run audit:check",
-    "dep:check": "yarn workspaces foreach --parallel -v run dep:check",
-    "dep:update": "yarn workspaces foreach --parallel -v run dep:update"
+    "lint": "npm run lint -ws -p ",
+    "lint:fix": "npm run lint:fix -ws -p",
+    "test:unit": "npm run test:unit -ws",
+    "test:coverage": "npm run test:coverage -ws --parallel -v",
+    "test:coverage-check": "npm run test:coverage-check -ws --parallel -v",
+    "test:integration": "npm run test:integration -ws --parallel",
+    "audit:check": "npm run audit:check -ws --parallel -v",
+    "dep:check": "npm run dep:check -ws --parallel -v",
+    "dep:update": "npm run dep:update -ws --parallel -v ",
+    "publish:service-lib": "npm run npm_publish @mojaloop/account-lookup-bc-svc -w"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
@@ -46,10 +45,9 @@
     "typescript": "^4.6.4"
   },
   "workspaces": [
-    "packages/*"
-  ],
-  "packageManager": "yarn@3.2.0",
-  "engines": {
-    "yarn": "3.2.0"
-  }
+    "packages/account-lookup-svc",
+    "packages/client",
+    "packages/domain",
+    "packages/infrastructure"
+  ]
 }

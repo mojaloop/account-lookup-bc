@@ -130,9 +130,9 @@ export class AccountLookupAggregate  {
         // In this case, the sourceFspId already knows the destinationFspId,
         // so we just need to validate it
         if(destinationFspId) {
-            const destinationFsp = await this._participantService.getParticipantInfo(destinationFspId)
+            const destinationFsp = await this._participantService.getParticipantInfo(destinationFspId);
             
-            this.validateParticipant(destinationFsp)
+            this.validateParticipant(destinationFsp);
 
             destinationFspList = [await this._participantService.getParticipantInfo(destinationFspId)];
         } else {

@@ -21,16 +21,24 @@
     "/dist"
   ],
   "scripts": {
-    "start": "yarn run service",
-    "service": "tsc && node dist/application/index.js",
     "build": "tsc",
+    "clean:dist": "rm -rf dist",
+    "clean:node-modules": "rm -rf node_modules",
+    "clean:dist-and-node-modules": "rm -rf dist node_modules",
+    "clean": "npm run clean:dist",
+    "audit:check": "npm npm audit",
+    "dep:check": "ncu -e 2",
+    "dep:update": "ncu -u",
+    "publish": "npm run clean && npm run build && npm version patch && npm publish --tag latest --access public",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
-    "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
+    "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'",
+    "test:coverage": "jest --passWithNoTests --coverage --coverageThreshold='{}' --testMatch '**/test/unit/**/*.test.ts'",
+    "test:coverage-check": "jest --coverage --testMatch '**/test/unit/**/*.test.ts'"
   },
   "dependencies": {
-    "@mojaloop/account-lookup-bc-domain": "workspace:*",
+    "@mojaloop/account-lookup-bc-domain": "*",
     "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8",
     "mongodb": "^4.9.0"
   },
