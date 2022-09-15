@@ -44,7 +44,7 @@
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import EventEmitter from "events";
-import { GetParticipantError, GetPartyError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, NoSuchPartyError, NoValidParticipantFspIdError, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { GetParticipantError, GetPartyError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, NoSuchPartyError, NoValidParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived, PartyQueryResponse } from "./types";
 export class AccountLookupAggregate  {
@@ -60,14 +60,14 @@ export class AccountLookupAggregate  {
 		logger: ILogger,
         oracleFinder:IOracleFinder,
         oracleProviders:IOracleProvider[],
-        messagePublisher:IMessageProducer,
+        messageProducer:IMessageProducer,
         participantService: IParticipantService,
         accountLookUpEventEmitter?: EventEmitter
 	) {
         this._logger = logger;
 		this._oracleFinder = oracleFinder;
 		this._oracleProviders = oracleProviders;
-        this._messageProducer = messagePublisher;
+        this._messageProducer = messageProducer;
         this._participantService = participantService;
         this._accountLookUpEventEmitter = accountLookUpEventEmitter ?? new EventEmitter();
     }
@@ -81,7 +81,7 @@ export class AccountLookupAggregate  {
                 this._logger.debug("Oracle provider initialized with type" + oracle.partyType);
             }
             this.setAccountLookUpEvents();
-            // this.messagePublisher.init()
+            this._messageProducer.connect()
 		} catch (error: unknown) {
 			this._logger.fatal("Unable to intialize account lookup aggregate" + error);
 			throw error;
@@ -329,7 +329,7 @@ export class AccountLookupAggregate  {
         }
 
         if(!participant.isActive) {
-            throw Error(`fspId:${participant.id} is not active`);
+            throw new RequiredParticipantIsNotActive(`fspId:${participant.id} is not active`);
         }
     }
 

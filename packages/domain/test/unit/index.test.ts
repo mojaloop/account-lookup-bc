@@ -48,8 +48,10 @@
  import {Participant} from "../../src/entities/partipant";
  import {
      AccountLookupAggregate,
+     AccountLookUpEventsType,
      GetParticipantError,
      GetPartyError,
+     IAccountLookUpMessage,
      InvalidParticipantIdError,
      InvalidParticipantTypeError,
      InvalidPartyIdError,
@@ -63,6 +65,7 @@
      NoSuchParticipantFspIdError,
      NoSuchPartyError,
      NoValidParticipantFspIdError,
+     RequiredParticipantIsNotActive,
      UnableToAssociateParticipantError,
      UnableToAssociatePartyError,
      UnableToDisassociateParticipantError,
@@ -76,6 +79,7 @@ import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, moc
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
 import { MemoryLocalCache } from "./mocks/memory_local_cache";
+import EventEmitter from "events";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -101,13 +105,16 @@ const participantService: IParticipantService = new MemoryParticipantService(
     logger,
 );
 
+const eventEmitter = new EventEmitter();
+
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     oracleFinder,
     oracleProviderList,
     messageProducer,
-    participantService
+    participantService,
+    eventEmitter
 );
 
 describe("Account Lookup Domain", () => {
@@ -127,7 +134,6 @@ describe("Account Lookup Domain", () => {
         const party = new Party(id, type, currency, subId);
 
         // Assert
-
         expect(party.id).toBe(id);
         expect(party.type).toBe(type);
         expect(party.currency).toBe(currency);
@@ -149,7 +155,7 @@ describe("Account Lookup Domain", () => {
         // Assert
         expect(() => {
             Party.validateParty(party);
-          }).toThrowError(InvalidPartyIdError);
+        }).toThrowError(InvalidPartyIdError);
         
         
     });
@@ -170,7 +176,7 @@ describe("Account Lookup Domain", () => {
 
         expect(() => {
             Party.validateParty(party);
-          }).toThrowError(InvalidPartyTypeError);
+        }).toThrowError(InvalidPartyTypeError);
         
     });
 
@@ -186,12 +192,36 @@ describe("Account Lookup Domain", () => {
         
     });
 
+    test("should be able to init aggregate", async () => {
+        // Act && Assert
+        expect(aggregate.init()).resolves;
+
+        
+    });
+
+    test("should throw error if couldnt destroy aggregate", async () => {
+        // Arrange
+        jest.spyOn(oracleFinder, "destroy").mockImplementationOnce(() => {throw new Error();});
+
+        // Act && Assert
+
+        await expect(aggregate.destroy()).rejects.toThrowError();
+
+        
+    });
+
+
+    test("should be able to destroy aggregate", async () => {
+        // Act && Assert
+        expect(aggregate.destroy()).resolves;
+    });
+
     // Get Party
     test("should throw error if is unable to find a participant", async () => {
         //Arrange 
         const partyType = "error";
         const partyId = mockedPartyIds[0];
-        const sourceFspId = "dd" 
+        const sourceFspId = mockedParticipantIds[0]; 
 
          // Act && Assert
          await expect(
@@ -485,6 +515,34 @@ describe("Account Lookup Domain", () => {
          
      });
 
+     test("should be able to publish as messages all the valid participants found with a destinationId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+        const destinationFspId = mockedParticipantIds[1];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.getParticipant({ sourceFspId, partyType, partyId, destinationFspId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
      // Party Association
      test("should throw an error trying to associate a party", async () => {
         //Arrange 
@@ -536,6 +594,33 @@ describe("Account Lookup Domain", () => {
 
         //Assert
         expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
+     test("should throw an error if a required participant that needs to be valid is invalid", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: false,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.associateParty({ requesterFspId, partyType, partyId });
+            }
+        ).rejects.toThrow(RequiredParticipantIsNotActive);
          
      });
 
@@ -594,4 +679,79 @@ describe("Account Lookup Domain", () => {
         expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
          
      });
+
+    // Event emitter
+    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+        } as unknown as IAccountLookUpMessage;
+        
+        const errorMessage = "message as an invalid format or value";
+        
+        jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
+    
+    });
+
+    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                payload: fakePayload
+            }
+        } as unknown as IAccountLookUpMessage;;
+        const errorMessage = "execution error";
+        
+        jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type undefined is not a valid event type`);
+    
+    });
+
+    test("should call disassociateParticipantByTypeAndIdAndSubId aggregate method for DisassociateParticipantByTypeAndIdAndSubId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.AssociateParty,
+                payload: fakePayload
+            }
+        };
+        
+        const eventEmitterSpy = jest.spyOn(eventEmitter, "emit");
+
+        jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
+        
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(eventEmitterSpy).toBeCalledWith("[Account Lookup] Associate Party", {"participantId": "2", "participantSubId": "3", "participantType": "1"});
+        
+    });
 });

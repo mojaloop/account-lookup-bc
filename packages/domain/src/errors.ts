@@ -75,6 +75,7 @@ export class NoValidParticipantFspIdError extends Error {}
 export class InvalidParticipantAccountTypeError extends Error {}
 export class InvalidParticipantAccountCurrencyError extends Error {}
 export class InvalidParticipantAcountExtensionListError extends Error {}
+export class RequiredParticipantIsNotActive extends Error {}
 
 // Participant Association
 export class UnableToAssociateParticipantError extends Error {}
