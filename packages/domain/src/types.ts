@@ -98,7 +98,7 @@ export type ParticipantQueryReceived = {
 
 export type ParticipantQueryResponse = {
     fspId: string;
-    partyIdType: string;
+    partyType: string;
     partyId: string;
     partySubType?: string;
     currency?: string;
@@ -107,7 +107,7 @@ export type ParticipantQueryResponse = {
 
 export type PartyQueryReceived = {
     sourceFspId: string;
-    partyIdType: string;
+    partyType: string;
     partyId: string;
     partySubType?: string;
     currency?: string;
@@ -116,7 +116,7 @@ export type PartyQueryReceived = {
 
 export type PartyInfoRequested  = {
     fspId: string;
-    partyIdType: string;
+    partyType: string;
     partyId: string;
     partySubType?: string;
     currency?: string;
@@ -125,7 +125,7 @@ export type PartyInfoRequested  = {
 export type PartyInfoAvailable = {
     sourceFspId: string;
     destinationFspId: string;
-    partyIdType: string;
+    partyType: string;
     partyId: string;
     partySubType?: string;
     currency?: string;
@@ -137,7 +137,7 @@ export type PartyInfoAvailable = {
 export type PartyQueryResponse = {
     sourceFspId: string;
     destinationFspId: string;
-    partyIdType: string;
+    partyType: string;
     partyId: string;
     partySubType?: string;
     currency?: string;

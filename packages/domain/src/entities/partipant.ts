@@ -40,7 +40,7 @@
  "use strict";
 
 
-import { InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
+import { InvalidParticipantActiveFlagError, InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
 import { IParticipant } from "../types";
 
 export class Participant implements IParticipant{
@@ -53,11 +53,13 @@ export class Participant implements IParticipant{
 	constructor(
 		id: string,
 		type: string,
+		isActive: boolean,
         currency: string,
         subId: string | null = null,
 	) {
 		this.id = id;
 		this.type = type;
+		this.isActive = isActive;
         this.currency = currency;
         this.subId = subId;
 	}
@@ -69,6 +71,9 @@ export class Participant implements IParticipant{
 		}
 		if (!party.type) {
 			throw new InvalidParticipantTypeError();
+		}
+		if (!party.isActive) {
+			throw new InvalidParticipantActiveFlagError();
 		}
 	}
 }

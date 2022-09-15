@@ -61,12 +61,14 @@ import { mockedParticipants } from "./data";
 		return Promise.resolve(participant);
 	}
 
-	async getParticipantsInfo(fspId: string): Promise<IParticipant[]> {
+	async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
 		const participant:IParticipant[] = [];
 
-		mockedParticipants.forEach((participantFound:null|Error, key) => {
-			if(key.partyId === fspId) {
-				association=participantFound;
+		mockedParticipants.forEach((participantFound, key) => {
+			for(let i=0 ; i<fspIds.length ; i+=1){
+				if(participantFound?.id === fspIds[i]) {
+					participant.push(participantFound);
+				}
 			}
 		});
 

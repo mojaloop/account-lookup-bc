@@ -70,4 +70,22 @@ export class ParticipantClient implements IParticipantService {
 			return null;
 		}
 	}
+
+	async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
+		const result = this._localCache.get("getParticipantInfo", fspIds) as IParticipant[];
+		
+		if (result) {
+			this.logger.debug(`getParticipantInfo: returning cached result for fspId: ${fspIds}`);
+			return result;
+		}
+		
+		try {
+			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId },validateStatus: this.validateStatus });
+			this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
+			return axiosResponse.data;
+		} catch (e: unknown) {
+			this.logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
+			return null;
+		}
+	}
 }
