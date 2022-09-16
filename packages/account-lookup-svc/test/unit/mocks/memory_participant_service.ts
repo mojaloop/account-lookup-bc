@@ -50,6 +50,9 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	) {
 		this.logger = logger;
 	}
+	 getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
+		 throw new Error("Method not implemented.");
+	 }
      getParticipantInfo(fspId: string): Promise<IParticipant | null> {
          throw new Error("Method not implemented.");
      }

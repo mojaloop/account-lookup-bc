@@ -23,6 +23,7 @@
     "clean": "npm run clean:dist",
     "dep:check": "ncu -e 2",
     "lint": "eslint ./src",
+    "lint:fix": "yarn workspaces foreach -v run lint:fix --ignore-pattern node_modules",
     "build": "tsc",
     "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
     "publish": "npm run clean && npm run build && npm version patch && npm publish --tag latest --access public"

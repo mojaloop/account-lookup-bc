@@ -51,7 +51,7 @@ import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
 import { MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
 // Global vars
-const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
+const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
@@ -77,7 +77,7 @@ const producerOptions : MLKafkaProducerOptions = {
   kafkaBrokerList: KAFKA_URL,
   producerClientId: `${BC_NAME}_${APP_NAME}`,
   skipAcknowledgements: true,
-}
+};
 
 
 // Providers 
@@ -122,7 +122,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       //aggregate
-      aggregate.publishAccountLookUpEvent(message as any);
+      aggregate.publishAccountLookUpEvent(message as any); // eslint-disable-line
       Promise.resolve();
     };
     

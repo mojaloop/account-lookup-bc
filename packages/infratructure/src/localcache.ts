@@ -57,7 +57,7 @@ export class LocalCache implements ILocalCache{
     // in seconds
     private ttl: number;
 
-    constructor(logger:ILogger, ttl: number=320) {
+    constructor(logger:ILogger, ttl=320) {
         this._cache = new Map<string, LocalCacheResult>();
         this._logger = logger;
         this.ttl = ttl;

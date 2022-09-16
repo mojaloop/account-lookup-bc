@@ -41,7 +41,7 @@
  "use strict";
 
 
-import { IParticipant, IParty, ParticipantQueryReceived, ParticipantQueryResponse, PartyQueryReceived } from "../types";
+import { IParticipant } from "../types";
  
 /* infratructure interfaces */
 

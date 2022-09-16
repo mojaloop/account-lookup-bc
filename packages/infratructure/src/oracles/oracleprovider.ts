@@ -43,24 +43,14 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, Document, WithId} from "mongodb";
 import {
-IParty,
 IPartyAccount,
-IParticipantAccount,
 UnableToInitOracleProviderError,
 PartyAssociationAlreadyExistsError,
 PartyAssociationDoesntExistsError,
 UnableToGetPartyError,
 UnableToGetParticipantError,
 UnableToStorePartyAssociationError,
-UnableToDisassociatePartyError,
-NoSuchPartyError,
-IParticipant,
-NoSuchParticipantError,
-UnableToDisassociateParticipantError,
-ParticipantAssociationDoesntExistsError,
-ParticipantAssociationAlreadyExistsError,
-UnableToStoreParticipantAssociationError
-} from "@mojaloop/account-lookup-bc-domain";
+UnableToDisassociatePartyError} from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
 import { MongoQueryError } from "./../types";
 
@@ -114,7 +104,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 
 	//Participant
 	async getParticipants(partyId: string): Promise<string[]> {
-		let participants:string[] = [];
+		const participants:string[] = [];
 
 		try {
 			const data = await this.parties.find({

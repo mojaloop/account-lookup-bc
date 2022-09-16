@@ -44,9 +44,9 @@
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import EventEmitter from "events";
-import { GetParticipantError, GetPartyError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, NoSuchPartyError, NoValidParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociateParticipantError, UnableToAssociatePartyError, UnableToDisassociateParticipantError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, NoValidParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
-import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived, PartyQueryResponse } from "./types";
+import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
     private readonly _oracleFinder: IOracleFinder;
@@ -81,7 +81,6 @@ export class AccountLookupAggregate  {
                 this._logger.debug("Oracle provider initialized with type" + oracle.partyType);
             }
             this.setAccountLookUpEvents();
-            this._messageProducer.connect()
 		} catch (error: unknown) {
 			this._logger.fatal("Unable to intialize account lookup aggregate" + error);
 			throw error;
@@ -125,7 +124,7 @@ export class AccountLookupAggregate  {
         this.validateParticipant(sourceFsp);
 
 
-        let destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
+        const destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
         
         // Publish the same amount of messages as FSPs received
         for(let i=0 ; i<destinationFspList.length ; i+=1) {
@@ -176,7 +175,7 @@ export class AccountLookupAggregate  {
   
         this.validateParticipant(sourceFsp);
 
-        let destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
+        const destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
 
 
         // Publish the same amount of messages as FSPs received
@@ -340,9 +339,9 @@ export class AccountLookupAggregate  {
         // In this case, the sourceFspId already knows the destinationFspId,
         // so we just need to validate it
         if(destinationFspId) {
-            const destinationFsp = await this._participantService.getParticipantInfo(destinationFspId)
+            const destinationFsp = await this._participantService.getParticipantInfo(destinationFspId);
             
-            this.validateParticipant(destinationFsp)
+            this.validateParticipant(destinationFsp);
 
             if(destinationFsp) {
                 destinationFspList.push(destinationFsp);
