@@ -72,20 +72,29 @@ export class ParticipantClient implements IParticipantService {
 	}
 
 	async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
-		const result = this._localCache.get("getParticipantInfo", fspIds) as IParticipant[];
+		const result: IParticipant[] = [];
 		
-		if (result) {
-			this.logger.debug(`getParticipantInfo: returning cached result for fspId: ${fspIds}`);
+
+		for (const fspId of fspIds) {
+			result.push(this._localCache.get("getParticipantInfo", fspId) as IParticipant);
+		}
+		
+		if (result.every(participant => fspIds.includes(participant.id))) {
+			this.logger.debug(`getParticipantInfo: returning cached result for fspId list: ${fspIds}`);
 			return result;
 		}
 		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId },validateStatus: this.validateStatus });
-			this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
+			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspIds: fspIds },validateStatus: this.validateStatus });
+
+			for (const fspId of axiosResponse.data) {
+				this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
+			}
+
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			this.logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
-			return null;
+			this.logger.error(`getParticipantInfo: error getting participants info for fspIds: ${fspIds} - ${e}`);
+			return [];
 		}
 	}
 }

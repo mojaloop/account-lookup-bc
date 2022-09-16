@@ -70,6 +70,6 @@ export interface IOracleProvider{
 
 export interface IParticipantService {
     getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspId: string[]):Promise<IParticipant[]>;
+    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
 }
 
