@@ -45,9 +45,9 @@
     "typescript": "^4.6.4"
   },
   "workspaces": [
-    "packages/account-lookup-svc",
-    "packages/client",
     "packages/domain",
-    "packages/infrastructure"
+    "packages/client",
+    "packages/infrastructure",
+    "packages/account-lookup-svc"
   ]
 }
