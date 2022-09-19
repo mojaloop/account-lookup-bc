@@ -64,15 +64,18 @@ export class PartyAssociationDoesntExistsError extends Error {}
 // Participant
 export class InvalidParticipantIdError extends Error {}
 export class InvalidParticipantTypeError extends Error {}
+export class InvalidParticipantActiveFlagError extends Error {}
 export class NoSuchParticipantError extends Error {}
 export class GetParticipantError extends Error {}
 export class UnableToCreatePartyAssociationError extends Error {}
 export class NoSuchParticipantFspIdError extends Error {}
+export class NoValidParticipantFspIdError extends Error {}
 
 // Participant Account.
 export class InvalidParticipantAccountTypeError extends Error {}
 export class InvalidParticipantAccountCurrencyError extends Error {}
 export class InvalidParticipantAcountExtensionListError extends Error {}
+export class RequiredParticipantIsNotActive extends Error {}
 
 // Participant Association
 export class UnableToAssociateParticipantError extends Error {}
@@ -95,6 +98,7 @@ export class UnableToGetOracleError extends Error {}
 export class UnableToGetOracleProviderError extends Error {}
 export class UnableToGetPartyError extends Error {}
 export class UnableToGetParticipantError extends Error {}
+export class NoSuchOracleProviderError extends Error {}
 
 // Message Producer
 export class UnableToInitMessageProducerError extends Error {}

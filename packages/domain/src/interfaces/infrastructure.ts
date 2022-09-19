@@ -41,7 +41,7 @@
  "use strict";
 
 
-import { IParticipant, IParty, ParticipantQueryReceived, ParticipantQueryResponse, PartyQueryReceived } from "../types";
+import { IParticipant } from "../types";
  
 /* infratructure interfaces */
 
@@ -50,13 +50,13 @@ export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getOracleProvider(type:string, subType?:string):Promise<IOracleProvider>;
+    getOracleProvider(type:string, subType?:string):Promise<IOracleProvider | null>;
 }
 
 
 export interface IOracleProvider{
     // Properties.
-    type: string;
+    partyType: string;
     // Init and destroy.
 	init(): Promise<void>;
 	destroy(): Promise<void>;
@@ -70,6 +70,6 @@ export interface IOracleProvider{
 
 export interface IParticipantService {
     getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspId: string[]):Promise<string[]>;
+    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
 }
 

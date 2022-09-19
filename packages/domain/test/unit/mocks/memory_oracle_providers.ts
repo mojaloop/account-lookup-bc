@@ -54,7 +54,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsInfo, mockedParties, mockedPartyAssociations } from "./data";
 
  export class MemoryOracleProvider implements IOracleProvider {
-	type: string;
+	partyType: string;
 	private readonly logger: ILogger;
 
 	private readonly parties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty|Error>;
@@ -115,7 +115,6 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 
 	async disassociateParty(partyId:string):Promise<null> {
 		let association:null| Error | undefined;
-
 		mockedPartyAssociations.forEach((partyFound:null|Error, key) => {
 			if(key.partyId === partyId) {
 				association=partyFound;

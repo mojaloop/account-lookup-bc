@@ -40,39 +40,18 @@
 
  "use strict";
 
+ import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-import {
-    IOracleFinder, IOracleProvider, UnableToGetOracleError
-} from "../../../src";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleList } from "./data";
+export interface ILocalCache {
+    get(...keys: string[]):string|number|object|null;
+    set(value:NonNullable<string|number|object>,...keys: string[]):void;
+    delete(...keys: string[]):void;
+    destroy():void;
+}
 
-
-export class MemoryOracleFinder implements IOracleFinder {
-    private readonly logger: ILogger;
-    private oracleList: {id:string, type:string}[];
-
-    constructor(
-        logger: ILogger,
-    ) {
-        this.logger = logger;
-        this.oracleList = mockedOracleList;
-    }
-
-    async init(): Promise<void> {
-        
-    }
-
-    async destroy(): Promise<void> {
- 
-    }
-
-    async getOracleProvider(partyType: string): Promise<IOracleProvider> {
-        const foundOracle = this.oracleList.find(oracle => oracle.type === partyType);
-        if(foundOracle?.type === "error") {
-            throw new UnableToGetOracleError();
-        }
-
-        return foundOracle as unknown as IOracleProvider;
-    }
+export class KafkaMessageProducer implements IMessageProducer{
+    destroy: () => Promise<void>;
+    connect: () => Promise<void>;
+    disconnect: () => Promise<void>;
+    send: (message: any) => Promise<void>;
 }

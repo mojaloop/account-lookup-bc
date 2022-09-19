@@ -43,16 +43,13 @@
 
  import {
      IOracleProvider,
-     IParticipant,
-     IParty,
-	 UnableToAssociatePartyError,
-	 UnableToDisassociatePartyError,
  } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
 
  export class MemoryOracleProvider implements IOracleProvider {
 	id: string;
+	partyType: string;
 	private readonly logger: ILogger;
 
 	
@@ -71,47 +68,16 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 		return Promise.resolve();
 	}
 
-	getParticipantByTypeAndId(participantType: string, participantId: string): Promise<string | null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<string | null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 associateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 associateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 disassociateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 disassociateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
+	getParticipants(partyId: string): Promise<string[]> {
 		 throw new Error("Method not implemented.");
 	 }
 
-	async getPartyByTypeAndId(partyType:string, partyId:string):Promise<IParty|null> {
-		
+	async associateParty(partyType:string):Promise<null> {
 		throw new Error("Method not implemented.");
 	}
 
-	async getPartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<IParty|null> {
-		throw new Error("Method not implemented.");
-	}
 
-	async associatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
-
-	async associatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
-
-	async disassociatePartyByTypeAndId(partyType:string, partyId:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
-
-	async disassociatePartyByTypeAndIdAndSubId(partyType:string, partyId:string, partySubId:string):Promise<null> {
+	async disassociateParty(partyType:string):Promise<null> {
 		throw new Error("Method not implemented.");
 	}
 }

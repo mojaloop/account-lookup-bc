@@ -106,8 +106,8 @@ mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantTyp
 mockedParticipantsInfo.set({participantId:mockedParticipantIds[5],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, mockedParticipantFspIds[4]);
 
 export const mockedParticipants: Map<string, IParticipant| null> = new Map();
-mockedParticipants.set(mockedParticipantFspIds[0],{id: mockedParticipantResultIds[0], subId: mockedParticipantResultSubIds[0],type: "individual"});
-mockedParticipants.set(mockedParticipantFspIds[2],{id: mockedParticipantResultIds[1], subId: mockedParticipantResultSubIds[1],type: "individual"});
+mockedParticipants.set(mockedParticipantFspIds[0],{id: mockedParticipantResultIds[0], subId: mockedParticipantResultSubIds[0],type: "individual", isActive: true});
+mockedParticipants.set(mockedParticipantFspIds[2],{id: mockedParticipantResultIds[1], subId: mockedParticipantResultSubIds[1],type: "individual", isActive: true});
 mockedParticipants.set(mockedParticipantFspIds[4],null);
 
 

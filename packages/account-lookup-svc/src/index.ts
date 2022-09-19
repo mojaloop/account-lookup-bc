@@ -47,12 +47,11 @@ import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-s
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaConsumer, MLKafkaProducer, MLKafkaConsumerOptions, MLKafkaConsumerOutputType, MLKafkaProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { ParticipantHttpClient } from "@mojaloop/account-lookup-bc-client";
+import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
 import { MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
 
-
 // Global vars
-const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
+const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
@@ -123,7 +122,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       //aggregate
-      aggregate.publishAccountLookUpEvent(message as any);
+      aggregate.publishAccountLookUpEvent(message as any); // eslint-disable-line
       Promise.resolve();
     };
     
@@ -154,7 +153,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantHttpClient(logger);
+  participantService = participantServiceParam ?? new ParticipantClient(logger);
 }
 
 async function cleanUpAndExit(exitCode = 0): Promise<void> { 

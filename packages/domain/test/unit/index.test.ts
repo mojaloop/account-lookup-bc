@@ -48,8 +48,8 @@
  import {Participant} from "../../src/entities/partipant";
  import {
      AccountLookupAggregate,
-     GetParticipantError,
-     GetPartyError,
+     AccountLookUpEventsType,
+     IAccountLookUpMessage,
      InvalidParticipantIdError,
      InvalidParticipantTypeError,
      InvalidPartyIdError,
@@ -58,22 +58,20 @@
      IOracleProvider,
      IParticipant,
      IParticipantService,
-     NoSuchParticipantError,
+     NoSuchOracleProviderError,
      NoSuchParticipantFspIdError,
-     NoSuchPartyError,
-     UnableToAssociateParticipantError,
+     NoValidParticipantFspIdError,
+     RequiredParticipantIsNotActive,
      UnableToAssociatePartyError,
-     UnableToDisassociateParticipantError,
      UnableToDisassociatePartyError,
      UnableToGetOracleError,
-     UnableToGetOracleProviderError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
-import { MemoryLocalCache } from "./mocks/memory_local_cache";
+import EventEmitter from "events";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -87,7 +85,7 @@ for(let i=0 ; i<mockedOracleList.length ; i+=1) {
     const oracleProvider: IOracleProvider = new MemoryOracleProvider(
         logger,
     );
-    oracleProvider.type = mockedOracleList[i].type;
+    oracleProvider.partyType = mockedOracleList[i].type;
     oracleProviderList.push(oracleProvider);
 }
 
@@ -99,6 +97,8 @@ const participantService: IParticipantService = new MemoryParticipantService(
     logger,
 );
 
+const eventEmitter = new EventEmitter();
+
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
@@ -109,12 +109,10 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 );
 
 describe("Account Lookup Domain", () => {
-    
-   
+       
     afterEach(async () => {
         jest.resetAllMocks();
     });
-
 
     test("should create a new party entity", async()=>{
         // Arrange 
@@ -127,7 +125,6 @@ describe("Account Lookup Domain", () => {
         const party = new Party(id, type, currency, subId);
 
         // Assert
-
         expect(party.id).toBe(id);
         expect(party.type).toBe(type);
         expect(party.currency).toBe(currency);
@@ -149,7 +146,7 @@ describe("Account Lookup Domain", () => {
         // Assert
         expect(() => {
             Party.validateParty(party);
-          }).toThrowError(InvalidPartyIdError);
+        }).toThrowError(InvalidPartyIdError);
         
         
     });
@@ -170,7 +167,7 @@ describe("Account Lookup Domain", () => {
 
         expect(() => {
             Party.validateParty(party);
-          }).toThrowError(InvalidPartyTypeError);
+        }).toThrowError(InvalidPartyTypeError);
         
     });
 
@@ -186,656 +183,566 @@ describe("Account Lookup Domain", () => {
         
     });
 
- 
-    // test("should throw error if is unable to get oracle", async () => {
-    //    //Arrange 
-    //    const partyType = "error";
-    //    const partyId = mockedPartyIds[0];
+    test("should be able to init aggregate", async () => {
+        // Act && Assert
+        expect(aggregate.init()).resolves;
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
         
-    // });
+    });
 
-    // test("should throw error if is unable to find oracle for partyType", async () => {
-    //     //Arrange 
-    //     const partyType = "non-exisiting-oracle-type";
-    //     const partyId = mockedPartyIds[0];
- 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-    //          }
-    //      ).rejects.toThrow(UnableToGetOracleError);
+    test("should throw error if couldnt destroy aggregate", async () => {
+        // Arrange
+        jest.spyOn(oracleFinder, "destroy").mockImplementationOnce(() => {throw new Error();});
+
+        // Act && Assert
+
+        await expect(aggregate.destroy()).rejects.toThrowError();
+
+        
+    });
+
+
+    test("should be able to destroy aggregate", async () => {
+        // Act && Assert
+        expect(aggregate.destroy()).resolves;
+    });
+
+    // Get Party
+    test("should throw error if is unable to find a participant", async () => {
+        //Arrange 
+        const partyType = "error";
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0]; 
+
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+             }
+         ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-    //  });
+     });
 
-    //  test("should throw error if oracle returned is not present in the oracle providers list", async () => {
-    //     //Arrange 
-    //     const partyType = "not_found_oracle";
-    //     const partyId = mockedPartyIds[0];
- 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-    //          }
-    //      ).rejects.toThrow(UnableToGetOracleProviderError);
+    test("should throw error if is unable to get an oracle", async () => {
+       //Arrange 
+       const partyType = "error";
+       const partyId = mockedPartyIds[0];
+       const sourceFspId = mockedParticipantIds[0];
+
+       const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+            }
+        ).rejects.toThrow(UnableToGetOracleError);
+        
+    });
+
+    test("should throw error if is unable to find participant for partyType", async () => {
+        //Arrange 
+        const partyType = "non-exisiting-participant-type";
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+             }
+         ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-    //  });
-
-
-    // test("should get party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-
-    //     //Act
-    //     const party= await aggregate.getPartyByTypeAndIdResponse(partyType, partyId);
-
-    //     //Assert
-    //     expect(party?.id).toBe(mockedPartyResultIds[0]);
-    //     expect(party?.subId).toBe(mockedPartyResultSubIds[0]);
-
-    // });
-
-    // test("should throw error if is unable to get party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(GetPartyError);
-        
-    // });
-
-
-    // test("should throw error if no party found for partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = "non-existent-party-id";
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(NoSuchPartyError);
-        
-    // });
-
-    // test("should publish a message for party request for partyType, partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-
-    //     const messageProducerSpy = jest.spyOn(messageProducer, "send");
-        
-    //     //Act
-    //     await aggregate.getPartyByTypeAndIdRequest(partyType, partyId);
-
-    //     //Assert
-    //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
-    // });
-
-
-    // test("should get party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-    //     const partySubId = mockedPartySubIds[0];
-
-    //     //Act
-    //     const party= await aggregate.getPartyByTypeAndIdAndSubIdResponse(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(party?.id).toBe(mockedPartyResultIds[1]);
-    //     expect(party?.subId).toBe(mockedPartyResultSubIds[1]);
-
-    // });
-
-    // test("should throw error if is unable to get party by partyType, partyId and partySubId request", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[3];
-    //     const partySubId = mockedPartySubIds[0];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(GetPartyError);
-        
-    // });
-
-
-    // test("should throw error if no party found for partyType, partyId and partySubId request", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = "non-existent-party-id";
-    //     const partySubId = "non-existent-party-sub-id";
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(NoSuchPartyError);
-        
-    // });
-
-    // test("should publish a message for party request for partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-    //     const partySubId = mockedPartySubIds[0];
-
-    //     const messageProducerSpy = jest.spyOn(messageProducer, "send");
-        
-    //     //Act
-    //     await aggregate.getPartyByTypeAndIdAndSubIdRequest(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
-    // });
-
-    // test("should associate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-
-    //     //Act
-    //     const association= await aggregate.associatePartyByTypeAndId(partyType, partyId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to associate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[2];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToAssociatePartyError);
-        
-    // });
-
-
-    // test("should associate party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-    //     const partySubId = mockedPartySubIds[0];
-        
-
-    //     //Act
-    //     const association= await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-
-    // test("should throw error if is unable to associate party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[2];
-    //     const partySubId = mockedPartyIds[1];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToAssociatePartyError);
-        
-    // });
-
-    // test("should disassociate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-
-    //     //Act
-    //     const association= await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to disassociate party by partyType and partyId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[2];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.disassociatePartyByTypeAndId(partyType, partyId);
-    //         }
-    //     ).rejects.toThrow(UnableToDisassociatePartyError);
-        
-    // });
-
-    // test("should disassociate party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[1];
-    //     const partyId = mockedPartyIds[1];
-    //     const partySubId = mockedPartySubIds[0];
-
-    //     //Act
-    //     const association= await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to disassociate party by partyType, partyId and partySubId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[2];
-    //     const partyId = mockedPartyIds[2];
-    //     const partySubId = mockedPartySubIds[1];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.disassociatePartyByTypeAndIdAndSubId(partyType, partyId, partySubId);
-    //         }
-    //     ).rejects.toThrow(UnableToDisassociatePartyError);
-        
-    // });
-
-    // //Participant
-    // test("should create a new participant entity", async()=>{
-    //     // Arrange 
-    //     const id="fakeId";
-	//     const type="fake type";
-    //     const currency= "fake currency";
-	//     const subId="fake sub id";
-
-    //     // Act
-    //     const participant = new Participant(id, type, currency, subId);
-
-    //     // Assert
-
-    //     expect(participant.id).toBe(id);
-    //     expect(participant.type).toBe(type);
-    //     expect(participant.currency).toBe(currency);
-    //     expect(participant.subId).toBe(subId);
-        
-    // });
-
-    // test("should throw error if participant id is not valid", async()=>{
-    //     // Arrange 
-    //     const id="";
-	//     const type="fake type";
-    //     const currency= "fake currency";
-	//     const subId="fake sub id";
-
-    //     // Act
-    //     const participant = new Participant(id, type, currency, subId);
-
-
-    //     // Assert
-    //     expect(() => {
-    //         Participant.validateParticipant(participant);
-    //       }).toThrowError(InvalidParticipantIdError);
-        
-        
-    // });
-
-
-    // test("should throw error if participant type is not valid", async()=>{
-    //     // Arrange 
-    //     const id="fake id";
-	//     const type="";
-    //     const currency= "fake currency";
-	//     const subId="fake sub id";
-
-    //     // Act
-    //     const participant = new Participant(id, type, currency, subId);
-
-
-    //     // Assert
-
-    //     expect(() => {
-    //         Participant.validateParticipant(participant);
-    //       }).toThrowError(InvalidParticipantTypeError);
-        
-    // });
-
-
-    // test("should throw error if couldnt init aggregate", async () => {
-    //     // Arrange
-    //     jest.spyOn(oracleFinder, "init").mockImplementation(() => {throw new Error();});
-
-    //     // Act && Assert
-
-    //     await expect(aggregate.init()).rejects.toThrowError();
-
-        
-    // });
-
-    // test("should throw error if couldnt destroy aggregate", async () => {
-
-    //     // Arrange
-    //     jest.spyOn(oracleFinder, "destroy").mockImplementation(() => {throw new Error();});
-
-    //     // Act && Assert
-
-    //     await expect(aggregate.destroy()).rejects.toThrowError();
-        
-    // });
-
-
-    // test("should throw error if is unable to get oracle", async () => {
-    //    //Arrange 
-    //    const participantType = "error";
-    //    const participantId = mockedParticipantIds[0];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(UnableToGetOracleError);
-        
-    // });
-
-    // test("should throw error if is unable to find oracle for participantType", async () => {
-    //     //Arrange 
-    //     const participantType = "non-exisiting-oracle-type";
-    //     const participantId = mockedParticipantIds[0];
- 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //          }
-    //      ).rejects.toThrow(UnableToGetOracleError);
+     });
+
+     test("should throw error if oracle returned is not present in the oracle providers list", async () => {
+        //Arrange 
+        const partyType = "not_found_oracle";
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(null);
+
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+             }
+         ).rejects.toThrow(NoSuchOracleProviderError);
          
-    //  });
+     });
 
-    //  test("should throw error if oracle returned is not present in the oracle providers list", async () => {
-    //     //Arrange 
-    //     const participantType = "not_found_oracle";
-    //     const participantId = mockedParticipantIds[0];
- 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //          }
-    //      ).rejects.toThrow(UnableToGetOracleProviderError);
+     test("should throw error if oracle returns an empty list of participants", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+             }
+         ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-    //  });
+     });
 
 
-    // test("should get participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[0];
-    //     const participantId = mockedParticipantIds[0];
+     test("should throw error if oracle returns an empty list of valid participants", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
 
-    //     //Act
-    //     const participant= await aggregate.getParticipantByTypeAndId(participantType, participantId);
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
 
-    //     //Assert
-    //     expect(participant?.id).toBe(mockedParticipantResultIds[0]);
-    //     expect(participant?.subId).toBe(mockedParticipantResultSubIds[0]);
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce(mockedParticipantIds);
 
-    // });
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+             }
+         ).rejects.toThrow(NoValidParticipantFspIdError);
+         
+     });
 
-    // test("should throw error if it's unable to get participant by fspid", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[5];
+     test("should be able to publish as messages all the parties found from the request", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(NoSuchParticipantError);
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
 
-    // });
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
 
-    // test("should throw error if is unable to get participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[3];
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(GetParticipantError);
+        //Act
+        await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(2) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+     
+     test("should be able to publish as messages all the parties found from a response event", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+        const destinationFspId = mockedParticipantIds[1];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.getPartyResponse({ sourceFspId, destinationFspId, partyType, partyId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
+         
+     });
+
+     // Participant
+     test("should create a new participant entity", async()=>{
+        // Arrange 
+        const id="fakeId";
+	    const type="fake type";
+        const isActive = true;
+        const currency= "fake currency";
+	    const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+        // Assert
+
+        expect(participant.id).toBe(id);
+        expect(participant.type).toBe(type);
+        expect(participant.isActive).toBe(isActive);
+        expect(participant.subId).toBe(subId);
         
-    // });
+    });
+
+    test("should throw error if participant id is not valid", async()=>{
+        // Arrange 
+        const id="";
+	    const type="fake type";
+        const isActive = true;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
 
 
-    // test("should throw error if fspid not found for participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = "non-existent-participant-id";
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(NoSuchParticipantFspIdError);
+        // Assert
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantIdError);
         
-    // });
+        
+    });
 
+
+    test("should throw error if participant type is not valid", async()=>{
+        // Arrange 
+        const id="fake id";
+	    const type="";
+        const isActive= true;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+
+        // Assert
+
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantTypeError);
+        
+    });
+
+    test("should throw error if participant type is not valid", async()=>{
+        // Arrange 
+        const id="fake id";
+	    const type="";
+        const isActive= "fake boolean" as unknown as boolean;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+
+        // Assert
+
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantTypeError);
+        
+    });
+
+    test("should be able to publish as messages all the valid participants found", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.getParticipant({ sourceFspId, partyType, partyId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(2) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
+     test("should be able to publish as messages all the valid participants found with a destinationId", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const sourceFspId = mockedParticipantIds[0];
+        const destinationFspId = mockedParticipantIds[1];
+
+        const participant: IParticipant = {
+            id: sourceFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.getParticipant({ sourceFspId, partyType, partyId, destinationFspId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
+     // Party Association
+     test("should throw an error trying to associate a party", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+        
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.associateParty({ requesterFspId, partyType, partyId });
+            }
+        ).rejects.toThrow(UnableToAssociatePartyError);
+         
+     });
+     
+     test("should be able to associate a party", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.associateParty({ requesterFspId, partyType, partyId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
+     test("should throw an error if a required participant that needs to be valid is invalid", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: false,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.associateParty({ requesterFspId, partyType, partyId });
+            }
+        ).rejects.toThrow(RequiredParticipantIsNotActive);
+         
+     });
+
+    // Party Disassociation
+     test("should throw an error trying to disassociate a party", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[2];
+        const partyId = mockedPartyIds[2];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+        
+        // Act && Assert
+        await expect(
+            async () => {
+                await aggregate.disassociateParty({ requesterFspId, partyType, partyId });
+            }
+        ).rejects.toThrow(UnableToDisassociatePartyError);
+         
+     });
+
+     test("should be able to disassociate a party", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+
+        const messageProducerSpy = jest.spyOn(messageProducer, "send");
+
+        //Act
+        await aggregate.disassociateParty({ requesterFspId, partyType, partyId });
+
+        //Assert
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+         
+     });
+
+    // Event emitter
+    test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+        } as unknown as IAccountLookUpMessage;
+        
+        const errorMessage = "message as an invalid format or value";
+        
+        jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
+
+        // Assert
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
     
-    // test("should throw error if no participant found for participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = mockedParticipantIds[1];
+    });
 
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(NoSuchParticipantError);
+    test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                payload: fakePayload
+            }
+        } as unknown as IAccountLookUpMessage;
+        const errorMessage = "execution error";
         
-    // });
+        jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
+        jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+        
+        // Act
+        await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
 
-    // test("should throw error if fspid not found by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = mockedParticipantIds[1];
-    //     const participantSubId = mockedParticipantSubIds[1];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-    //         }
-    //     ).rejects.toThrow(NoSuchParticipantFspIdError);
-
-    // });
+        // Assert
+        expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type undefined is not a valid event type`);
     
-    // test("should get participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[2];
-    //     const participantSubId = mockedParticipantSubIds[1];
+    });
 
-    //     //Act
-    //     const participant= await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-
-    //     //Assert
-    //     expect(participant?.id).toBe(mockedParticipantResultIds[1]);
-    //     expect(participant?.subId).toBe(mockedParticipantResultSubIds[1]);
-
-    // });
-
-    // test("should throw error if is unable to get participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[3];
-    //     const participantSubId = mockedParticipantSubIds[0];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-    //         }
-    //     ).rejects.toThrow(GetParticipantError);
+    test("should call disassociateParticipantByTypeAndIdAndSubId aggregate method for DisassociateParticipantByTypeAndIdAndSubId Event", async()=>{
+        // Arrange
+        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.AssociateParty,
+                payload: fakePayload
+            }
+        };
         
-    // });
+        const eventEmitterSpy = jest.spyOn(eventEmitter, "emit");
 
-
-    // test("should throw error if no participant found for participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = mockedParticipantIds[1];
-    //     const participantSubId = mockedParticipantSubIds[0];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.getParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-    //         }
-    //     ).rejects.toThrow(NoSuchParticipantError);
+        jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
         
-    // });
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
 
-
-    // test("should associate participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[0];
-    //     const participantId = mockedParticipantIds[0];
-
-    //     //Act
-    //     const association= await aggregate.associateParticipantByTypeAndId(participantType, participantId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to associate participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[2];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associateParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(UnableToAssociateParticipantError);
+        // Assert
+       expect(eventEmitterSpy).toBeCalledWith("[Account Lookup] Associate Party", {"participantId": "2", "participantSubId": "3", "participantType": "1"});
         
-    // });
-
-
-    // test("should associate participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = mockedParticipantIds[1];
-    //     const participantSubId = mockedParticipantSubIds[0];
-        
-
-    //     //Act
-    //     const association= await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-
-    // test("should throw error if is unable to associate participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[2];
-    //     const participantSubId = mockedParticipantIds[1];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.associateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-    //         }
-    //     ).rejects.toThrow(UnableToAssociateParticipantError);
-        
-    // });
-
-    // test("should disassociate participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[0];
-    //     const participantId = mockedParticipantIds[0];
-
-    //     //Act
-    //     const association= await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to disassociate participant by participantType and participantId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[2];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.disassociateParticipantByTypeAndId(participantType, participantId);
-    //         }
-    //     ).rejects.toThrow(UnableToDisassociateParticipantError);
-        
-    // });
-
-    // test("should disassociate participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[1];
-    //     const participantId = mockedParticipantIds[1];
-    //     const participantSubId = mockedParticipantSubIds[0];
-
-    //     //Act
-    //     const association= await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-
-    //     //Assert
-    //     expect(association).toBeUndefined();
-  
-    // });
-
-    // test("should throw error if is unable to disassociate participant by participantType, participantId and participantSubId", async () => {
-    //     //Arrange 
-    //     const participantType = mockedParticipantTypes[2];
-    //     const participantId = mockedParticipantIds[2];
-    //     const participantSubId = mockedParticipantSubIds[1];
-
-    //     // Act && Assert
-    //     await expect(
-    //         async () => {
-    //             await aggregate.disassociateParticipantByTypeAndIdAndSubId(participantType, participantId, participantSubId);
-    //         }
-    //     ).rejects.toThrow(UnableToDisassociateParticipantError);
-        
-    // });
+    });
 });

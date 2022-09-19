@@ -43,24 +43,14 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, Document, WithId} from "mongodb";
 import {
-IParty,
 IPartyAccount,
-IParticipantAccount,
 UnableToInitOracleProviderError,
 PartyAssociationAlreadyExistsError,
 PartyAssociationDoesntExistsError,
 UnableToGetPartyError,
 UnableToGetParticipantError,
 UnableToStorePartyAssociationError,
-UnableToDisassociatePartyError,
-NoSuchPartyError,
-IParticipant,
-NoSuchParticipantError,
-UnableToDisassociateParticipantError,
-ParticipantAssociationDoesntExistsError,
-ParticipantAssociationAlreadyExistsError,
-UnableToStoreParticipantAssociationError
-} from "@mojaloop/account-lookup-bc-domain";
+UnableToDisassociatePartyError} from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
 import { MongoQueryError } from "./../types";
 
@@ -78,6 +68,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	private participants: Collection;
 
 	id: string;
+	partyType: string;
 
 	constructor(
 		logger: ILogger,
@@ -92,6 +83,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 
 		this.mongoClient = new MongoClient(this.DB_URL);
 	}
+
 
 	async init(): Promise<void> {
 		try {
@@ -110,257 +102,66 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		await this.mongoClient.close();
 	}
 
-	//Party.
-	async getPartyByTypeAndId(partyType: string, partyId: string): Promise<IParty | null> {
-		let party:IParty|Error | undefined;
-
-		try {
-			const data = await this.parties.findOne(
-				{
-					id: partyId,
-					type: partyType
-				},
-			);
-
-			if(!data) {
-				throw new NoSuchPartyError();
-			}
-
-			party = data as unknown as IParty;
-		} catch (e: unknown) {
-			throw new UnableToGetPartyError();
-		}
-
-		return party;
-	}
-
-	async getPartyByTypeAndIdAndSubId(partyType: string, partyId: string, partySubId: string): Promise<IParty | null> {
-		let party:IParty|Error | undefined;
-
-		try {
-			const data = await this.parties.findOne({
-				id: partyId,
-				type: partyType,
-				subId: partySubId
-			});
-
-			if(!data) {
-				throw new NoSuchPartyError();
-			}
-
-			party = data as unknown as IParty;
-		} catch (e: unknown) {
-			throw new UnableToGetPartyError();
-		}
-
-		return party;
-	}
-
-	async associatePartyByTypeAndId(partyType: string, partyId: string): Promise<null> {
-		const association = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
-
-		if (association) {
-			throw new PartyAssociationAlreadyExistsError();
-		}
-
-		try {
-			await this.partyAssociations.insertOne({
-				id: partyId,
-				type: partyType,
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToStorePartyAssociationError();
-		}
-	}
-
-	async associatePartyByTypeAndIdAndSubId(partyType: string, partyId: string, partySubId: string): Promise<null> {
-		const association = await this.associatedPartyExistsByTypeAndIdAndSubId(partyType, partyId, partySubId);
-
-		if (association) {
-			throw new PartyAssociationAlreadyExistsError();
-		}
-
-		try {
-			await this.partyAssociations.insertOne({
-				id: partyId,
-				type: partyType,
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToStorePartyAssociationError();
-		}
-	}
-
-	async disassociatePartyByTypeAndId(partyType: string, partyId: string): Promise<null> {
-		const association = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
-
-		if (!association) {
-			throw new PartyAssociationDoesntExistsError();
-		}
-
-		try {
-			await this.partyAssociations.deleteOne({
-				id: partyId,
-				type: partyType,
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToDisassociatePartyError();
-		}
-	}
-
-	async disassociatePartyByTypeAndIdAndSubId(partyType: string, partyId: string, partySubId: string): Promise<null> {
-		const association = await this.associatedPartyExistsByTypeAndId(partyType, partyId);
-
-		if (!association) {
-			throw new PartyAssociationDoesntExistsError();
-		}
-
-		try {
-			await this.partyAssociations.deleteOne({
-				id: partyId,
-				type: partyType,
-				subId: partySubId
-			}) as unknown as IPartyAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToDisassociatePartyError();
-		}
-	}
-
 	//Participant
-	async getParticipantByTypeAndId(participantType: string, participantId: string): Promise<string | null> {
-		let participant:any | Error | undefined;
+	async getParticipants(partyId: string): Promise<string[]> {
+		const participants:string[] = [];
 
 		try {
-			const data = await this.parties.findOne({
-				id: participantId,
-				type: participantType
-			});
+			const data = await this.parties.find({
+				partyId: partyId,
+			}).toArray();
 
-			if(!data) {
-				throw new NoSuchParticipantError();
-			}
-
-			participant = data as unknown as any;
+			data.forEach(value => participants.push(value.participantId as unknown as string));
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}
 
-		return participant.fspId;
+		return participants as unknown as string[];
 	}
 
-	async getParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<string | null> {
-		let participant:any | Error | undefined;
-
-		try {
-			const data = await this.parties.findOne({
-				id: participantId,
-				type: participantType,
-				subId: participantSubId
-			});
-
-			if(!data) {
-				throw new NoSuchParticipantError();
-			}
-
-			participant = data as unknown as any;
-		} catch (e: unknown) {
-			throw new UnableToGetParticipantError();
-		}
-
-		return participant.fspId;
-	}
-
-	async associateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
-		const association = await this.associatedParticipantExistsByTypeAndId(participantType, participantId);
+	//Party.
+	async associateParty(partyId: string): Promise<null> {
+		const association = await this.associatedPartyExists(partyId);
 
 		if (association) {
-			throw new ParticipantAssociationAlreadyExistsError();
+			throw new PartyAssociationAlreadyExistsError();
 		}
 
 		try {
-			await this.participantAssociations.insertOne({
-				id: participantId,
-				type: participantType,
-			}) as unknown as IParticipantAccount;
+			await this.partyAssociations.insertOne({
+				partyId: partyId,
+			}) as unknown as IPartyAccount;
 
 			return null;
 		} catch (e: unknown) {
-			throw new UnableToStoreParticipantAssociationError();
+			throw new UnableToStorePartyAssociationError();
 		}
 	}
 
-	async associateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
-		const association = await this.associatedParticipantExistsByTypeAndIdAndSubId(participantType, participantId, participantSubId);
 
-		if (association) {
-			throw new ParticipantAssociationAlreadyExistsError();
-		}
-
-		try {
-			await this.participantAssociations.insertOne({
-				id: participantId,
-				type: participantType,
-			}) as unknown as IParticipantAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToStoreParticipantAssociationError();
-		}
-	}
-
-	async disassociateParticipantByTypeAndId(participantType: string, participantId: string): Promise<null> {
-		const association = await this.associatedParticipantExistsByTypeAndId(participantType, participantId);
+	async disassociateParty(partyId: string): Promise<null> {
+		const association = await this.associatedPartyExists(partyId);
 
 		if (!association) {
-			throw new ParticipantAssociationDoesntExistsError();
+			throw new PartyAssociationDoesntExistsError();
 		}
 
 		try {
-			await this.participantAssociations.deleteOne({
-				id: participantId,
-				type: participantType,
-			}) as unknown as IParticipantAccount;
+			await this.partyAssociations.deleteOne({
+				partyId: partyId,
+			}) as unknown as IPartyAccount;
 
 			return null;
 		} catch (e: unknown) {
-			throw new UnableToDisassociateParticipantError();
+			throw new UnableToDisassociatePartyError();
 		}
 	}
-
-	async disassociateParticipantByTypeAndIdAndSubId(participantType: string, participantId: string, participantSubId: string): Promise<null> {
-		const association = await this.associatedParticipantExistsByTypeAndId(participantType, participantId);
-
-		if (!association) {
-			throw new ParticipantAssociationDoesntExistsError();
-		}
-
-		try {
-			await this.participantAssociations.deleteOne({
-				id: participantId,
-				type: participantType,
-				subId: participantSubId
-			}) as unknown as IParticipantAccount;
-
-			return null;
-		} catch (e: unknown) {
-			throw new UnableToDisassociateParticipantError();
-		}
-	}
-
 
 	// Private.
-	private async associatedPartyExistsByTypeAndId(partyType: string, partyId: string): Promise<boolean> {
+	private async associatedPartyExists(partyId: string): Promise<boolean> {
 		try {
 			const partyAssociation: WithId<Document> | null = await this.partyAssociations.findOne({
-				id: partyId,
-				type: partyType
+				partyId: partyId,
 			}); 
 			
 			return partyAssociation !== null;
@@ -369,45 +170,5 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		}
 	}
 
-	private async associatedPartyExistsByTypeAndIdAndSubId(partyType: string, partyId: string, partySubId: string): Promise<boolean> {
-		try {
-			const partyAssociation: WithId<Document> | null = await this.partyAssociations.findOne({
-				id: partyId,
-				type: partyType,
-				subId: partySubId
-			});
-
-			return partyAssociation !== null;
-		} catch (e: unknown) {
-			throw new UnableToGetPartyError((e as MongoQueryError)?.message);
-		}
-	}
-
-	private async associatedParticipantExistsByTypeAndId(partyType: string, partyId: string): Promise<boolean> {
-		try {
-			const partyAssociation: WithId<Document> | null = await this.partyAssociations.findOne({
-				id: partyId,
-				type: partyType
-			});
-
-			return partyAssociation !== null;
-			} catch (e: unknown) {
-				throw new UnableToGetParticipantError((e as MongoQueryError)?.message);
-			}
-		}
-
-	private async associatedParticipantExistsByTypeAndIdAndSubId(partyType: string, partyId: string, partySubId: string): Promise<boolean> {
-		try {
-			const partyAssociation: WithId<Document> | null = await this.partyAssociations.findOne({
-				id: partyId,
-				type: partyType,
-				subId: partySubId
-			});
-
-			return partyAssociation !== null;
-		} catch (e: unknown) {
-			throw new UnableToGetParticipantError((e as MongoQueryError)?.message);
-		}
-	}
 }
 
