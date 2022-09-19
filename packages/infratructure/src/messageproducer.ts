@@ -40,44 +40,18 @@
 
  "use strict";
 
+ import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
- import {
-     IOracleProvider,
- } from "@mojaloop/account-lookup-bc-domain";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+export interface ILocalCache {
+    get(...keys: string[]):string|number|object|null;
+    set(value:NonNullable<string|number|object>,...keys: string[]):void;
+    delete(...keys: string[]):void;
+    destroy():void;
+}
 
-
- export class MemoryOracleProvider implements IOracleProvider {
-	id: string;
-	partyType: string;
-	private readonly logger: ILogger;
-
-	
-
-	constructor(
-		logger: ILogger,
-	) {
-		this.logger = logger;
-	}
-
-	async init(): Promise<void> {
-		return Promise.resolve();
-	}
-
-	async destroy(): Promise<void> {
-		return Promise.resolve();
-	}
-
-	getParticipants(partyId: string): Promise<string[]> {
-		 throw new Error("Method not implemented.");
-	 }
-
-	async associateParty(partyType:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
-
-
-	async disassociateParty(partyType:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
+export class KafkaMessageProducer implements IMessageProducer{
+    destroy: () => Promise<void>;
+    connect: () => Promise<void>;
+    disconnect: () => Promise<void>;
+    send: (message: any) => Promise<void>;
 }

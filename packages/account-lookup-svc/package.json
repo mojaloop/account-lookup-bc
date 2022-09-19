@@ -27,7 +27,6 @@
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
-    "test:integration": "jest --passWithNoTests --testMatch '**/test/integration/**/*.test.ts'"
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-client": "workspace:*",

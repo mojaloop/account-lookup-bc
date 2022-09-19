@@ -74,8 +74,8 @@ export interface IParticipantAccount {
 
 
 export enum AccountLookUpEventsType  {
-    GetParticipantByPartyType = "[Account Lookup] Get Participant",
-    GetPartyById = "[Account Lookup] Get Party By Id",
+    GetParticipant = "[Account Lookup] Get Participant",
+    GetParty = "[Account Lookup] Get Party",
     AssociateParty = "[Account Lookup] Associate Party",
     DisassociateParty = "[Account Lookup] Disassociate Party",
 }

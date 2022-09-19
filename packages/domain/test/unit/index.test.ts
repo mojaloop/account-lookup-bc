@@ -681,7 +681,7 @@ describe("Account Lookup Domain", () => {
      });
 
     // Event emitter
-    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+    test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
         // Arrange
         const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
         const message = {
@@ -704,7 +704,7 @@ describe("Account Lookup Domain", () => {
     
     });
 
-    test("should log error if getParticipantByTypeAndIdAndSubId aggregate method for GetParticipantByTypeAndIdAndSubId Event throws error", async()=>{
+    test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
         // Arrange
         const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
         const message:IAccountLookUpMessage = {
@@ -715,7 +715,7 @@ describe("Account Lookup Domain", () => {
             value: {
                 payload: fakePayload
             }
-        } as unknown as IAccountLookUpMessage;;
+        } as unknown as IAccountLookUpMessage;
         const errorMessage = "execution error";
         
         jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);

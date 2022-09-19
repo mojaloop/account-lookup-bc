@@ -216,7 +216,7 @@ export class AccountLookupAggregate  {
 
     //Private methods.
     private setAccountLookUpEvents():void {
-        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.GetPartyById, async (payload: PartyQueryReceived) => {
+        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.GetParty, async (payload: PartyQueryReceived) => {
             await this.getPartyRequest({ 
                 sourceFspId: payload.sourceFspId, 
                 partyType: payload.partyType, 
@@ -226,11 +226,11 @@ export class AccountLookupAggregate  {
                 destinationFspId: payload.destinationFspId
             })
             .catch(err => {
-                this._logger.error(`${AccountLookUpEventsType.GetPartyById}: ${err}`);
+                this._logger.error(`${AccountLookUpEventsType.GetParty}: ${err}`);
             });
         });
 
-        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.GetParticipantByPartyType, async (payload: ParticipantQueryReceived) => {       
+        this._accountLookUpEventEmitter.on(AccountLookUpEventsType.GetParticipant, async (payload: ParticipantQueryReceived) => {       
             await this.getParticipant({
                 sourceFspId: payload.sourceFspId, 
                 partyType: payload.partyType, 
@@ -240,7 +240,7 @@ export class AccountLookupAggregate  {
                 currency: payload.currency
             })
             .catch(err => {
-                this._logger.error(`${AccountLookUpEventsType.GetParticipantByPartyType}: ${err}`);
+                this._logger.error(`${AccountLookUpEventsType.GetParticipant}: ${err}`);
             });
         });
         this._accountLookUpEventEmitter.on(AccountLookUpEventsType.AssociateParty, async (payload: ParticipantAssociationRequestReceived) => {
