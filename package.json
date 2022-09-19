@@ -46,8 +46,8 @@
   },
   "workspaces": [
     "packages/domain",
-    "packages/client",
     "packages/infrastructure",
+    "packages/client",
     "packages/account-lookup-svc"
   ]
 }
