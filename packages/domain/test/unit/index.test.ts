@@ -49,8 +49,6 @@
  import {
      AccountLookupAggregate,
      AccountLookUpEventsType,
-     GetParticipantError,
-     GetPartyError,
      IAccountLookUpMessage,
      InvalidParticipantIdError,
      InvalidParticipantTypeError,
@@ -61,24 +59,18 @@
      IParticipant,
      IParticipantService,
      NoSuchOracleProviderError,
-     NoSuchParticipantError,
      NoSuchParticipantFspIdError,
-     NoSuchPartyError,
      NoValidParticipantFspIdError,
      RequiredParticipantIsNotActive,
-     UnableToAssociateParticipantError,
      UnableToAssociatePartyError,
-     UnableToDisassociateParticipantError,
      UnableToDisassociatePartyError,
      UnableToGetOracleError,
-     UnableToGetOracleProviderError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { mockedOracleList, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
+import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
-import { MemoryLocalCache } from "./mocks/memory_local_cache";
 import EventEmitter from "events";
 
 const logger: ILogger = new ConsoleLogger();
@@ -113,8 +105,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     oracleFinder,
     oracleProviderList,
     messageProducer,
-    participantService,
-    eventEmitter
+    participantService
 );
 
 describe("Account Lookup Domain", () => {
