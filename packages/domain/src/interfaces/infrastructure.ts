@@ -61,7 +61,7 @@ export interface IOracleProvider{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getParticipants(partyId: string):Promise<string[]>;
+    getParticipant(partyId: string):Promise<string|null>;
     // Stores.
     associateParty(partyId:string):Promise<null>;
     // Updates.

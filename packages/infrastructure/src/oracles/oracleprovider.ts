@@ -50,7 +50,8 @@ PartyAssociationDoesntExistsError,
 UnableToGetPartyError,
 UnableToGetParticipantError,
 UnableToStorePartyAssociationError,
-UnableToDisassociatePartyError} from "@mojaloop/account-lookup-bc-domain";
+UnableToDisassociatePartyError,
+NoSuchParticipantError} from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
 import { MongoQueryError } from "./../types";
 
@@ -103,20 +104,25 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	}
 
 	//Participant
-	async getParticipants(partyId: string): Promise<string[]> {
-		const participants:string[] = [];
+	async getParticipant(partyId: string): Promise<string> {
+		let participant = null;
 
 		try {
-			const data = await this.parties.find({
+			const data = await this.parties.findOne({
 				partyId: partyId,
-			}).toArray();
+			});
 
-			data.forEach(value => participants.push(value.participantId as unknown as string));
+			if(!data) {
+                throw new NoSuchParticipantError();
+            }
+
+			participant = data.participantId as unknown as string
+
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();
 		}
 
-		return participants as unknown as string[];
+		return participant;
 	}
 
 	//Party.

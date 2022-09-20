@@ -82,8 +82,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     oracleFinder,
     oracleProviderList,
     mockedProducer,
-    mockedParticipantService,
-    eventEmitter
+    mockedParticipantService
 );
 
 
@@ -188,11 +187,18 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     // Participant
     test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
         // Arrange
-        const fakePayload = { participantType:"1", participantId: "2" };
+        const fakePayload = {                  
+            sourceFspId: "sourceFspId1", 
+            partyType: "partyType1", 
+            partyId: "partyId1", 
+            partySubType: "partySubType1", 
+            currency: "currency1",
+            destinationFspId: "destinationFspId1" 
+        };
         const message:IAccountLookUpMessage = {
-            key: "account-lookup-service",
+            key: "account-lookup",
             timestamp: 12,
-            topic: "account-lookup-service",
+            topic: "account-lookup",
             headers: [],
             value: {
                 type:AccountLookUpEventsType.GetParticipant,
@@ -206,7 +212,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         mockedAggregate.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.getParticipant).toBeCalledWith(fakePayload.participantType, fakePayload.participantId);
+       expect(mockedAggregate.getParticipant).toBeCalledWith(fakePayload);
         
     });
 
@@ -232,31 +238,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant}: ${errorMessage}`);
-        
-    });
-
-    test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
-        // Arrange
-        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
-        const message:IAccountLookUpMessage = {
-            key: "account-lookup-service",
-            timestamp: 12,
-            topic: "account-lookup-service",
-            headers: [],
-            value: {
-                type:AccountLookUpEventsType.GetParticipant,
-                payload: fakePayload
-            }
-        };
-        
-        jest.spyOn(mockedAggregate, "getParticipant").mockResolvedValueOnce({} as any);
-        
-        // Act
-        mockedAggregate.publishAccountLookUpEvent(message);
-
-        // Assert
-       expect(mockedAggregate.getParticipant).toBeCalledWith(fakePayload.participantType, fakePayload.participantId, fakePayload.participantSubId);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant} ${errorMessage}`);
         
     });
 
@@ -282,7 +264,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant} ${errorMessage}`);
         
     });
 
@@ -308,18 +290,25 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParticipant} ${errorMessage}`);
         
     });
 
     // Party
-    test("should call getPartyByTypeAndId aggregate method for GetPartyByTypeAndId Event", async()=>{
+    test("should call getParty aggregate method for GetParty Event", async()=>{
         // Arrange
-        const fakePayload = { partyType:"1", partyId: "2" };
+        const fakePayload = {                  
+            sourceFspId: "sourceFspId1", 
+            partyType: "partyType1", 
+            partyId: "partyId1", 
+            partySubType: "partySubType1", 
+            currency: "currency1",
+            destinationFspId: "destinationFspId1" 
+        };
         const message:IAccountLookUpMessage = {
-            key: "account-lookup-service",
+            key: "account-lookup",
             timestamp: 12,
-            topic: "account-lookup-service",
+            topic: "account-lookup",
             headers: [],
             value: {
                 type:AccountLookUpEventsType.GetParty,
@@ -333,7 +322,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         mockedAggregate.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.getPartyRequest).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
+       expect(mockedAggregate.getPartyRequest).toBeCalledWith(fakePayload);
         
     });
 
@@ -359,17 +348,17 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParty}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.GetParty} ${errorMessage}`);
         
     });
 
     test("should call associateParty aggregate method for AssociateParty Event", async()=>{
         // Arrange
-        const fakePayload = { partyType:"1", partyId: "2" };
+        const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
         const message:IAccountLookUpMessage = {
-            key: "account-lookup-service",
+            key: "account-lookup",
             timestamp: 12,
-            topic: "account-lookup-service",
+            topic: "account-lookup",
             headers: [],
             value: {
                 type:AccountLookUpEventsType.AssociateParty,
@@ -383,7 +372,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         mockedAggregate.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.associateParty).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
+       expect(mockedAggregate.associateParty).toBeCalledWith(fakePayload);
         
     });
 
@@ -409,17 +398,17 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.AssociateParty}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.AssociateParty} ${errorMessage}`);
         
     });
 
     test("should call disassociateParty aggregate method for DisassociateParty Event", async()=>{
         // Arrange
-        const fakePayload = { partyType:"1", partyId: "2" };
+        const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
         const message:IAccountLookUpMessage = {
-            key: "account-lookup-service",
+            key: "account-lookup",
             timestamp: 12,
-            topic: "account-lookup-service",
+            topic: "account-lookup",
             headers: [],
             value: {
                 type:AccountLookUpEventsType.DisassociateParty,
@@ -433,7 +422,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         mockedAggregate.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(mockedAggregate.disassociateParty).toBeCalledWith(fakePayload.partyType, fakePayload.partyId);
+       expect(mockedAggregate.disassociateParty).toBeCalledWith(fakePayload);
         
     });
 
@@ -459,7 +448,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await Promise.resolve(mockedAggregate.publishAccountLookUpEvent(message));
 
         // Assert
-        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParty}: ${errorMessage}`);
+        expect(logger.error).toBeCalledWith(`${AccountLookUpEventsType.DisassociateParty} ${errorMessage}`);
         
     });
 

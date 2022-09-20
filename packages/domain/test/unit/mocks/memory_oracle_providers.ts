@@ -129,19 +129,23 @@ import { mockedParticipantAssociations, mockedParticipants, mockedParticipantsIn
 	}
 
 	//Participant
-	async getParticipants(participantId:string):Promise<string[]> {
-		let fspIds:string[]= [];
+    async getParticipant(participantId:string):Promise<string|null> {
+        let fspId:string|Error | undefined;
 
-		mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
-			if(participantFspId instanceof Error) {
-				return;
-			}
-			if(key.participantId === participantId){
-				fspIds.push(participantFspId);
-			}
-		});
-		
-		return fspIds;
-	}
+        mockedParticipantsInfo.forEach((participantFspId:string| Error, key) => {
+            if(key.participantId === participantId){
+                fspId=participantFspId;
+            }
+        });
+
+        if(fspId instanceof Error){
+            throw fspId;
+        }
+        
+        if (!fspId) {
+            return null;
+        }
+        return fspId;
+    }
 
 }

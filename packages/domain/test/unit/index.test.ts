@@ -97,7 +97,6 @@ const participantService: IParticipantService = new MemoryParticipantService(
     logger,
 );
 
-const eventEmitter = new EventEmitter();
 
 // Domain.
 const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
@@ -312,8 +311,7 @@ describe("Account Lookup Domain", () => {
          
      });
 
-
-     test("should throw error if oracle returns an empty list of valid participants", async () => {
+     test("should throw error if oracle fails to return a participant", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
@@ -328,14 +326,14 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce(mockedParticipantIds);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(null);
 
          // Act && Assert
          await expect(
              async () => {
                  await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
              }
-         ).rejects.toThrow(NoValidParticipantFspIdError);
+         ).rejects.toThrow(NoSuchParticipantFspIdError);
          
      });
 
@@ -354,8 +352,8 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
-        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(sourceFspId);
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
 
         const messageProducerSpy = jest.spyOn(messageProducer, "send");
 
@@ -363,7 +361,7 @@ describe("Account Lookup Domain", () => {
         await aggregate.getPartyRequest({ sourceFspId, partyType, partyId });
 
         //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(2) // the same number as valid participants from getParticipantsInfo mock;
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
      });
      
@@ -383,7 +381,7 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(sourceFspId);
         jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
 
         const messageProducerSpy = jest.spyOn(messageProducer, "send");
@@ -493,8 +491,8 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
-        jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(sourceFspId);
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
 
         const messageProducerSpy = jest.spyOn(messageProducer, "send");
 
@@ -502,7 +500,7 @@ describe("Account Lookup Domain", () => {
         await aggregate.getParticipant({ sourceFspId, partyType, partyId });
 
         //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(2) // the same number as valid participants from getParticipantsInfo mock;
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
      });
 
@@ -522,7 +520,7 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([sourceFspId]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(sourceFspId);
 
         const messageProducerSpy = jest.spyOn(messageProducer, "send");
 
@@ -530,7 +528,7 @@ describe("Account Lookup Domain", () => {
         await aggregate.getParticipant({ sourceFspId, partyType, partyId, destinationFspId });
 
         //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
      });
 
@@ -550,7 +548,7 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
         jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
         
         // Act && Assert
@@ -584,7 +582,7 @@ describe("Account Lookup Domain", () => {
         await aggregate.associateParty({ requesterFspId, partyType, partyId });
 
         //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
      });
 
@@ -603,8 +601,6 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-
-        const messageProducerSpy = jest.spyOn(messageProducer, "send");
 
         // Act && Assert
         await expect(
@@ -631,7 +627,7 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
         jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
         
         // Act && Assert
@@ -658,7 +654,7 @@ describe("Account Lookup Domain", () => {
 
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipants").mockResolvedValueOnce([requesterFspId]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
         jest.spyOn(participantService, "getParticipantsInfo").mockResolvedValueOnce([participant, participant]);
 
         const messageProducerSpy = jest.spyOn(messageProducer, "send");
@@ -667,7 +663,7 @@ describe("Account Lookup Domain", () => {
         await aggregate.disassociateParty({ requesterFspId, partyType, partyId });
 
         //Assert
-        expect(messageProducerSpy).toHaveBeenCalledTimes(1) // the same number as valid participants from getParticipantsInfo mock;
+        expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
      });
 
@@ -720,9 +716,75 @@ describe("Account Lookup Domain", () => {
     
     });
 
-    test("should call disassociateParticipantByTypeAndIdAndSubId aggregate method for DisassociateParticipantByTypeAndIdAndSubId Event", async()=>{
+    test("should call getParty aggregate method for GetParty Event", async()=>{
         // Arrange
-        const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
+        const fakePayload = {                  
+            sourceFspId: "sourceFspId1", 
+            partyType: "partyType1", 
+            partyId: "partyId1", 
+            partySubType: "partySubType1", 
+            currency: "currency1",
+            destinationFspId: "destinationFspId1" 
+        };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParty,
+                payload: fakePayload
+            }
+        };
+        
+        const aggregateSpy = jest.spyOn(aggregate, "getPartyRequest");
+
+        jest.spyOn(aggregate, "getPartyRequest").mockResolvedValueOnce({} as any);
+        
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(aggregateSpy).toBeCalledWith(fakePayload);
+        
+    });
+    
+    test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
+        // Arrange
+        const fakePayload = {                  
+            sourceFspId: "sourceFspId1", 
+            partyType: "partyType1", 
+            partyId: "partyId1", 
+            partySubType: "partySubType1", 
+            currency: "currency1",
+            destinationFspId: "destinationFspId1" 
+        };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.GetParticipant,
+                payload: fakePayload
+            }
+        };
+        
+        const aggregateSpy = jest.spyOn(aggregate, "getParticipant");
+
+        jest.spyOn(aggregate, "getParticipant").mockResolvedValueOnce({} as any);
+        
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(aggregateSpy).toBeCalledWith(fakePayload);
+        
+    });
+
+    test("should call associateParty aggregate method for AssociateParty Event", async()=>{
+        // Arrange
+        const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
         const message:IAccountLookUpMessage = {
             key: "account-lookup",
             timestamp: 12,
@@ -734,7 +796,7 @@ describe("Account Lookup Domain", () => {
             }
         };
         
-        const eventEmitterSpy = jest.spyOn(eventEmitter, "emit");
+        const aggregateSpy = jest.spyOn(aggregate, "associateParty");
 
         jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
         
@@ -742,7 +804,58 @@ describe("Account Lookup Domain", () => {
         aggregate.publishAccountLookUpEvent(message);
 
         // Assert
-       expect(eventEmitterSpy).toBeCalledWith("[Account Lookup] Associate Party", {"participantId": "2", "participantSubId": "3", "participantType": "1"});
+       expect(aggregateSpy).toBeCalledWith(fakePayload);
         
     });
+
+    test("should call disassociateParty aggregate method for DisassociateParty Event", async()=>{
+        // Arrange
+        const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:AccountLookUpEventsType.DisassociateParty,
+                payload: fakePayload
+            }
+        };
+        
+        const aggregateSpy = jest.spyOn(aggregate, "disassociateParty");
+
+        jest.spyOn(aggregate, "disassociateParty").mockResolvedValueOnce({} as any);
+        
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(aggregateSpy).toBeCalledWith(fakePayload);
+        
+    });
+
+    test("should not call any event on an non-existing event type", async()=>{
+        // Arrange
+        const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
+        const message:IAccountLookUpMessage = {
+            key: "account-lookup",
+            timestamp: 12,
+            topic: "account-lookup",
+            headers: [],
+            value: {
+                type:"" as AccountLookUpEventsType,
+                payload: fakePayload
+            }
+        };
+        
+        const loggerSpy = jest.spyOn(logger, "error");
+       
+        // Act
+        aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+       expect(loggerSpy).toBeCalledWith("AccountLookUpEventHandler: publishAccountLookUpEvent: message type  is not a valid event type");
+        
+    });
+
 });

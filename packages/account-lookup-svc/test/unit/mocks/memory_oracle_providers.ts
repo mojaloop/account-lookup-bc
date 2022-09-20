@@ -68,7 +68,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 		return Promise.resolve();
 	}
 
-	getParticipants(partyId: string): Promise<string[]> {
+	getParticipant(partyId: string): Promise<string|null> {
 		 throw new Error("Method not implemented.");
 	 }
 

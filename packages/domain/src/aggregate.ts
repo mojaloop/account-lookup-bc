@@ -43,7 +43,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, NoValidParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
 export class AccountLookupAggregate  {
@@ -115,20 +115,17 @@ export class AccountLookupAggregate  {
         const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
   
         this.validateParticipant(sourceFsp);
-
-
-        const destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
         
-        // Publish the same amount of messages as FSPs received
-        for(let i=0 ; i<destinationFspList.length ; i+=1) {
-            this._messageProducer.send({ 
-                fspId: destinationFspList[i].id,
-                partyType: partyType,
-                partyId: partyId,
-                partySubType: partySubType,
-                currency: currency
-            });
-        }
+        const destinationFsp: IParticipant = await this.getDestinationFsp({ partyId, partyType, partySubType, destinationFspId });
+        
+        await this._messageProducer.send({ 
+            fspId: destinationFsp.id,
+            partyType: partyType,
+            partyId: partyId,
+            partySubType: partySubType,
+            currency: currency
+        });
+        
     }
 
     //Party.
@@ -144,7 +141,7 @@ export class AccountLookupAggregate  {
             throw new UnableToAssociatePartyError(error);
         });
 
-        this._messageProducer.send(null);
+        await this._messageProducer.send(null);
     }
 
     async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
@@ -159,7 +156,7 @@ export class AccountLookupAggregate  {
             throw new UnableToDisassociatePartyError(error);
         });
 
-        this._messageProducer.send(null);
+        await this._messageProducer.send(null);
     }
 
     async getPartyRequest({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceived):Promise<void>{
@@ -168,20 +165,17 @@ export class AccountLookupAggregate  {
   
         this.validateParticipant(sourceFsp);
 
-        const destinationFspList: IParticipant[] = await this.getDestinationFspList({ partyId, partyType, partySubType, destinationFspId });
+        const destinationFsp: IParticipant = await this.getDestinationFsp({ partyId, partyType, partySubType, destinationFspId });
 
-
-        // Publish the same amount of messages as FSPs received
-        for(let i=0 ; i<destinationFspList.length ; i+=1) {
-            this._messageProducer.send({ 
-                sourceFspId: sourceFspId,
-                destinationFspId: destinationFspList[i].id,
-                partyType: partyType,
-                partyId: partyId,
-                partySubType: partySubType,
-                currency: currency
-            });
-        }
+        await this._messageProducer.send({ 
+            sourceFspId: sourceFspId,
+            destinationFspId: destinationFsp.id,
+            partyType: partyType,
+            partyId: partyId,
+            partySubType: partySubType,
+            currency: currency
+        });
+        
     }
     
     async getPartyResponse({ sourceFspId, destinationFspId, partyType, partyId, partySubType, currency, partyName, partyDoB }: PartyInfoAvailable):Promise<void>{
@@ -194,7 +188,7 @@ export class AccountLookupAggregate  {
 
         this.validateParticipant(destinationFsp);
 
-        this._messageProducer.send({ 
+        await this._messageProducer.send({ 
             sourceFspId: sourceFspId,
             destinationFspId: destinationFspId,
             partyType: partyType,
@@ -286,45 +280,6 @@ export class AccountLookupAggregate  {
 
 		return oracleProvider;
 	}
-
-    private async getValidParticipants(partyId:string, partyType:string, partySubType?:string): Promise<IParticipant[]> {
-
-        const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
-        
-        if(!oracle) {
-            throw new NoSuchOracleProviderError(`oracle for ${partyType} not found`);
-        }
-
-        // We can have more than one FSP that owns this partyId
-        const fspIdList = await oracle.getParticipants(partyId);
-
-        if(!(fspIdList.length > 0)) {
-            throw new NoSuchParticipantFspIdError(`partyId:${partyId} has no existing fspId owner`);
-        }
-
-        // The participants service returns a list of FSPs with 
-        // more info than just a regular ID, example:
-        // {
-        //     id: string;
-        //     isActive: Boolean;
-        // }
-        const fspList: IParticipant[]  = await this._participantService.getParticipantsInfo(fspIdList);
-        
-        const validFspList: IParticipant[] = [];
-
-        // We need to check and push the active FSPs to a list we can return
-        for(let i=0 ; i<fspList.length ; i+=1) {
-            if(fspList[i].isActive) {
-                validFspList.push(fspList[i]);
-            }
-        }
-        
-        if(!(validFspList.length > 0)) {
-            throw new NoValidParticipantFspIdError(`getParticipant partyType:${partyType} has no valid fspIds`);
-        }
-
-        return validFspList;
-    }
     
     private validateParticipant(participant: IParticipant | null):void{
 
@@ -335,28 +290,62 @@ export class AccountLookupAggregate  {
         if(!participant.isActive) {
             throw new RequiredParticipantIsNotActive(`fspId:${participant.id} is not active`);
         }
+        
     }
 
-    private async getDestinationFspList({ partyId, partyType, partySubType, destinationFspId }: { partyId:string, partyType:string, partySubType?:string, destinationFspId?: string }):Promise<IParticipant[]>{
+    private async getDestinationFsp({ partyId, partyType, partySubType, destinationFspId }: { partyId:string, partyType:string, partySubType?:string, destinationFspId?: string }):Promise<IParticipant>{
         
-        let destinationFspList: IParticipant[] = [];
+        let destinationFsp: IParticipant|null = null;
 
         // In this case, the sourceFspId already knows the destinationFspId,
         // so we just need to validate it
         if(destinationFspId) {
-            const destinationFsp = await this._participantService.getParticipantInfo(destinationFspId);
+            const participant = await this._participantService.getParticipantInfo(destinationFspId);
             
-            this.validateParticipant(destinationFsp);
+            this.validateParticipant(participant);
 
-            if(destinationFsp) {
-                destinationFspList.push(destinationFsp);
+            if(participant) {
+                destinationFsp = participant; 
             }
         } else {
-            destinationFspList = await this.getValidParticipants(partyId, partyType, partySubType);
+     
+            
+            destinationFsp = await this.getParticipantFromOracle(partyId, partyType, partySubType);
         }  
 
-        return destinationFspList;
+        if(!destinationFsp){
+            throw new NoSuchParticipantFspIdError(`partyId:${partyId} has no existing fspId owner`);
+        }
+
+        return destinationFsp;
     }
 
+    private async getParticipantFromOracle(partyId:string, partyType:string, partySubType?:string): Promise<IParticipant|null> {
 
+        const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
+        
+        if(!oracle) {
+            throw new NoSuchOracleProviderError(`oracle for ${partyType} not found`);
+        }
+
+        // We can have more than one FSP that owns this partyId
+        const fspId = await oracle.getParticipant(partyId);
+
+        if(!(fspId)) {
+            throw new NoSuchParticipantFspIdError(`partyId:${partyId} has no existing fspId owner`);
+        }
+
+        // The participants BC will return a participant's info  
+        // more info than just a regular ID, example:
+        // {
+        //     id: string;
+        //     isActive: Boolean;
+        // }
+        const participant = await this._participantService.getParticipantInfo(fspId);
+        
+
+        this.validateParticipant(participant);
+
+        return participant;
+    }
 }

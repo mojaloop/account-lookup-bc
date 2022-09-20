@@ -316,11 +316,11 @@ describe("account lookup - infrastructure integration tests", () => {
         //Arrange 
         const participantId = mockedParticipantIds[4];
 
-        //Act
-        const fspId = await oracleProviderListRepo[0].getParticipants(participantId);
-
-        //Assert
-        expect(fspId.length).toBe(0);
+        await expect(
+            async () => {
+                await oracleProviderListRepo[0].getParticipant(participantId);
+            }
+        ).rejects.toThrow(UnableToGetParticipantError);
         
     });
 
@@ -355,10 +355,10 @@ describe("account lookup - infrastructure integration tests", () => {
         })
 
         //Act
-        const fspId = await oracleProviderListRepo[0].getParticipants(partyId);
+        const fspId = await oracleProviderListRepo[0].getParticipant(partyId);
 
         //Assert
-        expect(fspId[0]).toBe(participantId);
+        expect(fspId).toBe(participantId);
 
     });
 });
