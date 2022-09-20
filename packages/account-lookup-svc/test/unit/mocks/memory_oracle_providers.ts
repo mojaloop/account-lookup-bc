@@ -51,9 +51,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	id: string;
 	partyType: string;
 	private readonly logger: ILogger;
-
 	
-
 	constructor(
 		logger: ILogger,
 	) {

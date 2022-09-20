@@ -61,19 +61,19 @@ export class MemoryMessageConsumer implements IMessageConsumer{
          return Promise.resolve();      
     };
     
-    connect() : Promise<void> {
+    async connect() : Promise<void> {
         return Promise.resolve();
     };
     
-    disconnect(force: boolean) : Promise<void> {
+    async disconnect(force: boolean) : Promise<void> {
         return Promise.resolve();
     };
     
-    start() : Promise<void> {
+    async start() : Promise<void> {
         return Promise.resolve();
     };
     
-    stop (): Promise<void> {
+    async stop (): Promise<void> {
         return Promise.resolve();
     }
 

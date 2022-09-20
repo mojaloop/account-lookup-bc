@@ -43,22 +43,21 @@
 import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export class MemoryMessageProducer implements IMessageProducer{
-    init(): Promise<void> {
+    async init(): Promise<void> {
         return Promise.resolve();
     }
     
-    
-    connect(): Promise<void> {
+    async connect(): Promise<void> {
         return Promise.resolve();
     }    
-    disconnect(): Promise<void> {
+    async disconnect(): Promise<void> {
         return Promise.resolve();
     }
     
-    destroy(): Promise<void> {
+    async destroy(): Promise<void> {
         return Promise.resolve();
     }
-    send(message: IMessage | IMessage[]): Promise<void> {
+    async send(message: IMessage | IMessage[]): Promise<void> {
         return Promise.resolve();
     }
 }

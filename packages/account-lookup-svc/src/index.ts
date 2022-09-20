@@ -94,13 +94,12 @@ let oracleProvider: IOracleProvider[];
 // Aggregate
 let aggregate: AccountLookupAggregate;
 
-// Local express server
+// Participant server
 let participantService: IParticipantService;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[], aggregateParam?:AccountLookupAggregate,
-  participantServiceParam?:IParticipantService
+  oracleProviderParam?:IOracleProvider[],  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
   ):Promise<void> {
   
   try{
@@ -121,9 +120,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
     const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      //aggregate
-      aggregate.publishAccountLookUpEvent(message as any); // eslint-disable-line
-      Promise.resolve();
+      await aggregate.publishAccountLookUpEvent(message as any);
     };
     
     messageConsumer.setCallbackFn(callbackFunction);  
@@ -149,8 +146,8 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
 
-  messageProducer = messageProducerParam ??  new MLKafkaProducer(producerOptions,logger);
-
+  messageProducer = messageProducerParam as IMessageProducer;
+  
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 
   participantService = participantServiceParam ?? new ParticipantClient(logger);

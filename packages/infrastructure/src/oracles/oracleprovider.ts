@@ -116,7 +116,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
                 throw new NoSuchParticipantError();
             }
 
-			participant = data.participantId as unknown as string
+			participant = data.participantId as unknown as string;
 
 		} catch (e: unknown) {
 			throw new UnableToGetParticipantError();

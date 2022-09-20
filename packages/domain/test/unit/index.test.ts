@@ -60,7 +60,6 @@
      IParticipantService,
      NoSuchOracleProviderError,
      NoSuchParticipantFspIdError,
-     NoValidParticipantFspIdError,
      RequiredParticipantIsNotActive,
      UnableToAssociatePartyError,
      UnableToDisassociatePartyError,
@@ -71,7 +70,6 @@ import { MemoryMessageProducer } from "./mocks/memory_message_producer";
 import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
-import EventEmitter from "events";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -365,7 +363,7 @@ describe("Account Lookup Domain", () => {
          
      });
      
-     test("should be able to publish as messages all the parties found from a response event", async () => {
+     test("should be able to publish as message all the parties found from a response event", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
@@ -504,7 +502,7 @@ describe("Account Lookup Domain", () => {
          
      });
 
-     test("should be able to publish as messages all the valid participants found with a destinationId", async () => {
+     test("should be able to publish as message all the valid participants found with a destinationId", async () => {
         //Arrange 
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
@@ -857,5 +855,149 @@ describe("Account Lookup Domain", () => {
        expect(loggerSpy).toBeCalledWith("AccountLookUpEventHandler: publishAccountLookUpEvent: message type  is not a valid event type");
         
     });
+    
+    test("should log error if message is on a invalid format", async()=>{
+            // Arrange
+            const invalidMessage:any = {
+                type: "invalid",
+            };
+            jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(invalidMessage);
+    
+            // Assert
+            expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
+            
+        });
+    
+        test("should log error if message has invalid type", async()=>{
+            // Arrange
+            const invalidMessage:any = {
+                value: {
+                    type:"invalid type",
+                    payload: {"test":"test"}
+                }
+            };
+            jest.spyOn(logger, "error").mockImplementationOnce(() => { });
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(invalidMessage);
+    
+            // Assert
+            expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${invalidMessage.value.type} is not a valid event type`);
+            
+        });
+    
+        // // Participant
+        test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
+            // Arrange
+            const fakePayload = {                  
+                sourceFspId: "sourceFspId1", 
+                partyType: "partyType1", 
+                partyId: "partyId1", 
+                partySubType: "partySubType1", 
+                currency: "currency1",
+                destinationFspId: "destinationFspId1" 
+            };
+            const message:IAccountLookUpMessage = {
+                key: "account-lookup",
+                timestamp: 12,
+                topic: "account-lookup",
+                headers: [],
+                value: {
+                    type:AccountLookUpEventsType.GetParticipant,
+                    payload: fakePayload
+                }
+            };
+            
+            jest.spyOn(aggregate, "getParticipant").mockResolvedValueOnce({} as any);
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(message);
+    
+            // Assert
+           expect(aggregate.getParticipant).toBeCalledWith(fakePayload);
+            
+        });
+    
+        test("should call getParty aggregate method for GetParty Event", async()=>{
+            // Arrange
+            const fakePayload = {                  
+                sourceFspId: "sourceFspId1", 
+                partyType: "partyType1", 
+                partyId: "partyId1", 
+                partySubType: "partySubType1", 
+                currency: "currency1",
+                destinationFspId: "destinationFspId1" 
+            };
+            const message:IAccountLookUpMessage = {
+                key: "account-lookup",
+                timestamp: 12,
+                topic: "account-lookup",
+                headers: [],
+                value: {
+                    type:AccountLookUpEventsType.GetParty,
+                    payload: fakePayload
+                }
+            };
+            
+            jest.spyOn(aggregate, "getPartyRequest").mockResolvedValueOnce({} as any);
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(message);
+    
+            // Assert
+           expect(aggregate.getPartyRequest).toBeCalledWith(fakePayload);
+            
+        });
+    
+        test("should call associateParty aggregate method for AssociateParty Event", async()=>{
+            // Arrange
+            const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
+            const message:IAccountLookUpMessage = {
+                key: "account-lookup",
+                timestamp: 12,
+                topic: "account-lookup",
+                headers: [],
+                value: {
+                    type:AccountLookUpEventsType.AssociateParty,
+                    payload: fakePayload
+                }
+            };
+            
+            jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(message);
+    
+            // Assert
+           expect(aggregate.associateParty).toBeCalledWith(fakePayload);
+            
+        });
+    
+        test("should call disassociateParty aggregate method for DisassociateParty Event", async()=>{
+            // Arrange
+            const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
+            const message:IAccountLookUpMessage = {
+                key: "account-lookup",
+                timestamp: 12,
+                topic: "account-lookup",
+                headers: [],
+                value: {
+                    type:AccountLookUpEventsType.DisassociateParty,
+                    payload: fakePayload
+                }
+            };
+            
+            jest.spyOn(aggregate, "disassociateParty").mockResolvedValueOnce({} as any);
+            
+            // Act
+            aggregate.publishAccountLookUpEvent(message);
+    
+            // Assert
+           expect(aggregate.disassociateParty).toBeCalledWith(fakePayload);
+            
+        });
 
 });

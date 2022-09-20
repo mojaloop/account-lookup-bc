@@ -28,7 +28,7 @@
 
 "use strict";
 
-import {ConsoleLogger, ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {ParticipantClientHttpMock} from "./mock/participantclient_http_mock";
 import { ParticipantClient} from "../../src/participants";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
@@ -42,6 +42,7 @@ let localCache: ILocalCache;
 describe("Account Lookup Client Library - Unit Tests", () => {
 	beforeAll(async () => {
 		const logger: ILogger = new ConsoleLogger();
+		logger.setLogLevel(LogLevel.FATAL);
 		localCache = new LocalCache(logger);
 		participantHttpServerMock = new ParticipantClientHttpMock(
 			logger,

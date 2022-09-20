@@ -22,14 +22,14 @@
     "pretest": "echo 'FIX ME'",
     "lint": "npm run lint -ws -p ",
     "lint:fix": "npm run lint:fix -ws -p",
-    "test:unit": "npm run test:unit -ws",
+    "test:unit": "npm run test:unit --forceExit -ws",
     "test:coverage": "npm run test:coverage -ws --parallel -v",
     "test:coverage-check": "npm run test:coverage-check -ws --parallel -v",
     "test:integration": "npm run test:integration -ws --parallel",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "npm run dep:check -ws --parallel -v",
     "dep:update": "npm run dep:update -ws --parallel -v ",
-    "publish:service-lib": "npm run npm_publish @mojaloop/account-lookup-bc-svc -w"
+    "publish": "npm -ws -p run publish"
   },
   "devDependencies": {
     "@types/jest": "^27.0.3",
