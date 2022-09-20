@@ -42,7 +42,7 @@
 
 
 import {
-    IOracleFinder
+    IOracleFinder, IOracleProvider
 } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
@@ -58,10 +58,11 @@ export class MemoryOracleFinder implements IOracleFinder {
         this.oracleList = [];
     }
 
-    getOracleProvider(type: string): Promise<string | undefined> {
+    getOracleProvider(type: string, subType?: string | undefined): Promise<IOracleProvider | null> {
         throw new Error("Method not implemented.");
     }
 
+    
     async init(): Promise<void> {
         return Promise.resolve();
     }

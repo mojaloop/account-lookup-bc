@@ -38,20 +38,46 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
- import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { MongoClient } from "mongodb";
 
-export interface ILocalCache {
-    get(...keys: string[]):string|number|object|null;
-    set(value:NonNullable<string|number|object>,...keys: string[]):void;
-    delete(...keys: string[]):void;
-    destroy():void;
+export enum MongoDbOperationEnum {
+    INSERT_ONE = 'insertOne',
+    DELETE_MANY = 'deleteMany'
 }
 
-export class KafkaMessageProducer implements IMessageProducer{
-    destroy: () => Promise<void>;
-    connect: () => Promise<void>;
-    disconnect: () => Promise<void>;
-    send: (message: any) => Promise<void>;
+interface IMongoDBQuery {
+    dbUrl: string;
+    dbName: string;
+    dbCollection: string;
+    operation: MongoDbOperationEnum;
+    query: object;
+    cb?: Function
+}
+
+export async function mongoQuery({
+    dbUrl,
+    dbName,
+    dbCollection,
+    operation,
+    query = {},
+    cb = Function
+}: IMongoDBQuery) {
+    const client = new MongoClient(dbUrl);
+    
+    try {
+        const database = client.db(dbName);
+
+        const collection = database.collection(dbCollection);
+
+        await collection[operation](query);
+
+        if(cb) {
+            cb();
+        }
+        
+      } finally {
+        await client.close();
+      }
 }

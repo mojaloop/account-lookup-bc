@@ -43,7 +43,6 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import EventEmitter from "events";
 import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, NoValidParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
@@ -77,11 +76,14 @@ export class AccountLookupAggregate  {
                 await oracle.init();
                 this._logger.debug("Oracle provider initialized with type" + oracle.partyType);
             }
-    	} catch (error: unknown) {
-			this._logger.fatal("Unable to intialize account lookup aggregate" + error);
-			throw error;
-		}
-	}
+    	}
+        catch(error) {
+            {
+			    this._logger.fatal("Unable to intialize account lookup aggregate" + error);
+			    throw error;
+		    }
+	    }
+    }
 
 
     async publishAccountLookUpEvent(message:IAccountLookUpMessage): Promise<void> {
