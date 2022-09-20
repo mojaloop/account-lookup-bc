@@ -146,7 +146,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
 
-  messageProducer = messageProducerParam as IMessageProducer;
+  messageProducer = messageProducerParam ?? new MLKafkaProducer(producerOptions, logger);
   
   messageConsumer = messageConsumerParam ?? new MLKafkaConsumer(consumerOptions, logger);
 
