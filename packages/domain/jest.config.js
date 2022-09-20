@@ -6,5 +6,5 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: ['./src/**/*.ts'],
   coverageReporters: ['json', 'lcov'],
-  clearMocks: true
+  clearMocks: true,
 }
