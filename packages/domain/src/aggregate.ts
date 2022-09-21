@@ -45,7 +45,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
-import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantDisassociationRequestReceived, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
+import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantAssociationResponse, ParticipantDisassociationRequestReceived, ParticipantDisassociationResponse, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
@@ -141,7 +141,7 @@ export class AccountLookupAggregate  {
 			throw new UnableToAssociatePartyError(error);
 		});
 
-		await this._messageProducer.send(null);
+		await this._messageProducer.send({} as ParticipantAssociationResponse);
 	}
 
 	async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
@@ -156,7 +156,7 @@ export class AccountLookupAggregate  {
 			throw new UnableToDisassociatePartyError(error);
 		});
 
-		await this._messageProducer.send(null);
+		await this._messageProducer.send({} as ParticipantDisassociationResponse);
 	}
 
 	async getPartyRequest({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceived):Promise<void>{

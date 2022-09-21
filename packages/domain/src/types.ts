@@ -159,3 +159,7 @@ export type ParticipantDisassociationRequestReceived = {
     partyId: string;
     partySubType?: string;
 }
+
+export type ParticipantAssociationResponse = {}
+
+export type ParticipantDisassociationResponse = {}
