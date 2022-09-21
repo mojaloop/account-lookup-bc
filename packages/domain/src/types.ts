@@ -160,6 +160,6 @@ export type ParticipantDisassociationRequestReceived = {
     partySubType?: string;
 }
 
-export type ParticipantAssociationResponse = {}
+export type ParticipantAssociationResponse = Record<string, unknown>
 
-export type ParticipantDisassociationResponse = {}
+export type ParticipantDisassociationResponse = Record<string, unknown>

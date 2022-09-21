@@ -160,7 +160,6 @@ export class AccountLookupAggregate  {
 	}
 
 	async getPartyRequest({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceived):Promise<void>{
-
 		const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
   
 		this.validateParticipant(sourceFsp);
@@ -180,7 +179,6 @@ export class AccountLookupAggregate  {
 	
 	async getPartyResponse({ sourceFspId, destinationFspId, partyType, partyId, partySubType, currency, partyName, partyDoB }: PartyInfoAvailable):Promise<void>{
 		const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
-
 
 		this.validateParticipant(sourceFsp);
 
@@ -207,7 +205,6 @@ export class AccountLookupAggregate  {
 			this._logger.error(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
 			return false;
 		}
-
 
 		if(! Object.values(AccountLookUpEventsType).some(event => event === message?.value?.type)){
 			this._logger.error(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${message.value.type} is not a valid event type`);
@@ -267,7 +264,6 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getOracleProvider(partyType:string, partySubType?:string): Promise<IOracleProvider> {
-
 		const oracleProvider = await this._oracleFinder.getOracleProvider(partyType, partySubType).catch(error=>{
 			this._logger.error(`Unable to get oracle for type: ${partyType} ` + error);
 			throw new UnableToGetOracleError(error);
@@ -282,7 +278,6 @@ export class AccountLookupAggregate  {
 	}
 	
 	private validateParticipant(participant: IParticipant | null):void{
-
 		if(!participant) {
 			throw new NoSuchParticipantFspIdError(`fspId does not exist`);
 		}
@@ -294,7 +289,6 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getDestinationFsp({ partyId, partyType, partySubType, destinationFspId }: { partyId:string, partyType:string, partySubType?:string, destinationFspId?: string }):Promise<IParticipant>{
-		
 		let destinationFsp: IParticipant|null = null;
 
 		// In this case, the sourceFspId already knows the destinationFspId,
@@ -319,14 +313,12 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getParticipantFromOracle(partyId:string, partyType:string, partySubType?:string): Promise<IParticipant|null> {
-
 		const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
 		
 		if(!oracle) {
 			throw new NoSuchOracleProviderError(`oracle for ${partyType} not found`);
 		}
 
-		// We can have more than one FSP that owns this partyId
 		const fspId = await oracle.getParticipant(partyId);
 
 		if(!(fspId)) {
@@ -341,7 +333,6 @@ export class AccountLookupAggregate  {
 		// }
 		const participant = await this._participantService.getParticipantInfo(fspId);
 		
-
 		this.validateParticipant(participant);
 
 		return participant;
