@@ -87,7 +87,13 @@ export interface IAccountLookUpMessage extends IMessage {
     }
 }
 
-export type ParticipantQueryReceived = {
+export interface PayloadMetadata {
+    metadata: {
+        [key: string]: string
+    }
+}
+
+export type ParticipantQueryReceived = PayloadMetadata & {
     sourceFspId: string;
     partyType: string;
     partyId: string;
@@ -96,7 +102,7 @@ export type ParticipantQueryReceived = {
     destinationFspId?: string;
 }
 
-export type ParticipantQueryResponse = {
+export type ParticipantQueryResponse = PayloadMetadata & {
     fspId: string;
     partyType: string;
     partyId: string;
@@ -105,7 +111,7 @@ export type ParticipantQueryResponse = {
 }
 
 
-export type PartyQueryReceived = {
+export type PartyQueryReceived = PayloadMetadata & {
     sourceFspId: string;
     partyType: string;
     partyId: string;
@@ -114,7 +120,7 @@ export type PartyQueryReceived = {
     destinationFspId?: string;
 }
 
-export type PartyInfoRequested  = {
+export type PartyInfoRequested = PayloadMetadata & {
     fspId: string;
     partyType: string;
     partyId: string;
@@ -122,7 +128,7 @@ export type PartyInfoRequested  = {
     currency?: string;
 }
 
-export type PartyInfoAvailable = {
+export type PartyInfoAvailable = PayloadMetadata & {
     sourceFspId: string;
     destinationFspId: string;
     partyType: string;
@@ -134,7 +140,7 @@ export type PartyInfoAvailable = {
 
 }
 
-export type PartyQueryResponse = {
+export type PartyQueryResponse = PayloadMetadata & {
     sourceFspId: string;
     destinationFspId: string;
     partyType: string;
@@ -143,23 +149,22 @@ export type PartyQueryResponse = {
     currency?: string;
     partyName?: string;
     partyDoB?: string;
-
 }
 
-export type ParticipantAssociationRequestReceived = {
+export type ParticipantAssociationRequestReceived = PayloadMetadata & {
     requesterFspId: string; 
     partyType: string; 
     partyId: string;
     partySubType?: string;
 }
 
-export type ParticipantDisassociationRequestReceived = {
+export type ParticipantDisassociationRequestReceived = PayloadMetadata & {
     requesterFspId: string; 
     partyType: string; 
     partyId: string;
     partySubType?: string;
 }
 
-export type ParticipantAssociationResponse = Record<string, unknown>
+export type ParticipantAssociationResponse = PayloadMetadata;
 
-export type ParticipantDisassociationResponse = Record<string, unknown>
+export type ParticipantDisassociationResponse = PayloadMetadata;

@@ -45,7 +45,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
-import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantAssociationResponse, ParticipantDisassociationRequestReceived, ParticipantDisassociationResponse, ParticipantQueryReceived, PartyInfoAvailable, PartyQueryReceived } from "./types";
+import { AccountLookUpEventsType, IAccountLookUpMessage, IParticipant, ParticipantAssociationRequestReceived, ParticipantAssociationResponse, ParticipantDisassociationRequestReceived, ParticipantDisassociationResponse, ParticipantQueryReceived, ParticipantQueryResponse, PartyInfoAvailable, PartyQueryReceived, PartyQueryResponse } from "./types";
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
@@ -111,25 +111,28 @@ export class AccountLookupAggregate  {
 	}
 
 	//Participant.
-	async getParticipant({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId}: ParticipantQueryReceived):Promise<void>{
+	async getParticipant({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId, metadata }: ParticipantQueryReceived):Promise<void>{
 		const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
   
 		this.validateParticipant(sourceFsp);
 		
 		const destinationFsp: IParticipant = await this.getDestinationFsp({ partyId, partyType, partySubType, destinationFspId });
 		
-		await this._messageProducer.send({ 
+		const message:ParticipantQueryResponse = { 
 			fspId: destinationFsp.id,
 			partyType: partyType,
 			partyId: partyId,
 			partySubType: partySubType,
-			currency: currency
-		});
+			currency: currency,
+			metadata: metadata
+		}; 
+		
+		await this._messageProducer.send(message);
 		
 	}
 
 	//Party.
-	async associateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceived):Promise<void>{
+	async associateParty({ requesterFspId, partyType, partySubType, partyId, metadata }: ParticipantAssociationRequestReceived):Promise<void>{
 		const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -141,10 +144,14 @@ export class AccountLookupAggregate  {
 			throw new UnableToAssociatePartyError(error);
 		});
 
-		await this._messageProducer.send({} as ParticipantAssociationResponse);
+		const message:ParticipantAssociationResponse = { 
+			metadata: metadata
+		}; 
+
+		await this._messageProducer.send(message);
 	}
 
-	async disassociateParty({ requesterFspId, partyType, partySubType, partyId }: ParticipantDisassociationRequestReceived):Promise<void>{
+	async disassociateParty({ requesterFspId, partyType, partySubType, partyId, metadata }: ParticipantDisassociationRequestReceived):Promise<void>{
 		const requesterFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -156,28 +163,35 @@ export class AccountLookupAggregate  {
 			throw new UnableToDisassociatePartyError(error);
 		});
 
-		await this._messageProducer.send({} as ParticipantDisassociationResponse);
+		const message:ParticipantDisassociationResponse = { 
+			metadata: metadata
+		}; 
+
+		await this._messageProducer.send(message);
 	}
 
-	async getPartyRequest({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceived):Promise<void>{
+	async getPartyRequest({ sourceFspId, partyType, partyId, partySubType, currency, destinationFspId, metadata }: PartyQueryReceived):Promise<void>{
 		const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
   
 		this.validateParticipant(sourceFsp);
 
 		const destinationFsp: IParticipant = await this.getDestinationFsp({ partyId, partyType, partySubType, destinationFspId });
 
-		await this._messageProducer.send({ 
+		const message:PartyQueryResponse = { 
 			sourceFspId: sourceFspId,
 			destinationFspId: destinationFsp.id,
 			partyType: partyType,
 			partyId: partyId,
 			partySubType: partySubType,
-			currency: currency
-		});
+			currency: currency,
+			metadata: metadata
+		};
+
+		await this._messageProducer.send(message);
 		
 	}
 	
-	async getPartyResponse({ sourceFspId, destinationFspId, partyType, partyId, partySubType, currency, partyName, partyDoB }: PartyInfoAvailable):Promise<void>{
+	async getPartyResponse({ sourceFspId, destinationFspId, partyType, partyId, partySubType, currency, partyName, partyDoB, metadata }: PartyInfoAvailable):Promise<void>{
 		const sourceFsp = await this._participantService.getParticipantInfo(sourceFspId);
 
 		this.validateParticipant(sourceFsp);
@@ -186,7 +200,7 @@ export class AccountLookupAggregate  {
 
 		this.validateParticipant(destinationFsp);
 
-		await this._messageProducer.send({ 
+		const message:PartyInfoAvailable = { 
 			sourceFspId: sourceFspId,
 			destinationFspId: destinationFspId,
 			partyType: partyType,
@@ -194,8 +208,11 @@ export class AccountLookupAggregate  {
 			partySubType: partySubType,
 			currency: currency,
 			partyName: partyName,
-			partyDoB: partyDoB
-		});
+			partyDoB: partyDoB,
+			metadata: metadata
+		};
+
+		await this._messageProducer.send(message);
 	}
 
 
@@ -225,7 +242,8 @@ export class AccountLookupAggregate  {
 					partyId: payload.partyId, 
 					partySubType: payload.partySubType, 
 					currency: payload.currency,
-					destinationFspId: payload.destinationFspId
+					destinationFspId: payload.destinationFspId,
+					metadata: payload.metadata
 				});
 				break;
 			case AccountLookUpEventsType.GetParticipant:
@@ -236,7 +254,8 @@ export class AccountLookupAggregate  {
 					partyId: payload.partyId, 
 					partySubType: payload.partySubType, 
 					destinationFspId: payload.destinationFspId, 
-					currency: payload.currency
+					currency: payload.currency,
+					metadata: payload.metadata
 				});
 				break;
 			case AccountLookUpEventsType.AssociateParty:
@@ -245,7 +264,8 @@ export class AccountLookupAggregate  {
 					requesterFspId: payload.requesterFspId, 
 					partyType: payload.partyType, 
 					partyId: payload.partyId, 
-					partySubType: payload.partySubType
+					partySubType: payload.partySubType,
+					metadata: payload.metadata
 				});
 				break;
 			case AccountLookUpEventsType.DisassociateParty:
@@ -254,7 +274,8 @@ export class AccountLookupAggregate  {
 					requesterFspId: payload.requesterFspId, 
 					partyType: payload.partyType, 
 					partyId: payload.partyId, 
-					partySubType: payload.partySubType
+					partySubType: payload.partySubType,
+					metadata: payload.metadata
 				});
 				break;
 			default:
