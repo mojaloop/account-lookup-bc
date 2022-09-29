@@ -37,7 +37,9 @@
     "test:coverage-check": "jest --coverage --testMatch **/test/unit/**/*.test.ts"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.0.3"
+    "@mojaloop/logging-bc-public-types-lib": "^0.0.3",
+    "@mojaloop/platform-shared-lib-public-messages-lib":"^0.1.4",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.2.1"
   },
   "devDependencies": {
     "@types/uuid": "^8.3.4",
