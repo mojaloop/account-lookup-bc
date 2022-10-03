@@ -34,7 +34,6 @@
 },
   "devDependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
-    "@mojaloop/logging-bc-public-types-lib": "^0.0.3",
     "nock": "^13.2.9"
   },
   "dependencies": {

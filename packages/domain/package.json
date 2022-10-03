@@ -36,12 +36,6 @@
     "test:coverage": "jest --passWithNoTests --coverage --coverageThreshold='{}' --testMatch **/test/unit/**/*.test.ts",
     "test:coverage-check": "jest --coverage --testMatch **/test/unit/**/*.test.ts"
   },
-  "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.0.3",
-    "@mojaloop/platform-shared-lib-public-messages-lib":"^0.1.7",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.7",
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.2.4"
-  },
   "devDependencies": {
     "@types/uuid": "^8.3.4",
     "eslint": "^8.17.0",

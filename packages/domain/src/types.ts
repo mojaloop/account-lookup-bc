@@ -40,8 +40,6 @@
 
  "use strict";
 
-import {IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-
 export enum CurrencyType {
 	DOLLAR = "dollar",
 	EURO = "euro",
