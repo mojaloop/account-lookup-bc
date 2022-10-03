@@ -50,7 +50,7 @@ export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     // Gets.
-    getOracleProvider(type:string, subType?:string):Promise<IOracleProvider | null>;
+    getOracleProvider(type:string, subType:string | null):Promise<IOracleProvider | null>;
 }
 
 

@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.0.8",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.2.4",
     "mongodb": "^4.9.0"
   },
   "devDependencies": {
