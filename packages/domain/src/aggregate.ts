@@ -262,13 +262,16 @@ export class AccountLookupAggregate  {
 
 		this.validateParticipant(destinationFsp);
 
-		const payload:PartyInfoRequestedEvtPayload = { 
+		const payload:PartyInfoAvailableEvtPayload = { 
 			requesterFspId: requesterFspId,
 			destinationFspId: destinationFsp?.id ?? null,
 			partyType: partyType,
 			partyId: partyId,
 			partySubType: partySubType,
-			currency: currency
+			currency: currency,
+			ownerFspId: ownerFspId,
+			partyDoB: partyDoB,
+			partyName: partyName
 		};
 
 		const message = new PartyInfoRequestedEvt(payload);
