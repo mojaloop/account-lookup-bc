@@ -57,6 +57,8 @@ export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receiv
 export const mockedParticipantSubIds = ["subId2","subId3"];
 export const mockedParticipantTypes = ["bank", "creditUnion", "insurance"];
 
+export const TestErrorMessage = "Test Error Message";
+
 export const mockedOracleList = [
     {
         id: mockedPartyIds[0],
@@ -101,8 +103,8 @@ export const mockedParticipantsInfo: Map<{participantId:string, participantType:
 mockedParticipantsInfo.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]}, mockedParticipantFspIds[0]);
 mockedParticipantsInfo.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, mockedParticipantFspIds[1]);
 mockedParticipantsInfo.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, mockedParticipantFspIds[2]);
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2]}, new Error());
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, new Error());
+mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2]}, new Error(TestErrorMessage));
+mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, new Error(TestErrorMessage));
 mockedParticipantsInfo.set({participantId:mockedParticipantIds[5],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, mockedParticipantFspIds[4]);
 
 export const mockedParticipants: Map<string, IParticipant| null> = new Map();
@@ -114,5 +116,5 @@ mockedParticipants.set(mockedParticipantFspIds[4],null);
 export const mockedParticipantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error> = new Map();
 mockedParticipantAssociations.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]}, null);
 mockedParticipantAssociations.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, null);
-mockedParticipantAssociations.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, new Error());
+mockedParticipantAssociations.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, new Error(TestErrorMessage));
 

@@ -104,7 +104,7 @@ export class AccountLookupAggregate  {
 		const isMessageValid = this.validateMessage(message);
 		if(isMessageValid) {
 			try{
-				await this.handleMessage(message);
+				await this.handleEvent(message);
 			}
 			catch(error:any) {
 				this._logger.error(`${message.msgName} ` + error.message);
@@ -127,7 +127,7 @@ export class AccountLookupAggregate  {
 		return true;
 	}
 
-	async publishErrorEvent(message: IMessage, errorMsg: string) {
+	private async publishErrorEvent(message: IMessage, errorMsg: string) {
 		const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId: message.payload?.partyId ?? "Unknow party id",
@@ -136,29 +136,29 @@ export class AccountLookupAggregate  {
 		await this._messageProducer.send(messageToPublish);
 	}
 
-	private async handleMessage(message:IMessage):Promise<void> {
+	private async handleEvent(message:IMessage):Promise<void> {
 		const {payload, fspiopOpaqueState} = message;
-		let messageToPublish = null;
+		let eventToPublish = null;
 		switch(message.msgName){
 			case AccountLookupBCEvents.PartyInfoRequested:
-				messageToPublish = await this.getParty(payload);
+				eventToPublish = await this.getParty(payload);
 				break;
 			case AccountLookupBCEvents.PartyInfoAvailable:
-				messageToPublish = await this.getPartyInfo(payload);
+				eventToPublish = await this.getPartyInfo(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantQueryReceived:
-				messageToPublish = await this.getParticipant(payload);
+				eventToPublish = await this.getParticipant(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantAssociationRequested:
-				messageToPublish = await this.participantAssociation(payload);
+				eventToPublish = await this.participantAssociation(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantDisassociateRequest:
-				messageToPublish = await this.participantDisassociation(payload);
+				eventToPublish = await this.participantDisassociation(payload);
 				break;
 			}
-		if(messageToPublish != null){
-			messageToPublish.fspiopOpaqueState = fspiopOpaqueState;
-			await this._messageProducer.send(messageToPublish);
+		if(eventToPublish != null){
+			eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
+			await this._messageProducer.send(eventToPublish);
 		}
 		else{
 			await this.publishErrorEvent(message, "Unable to process message");
@@ -166,7 +166,7 @@ export class AccountLookupAggregate  {
 
 	}
 
-	async getParticipant({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
+	private async getParticipant({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(sourceFsp);
@@ -182,12 +182,12 @@ export class AccountLookupAggregate  {
 			currency: currency
 		}; 
 
-		const message = new ParticipantQueryReceivedEvt(payload);
+		const event = new ParticipantQueryReceivedEvt(payload);
 		
-		return message;
+		return event;
 	}
 
-	async participantAssociation({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
+	private async participantAssociation({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
 		const requesterFsp = await this._participantService.getParticipantInfo(ownerFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -203,13 +203,13 @@ export class AccountLookupAggregate  {
 			partyId: partyId,
 		};
 
-		const message = new ParticipantAssociationCreatedEvt(payload);
+		const event = new ParticipantAssociationCreatedEvt(payload);
 
-		return message;
+		return event;
 
 	}
 
-	async participantDisassociation({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
+	private async participantDisassociation({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
 		const requesterFsp = await this._participantService.getParticipantInfo(ownerFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -225,13 +225,13 @@ export class AccountLookupAggregate  {
 			partyId,
 		}; 
 
-		const message = new ParticipantAssociationRemovedEvt(payload);
+		const event = new ParticipantAssociationRemovedEvt(payload);
 
-		return message;
+		return event;
 
 	}
 
-	async getParty({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
+	private async getParty({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(sourceFsp);
@@ -247,13 +247,13 @@ export class AccountLookupAggregate  {
 			currency: currency
 		};
 
-		const message = new PartyInfoRequestedEvt(payload);
+		const event = new PartyInfoRequestedEvt(payload);
 
-		return message;
+		return event;
 		
 	}
 	
-	async getPartyInfo({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyInfoRequestedEvt>{
+	private async getPartyInfo({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyInfoRequestedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
 
 		this.validateParticipant(sourceFsp);
@@ -274,9 +274,9 @@ export class AccountLookupAggregate  {
 			partyName: partyName
 		};
 
-		const message = new PartyInfoRequestedEvt(payload);
+		const event = new PartyInfoRequestedEvt(payload);
 
-		return message;
+		return event;
 	}
 	
 

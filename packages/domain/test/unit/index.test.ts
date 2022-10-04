@@ -65,10 +65,10 @@
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
+import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes, TestErrorMessage } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
-import { PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import { AccountLookUperrorEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -203,27 +203,36 @@ describe("Account Lookup Domain", () => {
         expect(aggregate.destroy()).resolves;
     });
 
-    test("getParty - should throw error if is unable to find participant", async () => {
+    test("getParty - should publish error message if is unable to find participant", async () => {
         //Arrange
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
         const payload :PartyInfoRequestedEvtPayload = {
-            partyId : mockedPartyIds[0],
+            partyId,
             partyType : "error",
-            requesterFspId : mockedParticipantIds[0],
+            requesterFspId,
             destinationFspId:null,
             currency:null,
             partySubType: null,
         };
-       
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParty(payload);
-             }
-         ).rejects.toThrow(NoSuchParticipantFspIdError);
+        
+        jest.spyOn(messageProducer, "send");
+
+        const event = new PartyInfoRequestedEvt(payload);
+        const errorPayload: AccountLookUperrorEvtPayload = {
+			errorMsg: TestErrorMessage,
+			partyId,
+		};
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toBeCalledWith(errorPayload);
          
      });
 
-    test("getParty - should throw error if is unable to get an oracle", async () => {
+    test("getParty - should publish error message if is unable to get an oracle", async () => {
        //Arrange 
        const partyId = mockedPartyIds[0];
        const requesterFspId = mockedParticipantIds[0];
@@ -245,175 +254,181 @@ describe("Account Lookup Domain", () => {
         }
         
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        jest.spyOn(messageProducer, "send");
 
-        // Act && Assert
-        await expect(
-            async () => {
-                await aggregate.getParty(payload);
-            }
-        ).rejects.toThrow(UnableToGetOracleError);
+        const event = new PartyInfoRequestedEvt(payload);
+        const errorPayload: AccountLookUperrorEvtPayload = {
+			errorMsg: TestErrorMessage,
+			partyId,
+		};
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toBeCalledWith(errorPayload);
         
     });
 
-    test("getParty - should throw error if is unable to find participant for partyType", async () => {
-        //Arrange 
-        const partyType = "non-exisiting-participant-type";
-        const partyId = mockedPartyIds[0];
-        const requesterFspId = mockedParticipantIds[0];
-        const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    // test("getParty - should throw error if is unable to find participant for partyType", async () => {
+    //     //Arrange 
+    //     const partyType = "non-exisiting-participant-type";
+    //     const partyId = mockedPartyIds[0];
+    //     const requesterFspId = mockedParticipantIds[0];
+    //     const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
 
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParty(payload);
-             }
-         ).rejects.toThrow(NoSuchParticipantFspIdError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParty(payload);
+    //          }
+    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-     });
+    //  });
 
-     test("getParty - should throw error if oracle returned is not present in the oracle providers list", async () => {
-        //Arrange 
-        const partyType = "not_found_oracle";
-        const partyId = mockedPartyIds[0];
-        const requesterFspId =mockedParticipantIds[0];
-        const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    //  test("getParty - should throw error if oracle returned is not present in the oracle providers list", async () => {
+    //     //Arrange 
+    //     const partyType = "not_found_oracle";
+    //     const partyId = mockedPartyIds[0];
+    //     const requesterFspId =mockedParticipantIds[0];
+    //     const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
 
-        const participant: IParticipant = {
-            id: requesterFspId,
-            type: partyType,
-            isActive: true,
-            subId: null
-        }
+    //     const participant: IParticipant = {
+    //         id: requesterFspId,
+    //         type: partyType,
+    //         isActive: true,
+    //         subId: null
+    //     }
 
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(null);
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(null);
 
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParty(payload);
-             }
-         ).rejects.toThrow(NoSuchOracleProviderError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParty(payload);
+    //          }
+    //      ).rejects.toThrow(NoSuchOracleProviderError);
          
-     });
+    //  });
 
-     test("getParty - should throw error if oracle returns an empty list of participants", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-        const requesterFspId = mockedParticipantIds[0];
-        const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    //  test("getParty - should throw error if oracle returns an empty list of participants", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+    //     const requesterFspId = mockedParticipantIds[0];
+    //     const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
 
-        const participant: IParticipant = {
-            id: requesterFspId,
-            type: partyType,
-            isActive: true,
-            subId: null
-        }
+    //     const participant: IParticipant = {
+    //         id: requesterFspId,
+    //         type: partyType,
+    //         isActive: true,
+    //         subId: null
+    //     }
 
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
 
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParty(payload);
-             }
-         ).rejects.toThrow(NoSuchParticipantFspIdError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParty(payload);
+    //          }
+    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-     });
+    //  });
 
-     test("getParty - should throw error if oracle fails to return a participant", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-        const requesterFspId = mockedParticipantIds[0];
-        const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    //  test("getParty - should throw error if oracle fails to return a participant", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+    //     const requesterFspId = mockedParticipantIds[0];
+    //     const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
 
-        const participant: IParticipant = {
-            id: requesterFspId,
-            type: partyType,
-            isActive: true,
-            subId: null
-        }
+    //     const participant: IParticipant = {
+    //         id: requesterFspId,
+    //         type: partyType,
+    //         isActive: true,
+    //         subId: null
+    //     }
 
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(null);
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+    //     jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(null);
 
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.getParty(payload);
-             }
-         ).rejects.toThrow(NoSuchParticipantFspIdError);
+    //      // Act && Assert
+    //      await expect(
+    //          async () => {
+    //              await aggregate.getParty(payload);
+    //          }
+    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
          
-     });
+    //  });
 
-     test("getParty - should return PartyInfoRequestedEvt", async () => {
-        //Arrange 
-        const partyType = mockedPartyTypes[0];
-        const partyId = mockedPartyIds[0];
-        const requesterFspId = mockedParticipantIds[0];
-        const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    //  test("getParty - should return PartyInfoRequestedEvt", async () => {
+    //     //Arrange 
+    //     const partyType = mockedPartyTypes[0];
+    //     const partyId = mockedPartyIds[0];
+    //     const requesterFspId = mockedParticipantIds[0];
+    //     const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
 
-        const participant: IParticipant = {
-            id: requesterFspId,
-            type: partyType,
-            isActive: true,
-            subId: null
-        }
+    //     const participant: IParticipant = {
+    //         id: requesterFspId,
+    //         type: partyType,
+    //         isActive: true,
+    //         subId: null
+    //     }
 
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+    //     jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
 
-        //Act
-        const result = await aggregate.getParty(payload);
+    //     //Act
+    //     const result = await aggregate.getParty(payload);
 
-        //Assert
-        expect(result).toBeInstanceOf(PartyInfoRequestedEvt);
-        expect(result.payload).toMatchObject({
-            partyId,
-        });
+    //     //Assert
+    //     expect(result).toBeInstanceOf(PartyInfoRequestedEvt);
+    //     expect(result.payload).toMatchObject({
+    //         partyId,
+    //     });
          
-     });
+    //  });
 
     //  // Participant
     //  test("should create a new participant entity", async()=>{
