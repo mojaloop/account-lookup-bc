@@ -53,16 +53,16 @@ UnableToStorePartyAssociationError,
 UnableToDisassociatePartyError,
 NoSuchParticipantError} from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
-import { MongoQueryError } from "./../types";
+import { UnableToCloseDatabaseConnectionError } from "../errors";
 
 export class MongoOracleProviderRepo implements IOracleProvider{
 	// Properties received through the constructor.
-	private readonly logger: ILogger;
+	private readonly _logger: ILogger;
 	private readonly DB_URL: string;
 	private readonly DB_NAME: string;
 	private readonly COLLECTION_NAME: string;
 	// Other properties.
-	private readonly mongoClient: MongoClient;
+	private readonly _mongoClient: MongoClient;
 	private partyAssociations: Collection;
 	private parties: Collection;
 	private participantAssociations: Collection;
@@ -77,30 +77,38 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 		DB_NAME: string,
 		COLLECTION_NAME: string
 	) {
-		this.logger = logger;
+		this._logger = logger;
 		this.DB_URL = DB_URL;
 		this.DB_NAME = DB_NAME;
 		this.COLLECTION_NAME = COLLECTION_NAME;
 
-		this.mongoClient = new MongoClient(this.DB_URL);
+		this._mongoClient = new MongoClient(this.DB_URL);
 	}
 
 
 	async init(): Promise<void> {
 		try {
-			await this.mongoClient.connect(); // Throws if the repo is unreachable.
-		} catch (e: unknown) {
-			throw new UnableToInitOracleProviderError((e as MongoQueryError)?.message);
+			await this._mongoClient.connect(); // Throws if the repo is unreachable.
+		} catch (e: any) {
+			this._logger.fatal(`Unable to connect to the mongo database: ${this.DB_URL}: ${e.message}`);
+			throw new UnableToInitOracleProviderError();
 		}
 			// The following doesn't throw if the repo is unreachable, nor if the db or collection don't exist.
-			this.partyAssociations = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
-			this.parties = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
-			this.participantAssociations = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
-			this.participants = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+			this.partyAssociations = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+			this.parties = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+			this.participantAssociations = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+			this.participants = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
 		}
 
 	async destroy(): Promise<void> {
-		await this.mongoClient.close();
+		try{
+			await this._mongoClient.close();
+		}
+		catch(e: any){
+			this._logger.fatal(`Unable to close the mongo database: ${this.DB_URL}: ${e.message}`);
+			throw new UnableToCloseDatabaseConnectionError();
+		}
+		
 	}
 
 	//Participant
@@ -118,7 +126,8 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 
 			participant = data.participantId as unknown as string;
 
-		} catch (e: unknown) {
+		} catch (e: any) {
+			this._logger.debug(`Unable to get participant for partyId ${partyId}: ${e.message}`);
 			throw new UnableToGetParticipantError();
 		}
 
@@ -139,7 +148,8 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 			}) as unknown as IPartyAccount;
 
 			return null;
-		} catch (e: unknown) {
+		} catch (e: any) {
+			this._logger.debug(`Unable to store party association for partyId ${partyId}: ${e.message}`);
 			throw new UnableToStorePartyAssociationError();
 		}
 	}
@@ -158,7 +168,8 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 			}) as unknown as IPartyAccount;
 
 			return null;
-		} catch (e: unknown) {
+		} catch (e: any) {
+			this._logger.debug(`Unable to disassociate party for partyId ${partyId}: ${e.message}`);
 			throw new UnableToDisassociatePartyError();
 		}
 	}
@@ -171,8 +182,9 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 			}); 
 			
 			return partyAssociation !== null;
-		} catch (e: unknown) {
-			throw new UnableToGetPartyError((e as MongoQueryError)?.message);
+		} catch (e: any) {
+			this._logger.debug(`Unable to check if party association exists for partyId ${partyId}: ${e.message}`);
+			throw new UnableToGetPartyError();
 		}
 	}
 

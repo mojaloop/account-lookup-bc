@@ -69,17 +69,8 @@ export class InvalidParticipantActiveFlagError extends Error {}
 export class GetParticipantError extends Error {}
 export class UnableToCreatePartyAssociationError extends Error {}
 
-export const NoSuchParticipantErrorMessage = 'No such participant';
-export class NoSuchParticipantError extends Error {
-    constructor() {
-        super(NoSuchParticipantErrorMessage);
-    }
-}
-export class NoSuchParticipantFspIdError extends Error {
-       constructor(fspId: string) {
-           super(`No such participant with fspId: ${fspId}`);
-       }
-}
+export class NoSuchParticipantError extends Error {}
+export class NoSuchParticipantFspIdError extends Error {}
 export class NoValidParticipantFspIdError extends Error {}
 
 // Participant Account.
@@ -115,3 +106,8 @@ export class NoSuchOracleProviderError extends Error {}
 export class UnableToInitMessageProducerError extends Error {}
 export class UnableToDestroyMessageProducerError extends Error {}
 export class UnableToSendMessageProducerError extends Error {}
+export class InvalidMessagePayloadError extends Error {}
+export class InvalidMessageTypeError extends Error {}
+export class UnableToProcessMessageError extends Error {}
+
+

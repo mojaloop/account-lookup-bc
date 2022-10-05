@@ -57,6 +57,7 @@
      IParticipant,
      IParticipantService,
      NoSuchOracleProviderError,
+     NoSuchParticipantError,
      NoSuchParticipantFspIdError,
      RequiredParticipantIsNotActive,
      UnableToAssociatePartyError,
@@ -203,25 +204,39 @@ describe("Account Lookup Domain", () => {
         expect(aggregate.destroy()).resolves;
     });
 
-    test("getParty - should throw error if is unable to find participant", async () => {
+    test("getParty - should publish error message if is unable to find participant", async () => {
         //Arrange
+        const partyId = mockedPartyIds[0];
+
         const payload :PartyInfoRequestedEvtPayload = {
-            partyId : mockedPartyIds[0],
+            partyId,
             partyType : "error",
             requesterFspId : mockedParticipantIds[0],
             destinationFspId:null,
             currency:null,
             partySubType: null,
         };
+
         const event = new PartyInfoRequestedEvt(payload);
        
-         // Act && Assert
-         await expect(
-             async () => {
-                 await aggregate.publishAccountLookUpEvent(event);
-             }
-         ).rejects.toThrow(NoSuchParticipantFspIdError);
-         
+        jest.spyOn(messageProducer, "send");
+
+        const errorMsg = NoSuchParticipantFspIdError.name;
+
+        const errorPayload: AccountLookUperrorEvtPayload = {
+			errorMsg,
+			partyId,
+            sourceEvent : event.msgName
+		};
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+           }));
+        
      });
 
     test("getParty - should publish error message if is unable to get an oracle", async () => {

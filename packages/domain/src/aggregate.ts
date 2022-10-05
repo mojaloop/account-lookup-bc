@@ -43,7 +43,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { InvalidMessagePayloadError, InvalidMessageTypeError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError, UnableToProcessMessageError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookupBCEvents, AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
@@ -117,12 +117,12 @@ export class AccountLookupAggregate  {
 	private validateMessage(message:IMessage): boolean {
 		if(!message.payload){
 			this._logger.error(`AccountLookUpEventHandler: message payload has invalid format or value`);
-			return false;
+			throw new InvalidMessagePayloadError();
 		}
 
 		if(! Object.values(AccountLookupBCEvents).some(event => event === message?.msgName)){
 			this._logger.error(`AccountLookUpEventHandler: message name ${message?.msgName} is not a valid event type`);
-			return false;
+			throw new InvalidMessageTypeError();
 		}
 
 		return true;
@@ -135,6 +135,7 @@ export class AccountLookupAggregate  {
 			sourceEvent: message.msgName
 		};
 		const messageToPublish = new AccountLookUperrorEvt(errorPayload);
+		messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
 		await this._messageProducer.send(messageToPublish);
 	}
 
@@ -143,19 +144,19 @@ export class AccountLookupAggregate  {
 		let eventToPublish = null;
 		switch(message.msgName){
 			case AccountLookupBCEvents.PartyInfoRequested:
-				eventToPublish = await this.getParty(payload);
+				eventToPublish = await this.getPartyEvent(payload);
 				break;
 			case AccountLookupBCEvents.PartyInfoAvailable:
-				eventToPublish = await this.getPartyInfo(payload);
+				eventToPublish = await this.getPartyInfoEvent(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantQueryReceived:
-				eventToPublish = await this.getParticipant(payload);
+				eventToPublish = await this.getParticipantEvent(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantAssociationRequested:
-				eventToPublish = await this.participantAssociation(payload);
+				eventToPublish = await this.participantAssociationEvent(payload);
 				break;
 			case AccountLookupBCEvents.ParticipantDisassociateRequest:
-				eventToPublish = await this.participantDisassociation(payload);
+				eventToPublish = await this.participantDisassociationEvent(payload);
 				break;
 			}
 		if(eventToPublish != null){
@@ -163,12 +164,12 @@ export class AccountLookupAggregate  {
 			await this._messageProducer.send(eventToPublish);
 		}
 		else{
-			await this.publishErrorEvent(message, "Unable to process message");
+			throw new UnableToProcessMessageError();
 		}
 
 	}
 
-	private async getParticipant({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
+	private async getParticipantEvent({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(sourceFsp);
@@ -189,7 +190,7 @@ export class AccountLookupAggregate  {
 		return event;
 	}
 
-	private async participantAssociation({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
+	private async participantAssociationEvent({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
 		const requesterFsp = await this._participantService.getParticipantInfo(ownerFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -198,7 +199,7 @@ export class AccountLookupAggregate  {
 
 		await oracleProvider.associateParty(partyId).catch(error=>{
 			this._logger.error(`Unable to associate party id: ${partyId} ` + error);
-			throw new UnableToAssociatePartyError(error);
+			throw new UnableToAssociatePartyError();
 		});
 
 		const payload : ParticipantAssociationCreatedEvtPayload = {
@@ -211,7 +212,7 @@ export class AccountLookupAggregate  {
 
 	}
 
-	private async participantDisassociation({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
+	private async participantDisassociationEvent({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
 		const requesterFsp = await this._participantService.getParticipantInfo(ownerFspId);
   
 		this.validateParticipant(requesterFsp);
@@ -220,7 +221,7 @@ export class AccountLookupAggregate  {
 
 		await oracleProvider.disassociateParty(partyId).catch(error=>{
 			this._logger.error(`Unable to disassociate party id: ${partyId} ` + error);
-			throw new UnableToDisassociatePartyError(error);
+			throw new UnableToDisassociatePartyError();
 		});
 
 		const payload:ParticipantAssociationRemovedEvtPayload = { 
@@ -233,7 +234,7 @@ export class AccountLookupAggregate  {
 
 	}
 
-	private async getParty({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
+	private async getPartyEvent({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
   
 		this.validateParticipant(sourceFsp);
@@ -255,7 +256,7 @@ export class AccountLookupAggregate  {
 		
 	}
 	
-	private async getPartyInfo({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyInfoRequestedEvt>{
+	private async getPartyInfoEvent({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyInfoRequestedEvt>{
 		const sourceFsp = await this._participantService.getParticipantInfo(requesterFspId);
 
 		this.validateParticipant(sourceFsp);
@@ -285,12 +286,12 @@ export class AccountLookupAggregate  {
 	private async getOracleProvider(partyType:string, partySubType:string | null): Promise<IOracleProvider> {
 		const oracleProvider = await this._oracleFinder.getOracleProvider(partyType, partySubType).catch(error=>{
 			this._logger.error(`Unable to get oracle for type: ${partyType} ` + error);
-			throw new UnableToGetOracleError(error);
+			throw new UnableToGetOracleError();
 		});
 
 		if(!oracleProvider) {
 			this._logger.debug(`No oracle provider found for partyType: ${partyType}`);
-			throw new UnableToGetOracleProviderError(`Oracle provider not found for partyType: ${partyType}`);
+			throw new UnableToGetOracleProviderError();
 		}
 
 		return oracleProvider;
@@ -298,11 +299,13 @@ export class AccountLookupAggregate  {
 	
 	private validateParticipant(participant: IParticipant | null):void{
 		if(!participant) {
+			this._logger.debug(`No participant found`);
 			throw new NoSuchParticipantError();
 		}
 
 		if(!participant.isActive) {
-			throw new RequiredParticipantIsNotActive(`fspId:${participant.id} is not active`);
+			this._logger.debug(`${participant.id} is not active`);
+			throw new RequiredParticipantIsNotActive();
 		}
 		
 	}
@@ -325,7 +328,8 @@ export class AccountLookupAggregate  {
 		}  
 
 		if(!destinationFsp){
-			throw new NoSuchParticipantFspIdError(`partyId:${partyId} has no existing fspId owner`);
+			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
+			throw new NoSuchParticipantFspIdError();
 		}
 
 		return destinationFsp;
@@ -335,13 +339,15 @@ export class AccountLookupAggregate  {
 		const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
 		
 		if(!oracle) {
-			throw new NoSuchOracleProviderError(`oracle for ${partyType} not found`);
+			this._logger.debug(`oracle for ${partyType} not found`);
+			throw new NoSuchOracleProviderError();
 		}
 
 		const fspId = await oracle.getParticipant(partyId);
 
 		if(!(fspId)) {
-			throw new NoSuchParticipantFspIdError(`partyId:${partyId} has no existing fspId owner`);
+			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
+			throw new NoSuchParticipantFspIdError();
 		}
 
 		// The participants BC will return a participant's info  

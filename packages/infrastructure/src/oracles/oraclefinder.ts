@@ -48,15 +48,16 @@ import {
 	UnableToGetOracleError,
 	IOracleProvider
 } from "@mojaloop/account-lookup-bc-domain";
+import { UnableToCloseDatabaseConnectionError } from "../errors";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
 	// Properties received through the constructor.
-	private readonly logger: ILogger;
+	private readonly _logger: ILogger;
 	private readonly DB_URL: string;
 	private readonly DB_NAME: string;
 	private readonly COLLECTION_NAME: string;
 	// Other properties.
-	private readonly mongoClient: MongoClient;
+	private readonly _mongoClient: MongoClient;
 	private oracleProviders: Collection;
 
 	constructor(
@@ -65,26 +66,33 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		DB_NAME: string,
 		COLLECTION_NAME: string
 	) {
-		this.logger = logger;
+		this._logger = logger;
 		this.DB_URL = DB_URL;
 		this.DB_NAME = DB_NAME;
 		this.COLLECTION_NAME = COLLECTION_NAME;
 
-		this.mongoClient = new MongoClient(this.DB_URL);
+		this._mongoClient = new MongoClient(this.DB_URL);
 	}
 
 	async init(): Promise<void> {
 		try {
-			await this.mongoClient.connect();
-		} catch (e: unknown) {
+			await this._mongoClient.connect();
+		} catch (e: any) {
+			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleFinderError();
 		}
 		
-		this.oracleProviders = this.mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+		this.oracleProviders = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
 	}
 
 	async destroy(): Promise<void> {
-		await this.mongoClient.close(); // Doesn't throw if the repo is unreachable.
+		try{
+			await this._mongoClient.close();
+		}
+		catch(e: any){
+			this._logger.error(`Unable to close the database connection: ${e.message}`);
+			throw new UnableToCloseDatabaseConnectionError();
+		}
 	}
 
     async getOracleProvider(partyType: string, subType: string | null): Promise<IOracleProvider | null> {
@@ -101,7 +109,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			}
 			
 			return foundOracle as unknown as IOracleProvider;
-		} catch (e: unknown) {
+		} catch (e: any) {
+			this._logger.error(`Unable to get oracle provider: ${e.message}`);
 			throw new UnableToGetOracleError();
 		}
     }
