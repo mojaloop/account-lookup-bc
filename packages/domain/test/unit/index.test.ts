@@ -65,7 +65,7 @@
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes, TestErrorMessage } from "./mocks/data";
+import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
 import { AccountLookUperrorEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
@@ -203,32 +203,24 @@ describe("Account Lookup Domain", () => {
         expect(aggregate.destroy()).resolves;
     });
 
-    test("getParty - should publish error message if is unable to find participant", async () => {
+    test("getParty - should throw error if is unable to find participant", async () => {
         //Arrange
-        const partyId = mockedPartyIds[0];
-        const requesterFspId = mockedParticipantIds[0];
         const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
+            partyId : mockedPartyIds[0],
             partyType : "error",
-            requesterFspId,
+            requesterFspId : mockedParticipantIds[0],
             destinationFspId:null,
             currency:null,
             partySubType: null,
         };
-        
-        jest.spyOn(messageProducer, "send");
-
         const event = new PartyInfoRequestedEvt(payload);
-        const errorPayload: AccountLookUperrorEvtPayload = {
-			errorMsg: TestErrorMessage,
-			partyId,
-		};
-
-        // Act
-        await aggregate.publishAccountLookUpEvent(event);
-
-        // Assert
-        expect(messageProducer.send).toBeCalledWith(errorPayload);
+       
+         // Act && Assert
+         await expect(
+             async () => {
+                 await aggregate.publishAccountLookUpEvent(event);
+             }
+         ).rejects.toThrow(NoSuchParticipantFspIdError);
          
      });
 
@@ -253,20 +245,26 @@ describe("Account Lookup Domain", () => {
             subId: null
         }
         
+        const event = new PartyInfoRequestedEvt(payload);
+        
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
         jest.spyOn(messageProducer, "send");
 
-        const event = new PartyInfoRequestedEvt(payload);
+        const errorMsg = UnableToGetOracleError.name;
+
         const errorPayload: AccountLookUperrorEvtPayload = {
-			errorMsg: TestErrorMessage,
+			errorMsg,
 			partyId,
+            sourceEvent : event.msgName
 		};
 
         // Act
         await aggregate.publishAccountLookUpEvent(event);
 
         // Assert
-        expect(messageProducer.send).toBeCalledWith(errorPayload);
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+           }));
         
     });
 

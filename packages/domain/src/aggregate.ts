@@ -43,7 +43,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { NoSuchOracleProviderError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
+import { NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookupBCEvents, AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
@@ -107,8 +107,9 @@ export class AccountLookupAggregate  {
 				await this.handleEvent(message);
 			}
 			catch(error:any) {
+				const errorMessage = (error.message)? error.message : error.constructor.name;
 				this._logger.error(`${message.msgName} ` + error.message);
-				await this.publishErrorEvent(message, error.message);
+				await this.publishErrorEvent(message, errorMessage);
 			}
 		}
 	}
@@ -131,6 +132,7 @@ export class AccountLookupAggregate  {
 		const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId: message.payload?.partyId ?? "Unknow party id",
+			sourceEvent: message.msgName
 		};
 		const messageToPublish = new AccountLookUperrorEvt(errorPayload);
 		await this._messageProducer.send(messageToPublish);
@@ -296,7 +298,7 @@ export class AccountLookupAggregate  {
 	
 	private validateParticipant(participant: IParticipant | null):void{
 		if(!participant) {
-			throw new NoSuchParticipantFspIdError(`fspId does not exist`);
+			throw new NoSuchParticipantError();
 		}
 
 		if(!participant.isActive) {

@@ -65,10 +65,21 @@ export class PartyAssociationDoesntExistsError extends Error {}
 export class InvalidParticipantIdError extends Error {}
 export class InvalidParticipantTypeError extends Error {}
 export class InvalidParticipantActiveFlagError extends Error {}
-export class NoSuchParticipantError extends Error {}
+
 export class GetParticipantError extends Error {}
 export class UnableToCreatePartyAssociationError extends Error {}
-export class NoSuchParticipantFspIdError extends Error {}
+
+export const NoSuchParticipantErrorMessage = 'No such participant';
+export class NoSuchParticipantError extends Error {
+    constructor() {
+        super(NoSuchParticipantErrorMessage);
+    }
+}
+export class NoSuchParticipantFspIdError extends Error {
+       constructor(fspId: string) {
+           super(`No such participant with fspId: ${fspId}`);
+       }
+}
 export class NoValidParticipantFspIdError extends Error {}
 
 // Participant Account.
