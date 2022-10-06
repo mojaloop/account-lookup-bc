@@ -69,7 +69,7 @@ import { MemoryMessageProducer } from "./mocks/memory_message_producer";
 import { mockedOracleList, mockedParticipantIds, mockedPartyIds, mockedPartyTypes } from "./mocks/data";
 import { MemoryOracleProvider } from "./mocks/memory_oracle_providers";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
-import { AccountLookUperrorEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import { AccountLookUperrorEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -111,6 +111,7 @@ describe("Account Lookup Domain", () => {
         jest.resetAllMocks();
     });
 
+    //#region Party entity
     test("should create a new party entity", async()=>{
         // Arrange 
         const id="fakeId";
@@ -167,8 +168,93 @@ describe("Account Lookup Domain", () => {
         }).toThrowError(InvalidPartyTypeError);
         
     });
+    //#endregion
+
+     //#region Participant entity
+     test("should create a new participant entity", async()=>{
+        // Arrange 
+        const id="fakeId";
+	    const type="fake type";
+        const isActive = true;
+        const currency= "fake currency";
+	    const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+        // Assert
+
+        expect(participant.id).toBe(id);
+        expect(participant.type).toBe(type);
+        expect(participant.isActive).toBe(isActive);
+        expect(participant.subId).toBe(subId);
+        
+    });
+
+    test("should throw error if participant id is not valid", async()=>{
+        // Arrange 
+        const id="";
+	    const type="fake type";
+        const isActive = true;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
 
 
+        // Assert
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantIdError);
+        
+        
+    });
+
+
+    test("should throw error if participant type is not valid", async()=>{
+        // Arrange 
+        const id="fake id";
+	    const type="";
+        const isActive= true;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+
+        // Assert
+
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantTypeError);
+        
+    });
+
+    test("should throw error if participant type is not valid", async()=>{
+        // Arrange 
+        const id="fake id";
+	    const type="";
+        const isActive= "fake boolean" as unknown as boolean;
+        const currency= "fake currency";
+        const subId="fake sub id";
+
+        // Act
+        const participant = new Participant(id, type, isActive, currency, subId);
+
+
+        // Assert
+
+        expect(() => {
+            Participant.validateParticipant(participant);
+          }).toThrowError(InvalidParticipantTypeError);
+        
+    });
+
+    //#endregion
+
+    //#region Init and Destroy
     test("should throw error if couldnt init aggregate", async () => {
         // Arrange
         jest.spyOn(oracleFinder, "init").mockImplementation(() => {throw new Error();});
@@ -204,12 +290,15 @@ describe("Account Lookup Domain", () => {
         expect(aggregate.destroy()).resolves;
     });
 
-    test("getParty - should publish error message if is unable to find participant on oracle", async () => {
+    //#endregion
+
+    //#region PartyQueryReceivedEvent
+    test("PartyQueryReceivedEvt - should publish error message if is unable to find participant on oracle", async () => {
         //Arrange
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
         const partyType = mockedPartyTypes[0];
-        const payload :PartyInfoRequestedEvtPayload = {
+        const payload :PartyQueryReceivedEvtPayload = {
             partyId,
             partyType : mockedPartyTypes[0],
             requesterFspId,
@@ -224,12 +313,12 @@ describe("Account Lookup Domain", () => {
             isActive: true,
             subId: null
         }
-
-        const event = new PartyInfoRequestedEvt(payload);
-       
+  
         jest.spyOn(messageProducer, "send");        
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        
+
+        const event = new PartyQueryReceivedEvt(payload);
+
         const errorMsg = NoSuchParticipantFspIdError.name;
 
         const errorPayload: AccountLookUperrorEvtPayload = {
@@ -248,292 +337,331 @@ describe("Account Lookup Domain", () => {
         
      });
 
-    // test("getParty - should publish error message if is unable to get an oracle", async () => {
-    //    //Arrange 
-    //    const partyId = mockedPartyIds[0];
-    //    const requesterFspId = mockedParticipantIds[0];
-    //    const partyType = "error";
-    //    const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
-       
-    //    const participant: IParticipant = {
-    //         id: requesterFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
+    test("PartyQueryReceivedEvt - should publish error message if is unable to get an oracle", async () => {
+       //Arrange 
+       const partyId = mockedPartyIds[0];
+       const requesterFspId = mockedParticipantIds[0];
+       const partyType = "no oracle";
+       const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+      };
+          
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+        jest.spyOn(messageProducer, "send");
+
+        const event = new PartyQueryReceivedEvt(payload);
+     
+        const errorMsg = UnableToGetOracleError.name;
+
+        const errorPayload: AccountLookUperrorEvtPayload = {
+			errorMsg,
+			partyId,
+            sourceEvent : event.msgName
+		};
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+           }));
         
-    //     const event = new PartyInfoRequestedEvt(payload);
-        
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-    //     jest.spyOn(messageProducer, "send");
+    });
 
-    //     const errorMsg = UnableToGetOracleError.name;
+    test("PartyQueryReceivedEvt - should publish error message if is unable to find participant for partyType", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = "no party";
+        const requesterFspId = mockedParticipantIds[0];
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+      };
 
-    //     const errorPayload: AccountLookUperrorEvtPayload = {
-	// 		errorMsg,
-	// 		partyId,
-    //         sourceEvent : event.msgName
-	// 	};
+     
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({isActive:true, subId:null, type:partyType, id:requesterFspId});
+    jest.spyOn(messageProducer, "send");
 
-    //     // Act
-    //     await aggregate.publishAccountLookUpEvent(event);
+    const event = new PartyQueryReceivedEvt(payload);
+   
+    const errorMsg = NoSuchParticipantFspIdError.name;
 
-    //     // Assert
-    //     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-    //         "payload": errorPayload, 
-    //        }));
-        
-    // });
+    const errorPayload: AccountLookUperrorEvtPayload = {
+        errorMsg,
+        partyId,
+        sourceEvent : event.msgName
+    };
 
-    // test("getParty - should throw error if is unable to find participant for partyType", async () => {
-    //     //Arrange 
-    //     const partyType = "non-exisiting-participant-type";
-    //     const partyId = mockedPartyIds[0];
-    //     const requesterFspId = mockedParticipantIds[0];
-    //     const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
+    // Act
+    await aggregate.publishAccountLookUpEvent(event);
 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParty(payload);
-    //          }
-    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+        "payload": errorPayload, 
+       }));
          
-    //  });
+     });
 
-    //  test("getParty - should throw error if oracle returned is not present in the oracle providers list", async () => {
-    //     //Arrange 
-    //     const partyType = "not_found_oracle";
-    //     const partyId = mockedPartyIds[0];
-    //     const requesterFspId =mockedParticipantIds[0];
-    //     const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
+     test("PartyQueryReceivedEvt - should publish error message if oracle returned is not present in the oracle providers list", async () => {
+        //Arrange 
+        const partyType = "not_found_oracle";
+        const partyId = mockedPartyIds[0];
+        const requesterFspId =mockedParticipantIds[0];
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+        };
 
-    //     const participant: IParticipant = {
-    //         id: requesterFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
+        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(null);
 
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(null);
-
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParty(payload);
-    //          }
-    //      ).rejects.toThrow(NoSuchOracleProviderError);
+        const event = new PartyQueryReceivedEvt(payload);
+   
+        const errorMsg = NoSuchOracleProviderError.name;
+    
+        const errorPayload: AccountLookUperrorEvtPayload = {
+            errorMsg,
+            partyId,
+            sourceEvent : event.msgName
+        };
+    
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+    
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+           }));
          
-    //  });
+     });
 
-    //  test("getParty - should throw error if oracle returns an empty list of participants", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const requesterFspId = mockedParticipantIds[0];
-    //     const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
+     test("PartyQueryReceivedEvt - should publish error message if oracle returns an empty list of participants", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+      };
 
-    //     const participant: IParticipant = {
-    //         id: requesterFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, subId: null});
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
 
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        const event = new PartyQueryReceivedEvt(payload);
+   
+        const errorMsg = NoSuchParticipantFspIdError.name;
+    
+        const errorPayload: AccountLookUperrorEvtPayload = {
+            errorMsg,
+            partyId,
+            sourceEvent : event.msgName
+        };
+    
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
+    
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+        }));         
+     });
 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParty(payload);
-    //          }
-    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
+   
+     test("PartyQueryReceivedEvt - should publish reponse with PartyInfoRequestedEvt", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+      };
+
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue({ id: "1",type: partyType, isActive: true, subId: null});
+        jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
+        jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
+
+        const event = new PartyQueryReceivedEvt(payload);
+        const responsePayload : PartyInfoRequestedEvtPayload= {
+            partyId,
+            partyType,
+            requesterFspId,
+            destinationFspId: "1",
+            currency: null,
+            partySubType: null
+        };
+    
+        // Act
+        const result = await aggregate.publishAccountLookUpEvent(event);
+    
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload, 
+        }));         
          
-    //  });
+    });
 
-    //  test("getParty - should throw error if oracle fails to return a participant", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const requesterFspId = mockedParticipantIds[0];
-    //     const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
+    //#endregion
 
-    //     const participant: IParticipant = {
-    //         id: requesterFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
+    //#region PartyInfoAvailableEvt
+    test("PartyInfoAvailableEvt - should publish error message if information from source is invalid", async () => {
+        // Arrange
+        const partyType = mockedPartyTypes[0];
+        const partyId = "no party";
+        const requesterFspId = mockedParticipantIds[0];
+        const payload :PartyInfoAvailableEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+            ownerFspId: "ownerId",
+            partyDoB:new Date(),
+            partyName:"name",
+        };
 
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-    //     jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(null);
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce(null);
+        jest.spyOn(messageProducer, "send");
 
-    //      // Act && Assert
-    //      await expect(
-    //          async () => {
-    //              await aggregate.getParty(payload);
-    //          }
-    //      ).rejects.toThrow(NoSuchParticipantFspIdError);
-         
-    //  });
-
-    //  test("getParty - should return PartyInfoRequestedEvt", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const requesterFspId = mockedParticipantIds[0];
-    //     const payload :PartyInfoRequestedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         requesterFspId ,
-    //         destinationFspId:null,
-    //         currency:null,
-    //         partySubType: null,
-    //   };
-
-    //     const participant: IParticipant = {
-    //         id: requesterFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
-
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-    //     jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(requesterFspId);
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-
-    //     //Act
-    //     const result = await aggregate.getParty(payload);
-
-    //     //Assert
-    //     expect(result).toBeInstanceOf(PartyInfoRequestedEvt);
-    //     expect(result.payload).toMatchObject({
-    //         partyId,
-    //     });
-         
-    //  });
-
-    //  // Participant
-    //  test("should create a new participant entity", async()=>{
-    //     // Arrange 
-    //     const id="fakeId";
-	//     const type="fake type";
-    //     const isActive = true;
-    //     const currency= "fake currency";
-	//     const subId="fake sub id";
-
-    //     // Act
-    //     const participant = new Participant(id, type, isActive, currency, subId);
-
-    //     // Assert
-
-    //     expect(participant.id).toBe(id);
-    //     expect(participant.type).toBe(type);
-    //     expect(participant.isActive).toBe(isActive);
-    //     expect(participant.subId).toBe(subId);
+        const event = new PartyInfoAvailableEvt(payload);
         
-    // });
+        const errorMsg = NoSuchParticipantError.name;
+        const errorPayload: AccountLookUperrorEvtPayload = {
+            errorMsg,
+            partyId,
+            sourceEvent : event.msgName
+        };
 
-    // test("should throw error if participant id is not valid", async()=>{
-    //     // Arrange 
-    //     const id="";
-	//     const type="fake type";
-    //     const isActive = true;
-    //     const currency= "fake currency";
-    //     const subId="fake sub id";
+        // Act
+        await aggregate.publishAccountLookUpEvent(event);
 
-    //     // Act
-    //     const participant = new Participant(id, type, isActive, currency, subId);
+        // Assert
 
-
-    //     // Assert
-    //     expect(() => {
-    //         Participant.validateParticipant(participant);
-    //       }).toThrowError(InvalidParticipantIdError);
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload,
+            }));
         
-        
-    // });
+        });
 
+        test("PartyInfoAvailableEvt - should publish error message if information from destination is invalid", async () => {
+            //Arrange
+            const partyType = mockedPartyTypes[0];
+            const partyId = "no party";
+            const requesterFspId = mockedParticipantIds[0];
+            const payload :PartyInfoAvailableEvtPayload = {
+                partyId,
+                partyType,
+                requesterFspId ,
+                destinationFspId:"2",
+                currency:null,
+                partySubType: null,
+                ownerFspId: "ownerId",
+                partyDoB:new Date(),
+                partyName:"name",
+            };
+    
+            jest.spyOn(participantService, "getParticipantInfo")
+                .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null})
+                .mockResolvedValueOnce(null);
+            jest.spyOn(messageProducer, "send");
+    
+            const event = new PartyInfoAvailableEvt(payload);
+            
+            const errorMsg = NoSuchParticipantError.name;
+            const errorPayload: AccountLookUperrorEvtPayload = {
+                errorMsg,
+                partyId,
+                sourceEvent : event.msgName
+            };
+    
+            // Act
+            await aggregate.publishAccountLookUpEvent(event);
+    
+            // Assert
+    
+            expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+                "payload": errorPayload,
+            }));
+        });
 
-    // test("should throw error if participant type is not valid", async()=>{
-    //     // Arrange 
-    //     const id="fake id";
-	//     const type="";
-    //     const isActive= true;
-    //     const currency= "fake currency";
-    //     const subId="fake sub id";
+        test("PartyInfoAvailableEvt - should publish event with party info requested", async () => {
+            //Arrange
+            const partyType = mockedPartyTypes[0];
+            const partyId = mockedPartyIds[0];
+            const requesterFspId = mockedParticipantIds[0];
+            const partyDoB = new Date();
+            const payload :PartyInfoAvailableEvtPayload = {
+                partyId,
+                partyType,
+                requesterFspId ,
+                destinationFspId:"2",
+                currency:null,
+                partySubType: null,
+                ownerFspId: "ownerId",
+                partyDoB,
+                partyName:"name",
+            };
 
-    //     // Act
-    //     const participant = new Participant(id, type, isActive, currency, subId);
+            jest.spyOn(participantService, "getParticipantInfo")
+                .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null})
+                .mockResolvedValueOnce({id: "2", type: partyType, isActive: true, subId: null});
+            jest.spyOn(messageProducer, "send");
 
+            const event = new PartyInfoAvailableEvt(payload);
+            const responsePayload : PartyQueryResponseEvtPayload= {
+                requesterFspId,
+                destinationFspId: "2",
+                partyType,
+                partyId,
+                partySubType: null,
+                currency: null,
+                ownerFspId: "ownerId",
+                partyDoB,
+                partyName:"name",
+            };
 
-    //     // Assert
+            // Act
+            const result = await aggregate.publishAccountLookUpEvent(event);
 
-    //     expect(() => {
-    //         Participant.validateParticipant(participant);
-    //       }).toThrowError(InvalidParticipantTypeError);
-        
-    // });
+            // Assert
 
-    // test("should throw error if participant type is not valid", async()=>{
-    //     // Arrange 
-    //     const id="fake id";
-	//     const type="";
-    //     const isActive= "fake boolean" as unknown as boolean;
-    //     const currency= "fake currency";
-    //     const subId="fake sub id";
+            expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+                "payload": responsePayload,
+            }));
+        });
 
-    //     // Act
-    //     const participant = new Participant(id, type, isActive, currency, subId);
+    //#endregion
 
+    //#region ParticipantQueryReceivedEvt
+    
 
-    //     // Assert
-
-    //     expect(() => {
-    //         Participant.validateParticipant(participant);
-    //       }).toThrowError(InvalidParticipantTypeError);
-        
-    // });
-
+    //#region PartyInfoRequestedEvt
     // test("should be able to publish as messages all the valid participants found", async () => {
     //     //Arrange 
     //     const partyType = mockedPartyTypes[0];
@@ -562,33 +690,9 @@ describe("Account Lookup Domain", () => {
          
     //  });
 
-    //  test("should be able to publish as message all the valid participants found with a destinationId", async () => {
-    //     //Arrange 
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const sourceFspId = mockedParticipantIds[0];
-    //     const destinationFspId = mockedParticipantIds[1];
 
-    //     const participant: IParticipant = {
-    //         id: sourceFspId,
-    //         type: partyType,
-    //         isActive: true,
-    //         subId: null
-    //     }
 
-    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValue(participant);
-    //     jest.spyOn(oracleFinder, "getOracleProvider").mockResolvedValueOnce(oracleProviderList[0]);
-    //     jest.spyOn(oracleProviderList[0], "getParticipant").mockResolvedValueOnce(sourceFspId);
-
-    //     const messageProducerSpy = jest.spyOn(messageProducer, "send");
-
-    //     //Act
-    //     await aggregate.getParticipant({ sourceFspId, partyType, partyId, destinationFspId });
-
-    //     //Assert
-    //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
-         
-    //  });
+     //#endregion
 
     //  // Party Association
     //  test("should throw an error trying to associate a party", async () => {
@@ -724,340 +828,5 @@ describe("Account Lookup Domain", () => {
     //     expect(messageProducerSpy).toHaveBeenCalledTimes(1);
          
     //  });
-
-    // // Event emitter
-    // test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
-    //     // Arrange
-    //     const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
-    //     const message = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //     } as unknown as IAccountLookUpMessage;
-        
-    //     const errorMessage = "message as an invalid format or value";
-        
-    //     jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
-    //     jest.spyOn(logger, "error").mockImplementationOnce(() => { });
-        
-    //     // Act
-    //     await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
-
-    //     // Assert
-    //     expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
-    
-    // });
-
-    // test("should log error if getParticipant aggregate method for GetParticipant Event throws error", async()=>{
-    //     // Arrange
-    //     const fakePayload = { participantType:"1", participantId: "2", participantSubId:"3" };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             payload: fakePayload
-    //         }
-    //     } as unknown as IAccountLookUpMessage;
-    //     const errorMessage = "execution error";
-        
-    //     jest.spyOn(aggregate, "associateParty").mockRejectedValueOnce(errorMessage);
-    //     jest.spyOn(logger, "error").mockImplementationOnce(() => { });
-        
-    //     // Act
-    //     await Promise.resolve(aggregate.publishAccountLookUpEvent(message));
-
-    //     // Assert
-    //     expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type undefined is not a valid event type`);
-    
-    // });
-
-    // test("should call getParty aggregate method for GetParty Event", async()=>{
-    //     // Arrange
-    //     const fakePayload = {                  
-    //         sourceFspId: "sourceFspId1", 
-    //         partyType: "partyType1", 
-    //         partyId: "partyId1", 
-    //         partySubType: "partySubType1", 
-    //         currency: "currency1",
-    //         destinationFspId: "destinationFspId1" 
-    //     };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             type:AccountLookUpEventsType.GetParty,
-    //             payload: fakePayload
-    //         }
-    //     };
-        
-    //     const aggregateSpy = jest.spyOn(aggregate, "getPartyRequest");
-
-    //     jest.spyOn(aggregate, "getPartyRequest").mockResolvedValueOnce({} as any);
-        
-    //     // Act
-    //     aggregate.publishAccountLookUpEvent(message);
-
-    //     // Assert
-    //    expect(aggregateSpy).toBeCalledWith(fakePayload);
-        
-    // });
-    
-    // test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
-    //     // Arrange
-    //     const fakePayload = {                  
-    //         sourceFspId: "sourceFspId1", 
-    //         partyType: "partyType1", 
-    //         partyId: "partyId1", 
-    //         partySubType: "partySubType1", 
-    //         currency: "currency1",
-    //         destinationFspId: "destinationFspId1" 
-    //     };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             type:AccountLookUpEventsType.GetParticipant,
-    //             payload: fakePayload
-    //         }
-    //     };
-        
-    //     const aggregateSpy = jest.spyOn(aggregate, "getParticipant");
-
-    //     jest.spyOn(aggregate, "getParticipant").mockResolvedValueOnce({} as any);
-        
-    //     // Act
-    //     aggregate.publishAccountLookUpEvent(message);
-
-    //     // Assert
-    //    expect(aggregateSpy).toBeCalledWith(fakePayload);
-        
-    // });
-
-    // test("should call associateParty aggregate method for AssociateParty Event", async()=>{
-    //     // Arrange
-    //     const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             type:AccountLookUpEventsType.AssociateParty,
-    //             payload: fakePayload
-    //         }
-    //     };
-        
-    //     const aggregateSpy = jest.spyOn(aggregate, "associateParty");
-
-    //     jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
-        
-    //     // Act
-    //     aggregate.publishAccountLookUpEvent(message);
-
-    //     // Assert
-    //    expect(aggregateSpy).toBeCalledWith(fakePayload);
-        
-    // });
-
-    // test("should call disassociateParty aggregate method for DisassociateParty Event", async()=>{
-    //     // Arrange
-    //     const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             type:AccountLookUpEventsType.DisassociateParty,
-    //             payload: fakePayload
-    //         }
-    //     };
-        
-    //     const aggregateSpy = jest.spyOn(aggregate, "disassociateParty");
-
-    //     jest.spyOn(aggregate, "disassociateParty").mockResolvedValueOnce({} as any);
-        
-    //     // Act
-    //     aggregate.publishAccountLookUpEvent(message);
-
-    //     // Assert
-    //    expect(aggregateSpy).toBeCalledWith(fakePayload);
-        
-    // });
-
-    // test("should not call any event on an non-existing event type", async()=>{
-    //     // Arrange
-    //     const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
-    //     const message:IAccountLookUpMessage = {
-    //         key: "account-lookup",
-    //         timestamp: 12,
-    //         topic: "account-lookup",
-    //         headers: [],
-    //         value: {
-    //             type:"" as AccountLookUpEventsType,
-    //             payload: fakePayload
-    //         }
-    //     };
-        
-    //     const loggerSpy = jest.spyOn(logger, "error");
-       
-    //     // Act
-    //     aggregate.publishAccountLookUpEvent(message);
-
-    //     // Assert
-    //    expect(loggerSpy).toBeCalledWith("AccountLookUpEventHandler: publishAccountLookUpEvent: message type  is not a valid event type");
-        
-    // });
-    
-    // test("should log error if message is on a invalid format", async()=>{
-    //         // Arrange
-    //         const invalidMessage:any = {
-    //             type: "invalid",
-    //         };
-    //         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(invalidMessage);
-    
-    //         // Assert
-    //         expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message as an invalid format or value`);
-            
-    //     });
-    
-    //     test("should log error if message has invalid type", async()=>{
-    //         // Arrange
-    //         const invalidMessage:any = {
-    //             value: {
-    //                 type:"invalid type",
-    //                 payload: {"test":"test"}
-    //             }
-    //         };
-    //         jest.spyOn(logger, "error").mockImplementationOnce(() => { });
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(invalidMessage);
-    
-    //         // Assert
-    //         expect(logger.error).toBeCalledWith(`AccountLookUpEventHandler: publishAccountLookUpEvent: message type ${invalidMessage.value.type} is not a valid event type`);
-            
-    //     });
-    
-    //     // // Participant
-    //     test("should call getParticipant aggregate method for GetParticipant Event", async()=>{
-    //         // Arrange
-    //         const fakePayload = {                  
-    //             sourceFspId: "sourceFspId1", 
-    //             partyType: "partyType1", 
-    //             partyId: "partyId1", 
-    //             partySubType: "partySubType1", 
-    //             currency: "currency1",
-    //             destinationFspId: "destinationFspId1" 
-    //         };
-    //         const message:IAccountLookUpMessage = {
-    //             key: "account-lookup",
-    //             timestamp: 12,
-    //             topic: "account-lookup",
-    //             headers: [],
-    //             value: {
-    //                 type:AccountLookUpEventsType.GetParticipant,
-    //                 payload: fakePayload
-    //             }
-    //         };
-            
-    //         jest.spyOn(aggregate, "getParticipant").mockResolvedValueOnce({} as any);
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(message);
-    
-    //         // Assert
-    //        expect(aggregate.getParticipant).toBeCalledWith(fakePayload);
-            
-    //     });
-    
-    //     test("should call getParty aggregate method for GetParty Event", async()=>{
-    //         // Arrange
-    //         const fakePayload = {                  
-    //             sourceFspId: "sourceFspId1", 
-    //             partyType: "partyType1", 
-    //             partyId: "partyId1", 
-    //             partySubType: "partySubType1", 
-    //             currency: "currency1",
-    //             destinationFspId: "destinationFspId1" 
-    //         };
-    //         const message:IAccountLookUpMessage = {
-    //             key: "account-lookup",
-    //             timestamp: 12,
-    //             topic: "account-lookup",
-    //             headers: [],
-    //             value: {
-    //                 type:AccountLookUpEventsType.GetParty,
-    //                 payload: fakePayload
-    //             }
-    //         };
-            
-    //         jest.spyOn(aggregate, "getPartyRequest").mockResolvedValueOnce({} as any);
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(message);
-    
-    //         // Assert
-    //        expect(aggregate.getPartyRequest).toBeCalledWith(fakePayload);
-            
-    //     });
-    
-    //     test("should call associateParty aggregate method for AssociateParty Event", async()=>{
-    //         // Arrange
-    //         const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
-    //         const message:IAccountLookUpMessage = {
-    //             key: "account-lookup",
-    //             timestamp: 12,
-    //             topic: "account-lookup",
-    //             headers: [],
-    //             value: {
-    //                 type:AccountLookUpEventsType.AssociateParty,
-    //                 payload: fakePayload
-    //             }
-    //         };
-            
-    //         jest.spyOn(aggregate, "associateParty").mockResolvedValueOnce({} as any);
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(message);
-    
-    //         // Assert
-    //        expect(aggregate.associateParty).toBeCalledWith(fakePayload);
-            
-    //     });
-    
-    //     test("should call disassociateParty aggregate method for DisassociateParty Event", async()=>{
-    //         // Arrange
-    //         const fakePayload = { requesterFspId:"fspIdRequester", partyType: "partyType1", partyId: "partyId1", partySubType:"partySubType1" };
-    //         const message:IAccountLookUpMessage = {
-    //             key: "account-lookup",
-    //             timestamp: 12,
-    //             topic: "account-lookup",
-    //             headers: [],
-    //             value: {
-    //                 type:AccountLookUpEventsType.DisassociateParty,
-    //                 payload: fakePayload
-    //             }
-    //         };
-            
-    //         jest.spyOn(aggregate, "disassociateParty").mockResolvedValueOnce({} as any);
-            
-    //         // Act
-    //         aggregate.publishAccountLookUpEvent(message);
-    
-    //         // Assert
-    //        expect(aggregate.disassociateParty).toBeCalledWith(fakePayload);
-            
-    //     });
 
 });
