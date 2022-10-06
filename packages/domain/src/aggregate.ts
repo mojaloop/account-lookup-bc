@@ -311,31 +311,28 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getDestinationFsp({ partyId, partyType, partySubType, destinationFspId }: { partyId:string, partyType:string, partySubType:string | null, destinationFspId: string | null }):Promise<IParticipant>{
-		let destinationFsp: IParticipant|null = null;
+		let destinationFsp: IParticipant;
 
 		// In this case, the sourceFspId already knows the destinationFspId,
 		// so we just need to validate it
 		if(destinationFspId) {
-			const participant = await this._participantService.getParticipantInfo(destinationFspId);
+			const destinationParticipantInfo = await this._participantService.getParticipantInfo(destinationFspId);
 			
-			this.validateParticipant(participant);
-
-			if(participant) {
-				destinationFsp = participant; 
+			if(!destinationParticipantInfo) {
+				throw new NoSuchParticipantError();
 			}
+
+			destinationFsp = destinationParticipantInfo;
+
+			this.validateParticipant(destinationFsp);
+
 		} else {
 			destinationFsp = await this.getParticipantFromOracle(partyId, partyType, partySubType);
 		}  
-
-		if(!destinationFsp){
-			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
-			throw new NoSuchParticipantFspIdError();
-		}
-
 		return destinationFsp;
 	}
 
-	private async getParticipantFromOracle(partyId:string, partyType:string, partySubType:string | null): Promise<IParticipant|null> {
+	private async getParticipantFromOracle(partyId:string, partyType:string, partySubType:string | null): Promise<IParticipant> {
 		const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
 		
 		if(!oracle) {
@@ -357,6 +354,10 @@ export class AccountLookupAggregate  {
 		//     isActive: Boolean;
 		// }
 		const participant = await this._participantService.getParticipantInfo(fspId);
+
+		if(!participant) {
+			throw new NoSuchParticipantError();
+		}
 		
 		this.validateParticipant(participant);
 

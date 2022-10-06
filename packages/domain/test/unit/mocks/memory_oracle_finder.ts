@@ -46,6 +46,7 @@ import {
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleList } from "./data";
+import { MemoryOracleProvider } from "./memory_oracle_providers";
 
 
 export class MemoryOracleFinder implements IOracleFinder {
@@ -69,10 +70,11 @@ export class MemoryOracleFinder implements IOracleFinder {
 
     async getOracleProvider(partyType: string): Promise<IOracleProvider> {
         const foundOracle = this.oracleList.find(oracle => oracle.type === partyType);
-        if(foundOracle?.type === "error") {
-            throw new UnableToGetOracleError();
+        
+        if(foundOracle) {
+            return new MemoryOracleProvider(this.logger);
+            
         }
-
-        return foundOracle as unknown as IOracleProvider;
+        throw new UnableToGetOracleError();
     }
 }

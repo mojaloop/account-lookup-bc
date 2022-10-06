@@ -204,23 +204,32 @@ describe("Account Lookup Domain", () => {
         expect(aggregate.destroy()).resolves;
     });
 
-    test("getParty - should publish error message if is unable to find participant", async () => {
+    test("getParty - should publish error message if is unable to find participant on oracle", async () => {
         //Arrange
         const partyId = mockedPartyIds[0];
-
+        const requesterFspId = mockedParticipantIds[0];
+        const partyType = mockedPartyTypes[0];
         const payload :PartyInfoRequestedEvtPayload = {
             partyId,
-            partyType : "error",
-            requesterFspId : mockedParticipantIds[0],
-            destinationFspId:null,
+            partyType : mockedPartyTypes[0],
+            requesterFspId,
+            destinationFspId: null,
             currency:null,
             partySubType: null,
         };
 
+        const participant: IParticipant = {
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            subId: null
+        }
+
         const event = new PartyInfoRequestedEvt(payload);
        
-        jest.spyOn(messageProducer, "send");
-
+        jest.spyOn(messageProducer, "send");        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+        
         const errorMsg = NoSuchParticipantFspIdError.name;
 
         const errorPayload: AccountLookUperrorEvtPayload = {
@@ -239,49 +248,49 @@ describe("Account Lookup Domain", () => {
         
      });
 
-    test("getParty - should publish error message if is unable to get an oracle", async () => {
-       //Arrange 
-       const partyId = mockedPartyIds[0];
-       const requesterFspId = mockedParticipantIds[0];
-       const partyType = "error";
-       const payload :PartyInfoRequestedEvtPayload = {
-            partyId,
-            partyType,
-            requesterFspId ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-      };
+    // test("getParty - should publish error message if is unable to get an oracle", async () => {
+    //    //Arrange 
+    //    const partyId = mockedPartyIds[0];
+    //    const requesterFspId = mockedParticipantIds[0];
+    //    const partyType = "error";
+    //    const payload :PartyInfoRequestedEvtPayload = {
+    //         partyId,
+    //         partyType,
+    //         requesterFspId ,
+    //         destinationFspId:null,
+    //         currency:null,
+    //         partySubType: null,
+    //   };
        
-       const participant: IParticipant = {
-            id: requesterFspId,
-            type: partyType,
-            isActive: true,
-            subId: null
-        }
+    //    const participant: IParticipant = {
+    //         id: requesterFspId,
+    //         type: partyType,
+    //         isActive: true,
+    //         subId: null
+    //     }
         
-        const event = new PartyInfoRequestedEvt(payload);
+    //     const event = new PartyInfoRequestedEvt(payload);
         
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
-        jest.spyOn(messageProducer, "send");
+    //     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);
+    //     jest.spyOn(messageProducer, "send");
 
-        const errorMsg = UnableToGetOracleError.name;
+    //     const errorMsg = UnableToGetOracleError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
-			errorMsg,
-			partyId,
-            sourceEvent : event.msgName
-		};
+    //     const errorPayload: AccountLookUperrorEvtPayload = {
+	// 		errorMsg,
+	// 		partyId,
+    //         sourceEvent : event.msgName
+	// 	};
 
-        // Act
-        await aggregate.publishAccountLookUpEvent(event);
+    //     // Act
+    //     await aggregate.publishAccountLookUpEvent(event);
 
-        // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
-           }));
+    //     // Assert
+    //     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+    //         "payload": errorPayload, 
+    //        }));
         
-    });
+    // });
 
     // test("getParty - should throw error if is unable to find participant for partyType", async () => {
     //     //Arrange 
