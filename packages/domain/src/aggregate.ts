@@ -42,7 +42,7 @@
 
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { InvalidMessagePayloadError, InvalidMessageTypeError, InvalidParticipantIdError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError, UnableToProcessMessageError } from "./errors";
 import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
 import { AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload, PartyQueryReceivedEvt, PartyInfoAvailableEvt, ParticipantAssociationRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvt, PartyQueryResponseEvt, PartyQueryResponseEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
@@ -119,6 +119,10 @@ export class AccountLookupAggregate  {
 		if(!message.payload){
 			this._logger.error(`AccountLookUpEventHandler: message payload has invalid format or value`);
 			throw new InvalidMessagePayloadError();
+		}
+		if(message.msgType !== MessageTypes.DOMAIN_EVENT){
+			this._logger.error(`AccountLookUpEventHandler: message type is invalid : ${message.msgType}`);
+			throw new InvalidMessageTypeError();
 		}
 
 		return true;

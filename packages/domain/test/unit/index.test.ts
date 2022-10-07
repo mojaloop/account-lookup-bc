@@ -354,6 +354,51 @@ describe("Account Lookup Domain", () => {
     });
 
 
+    test("should publish error message if message Type is invalid", async () => {
+        // Arrange
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId:"1",
+            partyType:"type",
+            requesterFspId:"2" ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+        }
+
+        const message: IMessage = {
+            fspiopOpaqueState: "fake opaque state",
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: "fake msg name",
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: "invalid message type" as unknown as MessageTypes.DOMAIN_EVENT,
+            payload :payload,
+        };
+
+        const errorMsg = InvalidMessageTypeError.name;
+
+        const errorPayload: AccountLookUperrorEvtPayload = {
+			errorMsg,
+			partyId:"1",
+            sourceEvent : "fake msg name"
+		};
+
+        jest.spyOn(messageProducer, "send");
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+           }));
+
+    });
+
+
     test("should publish opaque state when publishing error event", async () => {
         // Arrange
         const payload:PartyQueryReceivedEvtPayload = {
