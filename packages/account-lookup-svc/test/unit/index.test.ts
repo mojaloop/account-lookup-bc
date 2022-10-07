@@ -38,7 +38,7 @@
  --------------
  **/
 
-import {AccountLookupAggregate, AccountLookUpEventsType, IAccountLookUpMessage, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/data";
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
@@ -118,7 +118,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         await expect(
             start(logger,mockedConsumer,mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate))
             .rejects.toThrowError(error);
-        });
+    });
 
     
     });

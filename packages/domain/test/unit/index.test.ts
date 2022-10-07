@@ -213,27 +213,6 @@ describe("Account Lookup Domain", () => {
         
     });
 
-
-    test("should throw error if participant type is not valid", async()=>{
-        // Arrange 
-        const id="fake id";
-	    const type="";
-        const isActive= true;
-        const currency= "fake currency";
-        const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, isActive, currency, subId);
-
-
-        // Assert
-
-        expect(() => {
-            Participant.validateParticipant(participant);
-          }).toThrowError(InvalidParticipantTypeError);
-        
-    });
-
     test("should throw error if participant type is not valid", async()=>{
         // Arrange 
         const id="fake id";
@@ -294,7 +273,7 @@ describe("Account Lookup Domain", () => {
 
     //#endregion
 
-    //region Publish Event
+    //#region Publish Event
     test("should publish error message if payload is invalid", async () => {
         // Arrange
         const message: IMessage = {
@@ -370,6 +349,99 @@ describe("Account Lookup Domain", () => {
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload, 
+           }));
+
+    });
+
+
+    test("should publish opaque state when publishing error event", async () => {
+        // Arrange
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId:"1",
+            partyType:"type",
+            requesterFspId:"2" ,
+            destinationFspId:null,
+            currency:null,
+            partySubType: null,
+        }
+
+        const message: IMessage = {
+            fspiopOpaqueState: "fake opaque state",
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: "invalid name",
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: MessageTypes.DOMAIN_EVENT,
+            payload :payload,
+        };
+
+        jest.spyOn(messageProducer, "send");
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "fspiopOpaqueState": "fake opaque state", 
+           }));
+
+    });
+
+
+    test("should publish opaque state when publishing successful event", async () => {
+        // Arrange
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+        const destinationFspId = "destinationFspId";
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId,
+            currency:null,
+            partySubType: null,
+        };
+
+        const message: IMessage = {
+            fspiopOpaqueState: "fake opaque state",
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: PartyQueryReceivedEvt.name,
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: MessageTypes.DOMAIN_EVENT,
+            payload :payload,
+        };
+
+        const responsePayload : PartyInfoRequestedEvtPayload= {
+            partyId,
+            partyType,
+            requesterFspId,
+            destinationFspId,
+            currency: null,
+            partySubType: null
+        };
+
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, subId: null})
+            .mockResolvedValueOnce({ id:destinationFspId,type: partyType, isActive: true, subId: null});
+
+        
+        jest.spyOn(messageProducer, "send");
+
+        // Act
+        await aggregate.publishAccountLookUpEvent(message);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "fspiopOpaqueState": "fake opaque state",
+            "payload": responsePayload,
            }));
 
     });
@@ -571,6 +643,43 @@ describe("Account Lookup Domain", () => {
         }));         
      });
 
+     test("PartyQueryReceivedEvt - should publish error message if participant is not active", async () => {
+        //Arrange 
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+        const destinationFspId = "destinationFspId";
+        const payload :PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId ,
+            destinationFspId,
+            currency:null,
+            partySubType: null,
+      };
+
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: false, subId: null});
+
+        const event = new PartyQueryReceivedEvt(payload);
+        const errorMsg = RequiredParticipantIsNotActive.name;
+    
+        const errorPayload: AccountLookUperrorEvtPayload = {
+            errorMsg,
+            partyId,
+            sourceEvent : event.msgName
+        };
+    
+        // Act
+        const result = await aggregate.publishAccountLookUpEvent(event);
+    
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload, 
+        }));      
+         
+    });
+
    
      test("PartyQueryReceivedEvt - should publish reponse with PartyInfoRequestedEvt", async () => {
         //Arrange 
@@ -602,7 +711,7 @@ describe("Account Lookup Domain", () => {
         };
     
         // Act
-        const result = await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.publishAccountLookUpEvent(event);
     
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
