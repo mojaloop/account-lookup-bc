@@ -51,7 +51,7 @@ import { MemoryParticipantService } from "./mocks/memory_participant_service";
 
 
 const logger: ILogger = new ConsoleLogger();
-// logger.setLogLevel(LogLevel.FATAL);
+logger.setLogLevel(LogLevel.FATAL);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,

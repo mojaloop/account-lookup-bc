@@ -206,7 +206,7 @@ export class AccountLookupAggregate  {
 
 		const payload:PartyQueryResponseEvtPayload = { 
 			requesterFspId: requesterFspId,
-			destinationFspId: destinationFspId,
+			destinationFspId: destinationFspId as string,
 			partyDoB: partyDoB,
 			partyName: partyName,
 			ownerFspId: ownerFspId,
