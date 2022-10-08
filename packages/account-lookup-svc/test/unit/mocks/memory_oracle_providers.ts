@@ -59,14 +59,14 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	}
 
 	async init(): Promise<void> {
-		return Promise.resolve();
+		return;
 	}
 
 	async destroy(): Promise<void> {
-		return Promise.resolve();
+		return;
 	}
 
-	getParticipant(partyId: string): Promise<string|null> {
+	async getParticipant(partyId: string): Promise<string|null> {
 		 throw new Error("Method not implemented.");
 	 }
 

@@ -1,2 +1,2 @@
-export class LocalCacheError extends Error {};
-export class UnableToCloseDatabaseConnectionError extends Error{};
+export class LocalCacheError extends Error {}
+export class UnableToCloseDatabaseConnectionError extends Error{}

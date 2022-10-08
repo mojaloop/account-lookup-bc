@@ -44,20 +44,23 @@ import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messagin
 
 export class MemoryMessageProducer implements IMessageProducer{
     async init(): Promise<void> {
-        return Promise.resolve();
+        return new Promise<void>((resolve) => {
+            resolve();
+          });
     }
     
     async connect(): Promise<void> {
-        return Promise.resolve();
+        return;
     }    
     async disconnect(): Promise<void> {
-        return Promise.resolve();
+        return;
     }
     
     async destroy(): Promise<void> {
-        return Promise.resolve();
+        return;
     }
+
     async send(message: IMessage | IMessage[]): Promise<void> {
-        return Promise.resolve();
+        return;
     }
 }

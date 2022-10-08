@@ -44,14 +44,14 @@ import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { start } from "../../src/index";
+import { start, tearDown } from "../../src/service";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
 import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
 
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
+// logger.setLogLevel(LogLevel.FATAL);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
@@ -83,9 +83,11 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
 
  describe("Account Lookup Service", () => {
 
-  
     afterEach(async () => {
         jest.resetAllMocks();
+        await mockedConsumer.destroy(true);
+        await mockedProducer.destroy();
+        await mockedAggregate.destroy();
     });
 
     test("should be able to run start and init all variables", async()=>{
@@ -98,7 +100,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
         
         // Act
-        await start(logger,mockedConsumer,mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate);
+        await start(logger,mockedConsumer, mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1); 
@@ -107,18 +109,28 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         expect(spyConsumerCallback).toBeCalledTimes(1); 
         expect(spyProducerInit).toBeCalledTimes(1);
         expect(spyAggregateInit).toBeCalledTimes(1);
+
     });
 
-    test("should throw error if not able to start", async()=>{
+    test("should teardown instances if terminating the service in case of error", async()=>{
         // Arrange
         const error = new Error("Error"); 
         jest.spyOn(mockedConsumer, "setTopics").mockImplementationOnce(()=> {throw error;});
-        
-        // Act && Assert
-        await expect(
-            start(logger,mockedConsumer,mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate))
-            .rejects.toThrowError(error);
+        const mockedProcessStub = jest.spyOn(process, "exit").mockImplementationOnce(()=> {return null as never;});
+        const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
+        const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
+        const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
+
+        // Act
+        await start(logger,mockedConsumer,mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate);
+
+        // Assert
+        expect(mockedProcessStub).toBeCalledTimes(1);
+        expect(spyMockedConsumer).toBeCalledTimes(1);
+        expect(spyMockedProducer).toBeCalledTimes(1);
+        expect(spyMockedAggregate).toBeCalledTimes(1);
+
     });
 
     
-    });
+});

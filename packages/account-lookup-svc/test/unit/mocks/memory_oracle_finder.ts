@@ -58,16 +58,16 @@ export class MemoryOracleFinder implements IOracleFinder {
         this.oracleList = [];
     }
 
-    getOracleProvider(type: string, subType?: string | undefined): Promise<IOracleProvider | null> {
+    getOracleProvider(type: string, subType: string | null): Promise<IOracleProvider | null> {
         throw new Error("Method not implemented.");
     }
 
     
     async init(): Promise<void> {
-        return Promise.resolve();
+        return;
     }
 
     async destroy(): Promise<void> {
-        return Promise.resolve();
+        return;
     }
 }
