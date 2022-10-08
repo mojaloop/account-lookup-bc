@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/account-lookup-bc-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Account Lookup BC - Client Library",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/client",
@@ -31,7 +31,7 @@
     "test:integration": "jest --passWithNoTests --testMatch **/test/integration/**/*.test.ts",
     "test:coverage": "jest --passWithNoTests --coverage --coverageThreshold='{}' --testMatch **/test/unit/**/*.test.ts",
     "test:coverage-check": "jest --coverage --testMatch **/test/unit/**/*.test.ts"
-},
+  },
   "devDependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
     "nock": "^13.2.9"
