@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/account-lookup-bc",
-  "version": "0.0.1",
+  "version": "0.0.6",
   "description": "mojaloop account lookup bounded context.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mojaloop/account-lookup-bc",
