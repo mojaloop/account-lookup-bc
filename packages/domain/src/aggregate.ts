@@ -131,8 +131,12 @@ export class AccountLookupAggregate  {
 	private async publishErrorEvent(message: IMessage, errorMsg: string) {
 		const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
-			partyId: message.payload?.partyId ?? "Unknow party id",
-			sourceEvent: message.msgName
+			partyId: message.payload?.partyId ?? "N/A",
+			sourceEvent: message.msgName,
+			partyType: message.payload?.partyType ?? "N/A",
+			partySubType: message.payload?.partySubType ?? "N/A",
+			requesterFspId: message.payload?.requesterFspId ?? "N/A",
+
 		};
 		const messageToPublish = new AccountLookUperrorEvt(errorPayload);
 		messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
@@ -255,6 +259,9 @@ export class AccountLookupAggregate  {
 
 		const payload : ParticipantAssociationCreatedEvtPayload = {
 			partyId,
+			ownerFspId,
+			partyType,
+			partySubType
 		};
 
 		const event = new ParticipantAssociationCreatedEvt(payload);
@@ -275,6 +282,9 @@ export class AccountLookupAggregate  {
 
 		const payload:ParticipantAssociationRemovedEvtPayload = { 
 			partyId,
+			ownerFspId,
+			partyType,
+			partySubType
 		}; 
 
 		const event = new ParticipantAssociationRemovedEvt(payload);

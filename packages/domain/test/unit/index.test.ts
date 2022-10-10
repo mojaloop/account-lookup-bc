@@ -293,8 +293,12 @@ describe("Account Lookup Domain", () => {
 
         const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
-			partyId:"Unknow party id",
-            sourceEvent : "fake msg name"
+			partyId:"N/A",
+            sourceEvent : "fake msg name",
+            partySubType: "N/A",
+            partyType: "N/A",
+            requesterFspId: "N/A",
+
 		};
 
         jest.spyOn(messageProducer, "send");
@@ -338,7 +342,11 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId:"1",
-            sourceEvent : "fake msg name"
+            sourceEvent : "fake msg name",
+            partySubType: "N/A",
+            partyType: "type",
+            requesterFspId: "2",
+
 		};
 
         jest.spyOn(messageProducer, "send");
@@ -383,7 +391,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId:"1",
-            sourceEvent : "fake msg name"
+            sourceEvent : "fake msg name",
+            partyType: "type",
+            partySubType: "N/A",
+            requesterFspId: "2",
 		};
 
         jest.spyOn(messageProducer, "send");
@@ -526,7 +537,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
 		};
 
         // Act
@@ -563,7 +577,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
 			errorMsg,
 			partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
 		};
 
         // Act
@@ -601,7 +618,10 @@ describe("Account Lookup Domain", () => {
     const errorPayload: AccountLookUperrorEvtPayload = {
         errorMsg,
         partyId,
-        sourceEvent : event.msgName
+        sourceEvent : event.msgName,
+        partySubType: "N/A",
+        partyType,
+        requesterFspId,
     };
 
     // Act
@@ -639,7 +659,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partyType,
+            partySubType: "N/A",
+            requesterFspId,
         };
     
         // Act
@@ -676,7 +699,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
     
         // Act
@@ -712,7 +738,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
     
         // Act
@@ -795,7 +824,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
 
         // Act
@@ -837,7 +869,10 @@ describe("Account Lookup Domain", () => {
             const errorPayload: AccountLookUperrorEvtPayload = {
                 errorMsg,
                 partyId,
-                sourceEvent : event.msgName
+                sourceEvent : event.msgName,
+                partySubType: "N/A",
+                partyType,
+                requesterFspId,
             };
     
             // Act
@@ -922,7 +957,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
 
         // Act
@@ -1003,7 +1041,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
 
         // Act
@@ -1042,7 +1083,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId,
         };
 
         // Act
@@ -1081,7 +1125,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId:"N/A",
         };
 
         // Act
@@ -1120,7 +1167,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId:"N/A",
         };
 
         // Act
@@ -1156,6 +1206,9 @@ describe("Account Lookup Domain", () => {
         
         const expectedPayload: ParticipantAssociationCreatedEvtPayload = {
             partyId,
+            partyType,
+            ownerFspId,
+            partySubType: null,
         };
         
         // Act
@@ -1195,7 +1248,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId:"N/A",
         };
 
         // Act
@@ -1234,7 +1290,10 @@ describe("Account Lookup Domain", () => {
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName
+            sourceEvent : event.msgName,
+            partySubType: "N/A",
+            partyType,
+            requesterFspId:"N/A",
         };
 
         // Act
@@ -1270,6 +1329,9 @@ describe("Account Lookup Domain", () => {
         
         const expectedPayload: ParticipantAssociationRemovedEvtPayload = {
             partyId,
+            partyType,
+            ownerFspId,
+            partySubType: null,
         };
         
         // Act
