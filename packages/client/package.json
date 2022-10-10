@@ -16,6 +16,7 @@
   "files": [
     "/dist"
   ],
+  "private": true,
   "scripts": {
     "build": "tsc",
     "clean:dist": "rm -rf dist",

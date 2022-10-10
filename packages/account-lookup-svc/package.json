@@ -14,7 +14,7 @@
     "Pedro Sousa Barreto <pedrob@crosslaketech.com>",
     "Rui Rocha <rui.rocha@arg.software>"
   ],
-  "private": true,
+  "private": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
