@@ -14,7 +14,7 @@
     "Pedro Sousa Barreto <pedrob@crosslaketech.com>",
     "Rui Rocha <rui.rocha@arg.software>"
   ],
-  "private": false,
+  "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -31,7 +31,7 @@
     "audit:check": "npm npm audit",
     "dep:check": "ncu -e 2",
     "dep:update": "ncu -u",
-    "publish": "npm version patch && npm publish --tag=latest --access public",
+    "npm_publish": "npm version patch && npm publish --tag=latest --access public",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "test:unit": "jest --passWithNoTests  --testMatch **/test/unit/*.test.ts || ECHO.",

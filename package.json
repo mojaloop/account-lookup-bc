@@ -28,8 +28,7 @@
     "test:integration": "npm run test:integration -ws --parallel",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "npm run dep:check -ws --parallel -v",
-    "dep:update": "npm run dep:update -ws --parallel -v ",
-    "publish:account-lookup-service": "npm -w @mojaloop/account-lookup-bc-svc run publish"
+    "dep:update": "npm run dep:update -ws --parallel -v "
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.0.10",

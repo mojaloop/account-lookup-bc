@@ -44,14 +44,15 @@
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { InvalidMessagePayloadError, InvalidMessageTypeError, InvalidParticipantIdError, NoSuchOracleProviderError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAssociatePartyError, UnableToDisassociatePartyError, UnableToGetOracleError, UnableToGetOracleProviderError, UnableToProcessMessageError } from "./errors";
-import { IOracleFinder, IOracleProvider, IParticipantService} from "./interfaces/infrastructure";
+import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
 import { AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload, PartyQueryReceivedEvt, PartyInfoAvailableEvt, ParticipantAssociationRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvt, PartyQueryResponseEvt, PartyQueryResponseEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
-	private readonly _oracleProviders: IOracleProvider[];
+	private oracleProviders: IOracleProviderAdapter[];
+	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantService;
 	
@@ -59,13 +60,13 @@ export class AccountLookupAggregate  {
 	constructor(
 		logger: ILogger,
 		oracleFinder:IOracleFinder,
-		oracleProviders:IOracleProvider[],
+		oracleProvidersFactory:IOracleProviderFactory,
 		messageProducer:IMessageProducer,
 		participantService: IParticipantService
 	) {
 		this._logger = logger;
 		this._oracleFinder = oracleFinder;
-		this._oracleProviders = oracleProviders;
+		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
 	}
@@ -73,10 +74,13 @@ export class AccountLookupAggregate  {
 	async init(): Promise<void> {
 		try {
 			this._oracleFinder.init();
+			const oracles = await this._oracleFinder.getAllOracles();
 			this._logger.debug("Oracle finder initialized");
-			for await (const oracle of this._oracleProviders) {
-				await oracle.init();
-				this._logger.debug("Oracle provider initialized with type" + oracle.partyType);
+			for await (const oracle of oracles) {
+				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
+				await oracleAdapter.init();
+				this.oracleProviders.push(oracleAdapter);
+				this._logger.debug("Oracle provider initialized " + oracle.name);
 			}
 		}
 		catch(error) {
@@ -90,7 +94,7 @@ export class AccountLookupAggregate  {
 	async destroy(): Promise<void> {
 		try{
 			await this._oracleFinder.destroy();
-			for await (const oracle of this._oracleProviders) {
+			for await (const oracle of this.oracleProviders) {
 				oracle.destroy();
 			}
 		} catch(error) {
@@ -181,7 +185,6 @@ export class AccountLookupAggregate  {
 		await this.validateParticipant(requesterFspId);
 
 		if(!destinationFspIdToUse){
-			// await this.validateParticipant(destinationFspIdToUse);
 			destinationFspIdToUse = await this.getParticipantIdFromOracle(partyId, partyType, partySubType);
 		}
 
@@ -250,7 +253,7 @@ export class AccountLookupAggregate  {
 	private async participantAssociationEvent({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
 		await this.validateParticipant(ownerFspId);
 
-		const oracleProvider = await this.getOracleProvider(partyType, partySubType);
+		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
 
 		await oracleProvider.associateParty(partyId).catch(error=>{
 			this._logger.error(`Unable to associate party id: ${partyId} ` + error);
@@ -273,7 +276,7 @@ export class AccountLookupAggregate  {
 	private async participantDisassociationEvent({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
 		await this.validateParticipant(ownerFspId);
 		
-		const oracleProvider = await this.getOracleProvider(partyType, partySubType);
+		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
 
 		await oracleProvider.disassociateParty(partyId).catch(error=>{
 			this._logger.error(`Unable to disassociate party id: ${partyId} ` + error);
@@ -292,22 +295,7 @@ export class AccountLookupAggregate  {
 		return event;
 
 	}
-	
 
-	private async getOracleProvider(partyType:string, partySubType:string | null): Promise<IOracleProvider> {
-		const oracleProvider = await this._oracleFinder.getOracleProvider(partyType, partySubType).catch(error=>{
-			this._logger.error(`Unable to get oracle for type: ${partyType} ` + error);
-			throw new UnableToGetOracleError();
-		});
-
-		if(!oracleProvider) {
-			this._logger.debug(`No oracle provider found for partyType: ${partyType}`);
-			throw new UnableToGetOracleProviderError();
-		}
-
-		return oracleProvider;
-	}
-	
 	private async validateParticipant(participantId: string | null):Promise<void>{
 		
 		if(participantId){
@@ -331,16 +319,31 @@ export class AccountLookupAggregate  {
 		}
 		
 	}
-
-	private async getParticipantIdFromOracle(partyId:string, partyType:string, partySubType:string | null): Promise<string> {
-		const oracle = await this._oracleFinder.getOracleProvider(partyType, partySubType);
-		
+	
+	//region #Oracles
+	private async getOracleAdapter(partyType:string, partySubType:string | null): Promise<IOracleProviderAdapter> {
+		const oracle = await this._oracleFinder.getOracle(partyType, partySubType); 
 		if(!oracle) {
 			this._logger.debug(`oracle for ${partyType} not found`);
-			throw new NoSuchOracleProviderError();
+			throw new NoSuchOracleError();
 		}
+		
+		const oracleAdapter = this.oracleProviders.find(provider=>provider.oracleId === oracle?.id);
+		
+		if(!oracleAdapter) {
+			this._logger.debug(`oracle adapter for ${partyType} not found`);
+			throw new NoSuchOracleAdapterError();
+		}
+		
+		return oracleAdapter;
+	}
+	
+	
 
-		const fspId = await oracle.getParticipant(partyId);
+	private async getParticipantIdFromOracle(partyId:string, partyType:string, partySubType:string | null): Promise<string> {
+		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
+		
+		const fspId = await oracleAdapter.getParticipant(partyId);
 
 		if(!(fspId)) {
 			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
@@ -349,4 +352,51 @@ export class AccountLookupAggregate  {
 
 		return fspId;
 	}
+
+	public async addOracle(oracle: Oracle): Promise<void> {
+		const addedOracle = await this._oracleFinder.addOracle(oracle);
+
+		
+		if(!addedOracle) {
+			this._logger.debug(`oracle for ${oracle.type} not added`);
+			throw new UnableToAddOracleError();
+		}
+	    const addedOracleProvider = this._oracleProvidersFactory.create(oracle);
+		await addedOracleProvider.init();
+		this.oracleProviders.push(addedOracleProvider);
+	};
+	
+	public async removeOracle(oracle: Oracle): Promise<void> {
+		await this._oracleFinder.removeOracle(oracle);
+		this.oracleProviders = this.oracleProviders.filter((o) => o.oracleId !== oracle.id);
+	};
+	
+	public async getAllOracles(oracle: Oracle): Promise<Oracle[]> {
+		const oracles = await this._oracleFinder.getAllOracles();
+		const mappedOracles = oracles.map((o) => {
+			return {
+				id: o.id,
+				name: o.name,
+				type: o.type,
+				partyType: o.partyType,
+				partySubType: o.partySubType ?? "N/A",
+				endpoint: o.endpoint ?? "N/A",
+			} as Oracle
+		});
+
+		return mappedOracles;
+	};
+	
+	public async healthCheck(oracle: Oracle): Promise<boolean> {
+		const oracleFound =  this.oracleProviders.find((o) => o.oracleId === oracle.id);
+		if(!oracleFound) {
+			return false;
+			//TODO: throw error
+		}
+		return await oracleFound.healthCheck();
+	};
+
+	//#endregion
+
+
 }

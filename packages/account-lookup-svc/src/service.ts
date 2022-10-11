@@ -76,6 +76,7 @@ const producerOptions : MLKafkaJsonProducerOptions = {
   kafkaBrokerList: KAFKA_URL,
   producerClientId: `${BC_NAME}_${APP_NAME}`,
   skipAcknowledgements: true,
+  
 };
 
 
@@ -114,6 +115,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
    
     logger.info("Kafka Producer Initialised");    
     aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, participantService);
+    
     await aggregate.init();
     logger.info("Aggregate Initialized");
 

@@ -53,7 +53,7 @@ UnableToStorePartyAssociationError,
 UnableToDisassociatePartyError,
 NoSuchParticipantError} from "@mojaloop/account-lookup-bc-domain";
 import { IOracleProvider } from "@mojaloop/account-lookup-bc-domain";
-import { UnableToCloseDatabaseConnectionError } from "../errors";
+import { UnableToCloseDatabaseConnectionError } from "../../errors";
 
 export class MongoOracleProviderRepo implements IOracleProvider{
 	// Properties received through the constructor.
@@ -67,10 +67,7 @@ export class MongoOracleProviderRepo implements IOracleProvider{
 	private parties: Collection;
 	private participantAssociations: Collection;
 	private participants: Collection;
-
-	id: string;
-	partyType: string;
-
+	
 	constructor(
 		logger: ILogger,
 		DB_URL: string,

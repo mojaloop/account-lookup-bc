@@ -48,7 +48,7 @@ import {
 	UnableToGetOracleError,
 	IOracleProvider
 } from "@mojaloop/account-lookup-bc-domain";
-import { UnableToCloseDatabaseConnectionError } from "../errors";
+import { UnableToCloseDatabaseConnectionError } from "../../errors";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
 	// Properties received through the constructor.
@@ -72,6 +72,12 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		this.COLLECTION_NAME = COLLECTION_NAME;
 
 		this._mongoClient = new MongoClient(this.DB_URL);
+	}
+	addOracleProvider(type: string, subType: string | null): Promise<void> {
+		throw new Error("Method not implemented.");
+	}
+	removeOracleProvider(type: string, subType: string | null): Promise<void> {
+		throw new Error("Method not implemented.");
 	}
 
 	async init(): Promise<void> {
