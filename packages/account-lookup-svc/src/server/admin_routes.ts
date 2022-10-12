@@ -67,11 +67,11 @@ import { check, validationResult } from "express-validator";
          
 
          this._mainRouter.post("/oracles",[
-            check("id").isString().notEmpty().withMessage("id must be a non empty string"),
             check("name").isString().notEmpty().withMessage("name must be a non empty string"),
             check("type").isString().notEmpty().withMessage("type must be a non empty string"),
             check("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string"),
             check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
+            check("partySubType").optional().isString().notEmpty().withMessage("partySubType must be a non empty string"),
          ],() => this.createOracle);
 
 

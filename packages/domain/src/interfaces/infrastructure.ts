@@ -56,10 +56,13 @@ export type Oracle = {
     partySubType?: string | null;
     endpoint: string;
 }
+
+export type OracleCreationRequest = Omit<Oracle,"id">;
+
 export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
-    addOracle(oracle: Oracle):Promise<Oracle>;
+    addOracle(oracle: OracleCreationRequest):Promise<Oracle>;
     removeOracle(id: string):Promise<void>;
     getAllOracles():Promise<Oracle[]>;
     getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;

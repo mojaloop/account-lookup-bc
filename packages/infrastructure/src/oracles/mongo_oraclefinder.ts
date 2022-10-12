@@ -50,9 +50,10 @@ import { UnableToCloseDatabaseConnectionError, UnableToGetOracleError, UnableToI
 import {
     IOracleFinder,
 	Oracle,
+	OracleCreationRequest,
 } from "@mojaloop/account-lookup-bc-domain";
 import { MongoMemoryServer } from 'mongodb-memory-server';
-
+import crypto from 'crypto';
 export class MongoOracleFinderRepo implements IOracleFinder{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
@@ -94,9 +95,17 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		}
 	}
 
-	async addOracle(oracle: Oracle): Promise<Oracle> {
+	async addOracle(oracle: OracleCreationRequest): Promise<Oracle> {
 		try {
-			const insertedOracle = await this.oracleProviders.insertOne(oracle);
+			const newOracle: Oracle = {
+				id: crypto.randomUUID(),
+				name: oracle.name,
+				partyType: oracle.partyType,
+				partySubType: oracle.partySubType,
+				endpoint: oracle.endpoint,
+				type: oracle.type,
+			};
+			const insertedOracle = await this.oracleProviders.insertOne(newOracle);
 			return insertedOracle as unknown as Promise<Oracle>;
 			
 		} catch (e: any) {

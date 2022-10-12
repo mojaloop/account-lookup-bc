@@ -44,7 +44,7 @@
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { InvalidMessagePayloadError, InvalidMessageTypeError, InvalidParticipantIdError, NoSuchOracleAdapterError, NoSuchOracleError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAddOracleError,  UnableToAssociateParticipantError,  UnableToDisassociateParticipantError, UnableToProcessMessageError } from "./errors";
-import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
+import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle, OracleCreationRequest} from "./interfaces/infrastructure";
 import { AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload, PartyQueryReceivedEvt, PartyInfoAvailableEvt, ParticipantAssociationRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvt, PartyQueryResponseEvt, PartyQueryResponseEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
@@ -353,14 +353,14 @@ export class AccountLookupAggregate  {
 		return fspId;
 	}
 
-	public async addOracle(oracle: Oracle): Promise<void> {
+	public async addOracle(oracle: OracleCreationRequest): Promise<void> {
 		const addedOracle = await this._oracleFinder.addOracle(oracle);
 		
 		if(!addedOracle) {
-			this._logger.debug(`oracle for ${oracle.type} not added`);
+			this._logger.debug(`oracle ${oracle} not added`);
 			throw new UnableToAddOracleError();
 		}
-		const addedOracleProvider = this._oracleProvidersFactory.create(oracle);
+		const addedOracleProvider = this._oracleProvidersFactory.create(addedOracle);
 		await addedOracleProvider.init();
 		this.oracleProvidersAdapters.push(addedOracleProvider);
 	}
