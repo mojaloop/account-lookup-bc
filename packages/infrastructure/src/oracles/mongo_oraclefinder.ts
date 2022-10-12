@@ -56,6 +56,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
 	private readonly _mongoClient: MongoClient;
+	private databaseName = "account-lookup";
 	private collectionName = "oracleProviders";
 	private oracleProviders: Collection;
 
@@ -71,13 +72,13 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	async init(): Promise<void> {
 		try {
 			this._mongoClient.connect();
-			this.oracleProviders = this._mongoClient.db().collection(this.collectionName);
+			this.oracleProviders = this._mongoClient.db(this.databaseName).collection(this.collectionName);
 		} catch (e: any) {
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleFinderError();
 		}
 		
-		this.oracleProviders = this._mongoClient.db(this._connectionString).collection(this.collectionName);
+		this.oracleProviders = this._mongoClient.db(this.databaseName).collection(this.collectionName);
 	}
 
 	async destroy(): Promise<void> {
