@@ -47,12 +47,10 @@ NoSuchParticipantError,
 IOracleProviderAdapter,
 OracleType} from "@mojaloop/account-lookup-bc-domain";
 import { ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../../errors";
-import { MongoMemoryServer } from "mongodb-memory-server";
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
-	private readonly _mongoServer: MongoMemoryServer;
 	private readonly _mongoClient: MongoClient;
 	private collectionName = "participants";
 	private participants: Collection;
@@ -67,8 +65,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	) {
 		this._logger = logger;
 		this.oracleId = oracleId;
-		this._mongoServer = new MongoMemoryServer();
-		this._connectionString = this._mongoServer.getUri();
+		this._connectionString = connectionString;
 		this._mongoClient = new MongoClient(this._connectionString);
 		this.type = "builtin";
 	}

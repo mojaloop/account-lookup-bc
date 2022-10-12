@@ -43,8 +43,8 @@
 
  import express from "express";
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
- import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
-import { check, validationResult } from "express-validator";
+ import {AccountLookupAggregate} from "@mojaloop/account-lookup-bc-domain";
+ import { check, validationResult } from "express-validator";
   
  
  export class ExpressRoutes {
