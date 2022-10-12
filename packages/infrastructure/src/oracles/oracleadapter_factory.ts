@@ -40,7 +40,7 @@
  
 "use strict";
 
-import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { IOracleProviderAdapter, IOracleProviderFactory, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MongoOracleProviderRepo } from "./adapters/builtin/mongo_oracleprovider";
 import { HttpOracleProvider } from "./adapters/remote/http_oracleprovider";

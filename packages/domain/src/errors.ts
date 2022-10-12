@@ -40,34 +40,98 @@
 
 "use strict";
 
-
 // Party
-export class InvalidPartyIdError extends Error {}
-export class InvalidPartyTypeError extends Error {}
+export class InvalidPartyIdError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid party id");
+    }
+}
+export class InvalidPartyTypeError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid party type");
+    }
+}
 
 // Participant
-export class InvalidParticipantIdError extends Error {}
-export class InvalidParticipantTypeError extends Error {}
-export class InvalidParticipantActiveFlagError extends Error {}
-export class NoSuchParticipantError extends Error {}
-export class NoSuchParticipantFspIdError extends Error {}
+export class InvalidParticipantIdError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid participant id");
+    }
+}
 
-export class RequiredParticipantIsNotActive extends Error {}
+export class InvalidParticipantTypeError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid participant type");
+    }
+}
+export class InvalidParticipantActiveFlagError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid participant active flag");
+    }
+}
+export class NoSuchParticipantError extends Error {
+    constructor(message?: string) {
+        super(message || "No such participant");
+    }
+}
+export class NoSuchParticipantFspIdError extends Error {
+    constructor(message?: string) {
+        super(message || "No such participant fsp id");
+    }
+}
+
+export class RequiredParticipantIsNotActive extends Error {
+    constructor(message?: string) {
+        super(message || "Required participant is not active");
+    }
+}
 
 // Participant Association
-export class UnableToAssociateParticipantError extends Error {}
+export class UnableToAssociateParticipantError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to associate participant");
+    }
+}
 
 // Participant Dissociation  
-export class UnableToDisassociateParticipantError extends Error {}
+export class UnableToDisassociateParticipantError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to disassociate participant");
+    }
+}
 
 // Oracle
-export class NoSuchOracleAdapterError extends Error {}
-export class UnableToAddOracleError extends Error {}
-export class NoSuchOracleError extends Error {}
+export class NoSuchOracleAdapterError extends Error {
+    constructor(message?: string) {
+        super(message || "No such oracle adapter");
+    }
+}
+export class UnableToAddOracleError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to add oracle");
+    }
+}
+export class NoSuchOracleError extends Error {
+    constructor(message?: string) {
+        super(message || "No such oracle");
+    }
+}
 
 // Message Producer
-export class InvalidMessagePayloadError extends Error {}
-export class InvalidMessageTypeError extends Error {}
-export class UnableToProcessMessageError extends Error {}
+export class InvalidMessagePayloadError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid message payload");
+    }
+}
+export class InvalidMessageTypeError extends Error {
+    constructor(message?: string) {
+        super(message || "Invalid message type");
+    }
+}
+export class UnableToProcessMessageError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to process message");
+    }
+}
 
 

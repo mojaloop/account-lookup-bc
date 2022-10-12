@@ -50,41 +50,38 @@
  export class ExpressRoutes {
      private readonly _logger: ILogger;
      private readonly _accountLookupAggregate: AccountLookupAggregate;
-     private _mainRouter = express.Router();
+     private mainRouter = express.Router();
  
      constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
          this._logger = logger.createChild("ExpressRoutes");
          this._accountLookupAggregate = accountLookupAggregate;
  
-        this._mainRouter.get("/",()=> this.getExample);
+        this.mainRouter.get("/test", this.getExample);
 
          // account lookup admin routes
-         this._mainRouter.get("/oracles",()=> this.getAllOracles);
-         
-         this._mainRouter.delete("/oracles/:id",[
-            check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ],()=> this.deleteOracle);
-         
 
-         this._mainRouter.post("/oracles",[
+         this.mainRouter.get("/oracles",this.getAllOracles);
+         
+         this.mainRouter.delete("/oracles/:id",[
+            check("id").isString().notEmpty().withMessage("id must be a non empty string")
+         ], this.deleteOracle);
+         
+         this.mainRouter.post("/oracles",[
             check("name").isString().notEmpty().withMessage("name must be a non empty string"),
             check("type").isString().notEmpty().withMessage("type must be a non empty string"),
             check("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string"),
             check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
             check("partySubType").optional().isString().notEmpty().withMessage("partySubType must be a non empty string"),
-         ],() => this.createOracle);
+         ], this.createOracle);
 
-
-         this._mainRouter.get("/oracles/health/:id",[
+         this.mainRouter.get("/oracles/health/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ],() => this.healthCheck);
-        
+         ], this.healthCheck);        
  
      }
  
- 
      get MainRouter(): express.Router {
-         return this._mainRouter;
+         return this.mainRouter;
      }
      
      private validateRequest(req: express.Request, res: express.Response<any, Record<string, any>>) : boolean {
@@ -96,12 +93,12 @@
         return true;
     }
 
-     private async getExample(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private getExample = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
          return res.send({resp: "example worked"});
      }
 
  
-     private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
+     private getAllOracles = async (req: express.Request, res: express.Response, next: express.NextFunction) =>{
         if (!this.validateRequest(req, res)) {
             return;
         }             
@@ -119,7 +116,7 @@
          }
      }
 
-     private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+     private deleteOracle = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!this.validateRequest(req, res)) {
             return;
         }         
@@ -139,12 +136,12 @@
      }
 
 
-     private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+     private createOracle = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!this.validateRequest(req, res)) {
             return;
         }        
 
-        const oracle = req.body ?? null;
+        const oracle = req.body;
         this._logger.debug(`creating Oracle [${oracle}].`);
 
         try {
@@ -159,15 +156,14 @@
         }
     }
 
-    private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private healthCheck = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
         if (!this.validateRequest(req, res)) {
             return;
         }
-
-        const id = req.params["id"] ?? null;
-        this._logger.debug(`Health check for Oracle [${id}].`);
+        const id = req.params["id"];
+        this._logger.debug(`Health check for Oracle ${id}.`);
         try {
-            const fetched = await this._accountLookupAggregate.healthCheck(id as any);
+            const fetched = await this._accountLookupAggregate.healthCheck(id);
             res.send(fetched);
         } catch (err: any) {
             this._logger.error(err);

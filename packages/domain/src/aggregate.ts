@@ -51,10 +51,10 @@ import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
 	private readonly _oracleFinder: IOracleFinder;
-	private oracleProvidersAdapters: IOracleProviderAdapter[];
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantService;
+	private oracleProvidersAdapters: IOracleProviderAdapter[];
 	
 
 	constructor(
@@ -69,6 +69,7 @@ export class AccountLookupAggregate  {
 		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
+		this.oracleProvidersAdapters = [];
 	}
 
 	async init(): Promise<void> {
@@ -85,7 +86,7 @@ export class AccountLookupAggregate  {
 		}
 		catch(error) {
 			{
-				this._logger.fatal("Unable to intialize account lookup aggregate" + error);
+				this._logger.fatal("Unable to initialize account lookup aggregate" + error);
 				throw error;
 			}
 		}
@@ -372,25 +373,13 @@ export class AccountLookupAggregate  {
 	
 	public async getAllOracles(): Promise<Oracle[]> {
 		const oracles = await this._oracleFinder.getAllOracles();
-		const mappedOracles = oracles.map((o) => {
-			return {
-				id: o.id,
-				name: o.name,
-				type: o.type,
-				partyType: o.partyType,
-				partySubType: o.partySubType ?? "N/A",
-				endpoint: o.endpoint ?? "N/A",
-			} as Oracle;
-		});
-
-		return mappedOracles;
+		return oracles;
 	}
 	
 	public async healthCheck(id:string): Promise<boolean> {
 		const oracleFound =  this.oracleProvidersAdapters.find((o) => o.oracleId === id);
 		if(!oracleFound) {
-			return false;
-			//TODO: throw error
+			throw new NoSuchOracleError();
 		}
 		return await oracleFound.healthCheck();
 	}

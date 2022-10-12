@@ -75,7 +75,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
             return response.status === 200;
         }).catch((error: Error) => {
             this._logger.error(`healthCheck: error checking health - ${error}`);
-            return false;
+            throw new Error('Error checking health');
         });
     }
 
@@ -85,7 +85,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
             return response.data?.fspId ?? null;
         }).catch((error: Error) => {
             this._logger.error(`getParticipantFspId: error getting participant fspId for partyId: ${partyId}) - ${error}`);
-            return null;
+            throw new Error('Error getting participant fspId');
         });
     }
 

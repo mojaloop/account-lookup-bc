@@ -42,13 +42,13 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
-import { MongoOracleFinderRepo, MongoOracleProviderRepo, OracleAdapterFactory } from "@mojaloop/account-lookup-bc-infrastructure";
+import { MongoOracleFinderRepo, OracleAdapterFactory } from "@mojaloop/account-lookup-bc-infrastructure";
 import express, {Express} from "express";
 import { ExpressRoutes } from "./server/admin_routes";
 import { Server } from "net";
@@ -98,6 +98,7 @@ let aggregate: AccountLookupAggregate;
 let participantService: IParticipantService;
 
 // Admin server
+const ADMIN_PORT = process.env["ADMIN_PORT"] || 3030;
 let expressApp: Express;
 let oracleAdminServer: Server;
 
@@ -174,15 +175,11 @@ export function startOracleAdminServer():void {
       res.send(404);
   });
 
-  const portNum = 3030;
-
-  oracleAdminServer = expressApp.listen(portNum, () => {
-      logger.info(`🚀 Server ready at: http://localhost:${portNum}`);
+  oracleAdminServer = expressApp.listen(ADMIN_PORT, () => {
+      logger.info(`🚀 Server ready at: http://localhost:${ADMIN_PORT}`);
       logger.info("Oracle Admin Server started");
   });
 }
-
-
 
 export async function tearDown(code:number): Promise<void> { 
   logger.debug("Tearing down aggregate");

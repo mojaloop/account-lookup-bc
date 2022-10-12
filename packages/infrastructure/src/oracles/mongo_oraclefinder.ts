@@ -46,7 +46,7 @@
 	WithId
 	} from 'mongodb';
 import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
-import { UnableToCloseDatabaseConnectionError, UnableToGetOracleError, UnableToInitOracleFinderError } from '../errors';
+import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from '../errors';
 import {
     IOracleFinder,
 	Oracle,
@@ -78,8 +78,6 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleFinderError();
 		}
-		
-		this.oracleProviders = this._mongoClient.db(this.databaseName).collection(this.collectionName);
 	}
 
 	async destroy(): Promise<void> {
@@ -102,22 +100,33 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 				endpoint: oracle.endpoint,
 				type: oracle.type,
 			};
-			const insertedOracle = await this.oracleProviders.insertOne(newOracle);
-			return insertedOracle as unknown as Promise<Oracle>;
+
+			const isOracleAlreadyRegistered = await this.oracleProviders.findOne(
+				{
+					partyType: oracle.partyType,
+					partySubType: oracle.partySubType,
+					endpoint: oracle.endpoint,
+				},
+			);
+
+			if(isOracleAlreadyRegistered) {
+				throw new OracleAlreadyRegisteredError();
+			}
+
+			await this.oracleProviders.insertOne(newOracle);
+			return newOracle;
 			
 		} catch (e: any) {
 			this._logger.error(`Unable to insert oracle: ${e.message}`);
-			throw new UnableToGetOracleError();
+			throw new UnableToRegisterOracleError();
 		}
 	}
 	async removeOracle(id: string): Promise<void> {
 		try {
 			await this.oracleProviders.deleteOne({id});
-			
-			
 		} catch (e: any) {
 			this._logger.error(`Unable to remove oracle: ${e.message}`);
-			throw new UnableToGetOracleError();
+			throw new UnableToDeleteOracleError();
 		}
 	}
 	
