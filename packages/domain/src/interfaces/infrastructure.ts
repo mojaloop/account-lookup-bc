@@ -43,7 +43,7 @@
 
 import { IParticipant } from "../types";
  
-/* infratructure interfaces */
+/* infrastructure interfaces */
 
 
 export type OracleType = "builtin" | "remote-http";
@@ -54,7 +54,7 @@ export type Oracle = {
     type: OracleType;
     partyType: string;
     partySubType?: string | null;
-    endpoint?: string;
+    endpoint: string;
 }
 export interface IOracleFinder{
 	init(): Promise<void>;
@@ -62,7 +62,7 @@ export interface IOracleFinder{
     addOracle(oracle: Oracle):Promise<Oracle>;
     removeOracle(oracle:Oracle):Promise<void>;
     getAllOracles():Promise<Oracle[]>;
-    getOracle(partyType:string, partySubtyp: string | null):Promise<Oracle | null>;
+    getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
 }
 
 export interface IOracleProviderAdapter{
@@ -71,13 +71,12 @@ export interface IOracleProviderAdapter{
  	init(): Promise<void>;
     destroy(): Promise<void>;
     healthCheck(): Promise<boolean>;	
-    getParticipant(partyId: string):Promise<string|null>;
-    associateParty(partyId:string):Promise<null>;
-    disassociateParty(partyId:string):Promise<null>;
+    getParticipantFspId(partyId: string):Promise<string|null>;
+    associateParticipant(partyId:string, fspId:string):Promise<null>;
+    disassociateParticipant(partyId:string, fspId:string):Promise<null>;
 }
 
 export interface IOracleProviderFactory {
-    // TODO: the factory should return an instance of the adapter with the same oracleId as the oracle.id
     create(oracle: Oracle): IOracleProviderAdapter;
 }
 

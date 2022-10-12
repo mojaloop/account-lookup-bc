@@ -37,13 +37,30 @@
 
  --------------
  **/
+ 
+"use strict";
 
- "use strict";
+import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { MongoOracleProviderRepo } from "./adapters/builtin/mongo_oracleprovider";
+import { HttpOracleProvider } from "./adapters/remote/http_oracleprovider";
 
-export * from "./oracles/mongo_oraclefinder";
-export * from "./oracles/oracleadapter_factory";
-export * from "./oracles/adapters/builtin/mongo_oracleprovider";
-export * from "./oracles/adapters/remote/http_oracleprovider";
-export * from "./localcache";
-export * from "./errors";
+export class OracleAdapterFactory implements IOracleProviderFactory {
 
+    private readonly _logger: ILogger;
+
+    constructor(logger: ILogger) {
+        this._logger = logger;
+    }
+
+    create(oracle: Oracle): IOracleProviderAdapter {
+        switch (oracle.type) {
+            case "builtin":
+                return new MongoOracleProviderRepo(this._logger,oracle.id, oracle.endpoint);
+            case "remote-http":
+                return new HttpOracleProvider(this._logger, oracle.id, oracle.endpoint);
+            default:
+                throw new Error("Invalid oracle type");
+        }
+    }
+}

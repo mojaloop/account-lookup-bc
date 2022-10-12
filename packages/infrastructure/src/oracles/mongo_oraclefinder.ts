@@ -37,58 +37,52 @@
 
  --------------
  **/
-
  "use strict";
 
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection, Document, WithId} from "mongodb";
+ import {
+	Collection,
+	Document,
+	MongoClient,
+	WithId
+	} from 'mongodb';
+import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
+import { UnableToCloseDatabaseConnectionError, UnableToInitOracleFinderError } from '../errors';
 import {
     IOracleFinder,
-	UnableToInitOracleFinderError,
+	Oracle,
 	UnableToGetOracleError,
-	IOracleProvider
 } from "@mojaloop/account-lookup-bc-domain";
-import { UnableToCloseDatabaseConnectionError } from "../../errors";
+import { MongoMemoryServer } from 'mongodb-memory-server';
 
 export class MongoOracleFinderRepo implements IOracleFinder{
-	// Properties received through the constructor.
 	private readonly _logger: ILogger;
-	private readonly DB_URL: string;
-	private readonly DB_NAME: string;
-	private readonly COLLECTION_NAME: string;
-	// Other properties.
+	private readonly _connectionString: string;
+	private readonly _mongoServer: MongoMemoryServer;
 	private readonly _mongoClient: MongoClient;
+	private collectionName = "oracleProviders";
 	private oracleProviders: Collection;
 
 	constructor(
 		logger: ILogger,
-		DB_URL: string,
-		DB_NAME: string,
-		COLLECTION_NAME: string
+		connectionString: string,
 	) {
 		this._logger = logger;
-		this.DB_URL = DB_URL;
-		this.DB_NAME = DB_NAME;
-		this.COLLECTION_NAME = COLLECTION_NAME;
-
-		this._mongoClient = new MongoClient(this.DB_URL);
-	}
-	addOracleProvider(type: string, subType: string | null): Promise<void> {
-		throw new Error("Method not implemented.");
-	}
-	removeOracleProvider(type: string, subType: string | null): Promise<void> {
-		throw new Error("Method not implemented.");
+		this._mongoServer = new MongoMemoryServer();
+		this._connectionString = this._mongoServer.getUri();
+		this._mongoClient = new MongoClient(this._connectionString);
+		
 	}
 
 	async init(): Promise<void> {
 		try {
-			await this._mongoClient.connect();
+			this._mongoClient.connect();
+			this.oracleProviders = this._mongoClient.db().collection(this.collectionName);
 		} catch (e: any) {
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleFinderError();
 		}
 		
-		this.oracleProviders = this._mongoClient.db(this.DB_NAME).collection(this.COLLECTION_NAME);
+		this.oracleProviders = this._mongoClient.db(this._connectionString).collection(this.collectionName);
 	}
 
 	async destroy(): Promise<void> {
@@ -101,12 +95,38 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		}
 	}
 
-    async getOracleProvider(partyType: string, subType: string | null): Promise<IOracleProvider | null> {
+	async addOracle(oracle: Oracle): Promise<Oracle> {
+		try {
+			const insertedOracle = await this.oracleProviders.insertOne(oracle);
+			return insertedOracle as unknown as Promise<Oracle>;
+			
+		} catch (e: any) {
+			this._logger.error(`Unable to insert oracle: ${e.message}`);
+			throw new UnableToGetOracleError();
+		}
+	}
+	async removeOracle(oracle: Oracle): Promise<void> {
+		try {
+			await this.oracleProviders.deleteOne(oracle);
+			
+			
+		} catch (e: any) {
+			this._logger.error(`Unable to remove oracle: ${e.message}`);
+			throw new UnableToGetOracleError();
+		}
+	}
+	
+	async getAllOracles(): Promise<Oracle[]> {
+		const oracles = await this.oracleProviders.find().toArray();
+		return oracles as unknown as Promise<Oracle[]>;
+	}
+	
+    async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
 		try {
 			const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
 				{
 					partyType: partyType,
-					partySubType: subType
+					partySubType: partySubtype
 				},
 			);
 
@@ -114,7 +134,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 				throw new UnableToGetOracleError();
 			}
 			
-			return foundOracle as unknown as IOracleProvider;
+			return foundOracle as unknown as Oracle;
 		} catch (e: any) {
 			this._logger.error(`Unable to get oracle provider: ${e.message}`);
 			throw new UnableToGetOracleError();

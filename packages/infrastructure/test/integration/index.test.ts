@@ -74,9 +74,7 @@ const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME: string = "oracle-provider-parties
 
  const oracleFinderRepo: IOracleFinder = new MongoOracleFinderRepo(
 	logger,
-	DB_URL,
-	DB_NAME,
-	ORACLE_PROVIDERS_COLLECTION_NAME
+	DB_URL
 );
 
 const oracleProviderListRepo: IOracleProvider[] = [];
