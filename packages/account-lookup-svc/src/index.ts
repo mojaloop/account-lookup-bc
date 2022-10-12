@@ -1,3 +1,6 @@
-import { start } from "./service";
+import { start, startOracleAdminServer } from "./service";
 
-start();
+start().then(() => {
+    console.log("Started account lookup service");
+    startOracleAdminServer();
+});

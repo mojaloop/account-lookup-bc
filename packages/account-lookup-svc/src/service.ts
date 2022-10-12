@@ -42,13 +42,16 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
-import { MongoOracleFinderRepo, MongoOracleProviderRepo } from "@mojaloop/account-lookup-bc-infrastructure";
+import { MongoOracleFinderRepo, MongoOracleProviderRepo, OracleAdapterFactory } from "@mojaloop/account-lookup-bc-infrastructure";
+import express, {Express} from "express";
+import { ExpressRoutes } from "./server/admin_routes";
+import { Server } from "net";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
@@ -79,17 +82,12 @@ const producerOptions : MLKafkaJsonProducerOptions = {
   
 };
 
-
-// Providers 
+//Oracles
 const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
 const DB_PORT_NO: number = parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
 const DB_URL = `mongodb://${DB_HOST}:${DB_PORT_NO}`;
-const DB_NAME = "account-lookup";
-const ORACLE_PROVIDERS_COLLECTION_NAME = "oracle-providers";
-const ORACLE_PROVIDER_PARTIES_COLLECTION_NAME = "oracle-provider-parties";
-
 let oracleFinder: IOracleFinder;
-let oracleProvider: IOracleProvider[];
+let oracleProviderFactory: IOracleProviderFactory;
 
 // Aggregate
 let aggregate: AccountLookupAggregate;
@@ -97,24 +95,28 @@ let aggregate: AccountLookupAggregate;
 // Participant server
 let participantService: IParticipantService;
 
+// Admin server
+let expressApp: Express;
+let oracleAdminServer: Server;
+
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?:IOracleProvider[],  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
+  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
   ):Promise<void> {
   
   try{
     
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderParam, participantServiceParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
 
     messageConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
     await messageConsumer.connect();
     await messageConsumer.start();
-    logger.info("Kafka Consumer Initialised");
+    logger.info("Kafka Consumer Initialized");
 
     await messageProducer.connect();
    
-    logger.info("Kafka Producer Initialised");    
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProvider, messageProducer, participantService);
+    logger.info("Kafka Producer Initialized");    
+    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProviderFactory, messageProducer, participantService);
     
     await aggregate.init();
     logger.info("Aggregate Initialized");
@@ -135,18 +137,18 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 }
 
 async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderParam?: IOracleProvider[], participantServiceParam?: IParticipantService):Promise<void>  {
+  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
   if (!loggerParam) {
     await (logger as KafkaLogger).start();
-    logger.info("Kafka Logger Initialised");
+    logger.info("Kafka Logger Initialized");
   }
   
-  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,DB_URL, DB_NAME, ORACLE_PROVIDERS_COLLECTION_NAME);
-
-  oracleProvider = oracleProviderParam ?? [new MongoOracleProviderRepo(logger, DB_URL, DB_NAME, ORACLE_PROVIDER_PARTIES_COLLECTION_NAME)];
+  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,DB_URL);
+  
+  oracleProviderFactory = oracleProviderFactoryParam ?? new OracleAdapterFactory(logger);
 
   messageProducer = messageProducerParam ?? new MLKafkaJsonProducer(producerOptions, logger);
   
@@ -155,6 +157,31 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   participantService = participantServiceParam ?? new ParticipantClient(logger);
 }
 
+
+export function startOracleAdminServer():void {
+  expressApp = express();
+  expressApp.use(express.json()); // for parsing application/json
+  expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+
+  const routes = new ExpressRoutes(aggregate, logger);
+
+  expressApp.use("/admin", routes.MainRouter);
+
+  expressApp.use((req, res) => {
+      // catch all
+      res.send(404);
+  });
+
+  let portNum = 3030;
+
+  oracleAdminServer = expressApp.listen(portNum, () => {
+      logger.info(`🚀 Server ready at: http://localhost:${portNum}`);
+      logger.info("Oracle Admin Server started");
+  });
+}
+
+
+
 export async function tearDown(code:number): Promise<void> { 
   logger.debug("Tearing down aggregate");
   await aggregate.destroy();
@@ -162,6 +189,8 @@ export async function tearDown(code:number): Promise<void> {
   await messageConsumer.destroy(true);
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
+  logger.debug("Tearing down oracle admin server");
+  oracleAdminServer.close();
   process.exit(code);
 }
 
