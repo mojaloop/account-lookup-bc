@@ -46,11 +46,10 @@
 	WithId
 	} from 'mongodb';
 import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
-import { UnableToCloseDatabaseConnectionError, UnableToInitOracleFinderError } from '../errors';
+import { UnableToCloseDatabaseConnectionError, UnableToGetOracleError, UnableToInitOracleFinderError } from '../errors';
 import {
     IOracleFinder,
 	Oracle,
-	UnableToGetOracleError,
 } from "@mojaloop/account-lookup-bc-domain";
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
@@ -105,9 +104,9 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			throw new UnableToGetOracleError();
 		}
 	}
-	async removeOracle(oracle: Oracle): Promise<void> {
+	async removeOracle(id: string): Promise<void> {
 		try {
-			await this.oracleProviders.deleteOne(oracle);
+			await this.oracleProviders.deleteOne({id});
 			
 			
 		} catch (e: any) {

@@ -8,5 +8,6 @@ export class UnableToStoreParticipantAssociationError extends Error {}
 export class ParticipantAssociationAlreadyExistsError extends Error {}
 export class UnableToGetParticipantError extends Error {}
 export class UnableToInitOracleProvider extends Error {}
+export class UnableToGetOracleError extends Error {}
 
 

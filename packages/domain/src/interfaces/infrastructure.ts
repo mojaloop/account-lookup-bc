@@ -60,7 +60,7 @@ export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
     addOracle(oracle: Oracle):Promise<Oracle>;
-    removeOracle(oracle:Oracle):Promise<void>;
+    removeOracle(id: string):Promise<void>;
     getAllOracles():Promise<Oracle[]>;
     getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
 }
@@ -68,7 +68,7 @@ export interface IOracleFinder{
 export interface IOracleProviderAdapter{
     oracleId: string;
     type:  OracleType;
- 	init(): Promise<void>;
+    init(): Promise<void>;
     destroy(): Promise<void>;
     healthCheck(): Promise<boolean>;	
     getParticipantFspId(partyId: string):Promise<string|null>;

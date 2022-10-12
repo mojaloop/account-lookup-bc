@@ -114,7 +114,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async associateParticipant(partyId: string, fspId: string): Promise<null> {
-	  	const participant = await this.participants.findOne({
+		const participant = await this.participants.findOne({
 			partyId: partyId,
 			fspId: fspId,
 		});

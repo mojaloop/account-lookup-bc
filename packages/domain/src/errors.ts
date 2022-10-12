@@ -62,9 +62,6 @@ export class UnableToDisassociateParticipantError extends Error {}
 
 // Oracle
 export class NoSuchOracleAdapterError extends Error {}
-export class UnableToGetOracleError extends Error {}
-export class UnableToGetOracleProviderError extends Error {}
-
 export class UnableToAddOracleError extends Error {}
 export class NoSuchOracleError extends Error {}
 

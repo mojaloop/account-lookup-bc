@@ -73,7 +73,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     async healthCheck(): Promise<boolean> {
         return this.httpClient.get("/health").then((response: AxiosResponse) => {
             return response.status === 200;
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
             this._logger.error(`healthCheck: error checking health - ${error}`);
             return false;
         });
@@ -83,7 +83,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         return this.httpClient.get("/participants", { params: { partyId: partyId } }).then((
             response: AxiosResponse) => {
             return response.data?.fspId ?? null;
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
             this._logger.error(`getParticipantFspId: error getting participant fspId for partyId: ${partyId}) - ${error}`);
             return null;
         });
@@ -93,7 +93,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         return await this.httpClient.post("/participants", { partyId: partyId, fspId: fspId }).then((
             response: AxiosResponse) => {
             return null;
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
             this._logger.error(`associateParticipant: error associating participant for partyId: ${partyId}), fspId ${fspId}) - ${error}`); 
             throw new Error('Error associating participant');
         });
@@ -103,7 +103,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         return await this.httpClient.delete("/participants", { params: { partyId: partyId, fspId: fspId } }).then((
             response: AxiosResponse) => {
             return null;
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
             this._logger.error(`disassociateParticipant: error disassociating participant for partyId: ${partyId}) fspId ${fspId}) - ${error}`); 
             throw new Error('Error disassociating participant');
         });    
