@@ -66,7 +66,6 @@
  
      private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
          this._logger.debug("Fetching all oracles");
- 
          try {
              const fetched = await this._accountLookupAggregate.getAllOracles();
              res.send(fetched);
@@ -81,7 +80,7 @@
  
      private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
          const id = req.params["id"] ?? null;
-         this._logger.debug(`Deleting Oralce [${id}].`);
+         this._logger.debug(`Deleting Oracle [${id}].`);
  
          try {
              const fetched = await this._accountLookupAggregate.removeOracle(id);
@@ -94,6 +93,44 @@
              });
          }
      }
+
+
+     private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+        const oracle = req.body ?? null;
+        this._logger.debug(`creating Oracle [${oracle}].`);
+
+        try {
+            const fetched = await this._accountLookupAggregate.addOracle(oracle);
+            res.send(fetched);
+        } catch (err: any) {
+            this._logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: err.message
+            });
+        }
+    }
+
+    private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
+        const id = req.params["id"] ?? null;
+        this._logger.debug(`Health check for Oracle [${id}].`);
+        try {
+            const fetched = await this._accountLookupAggregate.healthCheck(id as any);
+            res.send(fetched);
+        } catch (err: any) {
+            this._logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: err.message
+            });
+        }
+    }
+
+
+
+
+
+
  
     //  private async participantById(req: express.Request, res: express.Response, next: express.NextFunction) {
     //      const id = req.params["id"] ?? null;

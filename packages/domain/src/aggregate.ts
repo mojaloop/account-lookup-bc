@@ -386,8 +386,8 @@ export class AccountLookupAggregate  {
 		return mappedOracles;
 	}
 	
-	public async healthCheck(oracle: Oracle): Promise<boolean> {
-		const oracleFound =  this.oracleProvidersAdapters.find((o) => o.oracleId === oracle.id);
+	public async healthCheck(id:string): Promise<boolean> {
+		const oracleFound =  this.oracleProvidersAdapters.find((o) => o.oracleId === id);
 		if(!oracleFound) {
 			return false;
 			//TODO: throw error
