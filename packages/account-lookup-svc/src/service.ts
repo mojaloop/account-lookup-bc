@@ -85,7 +85,9 @@ const producerOptions : MLKafkaJsonProducerOptions = {
 //Oracles
 const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
 const DB_PORT_NO: number = parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
-const DB_URL = `mongodb://${DB_HOST}:${DB_PORT_NO}`;
+const DB_USERNAME = process.env.ACCOUNT_LOOKUP_DB_USERNAME ?? "root";
+const DB_PASSWORD = process.env.ACCOUNT_LOOKUP_DB_PASSWORD ?? "mongoDbPas42";
+const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT_NO}`;
 let oracleFinder: IOracleFinder;
 let oracleProviderFactory: IOracleProviderFactory;
 
@@ -172,7 +174,7 @@ export function startOracleAdminServer():void {
       res.send(404);
   });
 
-  let portNum = 3030;
+  const portNum = 3030;
 
   oracleAdminServer = expressApp.listen(portNum, () => {
       logger.info(`🚀 Server ready at: http://localhost:${portNum}`);
