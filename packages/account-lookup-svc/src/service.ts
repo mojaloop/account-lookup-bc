@@ -52,6 +52,7 @@ import { MongoOracleFinderRepo, OracleAdapterFactory } from "@mojaloop/account-l
 import express, {Express} from "express";
 import { ExpressRoutes } from "./server/admin_routes";
 import { Server } from "net";
+import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
@@ -66,7 +67,7 @@ const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
 // Message Consumer/Publisher 
 const KAFKA_LOGS_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_LOG_TOPIC"] || "logs";
 const KAFKA_URL = process.env["ACCOUNT_LOOKUP_KAFKA_URL"] || "localhost:9092";
-const KAFKA_CONSUMER_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_CONSUMER_TOPIC"] || "oracles";
+const KAFKA_CONSUMER_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_CONSUMER_TOPIC"] || AccountLookupBCTopics.DomainRequests;
 
 let messageConsumer: IMessageConsumer;
 const consumerOptions: MLKafkaJsonConsumerOptions = {

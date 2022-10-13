@@ -44,6 +44,7 @@
     "@mojaloop/account-lookup-bc-infrastructure": "*",
     "@mojaloop/auditing-bc-client-lib": "^0.0.6",
     "@mojaloop/auditing-bc-public-types-lib": "^0.0.7",
+    "@mojaloop/platform-shared-lib-public-messages-lib": "~0.1.14",
     "express-validator": "^6.14.2"
   },
   "devDependencies": {
