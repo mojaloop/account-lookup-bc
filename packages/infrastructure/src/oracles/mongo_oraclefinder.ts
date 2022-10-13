@@ -132,7 +132,9 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	
 	async getAllOracles(): Promise<Oracle[]> {
 		const oracles = await this.oracleProviders.find().toArray();
-		return oracles as unknown as Promise<Oracle[]>;
+		return oracles.map((oracleWithId: WithId<Document>) => {
+			return  this.mapToOracle(oracleWithId);
+		});
 	}
 	
     async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
@@ -147,11 +149,24 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			if(!foundOracle) {
 				throw new UnableToGetOracleError();
 			}
+
+			const mappedOracle: Oracle = this.mapToOracle(foundOracle);
 			
-			return foundOracle as unknown as Oracle;
+			return mappedOracle;
 		} catch (e: any) {
 			this._logger.error(`Unable to get oracle provider: ${e.message}`);
 			throw new UnableToGetOracleError();
 		}
     }
+
+	private mapToOracle(foundOracle: WithId<Document>): Oracle {
+		return {
+			id: foundOracle.id,
+			name: foundOracle.name,
+			partyType: foundOracle.partyType,
+			partySubType: foundOracle.partySubType,
+			endpoint: foundOracle.endpoint,
+			type: foundOracle.type,
+		};
+	}
 }
