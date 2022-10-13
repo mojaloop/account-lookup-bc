@@ -64,9 +64,9 @@ let logger: ILogger;
 const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
 
 // Message Consumer/Publisher 
-const KAFKA_LOGS_TOPIC = "logs";
-const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
-const KAFKA_ORACLES_TOPIC = "account-lookup";
+const KAFKA_LOGS_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_LOG_TOPIC"] || "logs";
+const KAFKA_URL = process.env["ACCOUNT_LOOKUP_KAFKA_URL"] || "localhost:9092";
+const KAFKA_CONSUMER_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_CONSUMER_TOPIC"] || "oracles";
 
 let messageConsumer: IMessageConsumer;
 const consumerOptions: MLKafkaJsonConsumerOptions = {
@@ -87,7 +87,8 @@ const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
 const DB_PORT_NO: number = parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
 const DB_USERNAME = process.env.ACCOUNT_LOOKUP_DB_USERNAME ?? "root";
 const DB_PASSWORD = process.env.ACCOUNT_LOOKUP_DB_PASSWORD ?? "mongoDbPas42";
-const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT_NO}`;
+const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
+const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT_NO}/${DB_NAME}?authSource=admin`;
 let oracleFinder: IOracleFinder;
 let oracleProviderFactory: IOracleProviderFactory;
 
@@ -111,7 +112,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     
     await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
 
-    messageConsumer.setTopics([KAFKA_ORACLES_TOPIC]);
+    messageConsumer.setTopics([KAFKA_CONSUMER_TOPIC]);
     await messageConsumer.connect();
     await messageConsumer.start();
     logger.info("Kafka Consumer Initialized");

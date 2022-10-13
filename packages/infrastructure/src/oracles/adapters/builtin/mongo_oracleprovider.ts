@@ -41,7 +41,7 @@ optionally within square brackets <email>.
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection, Document, WithId} from "mongodb";
+import {MongoClient, Collection} from "mongodb";
 import {
 NoSuchParticipantError,
 IOracleProviderAdapter,
