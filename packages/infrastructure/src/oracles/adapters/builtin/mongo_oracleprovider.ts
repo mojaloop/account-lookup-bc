@@ -43,38 +43,57 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection} from "mongodb";
 import {
-NoSuchParticipantError,
-IOracleProviderAdapter,
-OracleType} from "@mojaloop/account-lookup-bc-domain";
+	NoSuchParticipantError,
+	IOracleProviderAdapter,
+	OracleType, Oracle
+} from "@mojaloop/account-lookup-bc-domain";
 import { ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../../errors";
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
 	private readonly _mongoClient: MongoClient;
-	private collectionName = "participants";
-	private participants: Collection;
-	
-	oracleId: string;
-	type: OracleType;
+	private readonly _dbName;
+	private collectionName = "builtinOracleParties";
+	private parties: Collection;
+	private readonly _oracle: Oracle;
+
+
+	public readonly oracleId: string;
+	public readonly type: OracleType;
 
 	constructor(
-		logger: ILogger,
-		oracleId: string,
-		connectionString: string,
+			oracle:Oracle,
+			logger:ILogger,
+			connectionString: string,
+			dbName:string
 	) {
-		this._logger = logger;
-		this.oracleId = oracleId;
+		this._logger = logger.createChild(this.constructor.name);
+		this._oracle = oracle;
+		this.oracleId = this._oracle.id;
 		this._connectionString = connectionString;
 		this._mongoClient = new MongoClient(this._connectionString);
+		this._dbName = dbName;
 		this.type = "builtin";
 	}
+
+	// constructor(
+	// 	logger: ILogger,
+	// 	oracleId: string,
+	// 	connectionString: string,
+	// ) {
+	// 	this._logger = logger.createChild(this.constructor.name);
+	// 	this.oracleId = oracleId;
+	// 	this._connectionString = connectionString;
+	// 	this._mongoClient = new MongoClient(this._connectionString);
+	// 	this.type = "builtin";
+	// }
 	
 
 	async init(): Promise<void> {
 		try {
 			this._mongoClient.connect();
-			this.participants = this._mongoClient.db().collection(this.collectionName);
+			this.parties = this._mongoClient.db(this._dbName).collection(this.collectionName);
 		} catch (e: any) {
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleProvider();
@@ -94,12 +113,12 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	async getParticipantFspId(partyId: string): Promise<string | null> {
 		try {
-			const data = await this.participants.findOne({
+			const data = await this.parties.findOne({
 				partyId: partyId,
 			});
 
 			if(!data) {
-                throw new NoSuchParticipantError();
+                return null; // throw new NoSuchParticipantError();
             }
 
 			return data.fspId as unknown as string;
@@ -111,7 +130,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async associateParticipant(partyId: string, fspId: string): Promise<null> {
-		const participant = await this.participants.findOne({
+		const participant = await this.parties.findOne({
 			partyId: partyId,
 			fspId: fspId,
 		});
@@ -121,7 +140,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			throw new ParticipantAssociationAlreadyExistsError();
 		}
 
-		await this.participants.insertOne({
+		await this.parties.insertOne({
 			partyId: partyId,
 			fspId: fspId,
 		}).catch((e: any) => {
@@ -134,7 +153,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async disassociateParticipant(partyId: string, fspId: string): Promise<null> {
-		await this.participants.deleteOne({
+		await this.parties.deleteOne({
 			partyId: partyId,
 			fspId: fspId,
 		}).catch((e: any) => {

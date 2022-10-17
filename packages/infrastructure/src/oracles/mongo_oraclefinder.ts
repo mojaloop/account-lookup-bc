@@ -30,14 +30,14 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
  **/
- "use strict";
+"use strict";
 
  import {
 	Collection,
@@ -48,7 +48,7 @@
 import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
 import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from '../errors';
 import {
-    IOracleFinder,
+	IOracleFinder, NoSuchOracleError,
 	Oracle,
 	OracleCreationRequest,
 } from "@mojaloop/account-lookup-bc-domain";
@@ -57,22 +57,25 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
 	private readonly _mongoClient: MongoClient;
-	private collectionName = "oracleProviders";
+	private readonly dbName;
+	private readonly collectionName = "oracles";
 	private oracleProviders: Collection;
 
 	constructor(
 		logger: ILogger,
         connectionString: string,
+		dbName:string
 	) {
-		this._logger = logger;
+		this._logger = logger.createChild(this.constructor.name);
         this._connectionString = connectionString;
 		this._mongoClient = new MongoClient(this._connectionString);
+		this.dbName = dbName;
 	}
 
 	async init(): Promise<void> {
 		try {
 			this._mongoClient.connect();
-			this.oracleProviders = this._mongoClient.db().collection(this.collectionName);
+			this.oracleProviders = this._mongoClient.db(this.dbName).collection(this.collectionName);
 		} catch (e: any) {
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleFinderError();
@@ -122,7 +125,12 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 	async removeOracle(id: string): Promise<void> {
 		try {
-			await this.oracleProviders.deleteOne({id});
+			const deleteResult = await this.oracleProviders.deleteOne({id});
+			if(deleteResult.deletedCount == 1){
+				return;
+			}
+			// probably not found
+			throw new NoSuchOracleError();
 		} catch (e: any) {
 			this._logger.error(`Unable to remove oracle: ${e.message}`);
 			throw new UnableToDeleteOracleError();
@@ -135,6 +143,12 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			return  this.mapToOracle(oracleWithId);
 		});
 	}
+
+	async getOracleById(id:string):Promise<Oracle|null>{
+		const oracle = await this.oracleProviders.findOne({id: id });
+		if(!oracle) return null;
+		return this.mapToOracle(oracle);
+	}
 	
     async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
 		try {
@@ -146,7 +160,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			);
 
 			if(!foundOracle) {
-				throw new UnableToGetOracleError();
+				throw new NoSuchOracleError();
 			}
 
 			const mappedOracle: Oracle = this.mapToOracle(foundOracle);

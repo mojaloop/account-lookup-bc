@@ -40,7 +40,7 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import { IOracleProviderAdapter, OracleType } from "@mojaloop/account-lookup-bc-domain";
+import {IOracleProviderAdapter, Oracle, OracleType} from "@mojaloop/account-lookup-bc-domain";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
 
@@ -48,14 +48,16 @@ import axios, {AxiosInstance, AxiosResponse} from "axios";
 export class HttpOracleProvider implements IOracleProviderAdapter {
     private readonly _endpoint: string;
     private readonly _logger: ILogger;
+    private readonly _oracle: Oracle;
     private httpClient: AxiosInstance;
+
     oracleId: string;
     type: OracleType;
 
-    constructor(logger:ILogger, oracleId: string, endpoint: string) {
-        this._logger = logger;
-        this._endpoint = endpoint;
-        this.oracleId = oracleId;
+    constructor(oracle:Oracle, logger:ILogger) {
+        this._logger = logger.createChild(this.constructor.name);
+        this._oracle = oracle;
+        this.oracleId = this._oracle.id;
         this.type = "remote-http";
     }
 

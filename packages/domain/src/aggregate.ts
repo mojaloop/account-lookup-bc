@@ -45,7 +45,30 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { InvalidMessagePayloadError, InvalidMessageTypeError, InvalidParticipantIdError, NoSuchOracleAdapterError, NoSuchOracleError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAddOracleError,  UnableToAssociateParticipantError,  UnableToDisassociateParticipantError, UnableToProcessMessageError } from "./errors";
 import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle, OracleCreationRequest} from "./interfaces/infrastructure";
-import { AccountLookUperrorEvt, AccountLookUperrorEvtPayload, ParticipantAssociationRemovedEvt, ParticipantAssociationCreatedEvt, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvtPayload, PartyQueryReceivedEvt, PartyInfoAvailableEvt, ParticipantAssociationRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvt, PartyQueryResponseEvt, PartyQueryResponseEvtPayload  } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {
+	AccountLookUperrorEvt,
+	AccountLookUperrorEvtPayload,
+	ParticipantAssociationRemovedEvt,
+	ParticipantAssociationCreatedEvt,
+	ParticipantAssociationCreatedEvtPayload,
+	ParticipantAssociationRemovedEvtPayload,
+	ParticipantAssociationRequestReceivedEvtPayload,
+	ParticipantDisassociateRequestReceivedEvtPayload,
+	ParticipantQueryReceivedEvt,
+	ParticipantQueryReceivedEvtPayload,
+	ParticipantQueryResponseEvtPayload,
+	PartyInfoAvailableEvtPayload,
+	PartyInfoRequestedEvt,
+	PartyInfoRequestedEvtPayload,
+	PartyQueryReceivedEvtPayload,
+	PartyQueryReceivedEvt,
+	PartyInfoAvailableEvt,
+	ParticipantAssociationRequestReceivedEvt,
+	ParticipantDisassociateRequestReceivedEvt,
+	PartyQueryResponseEvt,
+	PartyQueryResponseEvtPayload,
+	ParticipantQueryResponseEvt
+} from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export class AccountLookupAggregate  {
@@ -64,7 +87,7 @@ export class AccountLookupAggregate  {
 		messageProducer:IMessageProducer,
 		participantService: IParticipantService
 	) {
-		this._logger = logger;
+		this._logger = logger.createChild(this.constructor.name);
 		this._oracleFinder = oracleFinder;
 		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._messageProducer = messageProducer;
@@ -182,6 +205,7 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getPartyEvent({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
+		this._logger.debug(`Got getPartyEvent msg for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId} destinationFspId: ${destinationFspId}`);
 		let destinationFspIdToUse = destinationFspId;
 		await this.validateParticipant(requesterFspId);
 
@@ -207,7 +231,7 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getPartyInfoEvent({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyQueryResponseEvt>{
-
+		this._logger.debug(`Got getPartyInfoEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId} destinationFspId: ${destinationFspId}`);
 		await this.validateParticipant(requesterFspId);
 
 		await this.validateParticipant(destinationFspId);
@@ -230,7 +254,7 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getParticipantEvent({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
-  
+		this._logger.debug(`Got getParticipantEvent msg for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} currency: ${currency} - requesterFspId: ${requesterFspId}`);
 		await this.validateParticipant(requesterFspId);
 
 		const participantId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType);
@@ -246,12 +270,13 @@ export class AccountLookupAggregate  {
 			currency: currency
 		}; 
 
-		const event = new ParticipantQueryReceivedEvt(payload);
+		const event = new ParticipantQueryResponseEvt(payload);
 		
 		return event;
 	}
 
 	private async participantAssociationEvent({ ownerFspId, partyType, partySubType, partyId }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
+		this._logger.debug(`Got participantAssociationEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId}`);
 		await this.validateParticipant(ownerFspId);
 
 		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
@@ -275,6 +300,7 @@ export class AccountLookupAggregate  {
 	}
 
 	private async participantDisassociationEvent({ ownerFspId, partyType, partySubType,partyId }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
+		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId}`);
 		await this.validateParticipant(ownerFspId);
 		
 		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
@@ -298,27 +324,26 @@ export class AccountLookupAggregate  {
 	}
 
 	private async validateParticipant(participantId: string | null):Promise<void>{
-		
-		if(participantId){
-			const participant = await this._participantService.getParticipantInfo(participantId);
-		
-			if(!participant) {
-				this._logger.debug(`No participant found`);
-				throw new NoSuchParticipantError();
-			}
-
-			if(participant.id !== participantId){
-				this._logger.debug(`Participant id mismatch ${participant.id} ${participantId}`);
-				throw new InvalidParticipantIdError();
-			}
-	
-			if(!participant.isActive) {
-				this._logger.debug(`${participant.id} is not active`);
-				throw new RequiredParticipantIsNotActive();
-			}
-		
-		}
-		
+		// FIXME implement actual participantClient
+		return;
+		// if(participantId){
+		// 	const participant = await this._participantService.getParticipantInfo(participantId);
+		//
+		// 	if(!participant) {
+		// 		this._logger.debug(`No participant found`);
+		// 		throw new NoSuchParticipantError();
+		// 	}
+		//
+		// 	if(participant.id !== participantId){
+		// 		this._logger.debug(`Participant id mismatch ${participant.id} ${participantId}`);
+		// 		throw new InvalidParticipantIdError();
+		// 	}
+		//
+		// 	if(!participant.isActive) {
+		// 		this._logger.debug(`${participant.id} is not active`);
+		// 		throw new RequiredParticipantIsNotActive();
+		// 	}
+		// }
 	}
 	
 	//#region Oracles
@@ -374,6 +399,11 @@ export class AccountLookupAggregate  {
 	public async getAllOracles(): Promise<Oracle[]> {
 		const oracles = await this._oracleFinder.getAllOracles();
 		return oracles;
+	}
+
+	public async getOracleById(id:string): Promise<Oracle|null> {
+		const oracle = await this._oracleFinder.getOracleById(id);
+		return oracle;
 	}
 	
 	public async healthCheck(id:string): Promise<boolean> {

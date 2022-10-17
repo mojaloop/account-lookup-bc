@@ -43,7 +43,7 @@
 
  import express from "express";
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
- import {AccountLookupAggregate} from "@mojaloop/account-lookup-bc-domain";
+ import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain";
  import { check, validationResult } from "express-validator";
   
  
@@ -53,18 +53,20 @@
      private mainRouter = express.Router();
  
      constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
-         this._logger = logger.createChild("ExpressRoutes");
+         this._logger = logger.createChild(this.constructor.name);
          this._accountLookupAggregate = accountLookupAggregate;
  
-        this.mainRouter.get("/test", this.getExample);
-
          // account lookup admin routes
 
-         this.mainRouter.get("/oracles",this.getAllOracles);
+         this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
+
+         this.mainRouter.get("/oracles/:id",[
+             check("id").isString().notEmpty().withMessage("id must be a non empty string")
+         ],this.getOracleById.bind(this));
          
          this.mainRouter.delete("/oracles/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ], this.deleteOracle);
+         ], this.deleteOracle.bind(this));
          
          this.mainRouter.post("/oracles",[
             check("name").isString().notEmpty().withMessage("name must be a non empty string"),
@@ -72,11 +74,11 @@
             check("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string"),
             check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
             check("partySubType").optional().isString().notEmpty().withMessage("partySubType must be a non empty string"),
-         ], this.createOracle);
+         ], this.createOracle.bind(this));
 
          this.mainRouter.get("/oracles/health/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ], this.healthCheck);        
+         ], this.healthCheck.bind(this));
  
      }
  
@@ -93,12 +95,9 @@
         return true;
     }
 
-    private getExample = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-         return res.send({resp: "example worked"});
-     }
 
- 
-     private getAllOracles = async (req: express.Request, res: express.Response, next: express.NextFunction) =>{
+
+     private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }             
@@ -116,15 +115,23 @@
          }
      }
 
-     private deleteOracle = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-        if (!this.validateRequest(req, res)) {
-            return;
-        }         
-        const id = req.params["id"] ?? null;
-         this._logger.debug(`Deleting Oracle [${id}].`);
- 
+     private async getOracleById (req: express.Request, res: express.Response, next: express.NextFunction) {
+         if (!this.validateRequest(req, res)) {
+             return;
+         }
+
+         const id = req.params["id"] ?? null;
+         this._logger.debug(`Fetching Oracle [${id}].`);
+
          try {
-             const fetched = await this._accountLookupAggregate.removeOracle(id);
+             const fetched = await this._accountLookupAggregate.getOracleById(id);
+             if(!fetched){
+                 res.status(404).json({
+                     status: "error",
+                     msg: "Oracle not found"
+                 });
+                 return;
+             }
              res.send(fetched);
          } catch (err: any) {
              this._logger.error(err);
@@ -135,8 +142,35 @@
          }
      }
 
+     private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+        if (!this.validateRequest(req, res)) {
+            return;
+        }         
+        const id = req.params["id"] ?? null;
+         this._logger.debug(`Deleting Oracle [${id}].`);
+ 
+         try {
+             const fetched = await this._accountLookupAggregate.removeOracle(id);
+             res.send(fetched);
+         } catch (err: any) {
+             if(err instanceof NoSuchOracleError){
+                 res.status(404).json({
+                     status: "error",
+                     msg: err.message
+                 });
+                 return;
+             }
 
-     private createOracle = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+             this._logger.error(err);
+             res.status(500).json({
+                 status: "error",
+                 msg: err.message
+             });
+         }
+     }
+
+
+     private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }        
@@ -156,7 +190,7 @@
         }
     }
 
-    private healthCheck = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+     private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -166,6 +200,14 @@
             const fetched = await this._accountLookupAggregate.healthCheck(id);
             res.send(fetched);
         } catch (err: any) {
+            if(err instanceof NoSuchOracleError){
+                res.status(404).json({
+                    status: "error",
+                    msg: err.message
+                });
+                return;
+            }
+
             this._logger.error(err);
             res.status(500).json({
                 status: "error",

@@ -65,6 +65,7 @@ export interface IOracleFinder{
     addOracle(oracle: OracleCreationRequest):Promise<Oracle>;
     removeOracle(id: string):Promise<void>;
     getAllOracles():Promise<Oracle[]>;
+    getOracleById(id:string):Promise<Oracle|null>;
     getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
 }
 

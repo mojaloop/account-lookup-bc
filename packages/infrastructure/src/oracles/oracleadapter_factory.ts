@@ -40,25 +40,28 @@
  
 "use strict";
 
-import { IOracleProviderAdapter, IOracleProviderFactory, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain";
+import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MongoOracleProviderRepo } from "./adapters/builtin/mongo_oracleprovider";
 import { HttpOracleProvider } from "./adapters/remote/http_oracleprovider";
 
 export class OracleAdapterFactory implements IOracleProviderFactory {
-
     private readonly _logger: ILogger;
+    private readonly _builtinOracleMongoUrl: string;
+    private readonly _dbName:string;
 
-    constructor(logger: ILogger) {
-        this._logger = logger;
+    constructor(builtinOracleMongoUrl: string, dbName:string, logger: ILogger) {
+        this._logger = logger.createChild(this.constructor.name);
+        this._builtinOracleMongoUrl = builtinOracleMongoUrl;
+        this._dbName = dbName;
     }
 
     create(oracle: Oracle): IOracleProviderAdapter {
         switch (oracle.type) {
             case "builtin":
-                return new MongoOracleProviderRepo(this._logger,oracle.id, oracle.endpoint);
+                return new MongoOracleProviderRepo(oracle, this._logger, this._builtinOracleMongoUrl, this._dbName);
             case "remote-http":
-                return new HttpOracleProvider(this._logger, oracle.id, oracle.endpoint);
+                return new HttpOracleProvider(oracle, this._logger);
             default:
                 throw new Error("Invalid oracle type");
         }

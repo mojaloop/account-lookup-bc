@@ -52,6 +52,7 @@ import { MongoOracleFinderRepo, OracleAdapterFactory } from "@mojaloop/account-l
 import express, {Express} from "express";
 import { ExpressRoutes } from "./server/admin_routes";
 import { Server } from "net";
+import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
@@ -66,7 +67,7 @@ const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
 // Message Consumer/Publisher 
 const KAFKA_LOGS_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_LOG_TOPIC"] || "logs";
 const KAFKA_URL = process.env["ACCOUNT_LOOKUP_KAFKA_URL"] || "localhost:9092";
-const KAFKA_CONSUMER_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_CONSUMER_TOPIC"] || "oracles";
+
 
 let messageConsumer: IMessageConsumer;
 const consumerOptions: MLKafkaJsonConsumerOptions = {
@@ -83,12 +84,9 @@ const producerOptions : MLKafkaJsonProducerOptions = {
 };
 
 //Oracles
-const DB_HOST: string = process.env.ACCOUNT_LOOKUP_DB_HOST ?? "localhost";
-const DB_PORT_NO: number = parseInt(process.env.ACCOUNT_LOOKUP_DB_PORT_NO ?? "") || 27017;
-const DB_USERNAME = process.env.ACCOUNT_LOOKUP_DB_USERNAME ?? "root";
-const DB_PASSWORD = process.env.ACCOUNT_LOOKUP_DB_PASSWORD ?? "mongoDbPas42";
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
-const DB_URL = `mongodb://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT_NO}/${DB_NAME}?authSource=admin`;
+const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:example@localhost:27017/";
+
 let oracleFinder: IOracleFinder;
 let oracleProviderFactory: IOracleProviderFactory;
 
@@ -107,12 +105,13 @@ let oracleAdminServer: Server;
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
   oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
   ):Promise<void> {
-  
+  console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
+
   try{
     
     await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
 
-    messageConsumer.setTopics([KAFKA_CONSUMER_TOPIC]);
+    messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
     await messageConsumer.connect();
     await messageConsumer.start();
     logger.info("Kafka Consumer Initialized");
@@ -131,12 +130,31 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
       await aggregate.publishAccountLookUpEvent(message);
     };
     
-    messageConsumer.setCallbackFn(callbackFunction);  
+    messageConsumer.setCallbackFn(callbackFunction);
+
+    // Start admin http server
+    expressApp = express();
+    expressApp.use(express.json()); // for parsing application/json
+    expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+
+    const routes = new ExpressRoutes(aggregate, logger);
+
+    expressApp.use("/admin", routes.MainRouter);
+
+    expressApp.use((req, res) => {
+      // catch all
+      res.send(404);
+    });
+
+    oracleAdminServer = expressApp.listen(ADMIN_PORT, () => {
+      logger.info(`🚀 Server ready at: http://localhost:${ADMIN_PORT}`);
+      logger.info("Oracle Admin Server started");
+    });
 
   }
   catch(err){
     logger.error(err);
-    await tearDown(1);
+    await stop();
   }
 }
 
@@ -146,13 +164,13 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
   if (!loggerParam) {
-    await (logger as KafkaLogger).start();
+    await (logger as KafkaLogger).init();
     logger.info("Kafka Logger Initialized");
   }
   
-  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,DB_URL);
+  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,MONGO_URL, DB_NAME);
   
-  oracleProviderFactory = oracleProviderFactoryParam ?? new OracleAdapterFactory(logger);
+  oracleProviderFactory = oracleProviderFactoryParam ?? new OracleAdapterFactory(MONGO_URL, DB_NAME, logger);
 
   messageProducer = messageProducerParam ?? new MLKafkaJsonProducer(producerOptions, logger);
   
@@ -162,27 +180,8 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 }
 
 
-export function startOracleAdminServer():void {
-  expressApp = express();
-  expressApp.use(express.json()); // for parsing application/json
-  expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-  const routes = new ExpressRoutes(aggregate, logger);
-
-  expressApp.use("/admin", routes.MainRouter);
-
-  expressApp.use((req, res) => {
-      // catch all
-      res.send(404);
-  });
-
-  oracleAdminServer = expressApp.listen(ADMIN_PORT, () => {
-      logger.info(`🚀 Server ready at: http://localhost:${ADMIN_PORT}`);
-      logger.info("Oracle Admin Server started");
-  });
-}
-
-export async function tearDown(code:number): Promise<void> { 
+export async function stop(): Promise<void> {
   logger.debug("Tearing down aggregate");
   await aggregate.destroy();
   logger.debug("Tearing down message consumer");
@@ -191,26 +190,35 @@ export async function tearDown(code:number): Promise<void> {
   await messageProducer.destroy();
   logger.debug("Tearing down oracle admin server");
   oracleAdminServer.close();
-  process.exit(code);
 }
+
+/**
+ * process termination and cleanup
+ */
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
-    logger?.info(`Service - ${signal} received - cleaning up...`);
-    await tearDown(0);
+  console.info(`Service - ${signal} received - cleaning up...`);
+  let clean_exit = false;
+  setTimeout(args => { clean_exit || process.abort();}, 5000);
+
+  // call graceful stop routine
+  await stop();
+
+  clean_exit = true;
+  process.exit();
 }
 
-
-// catches ctrl+c event
-process.once("SIGINT", _handle_int_and_term_signals.bind(this));
-
+//catches ctrl+c event
+process.on("SIGINT", _handle_int_and_term_signals.bind(this));
 //catches program termination event
-process.once("SIGTERM", _handle_int_and_term_signals.bind(this));
+process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
-process.on('exit', (code) => {
-  logger?.info("Example server - exiting...");
-  setTimeout(async ()=>{
-      await tearDown(code);
-  }, 0);
+process.on("exit", async () => {
+  logger.info("Microservice - exiting...");
 });
-
+process.on("uncaughtException", (err: Error) => {
+  logger.error(err);
+  console.log("UncaughtException - EXITING...");
+  process.exit(999);
+});
