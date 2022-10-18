@@ -85,7 +85,7 @@ const producerOptions : MLKafkaJsonProducerOptions = {
 
 //Oracles
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
-const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:example@localhost:27017/";
+const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
 
 let oracleFinder: IOracleFinder;
 let oracleProviderFactory: IOracleProviderFactory;
