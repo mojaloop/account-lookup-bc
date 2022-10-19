@@ -379,7 +379,7 @@ export class AccountLookupAggregate  {
 		return fspId;
 	}
 
-	public async addOracle(oracle: OracleCreationRequest): Promise<void> {
+	public async addOracle(oracle: OracleCreationRequest): Promise<Oracle> {
 		const addedOracle = await this._oracleFinder.addOracle(oracle);
 		
 		if(!addedOracle) {
@@ -389,6 +389,7 @@ export class AccountLookupAggregate  {
 		const addedOracleProvider = this._oracleProvidersFactory.create(addedOracle);
 		await addedOracleProvider.init();
 		this.oracleProvidersAdapters.push(addedOracleProvider);
+		return addedOracle;
 	}
 	
 	public async removeOracle(id: string): Promise<void> {
