@@ -1,3 +1,4 @@
+import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
 /**
  License
  --------------
@@ -48,9 +49,10 @@
  
  export class RemoteOracleExpressRoutes {
      private readonly _logger: ILogger;
+     private readonly _oracle : IOracleProviderAdapter;
      private mainRouter = express.Router();
  
-     constructor(logger: ILogger) {
+     constructor(logger: ILogger, oracleAdapter: IOracleProviderAdapter) {
          this._logger = logger.createChild(this.constructor.name);
  
          // http oracle routes
@@ -167,7 +169,23 @@
     }
      
      private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
-            res.send(true);
+        try {
+            const fetched = await this._oracle.healthCheck();
+            if(!fetched){
+                res.status(404).json({
+                    status: "error",
+                    msg: "Oracle not found"
+                });
+                return;
+            }
+            res.send(fetched);
+        } catch (err: any) {
+            this._logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: err.message
+            });
+        }
     } 
  
  }

@@ -54,6 +54,7 @@
     "packages/infrastructure",
     "packages/client",
     "packages/account-lookup-svc",
+    "packages/http-oracle-sv",
     "packages/*"
   ]
 }
