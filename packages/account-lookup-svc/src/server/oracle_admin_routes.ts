@@ -47,7 +47,7 @@
  import { check, validationResult } from "express-validator";
   
  
- export class ExpressRoutes {
+ export class OracleAdminExpressRoutes {
      private readonly _logger: ILogger;
      private readonly _accountLookupAggregate: AccountLookupAggregate;
      private mainRouter = express.Router();

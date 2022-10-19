@@ -50,7 +50,7 @@ import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
 import { MongoOracleFinderRepo, OracleAdapterFactory } from "@mojaloop/account-lookup-bc-infrastructure";
 import express, {Express} from "express";
-import { ExpressRoutes } from "./server/admin_routes";
+import { OracleAdminExpressRoutes } from "./server/oracle_admin_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
@@ -137,7 +137,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     expressApp.use(express.json()); // for parsing application/json
     expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-    const routes = new ExpressRoutes(aggregate, logger);
+    const routes = new OracleAdminExpressRoutes(aggregate, logger);
 
     expressApp.use("/admin", routes.MainRouter);
 

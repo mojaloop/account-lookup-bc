@@ -43,7 +43,6 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection} from "mongodb";
 import {
-	NoSuchParticipantError,
 	IOracleProviderAdapter,
 	OracleType, Oracle
 } from "@mojaloop/account-lookup-bc-domain";
@@ -76,20 +75,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		this._dbName = dbName;
 		this.type = "builtin";
 	}
-
-	// constructor(
-	// 	logger: ILogger,
-	// 	oracleId: string,
-	// 	connectionString: string,
-	// ) {
-	// 	this._logger = logger.createChild(this.constructor.name);
-	// 	this.oracleId = oracleId;
-	// 	this._connectionString = connectionString;
-	// 	this._mongoClient = new MongoClient(this._connectionString);
-	// 	this.type = "builtin";
-	// }
 	
-
 	async init(): Promise<void> {
 		try {
 			this._mongoClient.connect();
@@ -111,10 +97,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		
 	}
 
-	async getParticipantFspId(partyId: string): Promise<string | null> {
+	async getParticipantFspId(partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<string | null> {
 		try {
 			const data = await this.parties.findOne({
 				partyId: partyId,
+				partyType: partyType,
+				partySubType: partySubType,
+				currency: currency,
+				
 			});
 
 			if(!data) {
@@ -129,10 +119,15 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		}
 	}
 
-	async associateParticipant(partyId: string, fspId: string): Promise<null> {
+
+	async associateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
+	{
 		const participant = await this.parties.findOne({
 			partyId: partyId,
 			fspId: fspId,
+			partyType: partyType,
+			partySubType: partySubType,
+			currency: currency,
 		});
 
 		if(participant) {
@@ -143,19 +138,26 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		await this.parties.insertOne({
 			partyId: partyId,
 			fspId: fspId,
+			partyType: partyType,
+			partySubType: partySubType,
+			currency: currency,
 		}).catch((e: any) => {
 			this._logger.debug(`Unable to store participant association for partyId ${partyId}: ${e.message}`);
 			throw new UnableToStoreParticipantAssociationError();
 		}
 		);
 
-		return null;
+			return null;
+		}
 	}
 
-	async disassociateParticipant(partyId: string, fspId: string): Promise<null> {
+	async disassociateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
 		await this.parties.deleteOne({
 			partyId: partyId,
 			fspId: fspId,
+			partyType: partyType,
+			partySubType: partySubType,
+			currency: currency,
 		}).catch((e: any) => {
 			this._logger.debug(`Unable to delete participant association for partyId ${partyId}: ${e.message}`);
 			throw new UnableToDeleteParticipantAssociationError();
