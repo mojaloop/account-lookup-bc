@@ -127,7 +127,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
     const callbackFunction = async (message:IMessage):Promise<void> => {
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      await aggregate.publishAccountLookUpEvent(message);
+      await aggregate.handleAccountLookUpEvent(message);
     };
     
     messageConsumer.setCallbackFn(callbackFunction);

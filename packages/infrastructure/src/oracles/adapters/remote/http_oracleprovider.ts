@@ -46,7 +46,6 @@ import axios, {AxiosInstance, AxiosResponse} from "axios";
 
 //Create a class that implements the IOracleProviderAdapter interface using http requests
 export class HttpOracleProvider implements IOracleProviderAdapter {
-    private readonly _endpoint: string;
     private readonly _logger: ILogger;
     private readonly _oracle: Oracle;
     private httpClient: AxiosInstance;
@@ -63,7 +62,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 
     init(): Promise<void> {
         this.httpClient = axios.create({
-			baseURL: this._endpoint,
+			baseURL: this._oracle.endpoint,
 		});
         return Promise.resolve();
     }
@@ -82,7 +81,11 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     }
 
     async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ): Promise<string|null> {
-        return this.httpClient.get(`/participants/${partyType}/${partyId}/${partySubId}`, { params: { currency } }).then((
+        let url = `/participants/${partyType}/${partyId}`;
+        if(partySubId) url+=`/${partySubId}`;
+        if(currency) url+=`?${currency}`;
+
+        return this.httpClient.get(url).then((
             response: AxiosResponse) => {
             return response.data?.fspId ?? null;
         }).catch((error: Error) => {
@@ -92,7 +95,11 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     }
 
     async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null> {
-        return await this.httpClient.post(`/participants/${partyType}/${partyId}/${partySubId}`,
+        let url = `/participants/${partyType}/${partyId}`;
+        if(partySubId) url+=`/${partySubId}`;
+        if(currency) url+=`?${currency}`;
+
+        return await this.httpClient.post(url,
             { fspId: fspId}, 
             { params: currency })
             .then((
@@ -106,7 +113,11 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     }
 
     async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null> {
-        return await this.httpClient.post(`/participants/${partyType}/${partyId}/${partySubId}`,
+        let url = `/participants/${partyType}/${partyId}`;
+        if(partySubId) url+=`/${partySubId}`;
+        if(currency) url+=`?${currency}`;
+
+        return await this.httpClient.post(url,
             { fspId: fspId}, 
             { params: currency })
         .then((

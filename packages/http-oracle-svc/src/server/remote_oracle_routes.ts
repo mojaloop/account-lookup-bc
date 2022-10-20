@@ -118,7 +118,9 @@ export class RemoteOracleExpressRoutes {
             if(!fetched){
                 res.sendStatus(404);
             }else{
-                res.send(fetched);
+                res.send({
+                    fspId: fetched
+                });
             }
         } catch (err: any) {
             this._logger.error(`Error Fetching FSP ID with params [${params}]. -${err}`);

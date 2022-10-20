@@ -128,7 +128,7 @@ export class AccountLookupAggregate  {
 	}
 
 
-	async publishAccountLookUpEvent(message: IMessage): Promise<void> {
+	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
 		try{
 				const isMessageValid = this.validateMessage(message);
 				if(isMessageValid) {
@@ -138,7 +138,21 @@ export class AccountLookupAggregate  {
 			catch(error:any) {
 				const errorMessage = error.constructor.name;
 				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
-				await this.publishErrorEvent(message, errorMessage);
+
+				// TODO: find a way to publish the correct error event type
+
+				const errorPayload: AccountLookUperrorEvtPayload = {
+					errorMsg: errorMessage,
+					partyId: message.payload?.partyId ?? "N/A",
+					sourceEvent: message.msgName,
+					partyType: message.payload?.partyType ?? "N/A",
+					partySubType: message.payload?.partySubType ?? "N/A",
+					requesterFspId: message.payload?.requesterFspId ?? "N/A",
+
+				};
+				const messageToPublish = new AccountLookUperrorEvt(errorPayload);
+				messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
+				await this._messageProducer.send(messageToPublish);
 			}
 	}
 	
@@ -154,21 +168,6 @@ export class AccountLookupAggregate  {
 		}
 
 		return true;
-	}
-
-	private async publishErrorEvent(message: IMessage, errorMsg: string) {
-		const errorPayload: AccountLookUperrorEvtPayload = {
-			errorMsg,
-			partyId: message.payload?.partyId ?? "N/A",
-			sourceEvent: message.msgName,
-			partyType: message.payload?.partyType ?? "N/A",
-			partySubType: message.payload?.partySubType ?? "N/A",
-			requesterFspId: message.payload?.requesterFspId ?? "N/A",
-
-		};
-		const messageToPublish = new AccountLookUperrorEvt(errorPayload);
-		messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
-		await this._messageProducer.send(messageToPublish);
 	}
 
 	private async handleEvent(message:IMessage):Promise<void> {

@@ -304,7 +304,7 @@ describe("Account Lookup Domain", () => {
         jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.publishAccountLookUpEvent(message);
+        await aggregate.handleAccountLookUpEvent(message);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -352,7 +352,7 @@ describe("Account Lookup Domain", () => {
         jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.publishAccountLookUpEvent(message);
+        await aggregate.handleAccountLookUpEvent(message);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -400,7 +400,7 @@ describe("Account Lookup Domain", () => {
         jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.publishAccountLookUpEvent(message);
+        await aggregate.handleAccountLookUpEvent(message);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -437,7 +437,7 @@ describe("Account Lookup Domain", () => {
         jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.publishAccountLookUpEvent(message);
+        await aggregate.handleAccountLookUpEvent(message);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -492,7 +492,7 @@ describe("Account Lookup Domain", () => {
         jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.publishAccountLookUpEvent(message);
+        await aggregate.handleAccountLookUpEvent(message);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -544,7 +544,7 @@ describe("Account Lookup Domain", () => {
 		};
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -584,7 +584,7 @@ describe("Account Lookup Domain", () => {
 		};
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -625,7 +625,7 @@ describe("Account Lookup Domain", () => {
     };
 
     // Act
-    await aggregate.publishAccountLookUpEvent(event);
+    await aggregate.handleAccountLookUpEvent(event);
 
     // Assert
     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -666,7 +666,7 @@ describe("Account Lookup Domain", () => {
         };
     
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
     
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -706,7 +706,7 @@ describe("Account Lookup Domain", () => {
         };
     
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
     
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -745,7 +745,7 @@ describe("Account Lookup Domain", () => {
         };
     
         // Act
-        const result = await aggregate.publishAccountLookUpEvent(event);
+        const result = await aggregate.handleAccountLookUpEvent(event);
     
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -785,7 +785,7 @@ describe("Account Lookup Domain", () => {
         };
     
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
     
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -831,7 +831,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -876,7 +876,7 @@ describe("Account Lookup Domain", () => {
             };
     
             // Act
-            await aggregate.publishAccountLookUpEvent(event);
+            await aggregate.handleAccountLookUpEvent(event);
     
             // Assert
     
@@ -922,7 +922,7 @@ describe("Account Lookup Domain", () => {
             };
 
             // Act
-            const result = await aggregate.publishAccountLookUpEvent(event);
+            const result = await aggregate.handleAccountLookUpEvent(event);
 
             // Assert
 
@@ -964,7 +964,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1007,7 +1007,7 @@ describe("Account Lookup Domain", () => {
 
         // Act
 
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1048,7 +1048,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1090,7 +1090,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1132,7 +1132,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1174,7 +1174,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1212,7 +1212,7 @@ describe("Account Lookup Domain", () => {
         };
         
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1255,7 +1255,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1297,7 +1297,7 @@ describe("Account Lookup Domain", () => {
         };
 
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
@@ -1335,7 +1335,7 @@ describe("Account Lookup Domain", () => {
         };
         
         // Act
-        await aggregate.publishAccountLookUpEvent(event);
+        await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
 
