@@ -80,11 +80,10 @@ export class RemoteOracle implements IOracleProviderAdapter {
 
 
         const loadSuccess = await this._loadFromFile();
+        this._logger.info(`File "${this._filePath}" loaded success: ${loadSuccess}`);
         if(!loadSuccess){
-            this._logger.error(`Failed to load associations from file "${this._filePath}"`);
-            throw new Error(`Failed to load associations from file "${this._filePath}"`);
+            this._logger.error(`No associations loaded "${this._filePath}"`);
         }
-
 
         let fsWait:NodeJS.Timeout | undefined; // debounce wait
         
@@ -114,7 +113,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
             }
             fileData = JSON.parse(strContents);
         }catch (e) {
-            this._logger.error(`Failed to load associations from file "${this._filePath}"`);
+            this._logger.error(`Failed to load associations from file "${this._filePath} - ${e}"`);
             throw new Error(`Failed to load associations from file "${this._filePath}"`);
         }
 
