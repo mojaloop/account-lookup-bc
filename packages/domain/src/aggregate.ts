@@ -281,7 +281,7 @@ export class AccountLookupAggregate  {
 
 		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
 
-		await oracleProvider.associateParticipant(ownerFspId,partyId,partyType,partySubType,null).catch(error=>{
+		await oracleProvider.associateParticipant(ownerFspId,partyType, partyId,partySubType,null).catch(error=>{
 			this._logger.error(`Unable to associate party id: ${partyId} ` + error);
 			throw new UnableToAssociateParticipantError();
 		});
@@ -305,7 +305,7 @@ export class AccountLookupAggregate  {
 		
 		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
 
-		await oracleProvider.disassociateParticipant(ownerFspId,partyId,partyType,partySubType,null).catch(error=>{
+		await oracleProvider.disassociateParticipant(ownerFspId,partyType,partyId,partySubType,null).catch(error=>{
 			this._logger.error(`Unable to disassociate party id: ${partyId} ` + error);
 			throw new UnableToDisassociateParticipantError();
 		});
@@ -369,7 +369,7 @@ export class AccountLookupAggregate  {
 	private async getParticipantIdFromOracle(partyId:string, partyType:string, partySubType:string | null): Promise<string> {
 		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
 		
-		const fspId = await oracleAdapter.getParticipantFspId(partyId, partyType, partySubType,null);
+		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType,null);
 
 		if(!(fspId)) {
 			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);

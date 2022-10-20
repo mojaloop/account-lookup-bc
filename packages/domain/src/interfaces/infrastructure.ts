@@ -75,9 +75,9 @@ export interface IOracleProviderAdapter{
     init(): Promise<void>;
     destroy(): Promise<void>;
     healthCheck(): Promise<boolean>;	
-    getParticipantFspId(partyId: string, partyType:string,partySubType:string|null, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyId: string, partyType:string,partySubType:string|null, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyId: string, partyType:string,partySubType:string|null, currency:string| null):Promise<null>;
+    getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null>;
+    associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null>;
+    disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null>;
 }
 
 export interface IOracleProviderFactory {

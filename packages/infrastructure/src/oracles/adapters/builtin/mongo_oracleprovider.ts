@@ -97,41 +97,42 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		
 	}
 
-	async getParticipantFspId(partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<string | null> {
+	async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null> {
 		try {
 			const data = await this.parties.findOne({
 				partyId: partyId,
 				partyType: partyType,
-				partySubType: partySubType,
+				partySubId: partySubId,
 				currency: currency,
 				
 			});
 
 			if(!data) {
+				this._logger.debug(`Unable to find participant for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
                 return null; // throw new NoSuchParticipantError();
             }
 
 			return data.fspId as unknown as string;
 
 		} catch (e: any) {
-			this._logger.debug(`Unable to get participant for partyId ${partyId}: ${e.message}`);
+			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
 			throw new UnableToGetParticipantError();
 		}
 	}
 
 
-	async associateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
+	async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null> {
 	{
 		const participant = await this.parties.findOne({
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubType: partySubType,
+			partySubId: partySubId,
 			currency: currency,
 		});
 
 		if(participant) {
-			this._logger.debug(`Participant association already exists for partyId ${partyId} and fspId ${fspId}`);
+			this._logger.debug(`Participant association already exists for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
 			throw new ParticipantAssociationAlreadyExistsError();
 		}
 
@@ -139,30 +140,31 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubType: partySubType,
+			partySubId: partySubId,
 			currency: currency,
 		}).catch((e: any) => {
-			this._logger.debug(`Unable to store participant association for partyId ${partyId}: ${e.message}`);
+			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
 			throw new UnableToStoreParticipantAssociationError();
 		}
 		);
-
+			this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
 			return null;
 		}
 	}
 
-	async disassociateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
+	async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null> {
 		await this.parties.deleteOne({
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubType: partySubType,
+			partySubId: partySubId,
 			currency: currency,
 		}).catch((e: any) => {
-			this._logger.debug(`Unable to delete participant association for partyId ${partyId}: ${e.message}`);
+			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
 			throw new UnableToDeleteParticipantAssociationError();
 		});
 
+		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
 		return null;
 	}
 	

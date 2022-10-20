@@ -44,7 +44,7 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
 
  import express from "express";
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
- import { check, validationResult } from "express-validator";
+ import { body, check, validationResult } from "express-validator";
   
  
  export class RemoteOracleExpressRoutes {
@@ -53,25 +53,31 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
      private mainRouter = express.Router();
  
      constructor(logger: ILogger, oracleAdapter: IOracleProviderAdapter) {
-         this._logger = logger.createChild(this.constructor.name);
- 
+         this._logger = logger;
+         this._oracle = oracleAdapter;
          // http oracle routes
 
          this.mainRouter.get("/health",this.healthCheck.bind(this));
 
-         this.mainRouter.get("/participants/:partyType/:partyId/:partySubIdType",
-            [check("partyId").isString().notEmpty().withMessage(" partyId is required")], 
-            this.getParticipantFspId.bind(this));
+         this.mainRouter.get("/participants/:partyType/:partyId/:partySubId",[
+                check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
+                check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
+                check("partySubId").optional(),
+            ], this.getParticipantFspId.bind(this));
          
-         this.mainRouter.delete("/participants/:fspId/:partyType/:partyId/:partySubTypeId",[
-            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string"),
-            check("fspId").isString().notEmpty().withMessage("fspId must be a non empty string")
+         this.mainRouter.delete("/participants/:partyType/:partyId/:partySubId",[
+            check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
+            check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
+            body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
+            check("partySubId").optional(),
          ], this.disassociateParticipant.bind(this));
          
-         this.mainRouter.post("/participants",[
-            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string"),
-            check("fspId").isString().notEmpty().withMessage("fspId must be a non empty string"),
-         ], this.associateParticipant.bind(this));
+         this.mainRouter.post("/participants/:partyType/:partyId/:partySubId",[
+            check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
+            check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
+            body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
+            check("partySubId").optional(),
+        ], this.associateParticipant.bind(this));
  
      }
  
@@ -88,23 +94,30 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
         return true;
     }
 
+    private extractRequestParams(req:express.Request) {
+        const partyType = req.params["partyType"];
+        const partyId = req.params["partyId"];
+        const partySubId = req.params["partySubId"] ?? null;
+        const currency = req.query["currency"]?.toString() ?? null;
+        const fspId = req.body["fspId"] ?? null;
+        return { partyType, partyId, partySubId, currency,fspId };
+    }
 
 
      private async getParticipantFspId(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }             
-        const partyId = req.params["partyId"] ?? null;
-        const partyType = req.params["partyType"] ?? null;
-        const partySubIdType = req.params["partySubIdType"] ?? null;
-        const currency = req.query["currency"] ?? null;
-        this._logger.debug(`Fetching Participant FSP ID [${partyId}].`);
+        const params = this.extractRequestParams(req);
+
+        this._logger.debug(`Fetching Participant FSP ID  with params [${params}].`);
 
          try {
-             // const fetched = await this._accountLookupAggregate.getAllOracles();
-             res.send(null);
+             const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.partySubId, params.currency);
+             this._logger.debug(`Fetched Participant FSP ID [${fetched}] with params [${params}].`);
+             res.send(fetched);
          } catch (err: any) {
-             this._logger.error(err);
+            this._logger.error(`Error Fetching FSP ID with params [${params}]. -${err}`);
              res.status(500).json({
                  status: "error",
                  msg: err.message
@@ -112,27 +125,21 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
          }
      }
 
+
      private async disassociateParticipant(req: express.Request, res: express.Response, next: express.NextFunction) {
          if (!this.validateRequest(req, res)) {
              return;
          }
         
-         const partyId = req.params["partyId"] ?? null;
-         const fspId = req.params["fspId"] ?? null;
-         this._logger.debug(`Disassociating Participant [${partyId}] from FSP [${fspId}].`);
+         const params = this.extractRequestParams(req);
+         this._logger.debug(`Disassociating Participant with params [${params}].`);
 
          try {
-             const fetched = null;
-             if(!fetched){
-                 res.status(404).json({
-                     status: "error",
-                     msg: "Oracle not found"
-                 });
-                 return;
-             }
-             res.send(fetched);
+             const fetched = await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
+             this._logger.debug(`Disassociated Participant with params [${params}].`);           
+             res.send(null);
          } catch (err: any) {
-             this._logger.error(err);
+             this._logger.error(`Error disassociating Participant with params [${params}]. -${err}`);
              res.status(500).json({
                  status: "error",
                  msg: err.message
@@ -145,22 +152,15 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
             return;
         }
        
-        const partyId = req.params["partyId"] ?? null;
-        const fspId = req.params["fspId"] ?? null;
-        this._logger.debug(`Associating Participant [${partyId}] from FSP [${fspId}].`);
+        const params = this.extractRequestParams(req);
+        this._logger.debug(`Associating Participant with params [${params}].`);
 
         try {
-            const fetched = null;
-            if(!fetched){
-                res.status(404).json({
-                    status: "error",
-                    msg: "Oracle not found"
-                });
-                return;
-            }
+            const fetched = await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
+            this._logger.debug(`Associated Participant with params [${params}].`);
             res.send(fetched);
         } catch (err: any) {
-            this._logger.error(err);
+            this._logger.error(`Error associating Participant with params [${params}]. -${err}`);
             res.status(500).json({
                 status: "error",
                 msg: err.message
@@ -170,17 +170,12 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
      
      private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
         try {
+            this._logger.debug(`Health Check.`);
             const fetched = await this._oracle.healthCheck();
-            if(!fetched){
-                res.status(404).json({
-                    status: "error",
-                    msg: "Oracle not found"
-                });
-                return;
-            }
+            this._logger.debug(`Health Check Result [${fetched}].`);
             res.send(fetched);
         } catch (err: any) {
-            this._logger.error(err);
+            this._logger.error(`Error Health Check. -${err}`);
             res.status(500).json({
                 status: "error",
                 msg: err.message

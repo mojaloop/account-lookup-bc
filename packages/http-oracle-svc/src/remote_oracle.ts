@@ -48,9 +48,9 @@ import { watch } from "node:fs";
 
 type Association = {
     fspId: string;
-    partyId: string;
     partyType: string;
-    partySubType: string|null;
+    partyId: string;
+    partySubId: string|null;
     currency: string|null;
 }
 
@@ -61,7 +61,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
     private _fileWatcher: fs.FSWatcher;
     
     constructor(filePath:string, logger:ILogger) {
-        this._logger = logger.createChild(this.constructor.name);
+        this._logger = logger;
         this._filePath = filePath;
 
         this._logger.info(`Starting RemoteOracle with file path: "${this._filePath}"`);
@@ -125,7 +125,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
                     partyId: record.partyId,
                     fspId: record.fspId,
                     partyType: record.partyType,
-                    partySubType: record?.partySubType??"NULL",
+                    partySubId: record?.partySubId??"NULL",
                     currency: record?.currency??"NULL",
                 };
                 //Create key from partyId, partyType, partySubType and currency
@@ -161,54 +161,58 @@ export class RemoteOracle implements IOracleProviderAdapter {
 
     private createKey(data:Omit<Association,"fspId">):string{
         const checkNull = (value:string|null):string => {
-            return value??"N/A";
+            return value??"N_A";
         };
-        return `${data.partyId}-${data.partyType}-${checkNull(data.partySubType)}-${checkNull(data.currency)}`;
+        return `${data.partyId}-${data.partyType}-${checkNull(data.partySubId)}-${checkNull(data.currency)}`;
     }
 
-    async getParticipantFspId(partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<string | null> {
-        const key = this.createKey({partyId, partyType, partySubType, currency});
+    async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null> {
+        const key = this.createKey({partyId, partyType, partySubId, currency});
         const association = this._associations.get(key);
         if(association){
+            this._logger.debug(`Found association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
             return association.fspId;
         }
+        this._logger.debug(`No association found for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
         return null;
     }
     
-    async associateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
+    async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null): Promise<null> {
        //Create key from partyId, partyType,partySubType and currency
-         const key = this.createKey({partyId, partyType, partySubType, currency});
+        const key = this.createKey({partyId, partyType, partySubId, currency});
         const association = this._associations.get(key);
         if(association){
-            this._logger.warn(`Duplicate association found for partyId: ${partyId}`);
-            throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${partySubType}, ${currency}`);
+            this._logger.error(`Association already exists for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
+            throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${partySubId}, ${currency}`);
         }
         else{
-            this._associations.set(key, {partyId, partyType, partySubType, currency, fspId});
+            this._associations.set(key, {partyId, partyType, partySubId, currency, fspId});
+            this._logger.info(`Successfully added association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
             this._saveToFile();
             return null;
         }
     }
 
-    async disassociateParticipant(fspId: string, partyId: string, partyType: string, partySubType: string | null, currency: string | null): Promise<null> {
-        const key = this.createKey({partyId, partyType, partySubType, currency});
+    async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null): Promise<null> {
+        const key = this.createKey({partyId, partyType, partySubId, currency});
         const association = this._associations.get(key);
-        if(association){
+
+        if(association && association.fspId === fspId){
             this._associations.delete(key);
             this._saveToFile();
+            this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
             return null;
         }
         else{
-            this._logger.warn(`No association found for partyId: ${partyId}`);
+            this._logger.error(`No association found for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} and fspId: ${fspId}`);
             throw new Error(`No association found for partyId, partyType,
-            partySubType and currency: ${partyId}, ${partyType}, ${partySubType}, ${currency}`);
+            partySubType and currency: ${partyId}, ${partyType}, ${partySubId}, ${currency}`);
         }
     }
 
     async healthCheck(): Promise<boolean> {
         return true;
     }
-
 
 }
 

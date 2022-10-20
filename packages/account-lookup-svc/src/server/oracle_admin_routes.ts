@@ -44,7 +44,7 @@
  import express from "express";
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
  import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain";
- import { check, validationResult } from "express-validator";
+ import { body, check, validationResult } from "express-validator";
   
  
  export class OracleAdminExpressRoutes {
@@ -69,11 +69,11 @@
          ], this.deleteOracle.bind(this));
          
          this.mainRouter.post("/oracles",[
-            check("name").isString().notEmpty().withMessage("name must be a non empty string"),
-            check("type").isString().notEmpty().withMessage("type must be a non empty string"),
-            check("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string"),
-            check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
-            check("partySubType").optional().isString().withMessage("partySubType must be a non empty string"),
+            body("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
+            body("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+            body("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string").bail(),
+            body("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
+            body("partySubType").optional().isString().withMessage("partySubType must be a non empty string"),
          ], this.createOracle.bind(this));
 
          this.mainRouter.get("/oracles/health/:id",[
