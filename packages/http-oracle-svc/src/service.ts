@@ -50,7 +50,7 @@ import { RemoteOracleExpressRoutes } from "./server/remote_oracle_routes";
 
  // Oracle server
 const REMOTE_ORACLE_PORT = process.env["REMOTE_ORACLE_PORT"] || 3031;
-const FILE_PATH = process.env["ORACLE_FILE"] || "./db.json";
+const FILE_PATH = process.env["ORACLE_FILE"] || "db.json";
 let logger: ILogger;
 let expressApp: Express;
 let remoteOracleServer: Server;

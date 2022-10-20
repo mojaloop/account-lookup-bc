@@ -24,7 +24,7 @@
     "start": "npm run service",
     "service": "tsc && node dist/index.js",
     "build": "tsc",
-    "prebuild": "cp db.json dist/",
+    "prebuild": "cp db.json dist/db.json",
     "clean:dist": "rm -rf dist",
     "clean:node-modules": "rm -rf node_modules",
     "clean:dist-and-node-modules": "rm -rf dist node_modules",
