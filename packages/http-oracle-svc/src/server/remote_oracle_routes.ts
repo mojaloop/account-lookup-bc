@@ -141,7 +141,7 @@ export class RemoteOracleExpressRoutes {
         try {
             await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
             this._logger.debug(`Disassociated Participant with params [${params}].`);
-            res.send(null);
+            res.sendStatus(200);
         } catch (err: any) {
             this._logger.error(`Error disassociating Participant with params [${params}]. -${err}`);
             res.status(500).json({
@@ -162,7 +162,7 @@ export class RemoteOracleExpressRoutes {
         try {
             await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
             this._logger.debug(`Associated Participant with params [${params}].`);
-            res.send();
+            res.sendStatus(200);
         } catch (err: any) {
             this._logger.error(`Error associating Participant with params [${params}]. -${err}`);
             res.status(500).json({
