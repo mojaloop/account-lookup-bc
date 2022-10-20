@@ -59,20 +59,20 @@ import {IOracleProviderAdapter} from '@mojaloop/account-lookup-bc-domain';
 
          this.mainRouter.get("/health",this.healthCheck.bind(this));
 
-         this.mainRouter.get("/participants/:partyType/:partyId/:partySubId",[
+         this.mainRouter.get("/participants/:partyType/:partyId/:partySubId?",[
                 check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
                 check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
                 check("partySubId").optional(),
             ], this.getParticipantFspId.bind(this));
          
-         this.mainRouter.delete("/participants/:partyType/:partyId/:partySubId",[
+         this.mainRouter.delete("/participants/:partyType/:partyId/:partySubId?",[
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
             body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
             check("partySubId").optional(),
          ], this.disassociateParticipant.bind(this));
          
-         this.mainRouter.post("/participants/:partyType/:partyId/:partySubId",[
+         this.mainRouter.post("/participants/:partyType/:partyId/:partySubId?",[
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
             body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),

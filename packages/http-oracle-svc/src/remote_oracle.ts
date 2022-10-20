@@ -105,6 +105,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
             const strContents = await readFile(this._filePath, "utf8");
             if(!strContents || !strContents.length){
                  this._logger.info(`File "${this._filePath}" is empty. No associations to load.`);
+                 return;
             }
             fileData = JSON.parse(strContents);
         }catch (e) {
@@ -152,8 +153,8 @@ export class RemoteOracle implements IOracleProviderAdapter {
     }
 
     private createKey(data:Omit<Association,"fspId">):string{
-        const checkNull = (value:string|null):string => {
-            return value??"N_A";
+        const checkNull = (value:string|null|undefined):string => {
+            return (value === null || value === undefined)?"NULL":value;
         };
         return `${data.partyId}-${data.partyType}-${checkNull(data.partySubId)}-${checkNull(data.currency)}`;
     }
@@ -173,6 +174,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
        //Create key from partyId, partyType,partySubType and currency
         const key = this.createKey({partyId, partyType, partySubId, currency});
         const association = this._associations.get(key);
+        
         if(association){
             this._logger.error(`Association already exists for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
             throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${partySubId}, ${currency}`);
