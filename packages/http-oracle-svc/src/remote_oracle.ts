@@ -78,12 +78,7 @@ export class RemoteOracle implements IOracleProviderAdapter {
             return;
         }
 
-
-        const loadSuccess = await this._loadFromFile();
-        this._logger.info(`File "${this._filePath}" loaded success: ${loadSuccess}`);
-        if(!loadSuccess){
-            this._logger.error(`No associations loaded "${this._filePath}"`);
-        }
+        await this._loadFromFile();
 
         let fsWait:NodeJS.Timeout | undefined; // debounce wait
         
@@ -103,13 +98,13 @@ export class RemoteOracle implements IOracleProviderAdapter {
         this._fileWatcher.close();
     }
 
-    private async _loadFromFile(): Promise<boolean>{
+    private async _loadFromFile(): Promise<void>{
         this._associations.clear();
         let fileData: any;
         try{
             const strContents = await readFile(this._filePath, "utf8");
             if(!strContents || !strContents.length){
-                return false;
+                 this._logger.info(`File "${this._filePath}" is empty. No associations to load.`);
             }
             fileData = JSON.parse(strContents);
         }catch (e) {
@@ -141,8 +136,6 @@ export class RemoteOracle implements IOracleProviderAdapter {
         }
 
         this._logger.info(`Successfully read file contents - associations: ${this._associations.size}`);
-
-        return true;
     }
     
     private async _saveToFile():Promise<void>{
