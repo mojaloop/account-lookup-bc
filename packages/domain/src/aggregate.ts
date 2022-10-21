@@ -175,98 +175,102 @@ export class AccountLookupAggregate  {
 		let eventToPublish = null;
 		switch(message.msgName){
 			case PartyQueryReceivedEvt.name:
-				eventToPublish = await this.getPartyEvent(payload);
+				eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
 				break;
 			case PartyInfoAvailableEvt.name:
-				eventToPublish = await this.getPartyInfoEvent(payload);
+				eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
 				break;
 			case ParticipantQueryReceivedEvt.name:
-				eventToPublish = await this.getParticipantEvent(payload);
+				eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
 				break;
 			case ParticipantAssociationRequestReceivedEvt.name:
-				eventToPublish = await this.participantAssociationEvent(payload);
+				eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(message as ParticipantAssociationRequestReceivedEvt);
 				break;
 			case ParticipantDisassociateRequestReceivedEvt.name:
-				eventToPublish = await this.participantDisassociationEvent(payload);
+				eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
 				break;
 			default:
 				this._logger.error(`message type has invalid format or value ${message.msgName}`);
 				throw new InvalidMessageTypeError();
 			}
-		if(eventToPublish != null){
-			eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
+		if(eventToPublish){
 			await this._messageProducer.send(eventToPublish);
-		}
-		else{
+		}else{
 			throw new UnableToProcessMessageError();
 		}
 
 	}
 
-	private async getPartyEvent({ requesterFspId, partyType, partyId, partySubType, currency, destinationFspId }: PartyQueryReceivedEvtPayload):Promise<PartyInfoRequestedEvt>{
-		this._logger.debug(`Got getPartyEvent msg for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId} destinationFspId: ${destinationFspId}`);
-		let destinationFspIdToUse = destinationFspId;
-		await this.validateParticipant(requesterFspId);
+	private async handlePartyQueryReceivedEvt(msg: PartyQueryReceivedEvt):Promise<PartyInfoRequestedEvt>{
+		this._logger.debug(`Got getPartyEvent msg for partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId} - requesterFspId: ${msg.payload.requesterFspId} destinationFspId: ${msg.payload.destinationFspId}`);
+		let destinationFspIdToUse = msg.payload.destinationFspId;
+		await this.validateParticipant(msg.payload.requesterFspId);
 
 		if(!destinationFspIdToUse){
-			destinationFspIdToUse = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency);
+			destinationFspIdToUse = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.partySubType, msg.payload.currency);
 		}
 
 		await this.validateParticipant(destinationFspIdToUse);
 
 		const payload:PartyInfoRequestedEvtPayload = { 
-			requesterFspId: requesterFspId ,
+			requesterFspId: msg.payload.requesterFspId ,
 			destinationFspId: destinationFspIdToUse,
-			partyType: partyType,
-			partyId: partyId,
-			partySubType: partySubType,
-			currency: currency
+			partyType: msg.payload.partyType,
+			partyId: msg.payload.partyId,
+			partySubType: msg.payload.partySubType,
+			currency: msg.payload.currency
 		};
 
 		const event = new PartyInfoRequestedEvt(payload);
+
+		// carry over
+		event.fspiopOpaqueState = msg.fspiopOpaqueState;
 
 		return event;
 		
 	}
 
-	private async getPartyInfoEvent({ requesterFspId, ownerFspId, partyType, partyId, partySubType, destinationFspId, currency, partyName, partyDoB }: PartyInfoAvailableEvtPayload):Promise<PartyQueryResponseEvt>{
-		this._logger.debug(`Got getPartyInfoEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId} destinationFspId: ${destinationFspId}`);
-		await this.validateParticipant(requesterFspId);
+	private async handlePartyInfoAvailableEvt(msg:PartyInfoAvailableEvt):Promise<PartyQueryResponseEvt>{
+		this._logger.debug(`Got getPartyInfoEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId} - requesterFspId: ${msg.payload.requesterFspId} destinationFspId: ${msg.payload.destinationFspId}`);
+		await this.validateParticipant(msg.payload.requesterFspId);
 
-		await this.validateParticipant(destinationFspId);
+		await this.validateParticipant(msg.payload.destinationFspId);
 
-		const payload:PartyQueryResponseEvtPayload = { 
-			requesterFspId: requesterFspId,
-			destinationFspId: destinationFspId as string,
-			partyDoB: partyDoB,
-			partyName: partyName,
-			ownerFspId: ownerFspId,
-			partyType: partyType,
-			partyId: partyId,
-			partySubType: partySubType,
-			currency: currency,
+		const payload:PartyQueryResponseEvtPayload = {
+			requesterFspId: msg.payload.requesterFspId,
+			destinationFspId: msg.payload.destinationFspId as string,
+			partyDoB: msg.payload.partyDoB,
+			partyName: msg.payload.partyName,
+			ownerFspId: msg.payload.ownerFspId,
+			partyType: msg.payload.partyType,
+			partyId: msg.payload.partyId,
+			partySubType: msg.payload.partySubType,
+			currency: msg.payload.currency,
 		};
 
 		const event = new PartyQueryResponseEvt(payload);
 
+		// carry over
+		event.fspiopOpaqueState = msg.fspiopOpaqueState;
+
 		return event;
 	}
 
-	private async getParticipantEvent({ requesterFspId, partyType, partyId, partySubType, currency }: ParticipantQueryReceivedEvtPayload):Promise<ParticipantQueryReceivedEvt>{
-		this._logger.debug(`Got getParticipantEvent msg for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} currency: ${currency} - requesterFspId: ${requesterFspId}`);
-		await this.validateParticipant(requesterFspId);
+	private async handleParticipantQueryReceivedEvt(msg: ParticipantQueryReceivedEvt):Promise<ParticipantQueryReceivedEvt>{
+		this._logger.debug(`Got getParticipantEvent msg for partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId} currency: ${msg.payload.currency} - requesterFspId: ${msg.payload.requesterFspId}`);
+		await this.validateParticipant(msg.payload.requesterFspId);
 
-		const participantId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency);
+		const participantId = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.partySubType, msg.payload.currency);
 
 		await this.validateParticipant(participantId);
 
 		const payload: ParticipantQueryResponseEvtPayload = { 
-			requesterFspId: requesterFspId,
+			requesterFspId: msg.payload.requesterFspId,
 			ownerFspId: participantId,
-			partyType: partyType,
-			partyId: partyId,
-			partySubType: partySubType,
-			currency: currency
+			partyType: msg.payload.partyType,
+			partyId: msg.payload.partyId,
+			partySubType: msg.payload.partySubType,
+			currency: msg.payload.currency
 		}; 
 
 		const event = new ParticipantQueryResponseEvt(payload);
@@ -274,46 +278,49 @@ export class AccountLookupAggregate  {
 		return event;
 	}
 
-	private async participantAssociationEvent({ ownerFspId, partyType, partySubType, partyId, currency }: ParticipantAssociationRequestReceivedEvtPayload):Promise<ParticipantAssociationCreatedEvt>{
-		this._logger.debug(`Got participantAssociationEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId}`);
-		await this.validateParticipant(ownerFspId);
+	private async handleParticipantAssociationRequestReceivedEvt(msg: ParticipantAssociationRequestReceivedEvt):Promise<ParticipantAssociationCreatedEvt>{
+		this._logger.debug(`Got participantAssociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
+		await this.validateParticipant(msg.payload.ownerFspId);
 
-		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
+		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType, msg.payload.partySubType);
 
-		await oracleProvider.associateParticipant(ownerFspId,partyType, partyId,partySubType,currency).catch(error=>{
-			this._logger.error(`Unable to associate party id: ${partyId} ` + error);
+		await oracleProvider.associateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.partySubType, msg.payload.currency).catch(error=>{
+			this._logger.error(`Unable to associate party id: ${msg.payload.partyId} ` + error);
 			throw new UnableToAssociateParticipantError();
 		});
 
+
 		const payload : ParticipantAssociationCreatedEvtPayload = {
-			partyId,
-			ownerFspId,
-			partyType,
-			partySubType
+			partyId: msg.payload.partyId,
+			ownerFspId: msg.payload.ownerFspId,
+			partyType: msg.payload.partyType,
+			partySubType: msg.payload.partySubType
 		};
 
 		const event = new ParticipantAssociationCreatedEvt(payload);
+
+		event.fspiopOpaqueState = msg.fspiopOpaqueState;
 
 		return event;
 
 	}
 
-	private async participantDisassociationEvent({ ownerFspId, partyType, partySubType,partyId, currency }: ParticipantDisassociateRequestReceivedEvtPayload):Promise<ParticipantAssociationRemovedEvt>{
-		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${ownerFspId} partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId}`);
-		await this.validateParticipant(ownerFspId);
+	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt):Promise<ParticipantAssociationRemovedEvt>{
+		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
+		await this.validateParticipant(msg.payload.ownerFspId);
 		
-		const oracleProvider = await this.getOracleAdapter(partyType, partySubType);
+		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType, msg.payload.partySubType);
 
-		await oracleProvider.disassociateParticipant(ownerFspId,partyType,partyId,partySubType,currency).catch(error=>{
-			this._logger.error(`Unable to disassociate party id: ${partyId} ` + error);
+		await oracleProvider.disassociateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.partySubType, msg.payload.currency).catch(error=>{
+			this._logger.error(`Unable to disassociate party id: ${msg.payload.partyId} ` + error);
 			throw new UnableToDisassociateParticipantError();
 		});
 
-		const payload:ParticipantAssociationRemovedEvtPayload = { 
-			partyId,
-			ownerFspId,
-			partyType,
-			partySubType
+		const payload:ParticipantAssociationRemovedEvtPayload = {
+			partyId: msg.payload.partyId,
+			ownerFspId: msg.payload.ownerFspId,
+			partyType: msg.payload.partyType,
+			partySubType: msg.payload.partySubType
 		}; 
 
 		const event = new ParticipantAssociationRemovedEvt(payload);

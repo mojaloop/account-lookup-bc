@@ -83,7 +83,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ): Promise<string|null> {
         let url = `/participants/${partyType}/${partyId}`;
         if(partySubId) url+=`/${partySubId}`;
-        if(currency) url+=`?${currency}`;
+        if(currency) url+=`?currency=${currency}`;
 
         return this.httpClient.get(url).then((
             response: AxiosResponse) => {
@@ -97,30 +97,25 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null> {
         let url = `/participants/${partyType}/${partyId}`;
         if(partySubId) url+=`/${partySubId}`;
-        if(currency) url+=`?${currency}`;
+        if(currency) url+=`?currency=${currency}`;
 
-        return await this.httpClient.post(url,
-            { fspId: fspId}, 
-            { params: currency })
-            .then((
+        return await this.httpClient.post(url, { fspId: fspId}).then((
                 response: AxiosResponse) => {
                 this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
-                this._logger.error(`associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
-                throw new Error('Error associating participant');
+                const err= new Error(`associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
+                this._logger.error(err);
+                throw err;
             });
     }
 
     async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null> {
         let url = `/participants/${partyType}/${partyId}`;
         if(partySubId) url+=`/${partySubId}`;
-        if(currency) url+=`?${currency}`;
+        if(currency) url+=`?currency=${currency}`;
 
-        return await this.httpClient.post(url,
-            { fspId: fspId}, 
-            { params: currency })
-        .then((
+        return await this.httpClient.post(url, { fspId: fspId}).then((
             response: AxiosResponse) => {
             this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
             return null;
