@@ -73,7 +73,10 @@
             body("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
             body("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string").bail(),
             body("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
-            body("partySubType").optional().isString().withMessage("partySubType must be a non empty string"),
+            body("partySubType").optional({
+                nullable: true,
+                checkFalsy: true
+            }).isString(),
          ], this.createOracle.bind(this));
 
          this.mainRouter.get("/oracles/health/:id",[
