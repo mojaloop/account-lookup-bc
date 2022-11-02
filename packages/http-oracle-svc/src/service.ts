@@ -47,7 +47,7 @@ import { RemoteOracle } from "./remote_oracle";
 import { RemoteOracleExpressRoutes } from "./server/remote_oracle_routes";
 import {DefaultLogger} from "@mojaloop/logging-bc-client-lib";
 
-// Oracle server
+// Oracle routes
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "http-oracle-svc";
 const APP_VERSION = "0.0.1";
@@ -65,14 +65,14 @@ export async function start(){
         remoteOracle = new RemoteOracle(FILE_PATH, logger);
         await remoteOracle.init();
 
-        // Start oracle http server
+        // Start oracle http routes
         expressApp = express();
         expressApp.use(express.json()); // for parsing application/json
         expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
         const routes = new RemoteOracleExpressRoutes(logger, remoteOracle);
 
-        expressApp.use("/remote-oracle", routes.MainRouter);
+        expressApp.use("/", routes.MainRouter);
 
         expressApp.use((req, res) => {
             // catch all
@@ -94,6 +94,6 @@ export async function start(){
 export async function stop(): Promise<void> {
     logger.debug("Tearing down oracle");
     await remoteOracle.destroy();
-    logger.debug("Tearing down oracle server");
+    logger.debug("Tearing down oracle routes");
     remoteOracleServer.close();
 }

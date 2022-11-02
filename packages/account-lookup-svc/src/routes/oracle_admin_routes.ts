@@ -71,12 +71,7 @@
          this.mainRouter.post("/oracles",[
             body("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
             body("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            body("endpoint").isString().notEmpty().withMessage("endpoint must be a non empty string").bail(),
-            body("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
-            body("partySubType").optional({
-                nullable: true,
-                checkFalsy: true
-            }).isString(),
+            body("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail()
          ], this.createOracle.bind(this));
 
          this.mainRouter.get("/oracles/health/:id",[
@@ -176,14 +171,16 @@
      private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
-        }        
+        }
 
         const oracle = req.body;
-        this._logger.debug(`creating Oracle [${oracle}].`);
+        this._logger.debug(`Received Oracle [${oracle}] in createOracle.`);
 
         try {
-            const fetched = await this._accountLookupAggregate.addOracle(oracle);
-            res.send(fetched);
+            const createdId = await this._accountLookupAggregate.addOracle(oracle);
+            res.send({
+                id: createdId
+            });
         } catch (err: any) {
             this._logger.error(err);
             res.status(500).json({
