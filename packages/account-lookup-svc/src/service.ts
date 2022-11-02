@@ -50,7 +50,7 @@ import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { ParticipantClient } from "@mojaloop/account-lookup-bc-client";
 import { MongoOracleFinderRepo, OracleAdapterFactory } from "@mojaloop/account-lookup-bc-infrastructure";
 import express, {Express} from "express";
-import { OracleAdminExpressRoutes } from "./server/oracle_admin_routes";
+import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
@@ -93,10 +93,10 @@ let oracleProviderFactory: IOracleProviderFactory;
 // Aggregate
 let aggregate: AccountLookupAggregate;
 
-// Participant server
+// Participant routes
 let participantService: IParticipantService;
 
-// Admin server
+// Admin routes
 const ADMIN_PORT = process.env["ADMIN_PORT"] || 3030;
 let expressApp: Express;
 let oracleAdminServer: Server;
@@ -132,7 +132,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     
     messageConsumer.setCallbackFn(callbackFunction);
 
-    // Start admin http server
+    // Start admin http routes
     expressApp = express();
     expressApp.use(express.json()); // for parsing application/json
     expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
@@ -188,7 +188,7 @@ export async function stop(): Promise<void> {
   await messageConsumer.destroy(true);
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
-  logger.debug("Tearing down oracle admin server");
+  logger.debug("Tearing down oracle admin routes");
   oracleAdminServer.close();
 }
 

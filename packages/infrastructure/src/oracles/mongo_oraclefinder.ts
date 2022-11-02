@@ -47,12 +47,8 @@
 	} from 'mongodb';
 import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
 import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from '../errors';
-import {
-	IOracleFinder, NoSuchOracleError,
-	Oracle,
-	OracleCreationRequest,
-} from "@mojaloop/account-lookup-bc-domain";
-import crypto from 'crypto';
+import {IOracleFinder, NoSuchOracleError, Oracle} from "@mojaloop/account-lookup-bc-domain";
+
 export class MongoOracleFinderRepo implements IOracleFinder{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
@@ -92,31 +88,10 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		}
 	}
 
-	async addOracle(oracle: OracleCreationRequest): Promise<Oracle> {
+	async addOracle(oracle: Oracle): Promise<void> {
 		try {
-			const newOracle: Oracle = {
-				id: crypto.randomUUID(),
-				name: oracle.name,
-				partyType: oracle.partyType,
-				partySubType: oracle.partySubType,
-				endpoint: oracle.endpoint,
-				type: oracle.type,
-			};
 
-			const isOracleAlreadyRegistered = await this.oracleProviders.findOne(
-				{
-					partyType: oracle.partyType,
-					partySubType: oracle.partySubType,
-					endpoint: oracle.endpoint,
-				},
-			);
-
-			if(isOracleAlreadyRegistered) {
-				throw new OracleAlreadyRegisteredError();
-			}
-
-			await this.oracleProviders.insertOne(newOracle);
-			return newOracle;
+			await this.oracleProviders.insertOne(oracle);
 			
 		} catch (e: any) {
 			this._logger.error(`Unable to insert oracle: ${e.message}`);
@@ -146,6 +121,12 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 
 	async getOracleById(id:string):Promise<Oracle|null>{
 		const oracle = await this.oracleProviders.findOne({id: id });
+		if(!oracle) return null;
+		return this.mapToOracle(oracle);
+	}
+
+	async getOracleByName(name:string):Promise<Oracle|null>{
+		const oracle = await this.oracleProviders.findOne({name: name });
 		if(!oracle) return null;
 		return this.mapToOracle(oracle);
 	}

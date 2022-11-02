@@ -43,8 +43,22 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { InvalidMessagePayloadError, InvalidMessageTypeError, InvalidParticipantIdError, NoSuchOracleAdapterError, NoSuchOracleError, NoSuchParticipantError, NoSuchParticipantFspIdError, RequiredParticipantIsNotActive, UnableToAddOracleError,  UnableToAssociateParticipantError,  UnableToDisassociateParticipantError, UnableToProcessMessageError } from "./errors";
-import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle, OracleCreationRequest} from "./interfaces/infrastructure";
+import {
+	DuplicateOracleError,
+	InvalidMessagePayloadError,
+	InvalidMessageTypeError,
+	InvalidParticipantIdError,
+	NoSuchOracleAdapterError,
+	NoSuchOracleError,
+	NoSuchParticipantError,
+	NoSuchParticipantFspIdError,
+	RequiredParticipantIsNotActive,
+	UnableToAddOracleError,
+	UnableToAssociateParticipantError,
+	UnableToDisassociateParticipantError,
+	UnableToProcessMessageError
+} from "./errors";
+import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
 import {
 	AccountLookUperrorEvt,
 	AccountLookUperrorEvtPayload,
@@ -70,6 +84,7 @@ import {
 	ParticipantQueryResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {randomUUID} from "crypto";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -385,17 +400,24 @@ export class AccountLookupAggregate  {
 		return fspId;
 	}
 
-	public async addOracle(oracle: OracleCreationRequest): Promise<Oracle> {
-		const addedOracle = await this._oracleFinder.addOracle(oracle);
-		
-		if(!addedOracle) {
-			this._logger.debug(`oracle ${oracle} not added`);
-			throw new UnableToAddOracleError();
+	// TODO create methods never return the created entity, only the id
+	public async addOracle(oracle: Oracle): Promise<string> {
+		if(oracle.id && await this._oracleFinder.getOracleById(oracle.id)) {
+			throw new DuplicateOracleError("Oracle with same id already exists");
 		}
-		const addedOracleProvider = this._oracleProvidersFactory.create(addedOracle);
+
+		if(!oracle.id) oracle.id = randomUUID();
+
+		if(await this._oracleFinder.getOracleByName(oracle.name)) {
+			throw new DuplicateOracleError("Oracle with same name already exists");
+		}
+
+		await this._oracleFinder.addOracle(oracle);
+
+		const addedOracleProvider = this._oracleProvidersFactory.create(oracle);
 		await addedOracleProvider.init();
 		this.oracleProvidersAdapters.push(addedOracleProvider);
-		return addedOracle;
+		return oracle.id;
 	}
 	
 	public async removeOracle(id: string): Promise<void> {

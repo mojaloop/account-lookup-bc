@@ -43,5 +43,5 @@ optionally within square brackets <email>.
 import { start } from "./service";
 
 start().then(() => {
- console.log("Started remote oracle server");
+ console.log("Started remote oracle routes");
 });

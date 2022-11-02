@@ -101,6 +101,7 @@ export class UnableToDisassociateParticipantError extends Error {
 }
 
 // Oracle
+export class DuplicateOracleError extends Error{}
 export class NoSuchOracleAdapterError extends Error {
     constructor(message?: string) {
         super(message || "No such oracle adapter");

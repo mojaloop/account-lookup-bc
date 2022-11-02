@@ -57,15 +57,15 @@ export type Oracle = {
     endpoint: string;
 }
 
-export type OracleCreationRequest = Omit<Oracle,"id">;
 
 export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;
-    addOracle(oracle: OracleCreationRequest):Promise<Oracle>;
+    addOracle(oracle: Oracle):Promise<void>;
     removeOracle(id: string):Promise<void>;
     getAllOracles():Promise<Oracle[]>;
     getOracleById(id:string):Promise<Oracle|null>;
+    getOracleByName(name:string):Promise<Oracle|null>;
     getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
 }
 
