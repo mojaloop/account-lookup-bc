@@ -54,7 +54,7 @@ import {
 } from "@mojaloop/account-lookup-bc-domain";
 import { ILocalCache, LocalCache, MongoOracleFinderRepo, MongoOracleProviderRepo} from '../../src';
 import { mockedOracleList, mockedParticipantFspIds, mockedParticipantIds, mockedParticipantResultIds, mockedParticipantResultSubIds, mockedParticipantSubIds, mockedParticipantTypes, mockedPartyIds, mockedPartyResultIds, mockedPartyResultSubIds, mockedPartySubIds, mockedPartyTypes } from "./mocks/data";
-import { mongoQuery, MongoDbOperationEnum } from "./helpers/db";
+import { mongoQuery, MongoDbOperationEnum } from "../utils/helpers/db";
 
  /* ********** Constants ********** */
 
