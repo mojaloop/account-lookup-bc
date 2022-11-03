@@ -53,10 +53,9 @@ export type Oracle = {
     name: string;
     type: OracleType;
     partyType: string;
-    partySubType?: string | null;
-    endpoint: string;
+    partySubType: string | null;
+    endpoint: string | null;
 }
-
 
 export interface IOracleFinder{
 	init(): Promise<void>;

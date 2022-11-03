@@ -61,9 +61,16 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     }
 
     init(): Promise<void> {
-        this.httpClient = axios.create({
-			baseURL: this._oracle.endpoint,
-		});
+            const url = this._oracle.endpoint;
+            if(!url){
+                throw new Error('No endpoint defined for oracle');
+            }
+            else {
+                this.httpClient = axios.create({
+                    baseURL: this._oracle.endpoint as string,
+                });
+            }
+
         return Promise.resolve();
     }
 
