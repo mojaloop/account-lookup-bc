@@ -39,6 +39,20 @@
  **/
 
  "use strict";
+
+
+export class OracleTypeNotSupportedError extends Error {
+  constructor(message?: string) {
+    super(message || "Oracle type not supported");
+  }
+}
+
+export class NoSuchParticipantError extends Error {
+    constructor(message?: string) {
+        super(message||"No such participant");
+    }
+}
+
 export class UnableToGetParticipantError extends Error {
     constructor(message?: string) {
         super(message||"Unable to get participant");

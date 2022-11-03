@@ -46,7 +46,7 @@ import {
 	IOracleProviderAdapter,
 	OracleType, Oracle
 } from "@mojaloop/account-lookup-bc-domain";
-import { ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../../errors";
+import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../../errors";
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
@@ -109,7 +109,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 			if(!data) {
 				this._logger.debug(`Unable to find participant for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
-                return null; // throw new NoSuchParticipantError();
+                throw new NoSuchParticipantError();
             }
 
 			return data.fspId as unknown as string;

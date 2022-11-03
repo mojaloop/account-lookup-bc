@@ -42,7 +42,7 @@
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { mongoQuery, MongoDbOperationEnum } from "../utils/helpers/db";
-import { MongoOracleFinderRepo } from "../../src/index";
+import { MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "../../src/index";
 import { NoSuchOracleError, Oracle } from "@mojaloop/account-lookup-bc-domain";
 
 const logger: ILogger = new ConsoleLogger();
@@ -75,6 +75,11 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
     afterAll(async () => {
         await oracleFinder.destroy();
     });
+
+    test("should be able to init the builtin oracle finder", async () => {
+        expect(oracleFinder).toBeDefined();
+    });
+
 
     test("should return an empty array if there are no oracles in the database", async () => {
         // Act
@@ -129,6 +134,21 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
         const oracles = await oracleFinder.getAllOracles();
         expect(oracles).toEqual([builtInOracle, remoteOracle]);
         
+    });
+
+    test("should return error if oracle is already registered", async () => {
+        // Arrange
+        const oracle: Oracle = {
+            id: "testOracleId1",
+            endpoint: null,
+            name: "testName",
+            partyType: "testPartyType",
+            type: "builtin",
+            partySubType: "testPartySubType",
+        };
+
+        // Act
+        await expect(oracleFinder.addOracle(oracle)).rejects.toThrow(OracleAlreadyRegisteredError);
     });
 
     test("should return an oracle by its id", async () => {

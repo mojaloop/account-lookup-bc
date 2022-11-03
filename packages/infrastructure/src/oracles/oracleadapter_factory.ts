@@ -42,6 +42,7 @@
 
 import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { OracleTypeNotSupportedError } from "../errors";
 import { MongoOracleProviderRepo } from "./adapters/builtin/mongo_oracleprovider";
 import { HttpOracleProvider } from "./adapters/remote/http_oracleprovider";
 
@@ -63,7 +64,7 @@ export class OracleAdapterFactory implements IOracleProviderFactory {
             case "remote-http":
                 return new HttpOracleProvider(oracle, this._logger);
             default:
-                throw new Error("Invalid oracle type");
+                throw new OracleTypeNotSupportedError();
         }
     }
 }

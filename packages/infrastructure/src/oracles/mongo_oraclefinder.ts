@@ -90,6 +90,10 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 
 	async addOracle(oracle: Oracle): Promise<void> {
 		try {
+			const oracleAlreadyPresent = await this.getOracle(oracle.type, oracle.partySubType);
+			if(oracleAlreadyPresent){
+				throw new OracleAlreadyRegisteredError();
+			};
 
 			await this.oracleProviders.insertOne(oracle);
 			

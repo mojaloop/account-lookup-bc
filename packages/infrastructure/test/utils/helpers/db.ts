@@ -44,7 +44,8 @@ import { MongoClient } from "mongodb";
 
 export enum MongoDbOperationEnum {
     INSERT_ONE = 'insertOne',
-    DELETE_MANY = 'deleteMany'
+    DELETE_MANY = 'deleteMany',
+    FIND = 'find',
 }
 
 interface IMongoDBQuery {
@@ -56,6 +57,7 @@ interface IMongoDBQuery {
     cb?: Function
 }
 
+
 export async function mongoQuery({
     dbUrl,
     dbName,
@@ -63,7 +65,7 @@ export async function mongoQuery({
     operation,
     query = {},
     cb = Function
-}: IMongoDBQuery) {
+}: IMongoDBQuery):Promise<any> {
     const client = new MongoClient(dbUrl);
     
     try {
@@ -81,3 +83,4 @@ export async function mongoQuery({
         await client.close();
       }
 }
+

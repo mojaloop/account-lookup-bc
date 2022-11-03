@@ -41,6 +41,14 @@
 
 "use strict";
 
+import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
+
+describe("Infrastructure - Builtin Oracle Provider Integration tests", () => {
+
+});
 
 
 

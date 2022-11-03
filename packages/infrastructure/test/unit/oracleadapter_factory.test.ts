@@ -1,0 +1,126 @@
+/**
+ License
+ --------------
+ Copyright © 2021 Mojaloop Foundation
+
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
+
+ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+ Contributors
+ --------------
+ This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+
+ * Gates Foundation
+ - Name Surname <name.surname@gatesfoundation.com>
+
+ * Coil
+ - Jason Bruwer <jason.bruwer@coil.com>
+
+ * Crosslake
+ - Pedro Sousa Barreto <pedrob@crosslaketech.com>
+
+ * Gonçalo Garcia <goncalogarcia99@gmail.com>
+ 
+ * Arg Software
+ - José Antunes <jose.antunes@arg.software>
+ - Rui Rocha <rui.rocha@arg.software>
+
+ --------------
+ **/
+
+"use strict";
+
+import { Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { OracleAdapterFactory, OracleTypeNotSupportedError } from "../../src/index";
+import { MongoOracleProviderRepo } from "../../src/index";
+import { HttpOracleProvider } from "../../src/index";
+
+jest.mock("MongoOracleProviderRepo", () => {
+    return {
+        MongoOracleProviderRepo: jest.fn(),
+}});
+
+jest.mock("HttpOracleProvider", () => {
+    return {
+        HttpOracleProvider: jest.fn(),
+}});
+
+
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
+
+const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger);
+
+describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
+    
+    test("should return a remote Oracle Adapter", async () => {
+        // Arrange
+        const oracle: Oracle = {
+            id: "1",
+            name: "oracle 1",
+            type: "remote-http",
+            endpoint: "http://localhost:3000",
+            partyType: "MSISDN",
+            partySubType: null
+            
+        }
+        
+        // Act
+        const oracleAdapter = oracleAdapterFactory.create(oracle);
+
+        // Assert
+        expect(oracleAdapter).toBeDefined();~
+        expect(oracleAdapter).toBeInstanceOf(HttpOracleProvider);
+    });
+
+    test("should return a builtin Oracle Adapter", async () => {
+        // Arrange
+        const oracle: Oracle = {
+            id: "1",
+            name: "oracle 1",
+            type: "builtin",
+            endpoint: null,
+            partyType: "MSISDN",
+            partySubType: null
+            
+        }
+        
+        // Act
+        const oracleAdapter = oracleAdapterFactory.create(oracle);
+
+        // Assert
+        expect(oracleAdapter).toBeDefined();
+        expect(oracleAdapter).toBeInstanceOf(MongoOracleProviderRepo);
+    });
+
+    test("should throw an error when the oracle type is not supported", async () => {
+        // Arrange
+        const oracle: any = {
+            id: "1",
+            name: "oracle 1",
+            type: "unsupported",
+            endpoint: null,
+            partyType: "MSISDN",
+            partySubType: null
+            
+        }
+        
+        // Act and Assert
+
+        expect(() => oracleAdapterFactory.create(oracle)).toThrowError(OracleTypeNotSupportedError);
+    });
+
+}); 
+
+
