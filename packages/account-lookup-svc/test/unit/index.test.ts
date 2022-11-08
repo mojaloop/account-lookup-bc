@@ -39,9 +39,7 @@
  **/
 
 import {AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
-import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/data";
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
-import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
 import { MemoryOracleAdminRoutes } from "./mocks/memory_oracle_admin_routes";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
 import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
@@ -49,6 +47,7 @@ import { MemoryParticipantService } from "./mocks/memory_participant_service";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "../../src/service";
+import { MemoryOracleProviderFactory } from './mocks/memory_oracle_provider_factory';
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -57,15 +56,6 @@ logger.setLogLevel(LogLevel.FATAL);
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
 );
-const oracleProviderList: IOracleProvider[] = [];
-
-for(let i=0 ; i<mockedOracleList.length ; i+=1) {
-    const oracleProvider: IOracleProvider = new MemoryOracleProvider(
-        logger,
-    );
-    oracleProvider.partyType = mockedOracleList[i].type;
-    oracleProviderList.push(oracleProvider);
-}
 
 const mockedProducer: IMessageProducer = new MemoryMessageProducer();
 
@@ -73,10 +63,16 @@ const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
 const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
 
+const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
+
+const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
+
+const mockedAdminRoutes = new MemoryOracleAdminRoutes();
+
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
-    oracleFinder,
-    oracleProviderList,
+    mockedOracleFinder,
+    mockedOracleProviderFactory,
     mockedProducer,
     mockedParticipantService
 );
@@ -86,9 +82,6 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
 
     afterEach(async () => {
         jest.resetAllMocks();
-        await mockedConsumer.destroy(true);
-        await mockedProducer.destroy();
-        await mockedAggregate.destroy();
     });
 
     test("should be able to run start and init all variables", async()=>{
@@ -101,7 +94,8 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
         
         // Act
-        await start(logger,mockedConsumer, mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate);
+        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
+            mockedParticipantService, mockedAdminRoutes, mockedAggregate);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1); 
@@ -123,7 +117,9 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
         const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
 
         // Act
-        await start(logger,mockedConsumer,mockedProducer, oracleFinder,oracleProviderList, mockedParticipantService, mockedAggregate);
+        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, 
+            mockedOracleProviderFactory, mockedParticipantService, mockedAdminRoutes, mockedAggregate);
+
 
         // Assert
         expect(mockedProcessStub).toBeCalledTimes(1);

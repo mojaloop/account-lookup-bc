@@ -42,39 +42,41 @@
 
 
 import {
-    IOracleFinder, IOracleProvider, UnableToGetOracleError
+    IOracleFinder, Oracle
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleList } from "./data";
-import { MemoryOracleProvider } from "./memory_oracle_providers";
-
-
 export class MemoryOracleFinder implements IOracleFinder {
     private readonly logger: ILogger;
-    private oracleList: {id:string, type:string}[];
-
     constructor(
         logger: ILogger,
     ) {
         this.logger = logger;
-        this.oracleList = mockedOracleList;
+    }
+    init(): Promise<void> {
+        return Promise.resolve();
+    }
+    destroy(): Promise<void> {
+        return Promise.resolve();
+    }
+    addOracle(oracle: Oracle): Promise<void> {
+        return Promise.resolve();
+    }
+    removeOracle(id: string): Promise<void> {
+        return Promise.resolve();
+    }
+    getAllOracles(): Promise<Oracle[]> {
+        const oracles = [];
+        return Promise.resolve(oracles);
+    }
+    getOracleById(id: string): Promise<Oracle | null> {
+        throw new Error("Method not implemented.");
+    }
+    getOracleByName(name: string): Promise<Oracle | null> {
+        throw new Error("Method not implemented.");
+    }
+    getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null> {
+        throw new Error("Method not implemented.");
     }
 
-    async init(): Promise<void> {
-        
-    }
-
-    async destroy(): Promise<void> {
- 
-    }
-
-    async getOracleProvider(partyType: string): Promise<IOracleProvider> {
-        const foundOracle = this.oracleList.find(oracle => oracle.type === partyType);
-        
-        if(foundOracle) {
-            return new MemoryOracleProvider(this.logger);
-            
-        }
-        throw new UnableToGetOracleError();
-    }
 }

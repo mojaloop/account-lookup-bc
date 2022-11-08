@@ -42,12 +42,13 @@
 
 
  import {
-     IOracleProvider,
+	 IOracleProviderAdapter,
+     IOracleProviderFactory, Oracle,
  } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
 
- export class MemoryOracleProvider implements IOracleProvider {
+ export class MemoryOracleProviderFactory implements IOracleProviderFactory {
 	id: string;
 	partyType: string;
 	private readonly logger: ILogger;
@@ -58,24 +59,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 		this.logger = logger;
 	}
 
-	async init(): Promise<void> {
-		return;
-	}
-
-	async destroy(): Promise<void> {
-		return;
-	}
-
-	async getParticipant(partyId: string): Promise<string|null> {
-		 throw new Error("Method not implemented.");
-	 }
-
-	async associateParty(partyType:string):Promise<null> {
-		throw new Error("Method not implemented.");
-	}
-
-
-	async disassociateParty(partyType:string):Promise<null> {
-		throw new Error("Method not implemented.");
+	create(oracle: Oracle): IOracleProviderAdapter {
+		return {} as IOracleProviderAdapter;
 	}
 }

@@ -38,36 +38,50 @@
  --------------
  **/
 
- "use strict";
-
+"use strict";
 
 import {
-    IOracleFinder, IOracleProvider
+    IOracleFinder, Oracle
 } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 
-
 export class MemoryOracleFinder implements IOracleFinder {
     private readonly logger: ILogger;
-    private oracleList: {id:string, type:string}[];
-
+    
     constructor(
         logger: ILogger,
     ) {
         this.logger = logger;
-        this.oracleList = [];
     }
-
-    getOracleProvider(type: string, subType: string | null): Promise<IOracleProvider | null> {
-        throw new Error("Method not implemented.");
-    }
-
     
     async init(): Promise<void> {
-        return;
+        Promise.resolve();
+    }
+ 
+    async destroy(): Promise<void> {
+        Promise.resolve();
     }
 
-    async destroy(): Promise<void> {
-        return;
+    addOracle(oracle: Oracle): Promise<void> {
+        return Promise.resolve();
     }
+    removeOracle(id: string): Promise<void> {
+        return Promise.resolve();
+    }
+    getAllOracles(): Promise<Oracle[]> {
+        const oracles = [];
+        return Promise.resolve(oracles);
+    }
+    getOracleById(id: string): Promise<Oracle | null> {
+        const oracle = null;
+        return Promise.resolve(oracle);
+    }
+    getOracleByName(name: string): Promise<Oracle | null> {
+        const oracle = null;
+        return Promise.resolve(oracle);
+    }
+    getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null> {
+        const oracle = null;
+        return Promise.resolve(oracle);
+    }    
 }

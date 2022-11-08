@@ -103,8 +103,9 @@ let oracleAdminRoutes: IOracleAdminRoutes;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
-  oracleAdminRoutesParam?:IOracleAdminRoutes)
+  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, oracleAdminRoutesParam?:IOracleAdminRoutes,
+  aggregateParam?:AccountLookupAggregate,
+  )
   :Promise<void> {
   console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
