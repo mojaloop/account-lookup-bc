@@ -36,56 +36,20 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
-
-import { IParticipant } from "../types";
- 
-/* infrastructure interfaces */
+import { Router } from "express";
+import {IOracleAdminRoutes} from "../../../src/routes/oracle_admin_routes";
 
 
-export type OracleType = "builtin" | "remote-http";
+export class MemoryOracleAdminRoutes implements IOracleAdminRoutes {
+    
+    MainRouter: Router;
 
-export type Oracle = {
-    id: string;
-    name: string;
-    type: OracleType;
-    partyType: string;
-    partySubType: string | null;
-    endpoint: string | null;
+    constructor() {
+        this.MainRouter = {} as any;
+    }
+    
 }
-
-export interface IOracleFinder{
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    addOracle(oracle: Oracle):Promise<void>;
-    removeOracle(id: string):Promise<void>;
-    getAllOracles():Promise<Oracle[]>;
-    getOracleById(id:string):Promise<Oracle|null>;
-    getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
-}
-
-export interface IOracleProviderAdapter{
-    oracleId: string;
-    type:  OracleType;
-    init(): Promise<void>;
-    destroy(): Promise<void>;
-    healthCheck(): Promise<boolean>;	
-    getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null>;
-}
-
-export interface IOracleProviderFactory {
-    create(oracle: Oracle): IOracleProviderAdapter;
-}
-
-export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
-}
-
-

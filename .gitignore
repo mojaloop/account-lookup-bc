@@ -127,3 +127,4 @@ devspace*
 !.yarn/versions
 
 .idea/
+.vscode/settings.json

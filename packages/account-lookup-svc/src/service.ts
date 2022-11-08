@@ -49,7 +49,7 @@ import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, M
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-infrastructure";
 import express, {Express} from "express";
-import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
+import { IOracleAdminRoutes, OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
@@ -99,16 +99,18 @@ let participantService: IParticipantService;
 const ADMIN_PORT = process.env["ADMIN_PORT"] || 3030;
 let expressApp: Express;
 let oracleAdminServer: Server;
+let oracleAdminRoutes: IOracleAdminRoutes;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
   oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, aggregateParam?:AccountLookupAggregate,
-  ):Promise<void> {
+  oracleAdminRoutesParam?:IOracleAdminRoutes)
+  :Promise<void> {
   console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
   try{
     
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam, oracleAdminRoutesParam);
 
     messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
     await messageConsumer.connect();
@@ -136,9 +138,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     expressApp.use(express.json()); // for parsing application/json
     expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-    const routes = new OracleAdminExpressRoutes(aggregate, logger);
-
-    expressApp.use("/admin", routes.MainRouter);
+    expressApp.use("/admin", oracleAdminRoutes.MainRouter);
 
     expressApp.use((req, res) => {
       // catch all
@@ -158,7 +158,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 }
 
 async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService):Promise<void>  {
+  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService, oracleAdminRoutesParam?:IOracleAdminRoutes):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
@@ -176,6 +176,8 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
   participantService = participantServiceParam ?? new ParticipantClient(logger);
+
+  oracleAdminRoutes = oracleAdminRoutesParam ?? new OracleAdminExpressRoutes(aggregate, logger);
 }
 
 
@@ -187,7 +189,7 @@ export async function stop(): Promise<void> {
   await messageConsumer.destroy(true);
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
-  logger.debug("Tearing down oracle admin routes");
+  logger.debug("Tearing down oracle admin server");
   oracleAdminServer.close();
 }
 

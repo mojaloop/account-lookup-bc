@@ -38,16 +38,17 @@
  --------------
  **/
 
-import {AccountLookupAggregate, IOracleFinder, IOracleProvider, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import { mockedOracleList } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/data";
 import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
 import { MemoryOracleProvider } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_providers";
-import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { start, tearDown } from "../../src/service";
+import { MemoryOracleAdminRoutes } from "./mocks/memory_oracle_admin_routes";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
 import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
+import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { start, stop } from "../../src/service";
 
 
 const logger: ILogger = new ConsoleLogger();

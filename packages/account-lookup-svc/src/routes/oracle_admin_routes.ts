@@ -45,9 +45,12 @@
  import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
  import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain";
  import { body, check, validationResult } from "express-validator";
-  
+
+export interface IOracleAdminRoutes {
+    MainRouter: express.Router;
+}
  
- export class OracleAdminExpressRoutes {
+export class OracleAdminExpressRoutes implements IOracleAdminRoutes {
      private readonly _logger: ILogger;
      private readonly _accountLookupAggregate: AccountLookupAggregate;
      private mainRouter = express.Router();
