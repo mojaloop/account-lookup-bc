@@ -93,7 +93,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			const oracleAlreadyPresent = await this.getOracle(oracle.type, oracle.partySubType);
 			if(oracleAlreadyPresent){
 				throw new OracleAlreadyRegisteredError();
-			};
+			}
 
 			await this.oracleProviders.insertOne(oracle);
 			

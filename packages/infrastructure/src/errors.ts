@@ -118,4 +118,9 @@ export class ParticipantAssociationAlreadyExistsError extends Error {
     }
 }
 
+export class UnableToInitRemoteOracleProvider extends Error {
+    constructor(message?: string) {
+        super(message || 'Unable to initialize remote oracle provider');
+    }
+}
 

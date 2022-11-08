@@ -43,6 +43,7 @@ optionally within square brackets <email>.
 import {IOracleProviderAdapter, Oracle, OracleType} from "@mojaloop/account-lookup-bc-domain";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
+import { UnableToInitRemoteOracleProvider } from "../../../errors";
 
 //Create a class that implements the IOracleProviderAdapter interface using http requests
 export class HttpOracleProvider implements IOracleProviderAdapter {
@@ -63,7 +64,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     init(): Promise<void> {
             const url = this._oracle.endpoint;
             if(!url){
-                throw new Error('No endpoint defined for oracle');
+                throw new UnableToInitRemoteOracleProvider('No endpoint defined for oracle');
             }
             else {
                 this.httpClient = axios.create({
@@ -122,13 +123,15 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         if(partySubId) url+=`/${partySubId}`;
         if(currency) url+=`?currency=${currency}`;
 
-        return await this.httpClient.post(url, { fspId: fspId}).then((
+        return await this.httpClient.delete(url, { data:{
+                fspId: fspId
+            }}).then((
             response: AxiosResponse) => {
-            this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
-            return null;
-        }).catch((error: Error) => {
-            this._logger.error(`disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
-            throw new Error('Error disassociating participant');
-        });    
+                this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
+                return null;
+            }).catch((error: Error) => {
+                this._logger.error(`disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
+                throw new Error('Error disassociating participant');
+            });    
     }
 }
