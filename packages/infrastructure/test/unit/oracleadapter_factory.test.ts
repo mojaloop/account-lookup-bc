@@ -43,19 +43,11 @@
 import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { OracleAdapterFactory, OracleTypeNotSupportedError } from "../../src/index";
-import { MongoOracleProviderRepo } from "../../src/index";
-import { HttpOracleProvider } from "../../src/index";
+import { MongoOracleProviderRepo } from "../../src/oracles/adapters/builtin/mongo_oracleprovider";
+import { HttpOracleProvider } from "../../src/oracles/adapters/remote/http_oracleprovider";
 
-jest.mock("MongoOracleProviderRepo", () => {
-    return {
-        MongoOracleProviderRepo: jest.fn(),
-}});
-
-jest.mock("HttpOracleProvider", () => {
-    return {
-        HttpOracleProvider: jest.fn(),
-}});
-
+jest.mock("../../src/oracles/adapters/builtin/mongo_oracleprovider");
+jest.mock("../../src/oracles/adapters/remote/http_oracleprovider");
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -63,7 +55,10 @@ logger.setLogLevel(LogLevel.FATAL);
 const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger);
 
 describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
-    
+    afterAll(async() => {
+        jest.clearAllMocks();
+    });
+
     test("should return a remote Oracle Adapter", async () => {
         // Arrange
         const oracle: Oracle = {
@@ -80,7 +75,7 @@ describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
         const oracleAdapter = oracleAdapterFactory.create(oracle);
 
         // Assert
-        expect(oracleAdapter).toBeDefined();~
+        expect(oracleAdapter).toBeDefined();
         expect(oracleAdapter).toBeInstanceOf(HttpOracleProvider);
     });
 
@@ -115,7 +110,6 @@ describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
             partySubType: null
             
         }
-        
         // Act and Assert
 
         expect(() => oracleAdapterFactory.create(oracle)).toThrowError(OracleTypeNotSupportedError);

@@ -31,8 +31,8 @@
     "dep:update": "npm exec ncu -- -e 2 -u; npm -ws --parallel run dep:update"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-client-lib": "^0.1.15",
-    "@mojaloop/logging-bc-public-types-lib": "^0.1.12",
+    "@mojaloop/logging-bc-client-lib": "^0.1.16",
+    "@mojaloop/logging-bc-public-types-lib": "^0.1.13",
     "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.2.11",
     "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.14",
     "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.15"

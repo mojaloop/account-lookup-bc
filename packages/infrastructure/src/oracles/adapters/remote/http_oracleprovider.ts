@@ -45,7 +45,6 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
 import { UnableToInitRemoteOracleProvider } from "../../../errors";
 
-//Create a class that implements the IOracleProviderAdapter interface using http requests
 export class HttpOracleProvider implements IOracleProviderAdapter {
     private readonly _logger: ILogger;
     private readonly _oracle: Oracle;

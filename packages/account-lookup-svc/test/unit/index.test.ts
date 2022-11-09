@@ -50,15 +50,8 @@ import { start, stop } from "../../src/service";
 import { MemoryOracleProviderFactory } from './mocks/memory_oracle_provider_factory';
 const express = require("express");
 
-const mockedLogger = {
-    log: jest.fn(),
-    error: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    createChild: jest.fn().mockReturnThis(),
-}
-
-const logger = mockedLogger as unknown as ILogger;
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
 
 const mockedProducer: IMessageProducer = new MemoryMessageProducer();
 

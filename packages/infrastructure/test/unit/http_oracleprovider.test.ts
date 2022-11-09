@@ -92,9 +92,10 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
             partyType: "MSISDN",
             partySubType: null
         }
+        const badRemoteOracleProvider = new HttpOracleProvider(oracle, logger);
 
         // Act && Assert
-        expect(() => remoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);
+        expect(() => badRemoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);
     
     });
 

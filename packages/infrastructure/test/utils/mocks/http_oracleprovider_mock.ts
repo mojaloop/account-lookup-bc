@@ -55,19 +55,19 @@ export class RemoteOracleProviderHttpMock {
             .persist()
 
             .get(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
-            .query(true)
             .reply(404,"Participant not found")
             
-            .get(`/participants`)
+            .get(/participants.*/)
             .query(true)
             .reply(200,{
                 fspId: FSP_ID_RESPONSE
             })
             
             .post(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
+            .query({fspId: ERROR_FSP_ID})
             .reply(500, "Couldn't associate participant")
             
-            .post(`/participants`)
+            .post(/participants.*/)
             .query(true)
             .reply(200, {})
 
@@ -79,8 +79,7 @@ export class RemoteOracleProviderHttpMock {
             .query(true)
             .reply(200, {})
         
-            .delete(`/health`)
-            .query(true)
+            .get(`/health`)
             .reply(200, {});
      }
  

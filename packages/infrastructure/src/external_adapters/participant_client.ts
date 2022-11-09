@@ -31,7 +31,7 @@
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
 import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-domain";
-import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
+import { ILocalCache, LocalCache } from "../local_cache";
 
 export class ParticipantClient implements IParticipantService {
 	private readonly logger: ILogger;
