@@ -77,10 +77,8 @@ export class RemoteOracleProviderHttpMock {
         
             .delete(`/participants`)
             .query(true)
-            .reply(200, {});
+            .reply(200, {})
         
-        nock(this.BASE_URL)
-            .persist()
             .delete(`/health`)
             .query(true)
             .reply(200, {});

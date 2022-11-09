@@ -64,7 +64,8 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     beforeAll(async () => {
         oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger,oracle.endpoint as string);
         oracleproviderHttpServerMock.setUp();
-        oracleproviderHttpServerMock.enable();
+        //oracleproviderHttpServerMock.enable();
+        
         remoteOracleProvider = new HttpOracleProvider(oracle, logger);
     });
     
@@ -91,7 +92,6 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
             partyType: "MSISDN",
             partySubType: null
         }
-        const remoteOracleProvider = new HttpOracleProvider(oracle, logger);
 
         // Act && Assert
         expect(() => remoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);

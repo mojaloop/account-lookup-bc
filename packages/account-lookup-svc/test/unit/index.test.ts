@@ -48,8 +48,7 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "../../src/service";
 import { MemoryOracleProviderFactory } from './mocks/memory_oracle_provider_factory';
-import express, {Express} from "express";
-
+const express = require("express");
 
 const mockedLogger = {
     log: jest.fn(),
@@ -81,31 +80,25 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     mockedParticipantService
 );
 
-const mockedServer = {
-    close: jest.fn().mockReturnThis()
-}
+const useSpy = jest.fn();
+const closeSpy = jest.fn();
+const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
 
-const mockedExpressApp = {
-    express: jest.fn().mockReturnThis(),
-    use: jest.fn().mockReturnThis(),
-    listen: jest.fn().mockReturnValue(mockedServer)
-}
 
-jest.mock("express", () => {
-    return jest.fn().mockReturnValue({
-        express: jest.fn().mockReturnThis(),
-        use: jest.fn().mockReturnThis(),
-        listen: jest.fn().mockReturnValue({
-            close: jest.fn().mockReturnThis()
-        })
-    });
+jest.mock('express', () => {
+  return () => ({
+    listen: listenSpy,
+    use: useSpy,
+  });
 });
+
+express.json = jest.fn();
+express.urlencoded = jest.fn();
 
 describe("Account Lookup Service", () => {
     
-
     afterEach(async () => {
-        jest.resetAllMocks();
+        jest.restoreAllMocks()
     });
 
     test("should be able to run start and init all variables", async()=>{
@@ -116,9 +109,7 @@ describe("Account Lookup Service", () => {
         const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
         const spyProducerInit = jest.spyOn(mockedProducer, "connect");
         const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
-        const spyExpressAppUse = jest.spyOn(mockedExpressApp, "use");
-        const spyExpressAppListen = jest.spyOn(mockedExpressApp, "listen");
-
+     
         // Act
         await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
             mockedParticipantService, mockedAdminRoutes, mockedAggregate);
@@ -130,33 +121,28 @@ describe("Account Lookup Service", () => {
         expect(spyConsumerCallback).toBeCalledTimes(1); 
         expect(spyProducerInit).toBeCalledTimes(1);
         expect(spyAggregateInit).toBeCalledTimes(1);
-        expect(spyExpressAppUse).toBeCalledTimes(4);
-        expect(spyExpressAppUse).toBeCalledWith("/admin", mockedAdminRoutes.MainRouter);
-        expect(spyExpressAppListen).toBeCalledTimes(1);
-
+        expect(useSpy).toBeCalledWith("/admin", mockedAdminRoutes.MainRouter);
+        expect(listenSpy).toBeCalledTimes(1);
+    
     });
 
-    // test("should teardown instances if terminating the service in case of error", async()=>{
-    //     // Arrange
-    //     const error = new Error("Error"); 
-    //     jest.spyOn(mockedConsumer, "setTopics").mockImplementationOnce(()=> {throw error;});
-    //     const mockedProcessStub = jest.spyOn(process, "exit").mockImplementationOnce(()=> {return null as never;});
-    //     const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
-    //     const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
-    //     const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
-    //     // const spyMockedServer = jest.spyOn(mockedServer, "close");
-
-    //     // Act
-    //     await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, 
-    //         mockedOracleProviderFactory, mockedParticipantService, mockedAdminRoutes, mockedAggregate);
-
-    //     // Assert
-    //     expect(mockedProcessStub).toBeCalledTimes(1);
-    //     expect(spyMockedConsumer).toBeCalledTimes(1);
-    //     expect(spyMockedProducer).toBeCalledTimes(1);
-    //     expect(spyMockedAggregate).toBeCalledTimes(1);
-    //     // expect(spyMockedServer).toBeCalledTimes(1);
-    // });
+    test("should teardown instances when server stopped", async()=>{
+        // Arrange
+        const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
+        const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
+        const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
+        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, 
+            mockedOracleProviderFactory, mockedParticipantService, mockedAdminRoutes, mockedAggregate);
+        
+        // Act
+        await stop();
+        
+        // Assert
+        expect(spyMockedConsumer).toBeCalledTimes(1);
+        expect(spyMockedProducer).toBeCalledTimes(1);
+        expect(spyMockedAggregate).toBeCalledTimes(1);
+        expect(closeSpy).toBeCalledTimes(1);
+    });
 
     
 });
