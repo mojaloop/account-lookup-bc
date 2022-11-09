@@ -186,7 +186,6 @@ export class AccountLookupAggregate  {
 	}
 
 	private async handleEvent(message:IMessage):Promise<void> {
-		const {payload, fspiopOpaqueState} = message;
 		let eventToPublish = null;
 		switch(message.msgName){
 			case PartyQueryReceivedEvt.name:
@@ -399,8 +398,9 @@ export class AccountLookupAggregate  {
 
 		return fspId;
 	}
-
-	// TODO create methods never return the created entity, only the id
+	//#endregion
+	
+	//#region Oracle Admin
 	public async addOracle(oracle: Oracle): Promise<string> {
 		if(oracle.id && await this._oracleFinder.getOracleById(oracle.id)) {
 			throw new DuplicateOracleError("Oracle with same id already exists");

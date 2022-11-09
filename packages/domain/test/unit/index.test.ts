@@ -55,16 +55,11 @@
      InvalidPartyIdError,
      InvalidPartyTypeError,
      IOracleFinder,
-     IOracleProvider,
      IParticipant,
      IParticipantService,
-     NoSuchOracleProviderError,
      NoSuchParticipantError,
      NoSuchParticipantFspIdError,
      RequiredParticipantIsNotActive,
-     UnableToAssociatePartyError,
-     UnableToDisassociatePartyError,
-     UnableToGetOracleError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
@@ -107,7 +102,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
     participantService
 );
 
-describe("Account Lookup Domain", () => {
+describe("Unit Tests - Account Lookup Domain", () => {
        
     afterEach(async () => {
         jest.resetAllMocks();
