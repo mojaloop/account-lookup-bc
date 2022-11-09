@@ -35,6 +35,12 @@ export const NOT_FOUND_PARTY_TYPE = "NOT_FOUND_PARTY_TYPE";
 export const NOT_FOUND_PARTY_ID = "NOT_FOUND_PARTY_ID"; 
 export const NOT_FOUND_PARTY_SUB_ID = "NOT_FOUND_PARTY_SUB";
 export const ERROR_FSP_ID = "ERROR_FSP_ID";
+
+export const PARTY_TYPE = "PARTY_TYPE";
+export const PARTY_ID = "PARTY_ID";
+export const PARTY_SUB_ID = "PARTY_SUB_ID";
+export const FSP_ID = "FSP_ID";
+
 export const FSP_ID_RESPONSE = 1;
 
 export class RemoteOracleProviderHttpMock {
@@ -67,7 +73,7 @@ export class RemoteOracleProviderHttpMock {
             .query({fspId: ERROR_FSP_ID})
             .reply(500, "Couldn't associate participant")
             
-            .post(/participants.*/)
+            .post(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
             .query(true)
             .reply(200, {})
 
@@ -75,7 +81,7 @@ export class RemoteOracleProviderHttpMock {
             .query({fspId: ERROR_FSP_ID})
             .reply(500, "Couldn't disassociate participant")
         
-            .delete(`/participants`)
+            .delete(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
             .query(true)
             .reply(200, {})
         
