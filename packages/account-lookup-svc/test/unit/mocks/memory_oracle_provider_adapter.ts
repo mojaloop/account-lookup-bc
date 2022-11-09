@@ -43,24 +43,41 @@
 
  import {
 	 IOracleProviderAdapter,
-     IOracleProviderFactory, Oracle,
+     IOracleProviderFactory, Oracle, OracleType,
  } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 
 
- export class MemoryOracleProviderFactory implements IOracleProviderFactory {
-	id: string;
-	partyType: string;
-	private readonly _logger: ILogger;
+ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
+	oracleId: string;
+    type: OracleType;
+   
+    private readonly _logger: ILogger;
 	
 	constructor(
 		logger: ILogger,
+        oracle: Oracle,
 	) {
 		this._logger = logger;
+        this.oracleId = oracle.id;
+        this.type = oracle.type; 
 	}
-
-	create(oracle: Oracle): IOracleProviderAdapter {
-		return new MemoryOracleProviderAdapter(this._logger, oracle);
-	}
+     init(): Promise<void> {
+         return Promise.resolve();
+     }
+     destroy(): Promise<void> {
+         return Promise.resolve();
+     }
+     healthCheck(): Promise<boolean> {
+        return Promise.resolve(true);
+     }
+     getParticipantFspId(partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<string | null> {
+        throw new Error("Method not implemented.");
+     }
+     associateParticipant(fspId: string, partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<null> {
+         throw new Error("Method not implemented.");
+     }
+     disassociateParticipant(fspId: string, partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<null> {
+         throw new Error("Method not implemented.");
+     }
 }

@@ -191,7 +191,7 @@ export async function stop(): Promise<void> {
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
   logger.debug("Tearing down oracle admin server");
-  oracleAdminServer.close();
+  //oracleAdminServer.close();
 }
 
 /**

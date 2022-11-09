@@ -38,20 +38,36 @@
  --------------
  **/
 
- "use strict";
-
+"use strict";
 
 import {
     IOracleFinder, Oracle
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleList } from "./data";
+
 export class MemoryOracleFinder implements IOracleFinder {
-    private readonly logger: ILogger;
+    private readonly _logger: ILogger;
+    private readonly _oracles: Oracle[] = [{
+        id: "1",
+        name: "oracle1",
+        endpoint: "http://oracle1.com",
+        partyType: "DFSP",
+        partySubType: "MOBILE",
+        type: "builtin",
+    },
+    {
+        id: "2",
+        name: "oracle2",
+        endpoint: "http://oracle2.com",
+        partyType: "DFSP",
+        partySubType: "MOBILE",
+        type: "builtin",
+    }];
+
     constructor(
         logger: ILogger,
     ) {
-        this.logger = logger;
+        this._logger = logger;
     }
     init(): Promise<void> {
         return Promise.resolve();
@@ -66,17 +82,15 @@ export class MemoryOracleFinder implements IOracleFinder {
         return Promise.resolve();
     }
     getAllOracles(): Promise<Oracle[]> {
-        const oracles = [];
-        return Promise.resolve(oracles);
+        return Promise.resolve(this._oracles);
     }
     getOracleById(id: string): Promise<Oracle | null> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve(this._oracles.find(o => o.id === id) || null);
     }
     getOracleByName(name: string): Promise<Oracle | null> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve(this._oracles.find(o => o.name === name) || null);
     }
     getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null> {
-        throw new Error("Method not implemented.");
+        return Promise.resolve(this._oracles.find(o => o.partyType === partyType && o.partySubType === partySubtype) || null);
     }
-
 }
