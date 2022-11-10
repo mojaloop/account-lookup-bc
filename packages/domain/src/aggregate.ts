@@ -366,7 +366,7 @@ export class AccountLookupAggregate  {
 		// }
 	}
 	
-	//#region Oracles
+	// #region Oracles
 	private async getOracleAdapter(partyType:string, partySubType:string | null): Promise<IOracleProviderAdapter> {
 		const oracle = await this._oracleFinder.getOracle(partyType, partySubType); 
 		if(!oracle) {
