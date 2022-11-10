@@ -46,11 +46,30 @@ import { IParticipant } from "../../../src/types";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 
-export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
+export const mockedPartyTypes = ["bank", "creditUnion", "insurance", "not_included"];
 
 export const mockedPartySubTypes = ["savings", "checking", "order"];
 
 export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError","participantNull"];
+
+export const notIncludedOracleAdapters: Oracle[] = [
+    {
+        id: "0",
+        name: "oracle0",
+        endpoint: null,
+        partyType: mockedPartyTypes[3],
+        partySubType: mockedPartySubTypes[0],
+        type: "builtin",
+    },
+    {
+        id: "0.1",
+        name: "oracle0.1",
+        endpoint: null,
+        partyType: mockedPartyTypes[3],
+        partySubType: null,
+        type: "builtin",
+    }
+];
 
 export const mockedOracleAdapters: Oracle [] = [
     {
@@ -182,20 +201,5 @@ export const getParticipantFspIdForOracleTypeAndSuType = (partyType: string, par
     return result?.fspId ?? null;
 }
 
-
-
-// TODO: Review this part
-
-
-
-export const mockedParticipantResultIds = ["receivedParticipant1", "receivedParticipant2", "receivedParticipant3"];
-
-export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receivedParticipantSub2", "receivedParticipantSub3"];
-
-
-export const mockedParticipants: Map<string, IParticipant| null> = new Map();
-mockedParticipants.set(mockedParticipantFspIds[0],{id: mockedParticipantResultIds[0], subId: mockedParticipantResultSubIds[0],type: "individual", isActive: true});
-mockedParticipants.set(mockedParticipantFspIds[2],{id: mockedParticipantResultIds[1], subId: mockedParticipantResultSubIds[1],type: "individual", isActive: true});
-mockedParticipants.set(mockedParticipantFspIds[4],null);
 
 

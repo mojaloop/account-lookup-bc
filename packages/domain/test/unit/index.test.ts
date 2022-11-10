@@ -1,4 +1,3 @@
-import {UnableToGetOracleError} from '../../../infrastructure/src/errors';
 /**
  License
  --------------
@@ -62,16 +61,18 @@ import {UnableToGetOracleError} from '../../../infrastructure/src/errors';
      NoSuchOracleError,
      NoSuchParticipantError,
      NoSuchParticipantFspIdError,
+     Oracle,
      RequiredParticipantIsNotActive,
      UnableToAssociateParticipantError,
      UnableToDisassociateParticipantError,
  } from "../../src";
 import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
 import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { getParticipantFspIdForOracleTypeAndSuType, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "./mocks/data";
+import { getParticipantFspIdForOracleTypeAndSuType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "./mocks/data";
 import { MemoryParticipantService } from "./mocks/memory_participant_service";
 import { AccountLookUperrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { MemoryOracleProviderFactory } from "./mocks/memory_oracle_provider_factory";
+import { MemoryOracleProviderAdapter } from './mocks/memory_oracle_provider_adapter';
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -256,6 +257,42 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(aggregate.init()).resolves;
         
     });
+
+    test("should be able to get oracle adapters", async () => {
+        // Arrange
+        const expectedArrayLength = mockedOracleAdapters.length;
+        
+        // Act
+        const oracleAdapters = aggregate.oracleProvidersAdapters;
+
+        // Assert
+        expect(oracleAdapters).toBeDefined();
+        expect(oracleAdapters.length).toBe(expectedArrayLength);
+
+    });
+
+    test("shouldnt be able to get change original oracle adapter array", async () => {
+        // Arrange
+        const expectedArrayLength = mockedOracleAdapters.length;
+        const mockedOracle: Oracle = {
+            id: "mockedOracle",
+            partySubType: "mockedPartySubType",
+            partyType: "mockedPartyType",
+            name: "mockedOracle",
+            endpoint: null,
+            type: "builtin"
+        }
+        const oracleAdapters = aggregate.oracleProvidersAdapters;
+        oracleAdapters.push(new MemoryOracleProviderAdapter(logger, mockedOracle));
+        
+        // Act
+        const oracleAdaptersAfterPush = aggregate.oracleProvidersAdapters;
+
+        // Assert
+        expect(oracleAdaptersAfterPush.length).toBe(expectedArrayLength);
+
+    });
+
 
     test("should throw error if couldnt destroy aggregate", async () => {
         // Arrange
@@ -601,14 +638,15 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         //Arrange 
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
-        const partyType = mockedPartyTypes[0];
+        const partyType = mockedPartyTypes[3];
+        const partySubType = mockedPartySubTypes[0];
         const payload :PartyQueryReceivedEvtPayload = {
              partyId,
              partyType,
              requesterFspId ,
              destinationFspId:null,
              currency:null,
-             partySubType: null,
+             partySubType,
        };
            
          jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
@@ -623,7 +661,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
              errorMsg,
              partyId,
              sourceEvent : event.msgName,
-             partySubType: "N/A",
+             partySubType,
              partyType,
              requesterFspId,
          };

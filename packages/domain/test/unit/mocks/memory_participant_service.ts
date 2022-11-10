@@ -41,7 +41,6 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IParticipant, IParticipantService } from "../../../src";
-import { mockedParticipants } from "./data";
 
  export class MemoryParticipantService implements IParticipantService {
 	private readonly logger: ILogger;
@@ -53,26 +52,11 @@ import { mockedParticipants } from "./data";
 	}
 
 	async getParticipantInfo(fspId: string): Promise<IParticipant|null> {
-		const participant:IParticipant|null | undefined = mockedParticipants.get(fspId);
-
-		if (!participant) {
-			return null;
-		}
-		return Promise.resolve(participant);
+		return Promise.resolve(null);
 	}
 
 	async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
-		const participant:IParticipant[] = [];
-
-		mockedParticipants.forEach((participantFound, key) => {
-			for(let i=0 ; i<fspIds.length ; i+=1){
-				if(participantFound?.id === fspIds[i]) {
-					participant.push(participantFound);
-				}
-			}
-		});
-
-		return Promise.resolve(participant);
+		return Promise.resolve([]);
 	}
 	
 }

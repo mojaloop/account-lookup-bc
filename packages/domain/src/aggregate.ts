@@ -53,7 +53,6 @@ import {
 	NoSuchParticipantError,
 	NoSuchParticipantFspIdError,
 	RequiredParticipantIsNotActive,
-	UnableToAddOracleError,
 	UnableToAssociateParticipantError,
 	UnableToDisassociateParticipantError,
 	UnableToProcessMessageError
@@ -66,15 +65,10 @@ import {
 	ParticipantAssociationCreatedEvt,
 	ParticipantAssociationCreatedEvtPayload,
 	ParticipantAssociationRemovedEvtPayload,
-	ParticipantAssociationRequestReceivedEvtPayload,
-	ParticipantDisassociateRequestReceivedEvtPayload,
 	ParticipantQueryReceivedEvt,
-	ParticipantQueryReceivedEvtPayload,
 	ParticipantQueryResponseEvtPayload,
-	PartyInfoAvailableEvtPayload,
 	PartyInfoRequestedEvt,
 	PartyInfoRequestedEvtPayload,
-	PartyQueryReceivedEvtPayload,
 	PartyQueryReceivedEvt,
 	PartyInfoAvailableEvt,
 	ParticipantAssociationRequestReceivedEvt,
@@ -94,10 +88,6 @@ export class AccountLookupAggregate  {
 	private readonly _participantService: IParticipantService;
 	private _oracleProvidersAdapters: IOracleProviderAdapter[];
 	
-	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
-		return this._oracleProvidersAdapters;
-	}
-	
 	constructor(
 		logger: ILogger,
 		oracleFinder:IOracleFinder,
@@ -111,6 +101,11 @@ export class AccountLookupAggregate  {
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
 		this._oracleProvidersAdapters = [];
+	}
+
+	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
+		const clonedArray = this._oracleProvidersAdapters.map(a => {return {...a}});
+		return clonedArray;
 	}
 
 	async init(): Promise<void> {
@@ -136,7 +131,7 @@ export class AccountLookupAggregate  {
 	async destroy(): Promise<void> {
 		try{
 			await this._oracleFinder.destroy();
-			for await (const oracle of this.oracleProvidersAdapters) {
+			for await (const oracle of this._oracleProvidersAdapters) {
 				oracle.destroy();
 			}
 		} catch(error) {
@@ -145,7 +140,7 @@ export class AccountLookupAggregate  {
 		}
 	}
 
-
+	//#region Event handlers
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
 		try{
 				const isMessageValid = this.validateMessage(message);
@@ -173,7 +168,6 @@ export class AccountLookupAggregate  {
 				await this._messageProducer.send(messageToPublish);
 			}
 	}
-	
 
 	private validateMessage(message:IMessage): boolean {
 		if(!message.payload){
@@ -366,6 +360,8 @@ export class AccountLookupAggregate  {
 			}
 		}
 	}
+
+	//#endregion
 	
 	//#region Oracles
 	private async getOracleAdapter(partyType:string, partySubType:string | null): Promise<IOracleProviderAdapter> {
@@ -375,7 +371,7 @@ export class AccountLookupAggregate  {
 			throw new NoSuchOracleError();
 		}
 		
-		const oracleAdapter = this.oracleProvidersAdapters.find(provider=>provider.oracleId === oracle?.id);
+		const oracleAdapter = this._oracleProvidersAdapters.find(provider=>provider.oracleId === oracle?.id);
 		
 		if(!oracleAdapter) {
 			this._logger.debug(`oracle adapter for ${partyType} not found`);
@@ -403,11 +399,14 @@ export class AccountLookupAggregate  {
 	
 	//#region Oracle Admin
 	public async addOracle(oracle: Oracle): Promise<string> {
+
 		if(oracle.id && await this._oracleFinder.getOracleById(oracle.id)) {
 			throw new DuplicateOracleError("Oracle with same id already exists");
 		}
 
-		if(!oracle.id) oracle.id = randomUUID();
+		if(!oracle.id){
+			oracle.id = randomUUID();
+		} 
 
 		if(await this._oracleFinder.getOracleByName(oracle.name)) {
 			throw new DuplicateOracleError("Oracle with same name already exists");
@@ -417,13 +416,19 @@ export class AccountLookupAggregate  {
 
 		const addedOracleProvider = this._oracleProvidersFactory.create(oracle);
 		await addedOracleProvider.init();
-		this.oracleProvidersAdapters.push(addedOracleProvider);
+		this._oracleProvidersAdapters.push(addedOracleProvider);
 		return oracle.id;
 	}
 	
 	public async removeOracle(id: string): Promise<void> {
+		const oracle = await this._oracleFinder.getOracleById(id);
+		if(!oracle) {
+			throw new NoSuchOracleError();
+		}
+
 		await this._oracleFinder.removeOracle(id);
-		this._oracleProvidersAdapters = this.oracleProvidersAdapters.filter((o) => o.oracleId !== id);
+		
+		this._oracleProvidersAdapters = this._oracleProvidersAdapters.filter((o) => o.oracleId !== id);
 	}
 	
 	public async getAllOracles(): Promise<Oracle[]> {
@@ -437,7 +442,7 @@ export class AccountLookupAggregate  {
 	}
 	
 	public async healthCheck(id:string): Promise<boolean> {
-		const oracleFound =  this.oracleProvidersAdapters.find((o) => o.oracleId === id);
+		const oracleFound =  this._oracleProvidersAdapters.find((o) => o.oracleId === id);
 		if(!oracleFound) {
 			throw new NoSuchOracleError();
 		}
