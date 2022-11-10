@@ -83,9 +83,22 @@ import { mockedOracleAdapterResults } from "./data";
         return Promise.resolve(null);
      }
      associateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
-        return Promise.resolve(null);
+        const isAssociationPossible = mockedOracleAdapterResults.find((result) => {
+            return result.partyType === partyType && result.partySubType === partySubType
+        })?.association;
+        if(isAssociationPossible) {
+            return Promise.resolve(null);
+        }
+        return Promise.reject(new Error("Association not possible"));
      }
      disassociateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
-         return Promise.resolve(null);
+        const isDisassociationPossible = mockedOracleAdapterResults.find((result) => {
+            return result.partyType === partyType && result.partySubType === partySubType
+        })?.disassociation;
+        if(isDisassociationPossible) {
+            return Promise.resolve(null);
+        }
+        return Promise.reject(new Error("Disassociation not possible"));
+
      }
 }

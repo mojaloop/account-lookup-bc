@@ -119,6 +119,8 @@ export type OracleAdapterResults = {
     partyType: string;
     partySubType: string|null;
     fspId: string | null;
+    association: boolean;
+    disassociation: boolean;
 }
 
 export const mockedOracleAdapterResults:OracleAdapterResults[] = [
@@ -126,38 +128,59 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyType: mockedPartyTypes[0],
         partySubType: mockedPartySubTypes[0],
         fspId: mockedParticipantFspIds[0],
+        association: true,
+        disassociation: true
     },
     {
         partyType: mockedPartyTypes[0],
         partySubType: null,
         fspId: mockedParticipantFspIds[0],
+        association: false,
+        disassociation: false
     },
     {
         partyType: mockedPartyTypes[1],
         partySubType: mockedPartySubTypes[1],
         fspId: mockedParticipantFspIds[1],
+        association: false,
+        disassociation: true
     },
     {
         partyType: mockedPartyTypes[1],
         partySubType: null,
         fspId: mockedParticipantFspIds[1],
+        association: false,
+        disassociation: false
     },
     {
         partyType: mockedPartyTypes[2],
         partySubType: mockedPartySubTypes[2],
         fspId: mockedParticipantFspIds[2],
+        association: true,
+        disassociation: true
     },
     {
         partyType: mockedPartyTypes[2],
         partySubType: null,
         fspId: mockedParticipantFspIds[2],
+        association: false,
+        disassociation: false
     },
     {
         partyType: mockedPartyTypes[0],
         partySubType: mockedPartySubTypes[1],
         fspId: null,
+        association: false,
+        disassociation: false
     },
 ];
+
+export const getParticipantFspIdForOracleTypeAndSuType = (partyType: string, partySubType: string|null): string|null => {
+    const result = mockedOracleAdapterResults.find((oracleAdapterResult) => {
+        return oracleAdapterResult.partyType === partyType && oracleAdapterResult.partySubType === partySubType;
+    });
+    return result?.fspId ?? null;
+}
 
 
 

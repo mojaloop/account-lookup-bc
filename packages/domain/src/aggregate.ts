@@ -92,9 +92,12 @@ export class AccountLookupAggregate  {
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantService;
-	private oracleProvidersAdapters: IOracleProviderAdapter[];
+	private _oracleProvidersAdapters: IOracleProviderAdapter[];
 	
-
+	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
+		return this._oracleProvidersAdapters;
+	}
+	
 	constructor(
 		logger: ILogger,
 		oracleFinder:IOracleFinder,
@@ -107,7 +110,7 @@ export class AccountLookupAggregate  {
 		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
-		this.oracleProvidersAdapters = [];
+		this._oracleProvidersAdapters = [];
 	}
 
 	async init(): Promise<void> {
@@ -118,7 +121,7 @@ export class AccountLookupAggregate  {
 			for await (const oracle of oracles) {
 				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
 				await oracleAdapter.init();
-				this.oracleProvidersAdapters.push(oracleAdapter);
+				this._oracleProvidersAdapters.push(oracleAdapter);
 				this._logger.debug("Oracle provider initialized " + oracle.name);
 			}
 		}
@@ -344,7 +347,6 @@ export class AccountLookupAggregate  {
 	}
 
 	private async validateParticipant(participantId: string | null):Promise<void>{
-		// FIXME implement actual participantClient
 		if(participantId){
 			const participant = await this._participantService.getParticipantInfo(participantId);
 		
@@ -421,7 +423,7 @@ export class AccountLookupAggregate  {
 	
 	public async removeOracle(id: string): Promise<void> {
 		await this._oracleFinder.removeOracle(id);
-		this.oracleProvidersAdapters = this.oracleProvidersAdapters.filter((o) => o.oracleId !== id);
+		this._oracleProvidersAdapters = this.oracleProvidersAdapters.filter((o) => o.oracleId !== id);
 	}
 	
 	public async getAllOracles(): Promise<Oracle[]> {
