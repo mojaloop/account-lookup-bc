@@ -41,51 +41,26 @@
  "use strict";
 
 
-import { IParticipant } from "../types";
- 
-/* infrastructure interfaces */
+ import {
+	 IOracleProviderAdapter,
+     IOracleProviderFactory, Oracle,
+ } from "../../../src/interfaces/infrastructure";;
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 
 
-export type OracleType = "builtin" | "remote-http";
+ export class MemoryOracleProviderFactory implements IOracleProviderFactory {
+	id: string;
+	partyType: string;
+	private readonly _logger: ILogger;
+	
+	constructor(
+		logger: ILogger,
+	) {
+		this._logger = logger;
+	}
 
-export type Oracle = {
-    id: string;
-    name: string;
-    type: OracleType;
-    partyType: string;
-    partySubType: string | null;
-    endpoint: string | null;
+	create(oracle: Oracle): IOracleProviderAdapter {
+		return new MemoryOracleProviderAdapter(this._logger, oracle);
+	}
 }
-
-export interface IOracleFinder{
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    addOracle(oracle: Oracle):Promise<void>;
-    removeOracle(id: string):Promise<void>;
-    getAllOracles():Promise<Oracle[]>;
-    getOracleById(id:string):Promise<Oracle|null>;
-    getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
-}
-
-export interface IOracleProviderAdapter{
-    oracleId: string;
-    type:  OracleType;
-    init(): Promise<void>;
-    destroy(): Promise<void>;
-    healthCheck(): Promise<boolean>;	
-    getParticipantFspId(partyType:string, partyId: string, partySubType:string|null, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string,partySubType:string|null, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubType:string|null, currency:string| null):Promise<null>;
-}
-
-export interface IOracleProviderFactory {
-    create(oracle: Oracle): IOracleProviderAdapter;
-}
-
-export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
-}
-
-

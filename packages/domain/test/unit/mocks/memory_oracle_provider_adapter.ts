@@ -41,51 +41,51 @@
  "use strict";
 
 
-import { IParticipant } from "../types";
- 
-/* infrastructure interfaces */
+ import {
+	 IOracleProviderAdapter,
+     Oracle, OracleType,
+ } from "../../../src/interfaces/infrastructure";
+
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { mockedOracleAdapterResults } from "./data";
 
 
-export type OracleType = "builtin" | "remote-http";
-
-export type Oracle = {
-    id: string;
-    name: string;
+ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
+	oracleId: string;
     type: OracleType;
-    partyType: string;
-    partySubType: string | null;
-    endpoint: string | null;
+   
+    private readonly _logger: ILogger;
+	
+	constructor(
+		logger: ILogger,
+        oracle: Oracle,
+	) {
+		this._logger = logger;
+        this.oracleId = oracle.id;
+        this.type = oracle.type; 
+	}
+     init(): Promise<void> {
+        return Promise.resolve();
+     }
+     destroy(): Promise<void> {
+         return Promise.resolve();
+     }
+     healthCheck(): Promise<boolean> {
+        return Promise.resolve(true);
+     }
+     getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
+        const result = mockedOracleAdapterResults.find((result) => {
+            return result.partyType === partyType && result.partySubType === partySubType
+        })
+        if(result) {
+            return Promise.resolve(result.fspId);
+        }
+        return Promise.resolve(null);
+     }
+     associateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
+        return Promise.resolve(null);
+     }
+     disassociateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
+         return Promise.resolve(null);
+     }
 }
-
-export interface IOracleFinder{
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    addOracle(oracle: Oracle):Promise<void>;
-    removeOracle(id: string):Promise<void>;
-    getAllOracles():Promise<Oracle[]>;
-    getOracleById(id:string):Promise<Oracle|null>;
-    getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
-}
-
-export interface IOracleProviderAdapter{
-    oracleId: string;
-    type:  OracleType;
-    init(): Promise<void>;
-    destroy(): Promise<void>;
-    healthCheck(): Promise<boolean>;	
-    getParticipantFspId(partyType:string, partyId: string, partySubType:string|null, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string,partySubType:string|null, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubType:string|null, currency:string| null):Promise<null>;
-}
-
-export interface IOracleProviderFactory {
-    create(oracle: Oracle): IOracleProviderAdapter;
-}
-
-export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
-}
-
-

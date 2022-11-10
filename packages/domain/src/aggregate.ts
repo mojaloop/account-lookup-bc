@@ -345,28 +345,27 @@ export class AccountLookupAggregate  {
 
 	private async validateParticipant(participantId: string | null):Promise<void>{
 		// FIXME implement actual participantClient
-		return;
-		// if(participantId){
-		// 	const participant = await this._participantService.getParticipantInfo(participantId);
-		//
-		// 	if(!participant) {
-		// 		this._logger.debug(`No participant found`);
-		// 		throw new NoSuchParticipantError();
-		// 	}
-		//
-		// 	if(participant.id !== participantId){
-		// 		this._logger.debug(`Participant id mismatch ${participant.id} ${participantId}`);
-		// 		throw new InvalidParticipantIdError();
-		// 	}
-		//
-		// 	if(!participant.isActive) {
-		// 		this._logger.debug(`${participant.id} is not active`);
-		// 		throw new RequiredParticipantIsNotActive();
-		// 	}
-		// }
+		if(participantId){
+			const participant = await this._participantService.getParticipantInfo(participantId);
+		
+			if(!participant) {
+				this._logger.debug(`No participant found`);
+				throw new NoSuchParticipantError();
+			}
+		
+			if(participant.id !== participantId){
+				this._logger.debug(`Participant id mismatch ${participant.id} ${participantId}`);
+				throw new InvalidParticipantIdError();
+			}
+		
+			if(!participant.isActive) {
+				this._logger.debug(`${participant.id} is not active`);
+				throw new RequiredParticipantIsNotActive();
+			}
+		}
 	}
 	
-	// #region Oracles
+	//#region Oracles
 	private async getOracleAdapter(partyType:string, partySubType:string | null): Promise<IOracleProviderAdapter> {
 		const oracle = await this._oracleFinder.getOracle(partyType, partySubType); 
 		if(!oracle) {
@@ -398,7 +397,7 @@ export class AccountLookupAggregate  {
 
 		return fspId;
 	}
-	//#endregion
+	// #endregion
 	
 	//#region Oracle Admin
 	public async addOracle(oracle: Oracle): Promise<string> {

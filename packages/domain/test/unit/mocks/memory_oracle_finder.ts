@@ -44,31 +44,22 @@ import {
     IOracleFinder, Oracle
 } from "../../../src";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { mockedPartySubTypes, mockedPartyTypes, mockedOracleAdapters } from "./data";
 
 export class MemoryOracleFinder implements IOracleFinder {
     private readonly _logger: ILogger;
-    private readonly _oracles: Oracle[] = [{
-        id: "1",
-        name: "oracle1",
-        endpoint: "http://oracle1.com",
-        partyType: "DFSP",
-        partySubType: "MOBILE",
-        type: "builtin",
-    },
-    {
-        id: "2",
-        name: "oracle2",
-        endpoint: "http://oracle2.com",
-        partyType: "DFSP",
-        partySubType: "MOBILE",
-        type: "builtin",
-    }];
-
+    private readonly _oracles: Oracle[] ;
+    
     constructor(
         logger: ILogger,
     ) {
         this._logger = logger;
+        this._oracles = mockedOracleAdapters;
     }
+    public get oracles(): Oracle[] {
+        return this._oracles;
+    }
+
     init(): Promise<void> {
         return Promise.resolve();
     }
@@ -76,9 +67,11 @@ export class MemoryOracleFinder implements IOracleFinder {
         return Promise.resolve();
     }
     addOracle(oracle: Oracle): Promise<void> {
+        this._oracles.push(oracle);
         return Promise.resolve();
     }
     removeOracle(id: string): Promise<void> {
+        this._oracles.splice(this._oracles.findIndex(o => o.id === id), 1);
         return Promise.resolve();
     }
     getAllOracles(): Promise<Oracle[]> {
@@ -89,8 +82,10 @@ export class MemoryOracleFinder implements IOracleFinder {
     }
     getOracleByName(name: string): Promise<Oracle | null> {
         return Promise.resolve(this._oracles.find(o => o.name === name) || null);
-    }
+    }    
     getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null> {
-        return Promise.resolve(this._oracles.find(o => o.partyType === partyType && o.partySubType === partySubtype) || null);
+        const oracle = this._oracles.find(o => o.partyType === partyType && o.partySubType === partySubtype);
+        return Promise.resolve(oracle || null);
     }
+
 }

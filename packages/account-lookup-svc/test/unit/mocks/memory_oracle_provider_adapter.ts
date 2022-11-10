@@ -43,7 +43,7 @@
 
  import {
 	 IOracleProviderAdapter,
-     IOracleProviderFactory, Oracle, OracleType,
+     Oracle, OracleType,
  } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 

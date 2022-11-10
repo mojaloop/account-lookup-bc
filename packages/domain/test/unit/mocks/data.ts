@@ -41,80 +41,138 @@
  "use strict";
 
 
-import { IParticipant, IParty } from "../../../src/types";
+import { Oracle } from "../../../src/interfaces/infrastructure";
+import { IParticipant } from "../../../src/types";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
-export const mockedPartyResultIds = ["receivedParty1", "receivedParty2", "receivedParty3"];
-export const mockedPartyResultSubIds = ["receivedPartySub1", "receivedPartySub2", "receivedPartySub3"];
 
-export const mockedPartySubIds = ["subId2","subId3"];
 export const mockedPartyTypes = ["bank", "creditUnion", "insurance"];
 
+export const mockedPartySubTypes = ["savings", "checking", "order"];
+
 export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError","participantNull"];
-export const mockedParticipantResultIds = ["receivedParticipant1", "receivedParticipant2", "receivedParticipant3"];
-export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receivedParticipantSub2", "receivedParticipantSub3"];
 
-export const mockedParticipantSubIds = ["subId2","subId3"];
-export const mockedParticipantTypes = ["bank", "creditUnion", "insurance"];
-
-export const TestErrorMessage = "Test Error Message";
-
-export const mockedOracleList = [
+export const mockedOracleAdapters: Oracle [] = [
     {
-        id: mockedPartyIds[0],
-        type: mockedPartyTypes[0],
+        id: "1",
+        name: "oracle1",
+        endpoint: null,
+        partyType: mockedPartyTypes[0],
+        partySubType: mockedPartySubTypes[0],
+        type: "builtin",
     },
     {
-        id: mockedPartyIds[1],
-        type: mockedPartyTypes[1],
+        id: "1.1",
+        name: "oracle1.1",
+        endpoint: null,
+        partyType: mockedPartyTypes[0],
+        partySubType: null,
+        type: "builtin",
     },
     {
-        id: mockedPartyIds[2],
-        type: mockedPartyTypes[2],
+        id: "1.2",
+        name: "oracle1.2",
+        endpoint: null,
+        partyType: mockedPartyTypes[0],
+        partySubType: mockedPartySubTypes[1],
+        type: "builtin",
     },
     {
-        id: "error",
-        type: "error"
+        id: "2",
+        name: "oracle2",
+        endpoint: null,
+        partyType: mockedPartyTypes[1],
+        partySubType: mockedPartySubTypes[1],
+        type: "builtin",
     },
     {
-        id:"not_found_oracle",
-        type:"not_found_oracle"
+        id: "2.2",
+        name: "oracle2.2",
+        endpoint: null,
+        partyType: mockedPartyTypes[1],
+        partySubType: null,
+        type: "builtin",
+    },
+    {
+        id: "3",
+        name: "oracle3",
+        endpoint: "http://bank-oracle.com",
+        partyType: mockedPartyTypes[2],
+        partySubType: mockedPartySubTypes[2],
+        type: "remote-http",
+    },
+    {
+        id: "3.3",
+        name: "oracle3.3",
+        endpoint: "http://bank-oracle.com",
+        partyType: mockedPartyTypes[2],
+        partySubType: null,
+        type: "remote-http",
     }
+
 ];
-
-
-export const mockedParties: Map<{partyId:string, partyType:string, partySubId?:string}, IParty| Error> = new Map();
-mockedParties.set({partyId:mockedPartyIds[0],partyType:mockedPartyTypes[0]},{currency: "dollar", id: mockedPartyResultIds[0], subId: mockedPartyResultSubIds[0],type: "individual"});
-mockedParties.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:mockedPartySubIds[0]}, {currency: "dollar", id: mockedPartyResultIds[1], subId: mockedPartyResultSubIds[1],type: "individual"});
-mockedParties.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:mockedPartySubIds[1]}, {currency: "euro", id: mockedPartyResultIds[2], subId: mockedPartyResultSubIds[2],type: "individual"});
-mockedParties.set({partyId:mockedPartyIds[3],partyType:mockedPartyTypes[2]}, new Error());
-mockedParties.set({partyId:mockedPartyIds[3],partyType:mockedPartyTypes[2], partySubId:mockedPartySubIds[0]}, new Error());
-
-
-
-export const mockedPartyAssociations: Map<{partyType:string,partyId:string,partySubId?:string}, null| Error> = new Map();
-mockedPartyAssociations.set({partyId:mockedPartyIds[0],partyType:mockedPartyTypes[0]}, null);
-mockedPartyAssociations.set({partyId:mockedPartyIds[1],partyType:mockedPartyTypes[1],partySubId:mockedPartySubIds[0]}, null);
-mockedPartyAssociations.set({partyId:mockedPartyIds[2],partyType:mockedPartyTypes[2],partySubId:mockedPartySubIds[1]}, new Error());
 
 export const mockedParticipantFspIds = ["fspId1","fspId2","fspId3","fspId4","fspId5"];
 
-export const mockedParticipantsInfo: Map<{participantId:string, participantType:string, participantSubId?:string}, string| Error> = new Map();
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]}, mockedParticipantFspIds[0]);
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, mockedParticipantFspIds[1]);
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, mockedParticipantFspIds[2]);
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2]}, new Error(TestErrorMessage));
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[3],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, new Error(TestErrorMessage));
-mockedParticipantsInfo.set({participantId:mockedParticipantIds[5],participantType:mockedParticipantTypes[2], participantSubId:mockedParticipantSubIds[0]}, mockedParticipantFspIds[4]);
+
+export type OracleAdapterResults = {
+    partyType: string;
+    partySubType: string|null;
+    fspId: string | null;
+}
+
+export const mockedOracleAdapterResults:OracleAdapterResults[] = [
+    {
+        partyType: mockedPartyTypes[0],
+        partySubType: mockedPartySubTypes[0],
+        fspId: mockedParticipantFspIds[0],
+    },
+    {
+        partyType: mockedPartyTypes[0],
+        partySubType: null,
+        fspId: mockedParticipantFspIds[0],
+    },
+    {
+        partyType: mockedPartyTypes[1],
+        partySubType: mockedPartySubTypes[1],
+        fspId: mockedParticipantFspIds[1],
+    },
+    {
+        partyType: mockedPartyTypes[1],
+        partySubType: null,
+        fspId: mockedParticipantFspIds[1],
+    },
+    {
+        partyType: mockedPartyTypes[2],
+        partySubType: mockedPartySubTypes[2],
+        fspId: mockedParticipantFspIds[2],
+    },
+    {
+        partyType: mockedPartyTypes[2],
+        partySubType: null,
+        fspId: mockedParticipantFspIds[2],
+    },
+    {
+        partyType: mockedPartyTypes[0],
+        partySubType: mockedPartySubTypes[1],
+        fspId: null,
+    },
+];
+
+
+
+// TODO: Review this part
+
+
+
+export const mockedParticipantResultIds = ["receivedParticipant1", "receivedParticipant2", "receivedParticipant3"];
+
+export const mockedParticipantResultSubIds = ["receivedParticipantSub1", "receivedParticipantSub2", "receivedParticipantSub3"];
+
 
 export const mockedParticipants: Map<string, IParticipant| null> = new Map();
 mockedParticipants.set(mockedParticipantFspIds[0],{id: mockedParticipantResultIds[0], subId: mockedParticipantResultSubIds[0],type: "individual", isActive: true});
 mockedParticipants.set(mockedParticipantFspIds[2],{id: mockedParticipantResultIds[1], subId: mockedParticipantResultSubIds[1],type: "individual", isActive: true});
 mockedParticipants.set(mockedParticipantFspIds[4],null);
 
-
-export const mockedParticipantAssociations: Map<{participantType:string,participantId:string,participantSubId?:string}, null| Error> = new Map();
-mockedParticipantAssociations.set({participantId:mockedParticipantIds[0],participantType:mockedParticipantTypes[0]}, null);
-mockedParticipantAssociations.set({participantId:mockedParticipantIds[1],participantType:mockedParticipantTypes[1],participantSubId:mockedParticipantSubIds[0]}, null);
-mockedParticipantAssociations.set({participantId:mockedParticipantIds[2],participantType:mockedParticipantTypes[2],participantSubId:mockedParticipantSubIds[1]}, new Error(TestErrorMessage));
 
