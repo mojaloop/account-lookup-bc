@@ -61,6 +61,11 @@ import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 	}
 
 	create(oracle: Oracle): IOracleProviderAdapter {
-		return new MemoryOracleProviderAdapter(this._logger, oracle);
+		if(oracle.type=="builtin" || oracle.type=="remote-http"){
+			return new MemoryOracleProviderAdapter(this._logger, oracle);
+		} 
+
+		throw new Error("Oracle type not supported");
+		
 	}
 }

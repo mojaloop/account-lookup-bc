@@ -57,6 +57,15 @@ export type Oracle = {
     endpoint: string | null;
 }
 
+export type AddOracleDTO = {
+    id: string| null;
+    name: string;
+    type: OracleType;
+    partyType: string;
+    partySubType: string | null;
+    endpoint: string | null;
+}
+
 export interface IOracleFinder{
 	init(): Promise<void>;
 	destroy(): Promise<void>;

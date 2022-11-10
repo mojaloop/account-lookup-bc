@@ -57,7 +57,7 @@ import {
 	UnableToDisassociateParticipantError,
 	UnableToProcessMessageError
 } from "./errors";
-import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
+import { AddOracleDTO, IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
 import {
 	AccountLookUperrorEvt,
 	AccountLookUperrorEvtPayload,
@@ -398,7 +398,7 @@ export class AccountLookupAggregate  {
 	// #endregion
 	
 	//#region Oracle Admin
-	public async addOracle(oracle: Oracle): Promise<string> {
+	public async addOracle(oracle: AddOracleDTO): Promise<string> {
 
 		if(oracle.id && await this._oracleFinder.getOracleById(oracle.id)) {
 			throw new DuplicateOracleError("Oracle with same id already exists");
@@ -412,10 +412,14 @@ export class AccountLookupAggregate  {
 			throw new DuplicateOracleError("Oracle with same name already exists");
 		}
 
-		await this._oracleFinder.addOracle(oracle);
+		const newOracle: Oracle = oracle as Oracle; 
 
-		const addedOracleProvider = this._oracleProvidersFactory.create(oracle);
+		const addedOracleProvider = this._oracleProvidersFactory.create(newOracle);
+
+		await this._oracleFinder.addOracle(newOracle);
+
 		await addedOracleProvider.init();
+
 		this._oracleProvidersAdapters.push(addedOracleProvider);
 		return oracle.id;
 	}
