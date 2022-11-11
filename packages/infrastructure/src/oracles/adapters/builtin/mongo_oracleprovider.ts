@@ -51,8 +51,8 @@ import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, Unabl
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
 	private readonly _connectionString: string;
-	private readonly _mongoClient: MongoClient;
 	private readonly _dbName;
+	private mongoClient: MongoClient;
 	private collectionName = "builtinOracleParties";
 	private parties: Collection;
 	private readonly _oracle: Oracle;
@@ -71,15 +71,15 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		this._oracle = oracle;
 		this.oracleId = this._oracle.id;
 		this._connectionString = connectionString;
-		this._mongoClient = new MongoClient(this._connectionString);
 		this._dbName = dbName;
 		this.type = "builtin";
 	}
 	
 	async init(): Promise<void> {
 		try {
-			this._mongoClient.connect();
-			this.parties = this._mongoClient.db(this._dbName).collection(this.collectionName);
+			this.mongoClient = new MongoClient(this._connectionString);
+			this.mongoClient.connect();
+			this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
 		} catch (e: any) {
 			this._logger.error(`Unable to connect to the database: ${e.message}`);
 			throw new UnableToInitOracleProvider();
@@ -88,7 +88,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	async destroy(): Promise<void> {
 		try{
-			await this._mongoClient.close();
+			await this.mongoClient.close();
 		}
 		catch(e: any){
 			this._logger.error(`Unable to close database connection: ${e.message}`);
@@ -169,7 +169,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 	
 	async healthCheck(): Promise<boolean> {
-		await this._mongoClient.db().command({ping: 1}).catch((e: any) => {
+		await this.mongoClient.db().command({ping: 1}).catch((e: any) => {
 			this._logger.debug(`Unable to ping database: ${e.message}`);
 			return false;
 		});

@@ -37,24 +37,25 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
- import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
- import { mongoQuery, MongoDbOperationEnum } from "../utils/helpers/db";
- import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../src/index";
- import { Oracle } from "@mojaloop/account-lookup-bc-domain";
+import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "../../src/index";
+import { Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { Collection, MongoClient } from "mongodb";
  
- const logger: ILogger = new ConsoleLogger();
- logger.setLogLevel(LogLevel.FATAL);
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
  
- const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
- const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
- const COLLECTION_NAME = "builtinOracleParties";
+const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://localhost:27017/";
+const COLLECTION_NAME = "builtinOracleParties";
  
- let builtInOracleProvider: MongoOracleProviderRepo;
- const oracle: Oracle = {
+let builtInOracleProvider: MongoOracleProviderRepo;
+const oracle: Oracle = {
      id: "1",
      endpoint:null,
      name: "test",
@@ -62,26 +63,27 @@
      partySubType:"PHONE",
      type: "builtin",
  };
+
+let mongoClient: MongoClient;
+let collection : Collection;
+const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
  
- describe("Infrastructure - Builtin Oracle Provider Integration tests", () => {
+describe("Infrastructure - Builtin Oracle Provider Integration tests", () => {
  
      beforeAll(async () => {
+         mongoClient = await MongoClient.connect(connectionString);
+         collection = mongoClient.db(DB_NAME).collection(COLLECTION_NAME);
          builtInOracleProvider = new MongoOracleProviderRepo(oracle,logger,CONNECTION_STRING,DB_NAME);
          await builtInOracleProvider.init();
      });
  
      afterEach(async () => {
-         await mongoQuery({
-             dbUrl: CONNECTION_STRING,
-             dbName: DB_NAME,
-             dbCollection: COLLECTION_NAME,
-             operation: MongoDbOperationEnum.DELETE_MANY,
-             query: {}
-         });
+         await collection.deleteMany({});
      });
  
      afterAll(async () => {
          await builtInOracleProvider.destroy();
+         await mongoClient.close();
      });
 
 
@@ -90,7 +92,7 @@
     });
 
     test("should throw error if unable to init builtin provider", async () => {
-        const nonWorkingBuiltInOracleProvider = new MongoOracleProviderRepo(oracle,logger,CONNECTION_STRING,"fakeName");
+        const nonWorkingBuiltInOracleProvider = new MongoOracleProviderRepo(oracle,logger,"bad connection string","fakeName");
         await expect(nonWorkingBuiltInOracleProvider.init()).rejects.toThrowError(UnableToInitOracleProvider);
     });
 
@@ -125,24 +127,12 @@
             const currency = "USD";
 
             // Act
-            const result = await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
+           await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
             
             // Assert
-            expect(result).toEqual(null);
-            const queryResult = await mongoQuery({
-                dbUrl: CONNECTION_STRING,
-                dbName: DB_NAME,
-                dbCollection: COLLECTION_NAME,
-                operation: MongoDbOperationEnum.FIND,
-                query: {
-                    fspId,
-                    partyType,
-                    partyId,
-                    partySubId,
-                    currency
-                }});
-
-            expect(queryResult.length).toEqual(1);
+            const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
+            expect(queryResult).toBeDefined();
+            expect(queryResult?.fspId).toEqual(fspId);
 
      });
 
@@ -175,19 +165,8 @@
         
         // Assert
         expect(result).toBeNull();
-        const queryResult = await mongoQuery({
-            dbUrl: CONNECTION_STRING,
-            dbName: DB_NAME,
-            dbCollection: COLLECTION_NAME,
-            operation: MongoDbOperationEnum.FIND,
-            query: {
-                fspId,
-                partyType,
-                partyId,
-                partySubId,
-                currency
-            }});
-        expect(queryResult.length).toEqual(0);
+        const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
+        expect(queryResult).toBeNull();
     
     });
 
@@ -199,19 +178,6 @@
         // Assert
         expect(result).toEqual(true);
     });
-
-
-    test("should return false health check if db is down", async () => {
-        // Arrange
-        const nonWorkingBuiltInOracleProvider = new MongoOracleProviderRepo(oracle,logger,CONNECTION_STRING,"invalid_db_name");
-        
-        // Act
-        const result = await nonWorkingBuiltInOracleProvider.healthCheck();
-        
-        // Assert
-        expect(result).toEqual(false);
-    });
-
  
  });
  

@@ -29,7 +29,7 @@
  "use strict";
 
  import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
- import {ParticipantClientHttpMock} from "../utils/mocks/participant_client_http_mock";
+ import {ParticipantClientHttpMock} from "../mocks/participant_client_http_mock";
  import { ParticipantClient} from "../../src/external_adapters/participant_client";
  import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
  

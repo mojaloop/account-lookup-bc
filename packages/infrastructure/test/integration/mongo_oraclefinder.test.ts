@@ -41,39 +41,40 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { mongoQuery, MongoDbOperationEnum } from "../utils/helpers/db";
-import { MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "../../src/index";
+import {  MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "../../src/index";
 import { NoSuchOracleError, Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { MongoClient, Collection } from "mongodb";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
 const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://localhost:27017/";
 const COLLECTION_NAME = "oracles";
 
 let oracleFinder : MongoOracleFinderRepo;
 
+let mongoClient: MongoClient;
+let collection : Collection;
+const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
 
 describe("Infrastructure - Oracle Finder Integration tests", () => {
 
     beforeAll(async () => {
+        mongoClient = await MongoClient.connect(connectionString);
+        collection = mongoClient.db(DB_NAME).collection(COLLECTION_NAME);
         oracleFinder = new MongoOracleFinderRepo(logger, CONNECTION_STRING, DB_NAME);
         await oracleFinder.init();
     });
 
     afterEach(async () => {
-        await mongoQuery({
-            dbUrl: CONNECTION_STRING,
-            dbName: DB_NAME,
-            dbCollection: COLLECTION_NAME,
-            operation: MongoDbOperationEnum.DELETE_MANY,
-            query: {}
-        });
+      await collection.deleteMany({});
     });
 
     afterAll(async () => {
         await oracleFinder.destroy();
+        await mongoClient.close();
     });
 
     test("should be able to init the builtin oracle finder", async () => {
@@ -91,19 +92,19 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
 
     test("should throw error when is unable to init oracle finder", async () => {
         // Arrange
-        const oracleFinder = new MongoOracleFinderRepo(logger, CONNECTION_STRING, "invalid_db_name");
+        const badOracleFinder = new MongoOracleFinderRepo(logger, "invalid connection", "invalid_db_name");
         
         // Act
-        await expect(oracleFinder.init()).rejects.toThrowError();
+        await expect(badOracleFinder.init()).rejects.toThrowError();
 
     });
 
     test("should throw error when is unable to destroy oracle finder", async () => {
         // Arrange
-        const oracleFinder = new MongoOracleFinderRepo(logger, CONNECTION_STRING, "invalid_db_name");
+        const badOracleFinder = new MongoOracleFinderRepo(logger, "invalid connection", "invalid_db_name");
 
         // Act
-        await expect(oracleFinder.destroy()).rejects.toThrowError();
+        await expect(badOracleFinder.destroy()).rejects.toThrowError();
     });
 
     test("should insert remote and builtin oracles in the database", async () => {
@@ -132,7 +133,12 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
 
         // Assert
         const oracles = await oracleFinder.getAllOracles();
-        expect(oracles).toEqual([builtInOracle, remoteOracle]);
+        expect(oracles[0].id).toEqual(builtInOracle.id);
+        expect(oracles[0].name).toEqual(builtInOracle.name);
+        expect(oracles[0].type==="builtin").toBeTruthy();
+        expect(oracles[1].id).toEqual(remoteOracle.id);
+        expect(oracles[1].name).toEqual(remoteOracle.name);
+        expect(oracles[1].type==="remote-http").toBeTruthy();
         
     });
 
@@ -147,7 +153,9 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
             partySubType: "testPartySubType",
         };
 
-        // Act
+        await oracleFinder.addOracle(oracle);
+
+        // Act && Assert
         await expect(oracleFinder.addOracle(oracle)).rejects.toThrow(OracleAlreadyRegisteredError);
     });
 
@@ -167,7 +175,7 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
         const oracleById = await oracleFinder.getOracleById(oracle.id);
 
         // Assert
-        expect(oracleById).toEqual(oracle);
+        expect(oracleById?.id).toEqual(oracle.id);
 
     });
 
@@ -195,7 +203,7 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
         const oracleFound = await oracleFinder.getOracleByName(oracle.name);
 
         //Assert
-        expect(oracleFound).toEqual(oracle);
+        expect(oracleFound?.name).toEqual(oracle.name);
 
     });
 
@@ -235,7 +243,9 @@ describe("Infrastructure - Oracle Finder Integration tests", () => {
         const oracleFound = await oracleFinder.getOracle(oracle.partyType, oracle.partySubType);
 
         //Assert
-        expect(oracleFound).toEqual(oracle);
+        expect(oracleFound?.id).toEqual(oracle.id);
+        expect(oracleFound?.partyType).toEqual(oracle.partyType);
+        expect(oracleFound?.partySubType).toEqual(oracle.partySubType);
 
     });
 
