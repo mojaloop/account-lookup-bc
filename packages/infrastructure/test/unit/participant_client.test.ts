@@ -32,7 +32,6 @@ import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-type
 import { ParticipantClient} from "../../src/external_adapters/participant_client";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
 import { Participant} from "@mojaloop/participant-bc-public-types-lib";
-import ParticipantsHttpClient from "@mojaloop/participants-bc-client-lib";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
 const FAKE_TOKEN = "fakeToken";
@@ -67,9 +66,10 @@ describe("Account Lookup Client Library - Unit Tests", () => {
          );
      });
 
-     afterEach(() => {
-            jest.restoreAllMocks();
-        });
+    afterEach(() => {
+        jest.restoreAllMocks();
+        localCache.destroy();
+    });
  
      // Get participant.
     test("should receive null if participant doesnt exist", async () => {
@@ -190,8 +190,8 @@ describe("Account Lookup Client Library - Unit Tests", () => {
         }
 
         jest.spyOn(localCache, "get")
-            .mockReturnValue(participant1)
-            .mockReturnValue(participant2);
+            .mockReturnValueOnce(participant1)
+            .mockReturnValueOnce(participant2);
 
         // Act
         const participantsInfo =

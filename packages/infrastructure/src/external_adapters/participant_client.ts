@@ -76,21 +76,28 @@ export class ParticipantClient implements IParticipantService {
 	}
 
 	async getParticipantsInfo(fspIds: string[]): Promise<Participant[]|null> {
-		const result: Participant[] = [];
+		let result: Participant[] = [];
+		const missingFspIds: string[] = [];
 		
 		for (const fspId of fspIds) {
-			result.push(this._localCache.get("getParticipantInfo", fspId) as Participant);
+			const cachedResult = this._localCache.get("getParticipantInfo", fspId) as Participant;
+			if (cachedResult) {
+				result.push(cachedResult);
+			} else {
+				missingFspIds.push(fspId);
+			}
 		}
-		
-		if (result.every(participant => fspIds.includes(participant.id))) {
-			this._logger.debug(`getParticipantInfo: returning cached result for fspId list: ${fspIds}`);
+
+		if (missingFspIds.length === 0) {
+			this._logger.debug(`getParticipantsInfo: returning cached result for fspIds: ${fspIds}`);
 			return result;
 		}
-		
+
 		try {
-			const result = await this._externalParticipantClient.getParticipantsByIds(fspIds);
-			if(result) {
-				result.forEach(participant => this._localCache.set(participant, "getParticipantInfo", participant.id));
+			const participants = await this._externalParticipantClient.getParticipantsByIds(missingFspIds);
+			if(participants) {
+				participants.forEach(participant => this._localCache.set(participant, "getParticipantInfo", participant.id));
+				result = result.concat(participants);
 			};
 			return result;
 
