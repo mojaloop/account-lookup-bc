@@ -24,77 +24,193 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- ******/
+******/
 
- "use strict";
+"use strict";
 
- import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
- import {ParticipantClientHttpMock} from "../mocks/participant_client_http_mock";
- import { ParticipantClient} from "../../src/external_adapters/participant_client";
- import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import { ParticipantClient} from "../../src/external_adapters/participant_client";
+import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
+import { Participant} from "@mojaloop/participant-bc-public-types-lib";
+import ParticipantsHttpClient from "@mojaloop/participants-bc-client-lib";
+
+const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
+const FAKE_TOKEN = "fakeToken";
+
+const getParticipantByIdSpy = jest.fn();
+const getParticipantsByIdsSpy = jest.fn();
+
+jest.mock("@mojaloop/participants-bc-client-lib", () => {
+        return {
+            ParticipantsHttpClient: jest.fn().mockImplementation(() => { 
+                return {
+                    getParticipantById: getParticipantByIdSpy,
+                    getParticipantsByIds: getParticipantsByIdsSpy
+            }
+        })
+    }
+});
+
+let participantClient: ParticipantClient;
+let localCache: ILocalCache;
  
- const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
- 
- let participantHttpServerMock: ParticipantClientHttpMock;
- let participantClient: ParticipantClient;
- let localCache: ILocalCache;
- 
- describe("Account Lookup Client Library - Unit Tests", () => {
-     beforeAll(async () => {
+describe("Account Lookup Client Library - Unit Tests", () => {
+    beforeAll(async () => {
          const logger: ILogger = new ConsoleLogger();
          logger.setLogLevel(LogLevel.FATAL);
-         localCache = new LocalCache(logger);
-         participantHttpServerMock = new ParticipantClientHttpMock(
-             logger,
-             BASE_URL_PARTICIPANT_CLIENT
-         );
-         participantHttpServerMock.setUp();
-         
- 
+         localCache = new LocalCache(logger);         
          participantClient = new ParticipantClient(
              logger,
              BASE_URL_PARTICIPANT_CLIENT,
-             localCache
+             FAKE_TOKEN,
+            localCache
          );
      });
+
+     afterEach(() => {
+            jest.restoreAllMocks();
+        });
  
      // Get participant.
-     test("should receive null if participant doesnt exist", async () => {
-         // Arrange
-         const participantId: string = ParticipantClientHttpMock.NON_EXISTING_PARTICIPANT_ID;
+    test("should receive null if participant doesnt exist", async () => {
+        // Arrange
+        const participantId: string = "nonExistingParticipantId";
+        getParticipantByIdSpy.mockResolvedValueOnce(null);
+
+        // Act
+        const participantInfo = await participantClient.getParticipantInfo(participantId);
+
+        // Assert
+        expect(participantInfo).toBeNull();
+    });
  
+    test("should get participant info", async () => {
+        // Arrange
+        const participantId: string = "existingParticipantId";
+        const participant: Partial<Participant> = {
+            id: participantId,
+            name: "existingParticipantName",
+            isActive: true,
+            createdBy: "existingParticipantCreatedBy",
+            type: "DFSP",
+            createdDate: 1232131,
+            approved: true,
+            approvedBy: "existingParticipantApprovedBy",
+            approvedDate: 1232131,
+            description: "existingParticipantDescription"
+        }
+        getParticipantByIdSpy.mockResolvedValueOnce(participant);
+
          // Act
          const participantInfo =
              await participantClient.getParticipantInfo(participantId);
          
          // Assert
-         expect(participantInfo).toBeNull();
-     });
+         expect(participantInfo).toEqual(participant);
+        });
+    
+    test("should throw null if getting an error while getting participant info", async () => {
+        // Arrange
+        const participantId: string = "existingParticipantId";
+        getParticipantByIdSpy.mockRejectedValueOnce(null);
+
+        // Act
+        const participantInfo = await participantClient.getParticipantInfo(participantId);
+
+        // Assert
+        expect(participantInfo).toBeNull();
+    });
+    
+    test("should get participants info", async () => {
+        // Arrange
+        const participantId1: string = "existingParticipantId1";
+        const participantId2: string = "existingParticipantId2";
+        const participant1: Partial<Participant> = {
+            id: participantId1,
+            name: "existingParticipantName1",
+            isActive: true,
+            createdBy: "existingParticipantCreatedBy1",
+            type: "DFSP",
+            createdDate: 1232131,
+            approved: true,
+            approvedBy: "existingParticipantApprovedBy1",
+            approvedDate: 1232131,
+            description: "existingParticipantDescription1"
+        }
+        const participant2: Partial<Participant> = {
+            id: participantId2,
+            name: "existingParticipantName2",
+            isActive: true,
+            createdBy: "existingParticipantCreatedBy2",
+            type: "DFSP",
+            createdDate: 1232131,
+            approved: true,
+            approvedBy: "existingParticipantApprovedBy2",
+            approvedDate: 1232131,
+            description: "existingParticipantDescription2"
+        }
+
+        getParticipantsByIdsSpy.mockResolvedValueOnce([participant1, participant2]);
+
+        // Act
+        const participantsInfo =
+            await participantClient.getParticipantsInfo([participantId1, participantId2]);
+
+        // Assert
+        expect(participantsInfo).toEqual([participant1, participant2]);
+    });
+
+    test("should get participants info from cache", async () => {
+        // Arrange
+        const participantId1: string = "existingParticipantId1";
+        const participantId2: string = "existingParticipantId2";
+        const participant1: Partial<Participant> = {
+            id: participantId1,
+            name: "existingParticipantName1",
+            isActive: true,
+            createdBy: "existingParticipantCreatedBy1",
+            type: "DFSP",
+            createdDate: 1232131,
+            approved: true,
+            approvedBy: "existingParticipantApprovedBy1",
+            approvedDate: 1232131,
+            description: "existingParticipantDescription1"
+        }
+        const participant2: Partial<Participant> = {
+            id: participantId2,
+            name: "existingParticipantName2",
+            isActive: true,
+            createdBy: "existingParticipantCreatedBy2",
+            type: "DFSP",
+            createdDate: 1232131,
+            approved: true,
+            approvedBy: "existingParticipantApprovedBy2",
+            approvedDate: 1232131,
+            description: "existingParticipantDescription2"
+        }
+
+        jest.spyOn(localCache, "get")
+            .mockReturnValue(participant1)
+            .mockReturnValue(participant2);
+
+        // Act
+        const participantsInfo =
+            await participantClient.getParticipantsInfo([participantId1, participantId2]);
+
+        // Assert
+        expect(participantsInfo).toEqual([participant1, participant2]);
+    });
  
-     test("should get participant info", async () => {
+    test("should retrieve participant from cache", async () => {
          // Arrange
-         const participantId: string = ParticipantClientHttpMock.EXISTING_PARTICIPANT_ID;
- 
+        const participantId: string = "existingParticipantId";
+        jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
+        
          // Act
-         const participantInfo =
-             await participantClient.getParticipantInfo(participantId);
-         
-         // Assert
-         expect(participantInfo).toEqual(ParticipantClientHttpMock.participant);
-     });
- 
-     test("should retrieve participant from cache", async () => {
-         // Arrange
-         const participantId: string = ParticipantClientHttpMock.EXISTING_PARTICIPANT_ID;
-         jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
- 
-         // Act
-         const participantInfo =
-             await participantClient.getParticipantInfo(participantId);
+        const participantInfo = await participantClient.getParticipantInfo(participantId);
          
          // Assert
          expect(participantInfo).toEqual({"id":1, "name":"cache"});
-     });
+    });
  
- });
- 
+});

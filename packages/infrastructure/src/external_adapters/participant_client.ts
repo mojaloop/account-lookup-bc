@@ -29,72 +29,74 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import axios, {AxiosInstance, AxiosResponse} from "axios";
-import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-domain";
+import { ParticipantsHttpClient} from "@mojaloop/participants-bc-client-lib";
+import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+import { IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 import { ILocalCache, LocalCache } from "../local_cache";
 
 export class ParticipantClient implements IParticipantService {
-	private readonly logger: ILogger;
-	private readonly httpClient: AxiosInstance;
+	private readonly _logger: ILogger;
 	private readonly _localCache: ILocalCache;
+	private readonly _clientBaseUrl: string;
+	private readonly _externalParticipantClient :ParticipantsHttpClient;
+	private token: string;
 	private validateStatus = (status: number): boolean => status === 200;
 
 	constructor(
 		logger: ILogger,
-		baseUrlHttpService?: string,
-		localCache?: ILocalCache,
+		clientBaseUrl: string,
+		token: string,
+		localCache?: ILocalCache
 	) {
-		this.logger = logger;
-
-		this.httpClient = axios.create({
-			baseURL: baseUrlHttpService,
-		});
-
+		this._logger = logger;
+		this.token = token;
+		this._clientBaseUrl = clientBaseUrl;
+		this._externalParticipantClient = new ParticipantsHttpClient(this._logger, this._clientBaseUrl, this.token);
 		this._localCache = localCache ?? new LocalCache(logger);
 	}
 
-	async getParticipantInfo(fspId: string): Promise<IParticipant| null> {
-		const result = this._localCache.get("getParticipantInfo", fspId) as IParticipant;
+	async getParticipantInfo(fspId: string): Promise<Participant| null> {
+		const result = this._localCache.get("getParticipantInfo", fspId) as Participant;
 		
 		if (result) {
-			this.logger.debug(`getParticipantInfo: returning cached result for fspId: ${fspId}`);
+			this._logger.debug(`getParticipantInfo: returning cached result for fspId: ${fspId}`);
 			return result;
 		}
 		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspId: fspId },validateStatus: this.validateStatus });
-			this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
-			return axiosResponse.data;
+			const result = await this._externalParticipantClient.getParticipantById(fspId);
+			if(result) {
+				this._localCache.set(result, "getParticipantInfo", fspId);
+			};
+			return result;
 		} catch (e: unknown) {
-			this.logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
+			this._logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
 			return null;
 		}
 	}
 
-	async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
-		const result: IParticipant[] = [];
+	async getParticipantsInfo(fspIds: string[]): Promise<Participant[]|null> {
+		const result: Participant[] = [];
 		
-
 		for (const fspId of fspIds) {
-			result.push(this._localCache.get("getParticipantInfo", fspId) as IParticipant);
+			result.push(this._localCache.get("getParticipantInfo", fspId) as Participant);
 		}
 		
 		if (result.every(participant => fspIds.includes(participant.id))) {
-			this.logger.debug(`getParticipantInfo: returning cached result for fspId list: ${fspIds}`);
+			this._logger.debug(`getParticipantInfo: returning cached result for fspId list: ${fspIds}`);
 			return result;
 		}
 		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get("/participants", { params: { fspIds: fspIds },validateStatus: this.validateStatus });
+			const result = await this._externalParticipantClient.getParticipantsByIds(fspIds);
+			if(result) {
+				result.forEach(participant => this._localCache.set(participant, "getParticipantInfo", participant.id));
+			};
+			return result;
 
-			for (const fspId of axiosResponse.data) {
-				this._localCache.set(axiosResponse.data, "getParticipantInfo", fspId);
-			}
-
-			return axiosResponse.data;
 		} catch (e: unknown) {
-			this.logger.error(`getParticipantInfo: error getting participants info for fspIds: ${fspIds} - ${e}`);
-			return [];
+			this._logger.error(`getParticipantInfo: error getting participants info for fspIds: ${fspIds} - ${e}`);
+			return null;
 		}
 	}
 }

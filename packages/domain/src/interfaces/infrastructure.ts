@@ -36,15 +36,13 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
-
-import { IParticipant } from "../types";
+import { Participant } from "@mojaloop/participant-bc-public-types-lib";
  
 /* infrastructure interfaces */
-
 
 export type OracleType = "builtin" | "remote-http";
 
@@ -93,8 +91,8 @@ export interface IOracleProviderFactory {
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string):Promise<IParticipant|null>;
-    getParticipantsInfo(fspIds: string[]):Promise<IParticipant[]>;
+    getParticipantInfo(fspId: string): Promise<Participant| null>;
+    getParticipantsInfo(fspIds: string[]): Promise<Participant[]|null>;
 }
 
 

@@ -38,6 +38,8 @@
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
+    "@mojaloop/participant-bc-public-types-lib": "~0.0.3",
+    "@mojaloop/participants-bc-client-lib": "~0.0.5",
     "axios": "^1.1.2",
     "mongodb": "^4.10.0"
   },

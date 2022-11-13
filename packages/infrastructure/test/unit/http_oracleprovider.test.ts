@@ -45,7 +45,7 @@ import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { HttpOracleProvider } from "../../../infrastructure/src/oracles/adapters/remote/http_oracleprovider";
 import { UnableToInitRemoteOracleProvider } from "../../src/errors";
-import { FSP_ID_RESPONSE, NOT_FOUND_PARTY_ID, NOT_FOUND_PARTY_SUB_ID, NOT_FOUND_PARTY_TYPE, PARTY_ID, PARTY_SUB_ID, PARTY_TYPE, RemoteOracleProviderHttpMock } from "../utils/mocks/http_oracleprovider_mock";
+import { FSP_ID_RESPONSE, NOT_FOUND_PARTY_ID, NOT_FOUND_PARTY_SUB_ID, NOT_FOUND_PARTY_TYPE, PARTY_ID, PARTY_SUB_ID, PARTY_TYPE, RemoteOracleProviderHttpMock } from "../mocks/http_oracleprovider_mock";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);

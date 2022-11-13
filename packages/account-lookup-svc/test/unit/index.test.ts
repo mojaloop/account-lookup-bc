@@ -77,7 +77,6 @@ const useSpy = jest.fn();
 const closeSpy = jest.fn();
 const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
 
-
 jest.mock('express', () => {
   return () => ({
     listen: listenSpy,

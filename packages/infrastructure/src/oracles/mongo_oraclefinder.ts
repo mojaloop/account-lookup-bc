@@ -130,7 +130,11 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 	
 	async getAllOracles(): Promise<Oracle[]> {
-		const oracles = await this.oracleProviders.find().toArray();
+		const oracles = await this.oracleProviders.find().toArray().catch((e: any) => {
+			this._logger.error(`Unable to get all oracles: ${e.message}`);
+			throw new UnableToGetOracleError();
+		});
+
 		let mappedOracles: Oracle[] = [];
 		
 		oracles.map((oracle: any) => {
@@ -141,13 +145,21 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
 	async getOracleById(id:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({id: id });
-		if(!oracle) return null;
+		const oracle = await this.oracleProviders.findOne({id: id }).catch((e: any) => {
+			this._logger.error(`Unable to get oracle by id: ${e.message}`);
+			throw new UnableToGetOracleError();
+		});
+		if(!oracle){
+			return null;
+		} 
 		return this.mapToOracle(oracle);
 	}
 
 	async getOracleByName(name:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({name: name });
+		const oracle = await this.oracleProviders.findOne({name: name }).catch((e: any) => {
+			this._logger.error(`Unable to get oracle by name: ${e.message}`);
+			throw new UnableToGetOracleError();
+		});
 		if(!oracle) return null;
 		return this.mapToOracle(oracle);
 	}
