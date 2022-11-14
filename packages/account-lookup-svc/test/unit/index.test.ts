@@ -67,6 +67,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     mockedParticipantService
 );
 
+// Express mock 
 const useSpy = jest.fn();
 const closeSpy = jest.fn();
 const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
@@ -90,11 +91,14 @@ express.json = jest.fn();
 express.urlencoded = jest.fn();
 express.Router = jest.fn().mockImplementation(() => { return oracleAdminRoutesSpy });
 
-
 describe("Account Lookup Service", () => {
     
     afterEach(async () => {
         jest.restoreAllMocks()
+    });
+
+    afterAll(async () => {
+        jest.clearAllMocks();
     });
 
     test("should be able to run start and init all variables", async()=>{

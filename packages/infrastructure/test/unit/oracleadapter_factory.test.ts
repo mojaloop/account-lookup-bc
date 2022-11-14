@@ -55,6 +55,7 @@ logger.setLogLevel(LogLevel.FATAL);
 const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger);
 
 describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
+    
     afterAll(async() => {
         jest.clearAllMocks();
     });

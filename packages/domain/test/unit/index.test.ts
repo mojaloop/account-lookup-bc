@@ -101,6 +101,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
     afterEach(async () => {
         jest.restoreAllMocks();
     });
+    
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
 
     //#region Party entity
     test("should create a new party entity", async()=>{

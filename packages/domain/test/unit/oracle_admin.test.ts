@@ -94,6 +94,10 @@ describe("Domain - Unit Tests oracle admin", () => {
         jest.restoreAllMocks();
     });
 
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
+
     test("should be able to get all oracles", async () => {
         // Arrange 
         const expectedOraclesLength = mockedOracleAdapters.length;

@@ -71,6 +71,7 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     
     afterAll(async () => {
         oracleproviderHttpServerMock.disable();
+        jest.clearAllMocks();
     });
 
     test("should set correct values on initialization", async () => {

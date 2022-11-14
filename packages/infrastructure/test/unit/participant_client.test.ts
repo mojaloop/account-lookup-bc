@@ -70,6 +70,10 @@ describe("Account Lookup Client Library - Unit Tests", () => {
         jest.restoreAllMocks();
         localCache.destroy();
     });
+
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
  
      // Get participant.
     test("should receive null if participant doesnt exist", async () => {

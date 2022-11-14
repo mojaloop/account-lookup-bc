@@ -50,6 +50,10 @@ logger.setLogLevel(LogLevel.FATAL);
 
 describe("Infrastructure - Local Cache Unit Tests", () => {
     
+    afterAll(async () => {
+        jest.clearAllMocks();
+    });
+
     test("should create a new local cache instance", async()=>{ 
         
         //Arrange && Act 
