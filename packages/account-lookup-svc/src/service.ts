@@ -178,7 +178,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantClient(logger);
+  participantService = participantServiceParam ?? new ParticipantClient(logger,PARTICIPANT_SVC_BASEURL, fixedToken);
 
   oracleAdminRoutes = oracleAdminRoutesParam ?? new OracleAdminExpressRoutes(aggregate, logger);
 }

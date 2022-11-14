@@ -41,6 +41,7 @@
 
 import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { Participant } from "@mojaloop/participant-bc-public-types-lib";
 
  export class MemoryParticipantService implements IParticipantService {
 	private readonly logger: ILogger;
@@ -50,11 +51,12 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 	) {
 		this.logger = logger;
 	}
-	 async getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]> {
+	 getParticipantInfo(fspId: string): Promise<Participant | null> {
 		 throw new Error("Method not implemented.");
 	 }
-     async getParticipantInfo(fspId: string): Promise<IParticipant | null> {
-         throw new Error("Method not implemented.");
-     }
+	 getParticipantsInfo(fspIds: string[]): Promise<Participant[] | null> {
+		 throw new Error("Method not implemented.");
+	 }
+	
 	
 }
