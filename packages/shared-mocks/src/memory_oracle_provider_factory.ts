@@ -36,48 +36,36 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
 
- import {
-	 IOracleProviderAdapter,
-     Oracle, OracleType,
- } from "@mojaloop/account-lookup-bc-domain";
+import {
+	IOracleProviderAdapter,
+	IOracleProviderFactory, Oracle,
+} from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 
 
- export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
-	oracleId: string;
-    type: OracleType;
-   
-    private readonly _logger: ILogger;
+ export class MemoryOracleProviderFactory implements IOracleProviderFactory {
+	id: string;
+	partyType: string;
+	private readonly _logger: ILogger;
 	
 	constructor(
 		logger: ILogger,
-        oracle: Oracle,
 	) {
 		this._logger = logger;
-        this.oracleId = oracle.id;
-        this.type = oracle.type; 
 	}
-     init(): Promise<void> {
-         return Promise.resolve();
-     }
-     destroy(): Promise<void> {
-         return Promise.resolve();
-     }
-     healthCheck(): Promise<boolean> {
-        return Promise.resolve(true);
-     }
-     getParticipantFspId(partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<string | null> {
-        throw new Error("Method not implemented.");
-     }
-     associateParticipant(fspId: string, partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<null> {
-         throw new Error("Method not implemented.");
-     }
-     disassociateParticipant(fspId: string, partyType: string, partyId: string, partySubId: string | null, currency: string | null): Promise<null> {
-         throw new Error("Method not implemented.");
-     }
+
+	create(oracle: Oracle): IOracleProviderAdapter {
+		if(oracle.type=="builtin" || oracle.type=="remote-http"){
+			return new MemoryOracleProviderAdapter(this._logger, oracle);
+		} 
+
+		throw new Error("Oracle type not supported");
+		
+	}
 }

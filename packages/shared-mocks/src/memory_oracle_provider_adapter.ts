@@ -36,21 +36,20 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
 
- import {
-	 IOracleProviderAdapter,
-     Oracle, OracleType,
- } from "../../../src/interfaces/infrastructure";
-
+import {
+    IOracleProviderAdapter,
+    Oracle, OracleType,
+} from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleAdapterResults } from "./data";
+import { mockedOracleAdapterResults } from "./mocked_data";
 
 
- export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
+export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
 	oracleId: string;
     type: OracleType;
    
@@ -75,8 +74,8 @@ import { mockedOracleAdapterResults } from "./data";
      }
      getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
         const result = mockedOracleAdapterResults.find((result) => {
-            return result.partyType === partyType && result.partySubType === partySubType
-        })
+            return result.partyType === partyType && result.partySubType === partySubType;
+        });
         if(result) {
             return Promise.resolve(result.fspId);
         }
@@ -84,7 +83,7 @@ import { mockedOracleAdapterResults } from "./data";
      }
      associateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
         const isAssociationPossible = mockedOracleAdapterResults.find((result) => {
-            return result.partyType === partyType && result.partySubType === partySubType
+            return result.partyType === partyType && result.partySubType === partySubType;
         })?.association;
         if(isAssociationPossible) {
             return Promise.resolve(null);
@@ -93,7 +92,7 @@ import { mockedOracleAdapterResults } from "./data";
      }
      disassociateParticipant(fspId: string, partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<null> {
         const isDisassociationPossible = mockedOracleAdapterResults.find((result) => {
-            return result.partyType === partyType && result.partySubType === partySubType
+            return result.partyType === partyType && result.partySubType === partySubType;
         })?.disassociation;
         if(isDisassociationPossible) {
             return Promise.resolve(null);

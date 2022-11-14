@@ -36,9 +36,9 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
 export enum CurrencyType {
 	DOLLAR = "dollar",
@@ -57,16 +57,3 @@ export interface IPartyAccount {
 	currency: string[];
 	extensionList: string[];
 }
-
-export interface IParticipant {
-    id: string;
-    type: string;
-    subId: string | null;
-    isActive: boolean;
-}
-
-export interface IParticipantAccount {
-	fspId: string;
-	extensionList: string[];
-}
-

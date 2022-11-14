@@ -37,26 +37,13 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
-import { IParticipant, IParticipantService } from "@mojaloop/account-lookup-bc-domain";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+export * from "./memory_message_producer";
+export * from "./memory_message_consumer";
+export * from "./memory_oracle_finder";
+export * from "./memory_oracle_provider_adapter";
+export * from "./memory_oracle_provider_factory";
+export * from "./memory_participant_service";
+export * from "./mocked_data";
 
- export class MemoryParticipantService implements IParticipantService {
-	private readonly logger: ILogger;
-	
-	constructor(
-		logger: ILogger,
-	) {
-		this.logger = logger;
-	}
-	 getParticipantInfo(fspId: string): Promise<Participant | null> {
-		 throw new Error("Method not implemented.");
-	 }
-	 getParticipantsInfo(fspIds: string[]): Promise<Participant[] | null> {
-		 throw new Error("Method not implemented.");
-	 }
-	
-	
-}

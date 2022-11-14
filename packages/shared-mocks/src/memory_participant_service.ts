@@ -35,45 +35,29 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+import { IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 
-import { InvalidParticipantActiveFlagError, InvalidParticipantIdError, InvalidParticipantTypeError } from "../errors";
-import { IParticipant } from "../types";
-
-export class Participant implements IParticipant{
-	id: string;
-	type: string;
-    currency: string;
-	subId: string | null;
-	isActive: boolean;
-
+export class MemoryParticipantService implements IParticipantService {
+	private readonly logger: ILogger;
+	
 	constructor(
-		id: string,
-		type: string,
-		isActive: boolean,
-        currency: string,
-        subId: string | null = null,
+		logger: ILogger,
 	) {
-		this.id = id;
-		this.type = type;
-		this.isActive = isActive;
-        this.currency = currency;
-        this.subId = subId;
+		this.logger = logger;
 	}
 
-
-    static validateParticipant(party: Participant): void {
-		if (!party.id) {
-			throw new InvalidParticipantIdError();
-		}
-		if (!party.type) {
-			throw new InvalidParticipantTypeError();
-		}
-		if (!party.isActive) {
-			throw new InvalidParticipantActiveFlagError();
-		}
+	async getParticipantInfo(fspId: string): Promise<Participant|null> {
+		return Promise.resolve(null);
 	}
+
+	async getParticipantsInfo(fspIds: string[]): Promise<Participant[]> {
+		return Promise.resolve([]);
+	}
+	
 }

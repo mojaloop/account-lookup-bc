@@ -32,7 +32,8 @@
     "dep:check": "npm exec ncu -- -e 2",
     "dep:update": "npm exec ncu -- -u",
     "lint": "eslint ./src",
-    "lint:fix": "eslint ./src --fix"
+    "lint:fix": "eslint ./src --fix",
+    "test:unit": "jest --passWithNoTests --runInBand --testMatch **/test/unit/*.test.ts || ECHO."
   },
   "dependencies": {
     "@mojaloop/logging-bc-public-types-lib": "^0.1.12",

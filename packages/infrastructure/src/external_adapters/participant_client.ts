@@ -67,7 +67,7 @@ export class ParticipantClient implements IParticipantService {
 			const result = await this._externalParticipantClient.getParticipantById(fspId);
 			if(result) {
 				this._localCache.set(result, "getParticipantInfo", fspId);
-			};
+			}
 			return result;
 		} catch (e: unknown) {
 			this._logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
@@ -98,7 +98,7 @@ export class ParticipantClient implements IParticipantService {
 			if(participants) {
 				participants.forEach(participant => this._localCache.set(participant, "getParticipantInfo", participant.id));
 				result = result.concat(participants);
-			};
+			}
 			return result;
 
 		} catch (e: unknown) {

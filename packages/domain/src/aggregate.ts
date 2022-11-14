@@ -104,7 +104,7 @@ export class AccountLookupAggregate  {
 	}
 
 	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
-		const clonedArray = this._oracleProvidersAdapters.map(a => {return {...a}});
+		const clonedArray = this._oracleProvidersAdapters.map(a => {return {...a};});
 		return clonedArray;
 	}
 

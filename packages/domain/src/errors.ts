@@ -36,7 +36,7 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 "use strict";
 
@@ -59,16 +59,6 @@ export class InvalidParticipantIdError extends Error {
     }
 }
 
-export class InvalidParticipantTypeError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid participant type");
-    }
-}
-export class InvalidParticipantActiveFlagError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid participant active flag");
-    }
-}
 export class NoSuchParticipantError extends Error {
     constructor(message?: string) {
         super(message || "No such participant");

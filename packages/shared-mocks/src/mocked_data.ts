@@ -36,13 +36,11 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
-
-import { Oracle } from "../../../src/interfaces/infrastructure";
-import { IParticipant } from "../../../src/types";
+import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 
 export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
 
@@ -199,7 +197,7 @@ export const getParticipantFspIdForOracleTypeAndSuType = (partyType: string, par
         return oracleAdapterResult.partyType === partyType && oracleAdapterResult.partySubType === partySubType;
     });
     return result?.fspId ?? null;
-}
+};
 
 
 

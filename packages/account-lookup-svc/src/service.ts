@@ -101,11 +101,11 @@ let participantService: IParticipantService;
 const ADMIN_PORT = process.env["ADMIN_PORT"] || 3030;
 let expressApp: Express;
 let oracleAdminServer: Server;
-let oracleAdminRoutes: IOracleAdminRoutes;
+let oracleAdminRoutes: OracleAdminExpressRoutes;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService, oracleAdminRoutesParam?:IOracleAdminRoutes,
+  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService,
   aggregateParam?:AccountLookupAggregate,
   )
   :Promise<void> {
@@ -113,7 +113,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
   try{
     
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam, oracleAdminRoutesParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
 
     messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
     await messageConsumer.connect();
@@ -140,7 +140,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     expressApp = express();
     expressApp.use(express.json()); // for parsing application/json
     expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
-
+    oracleAdminRoutes = new OracleAdminExpressRoutes(aggregate, logger);
     expressApp.use("/admin", oracleAdminRoutes.MainRouter);
 
     expressApp.use((req, res) => {
@@ -161,7 +161,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 }
 
 async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
-  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService, oracleAdminRoutesParam?:IOracleAdminRoutes):Promise<void>  {
+  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
   
@@ -179,8 +179,6 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
   participantService = participantServiceParam ?? new ParticipantClient(logger,PARTICIPANT_SVC_BASEURL, fixedToken);
-
-  oracleAdminRoutes = oracleAdminRoutesParam ?? new OracleAdminExpressRoutes(aggregate, logger);
 }
 
 export async function stop(): Promise<void> {

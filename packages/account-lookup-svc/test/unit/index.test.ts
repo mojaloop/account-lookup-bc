@@ -36,24 +36,20 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 import {AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder } from "@mojaloop/account-lookup-bc-domain/test/unit/mocks/memory_oracle_finder";
-import { MemoryOracleAdminRoutes } from "./mocks/memory_oracle_admin_routes";
-import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { MemoryMessageConsumer } from "./mocks/memory_message_consumer";
-import { MemoryParticipantService } from "./mocks/memory_participant_service";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService } from "@mojaloop/account-lookup-shared-mocks";
+// import { MemoryOracleAdminRoutes } from "./mocks/memory_oracle_admin_routes";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "../../src/service";
-import { MemoryOracleProviderFactory } from './mocks/memory_oracle_provider_factory';
 const express = require("express");
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
-const mockedProducer: IMessageProducer = new MemoryMessageProducer();
+const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
 const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
@@ -62,8 +58,6 @@ const mockedParticipantService:IParticipantService = new MemoryParticipantServic
 const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
-
-const mockedAdminRoutes = new MemoryOracleAdminRoutes();
 
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
@@ -76,16 +70,26 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
 const useSpy = jest.fn();
 const closeSpy = jest.fn();
 const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
+const oracleAdminRoutesSpy = {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+};
+
 
 jest.mock('express', () => {
   return () => ({
     listen: listenSpy,
-    use: useSpy,
-  });
+    close: jest.fn(),
+    use: useSpy
+    });
 });
 
 express.json = jest.fn();
 express.urlencoded = jest.fn();
+express.Router = jest.fn().mockImplementation(() => { return oracleAdminRoutesSpy });
+
 
 describe("Account Lookup Service", () => {
     
@@ -104,7 +108,7 @@ describe("Account Lookup Service", () => {
      
         // Act
         await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
-            mockedParticipantService, mockedAdminRoutes, mockedAggregate);
+            mockedParticipantService, mockedAggregate);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1); 
@@ -113,7 +117,7 @@ describe("Account Lookup Service", () => {
         expect(spyConsumerCallback).toBeCalledTimes(1); 
         expect(spyProducerInit).toBeCalledTimes(1);
         expect(spyAggregateInit).toBeCalledTimes(1);
-        expect(useSpy).toBeCalledWith("/admin", mockedAdminRoutes.MainRouter);
+        expect(useSpy).toBeCalledWith("/admin", oracleAdminRoutesSpy);
         expect(listenSpy).toBeCalledTimes(1);
     
     });
@@ -124,7 +128,7 @@ describe("Account Lookup Service", () => {
         const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
         const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
         await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, 
-            mockedOracleProviderFactory, mockedParticipantService, mockedAdminRoutes, mockedAggregate);
+            mockedOracleProviderFactory, mockedParticipantService, mockedAggregate);
         
         // Act
         await stop();

@@ -25,7 +25,7 @@
     "test:unit": "npm run test:unit --forceExit -ws",
     "test:coverage": "npm run test:coverage -ws --parallel -v",
     "test:coverage-check": "npm run test:coverage-check -ws --parallel -v",
-    "test:integration": "npm run test:integration -ws --parallel",
+    "test:integration": "jest --passWithNoTests --testMatch **/tests/integration/**/*.test.ts",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "npm exec ncu -- -e 2; npm -ws --parallel run dep:check",
     "dep:update": "npm exec ncu -- -e 2 -u; npm -ws --parallel run dep:update"
@@ -45,7 +45,9 @@
     "eslint": "^8.25.0",
     "husky": "^8.0.1",
     "jest": "^29.1.2",
+    "mongodb": "^4.10.0",
     "npm-check-updates": "^16.3.11",
+    "supertest": "^6.3.1",
     "ts-jest": "^29.0.3",
     "typescript": "^4.8.4"
   },
@@ -55,6 +57,7 @@
     "packages/client",
     "packages/account-lookup-svc",
     "packages/http-oracle-sv",
+    "packages/shared-mocks",
     "packages/*"
   ]
 }

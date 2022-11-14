@@ -135,7 +135,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			throw new UnableToGetOracleError();
 		});
 
-		let mappedOracles: Oracle[] = [];
+		const mappedOracles: Oracle[] = [];
 		
 		oracles.map((oracle: any) => {
 			mappedOracles.push(this.mapToOracle(oracle));	

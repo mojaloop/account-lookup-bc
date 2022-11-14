@@ -45,17 +45,14 @@
  import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
  import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
  import {Party} from "../../src/entities/party";
- import {Participant} from "../../src/entities/participant";
  import {
      AccountLookupAggregate,
      InvalidMessagePayloadError,
      InvalidMessageTypeError,
      InvalidParticipantIdError,
-     InvalidParticipantTypeError,
      InvalidPartyIdError,
      InvalidPartyTypeError,
      IOracleFinder,
-     IParticipant,
      IParticipantService,
      NoSuchOracleAdapterError,
      NoSuchOracleError,
@@ -66,13 +63,11 @@
      UnableToAssociateParticipantError,
      UnableToDisassociateParticipantError,
  } from "../../src";
-import { MemoryOracleFinder } from "./mocks/memory_oracle_finder";
-import { MemoryMessageProducer } from "./mocks/memory_message_producer";
-import { getParticipantFspIdForOracleTypeAndSuType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "./mocks/data";
-import { MemoryParticipantService } from "./mocks/memory_participant_service";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-shared-mocks";
+import { getParticipantFspIdForOracleTypeAndSuType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-shared-mocks";
 import { AccountLookUperrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { MemoryOracleProviderFactory } from "./mocks/memory_oracle_provider_factory";
-import { MemoryOracleProviderAdapter } from './mocks/memory_oracle_provider_adapter';
+import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -166,69 +161,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
     });
     //#endregion
 
-    //#region Participant entity
-     test("should create a new participant entity", async()=>{
-        // Arrange 
-        const id="fakeId";
-	    const type="fake type";
-        const isActive = true;
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, isActive, currency, subId);
-
-        // Assert
-
-        expect(participant.id).toBe(id);
-        expect(participant.type).toBe(type);
-        expect(participant.isActive).toBe(isActive);
-        expect(participant.subId).toBe(subId);
-        
-    });
-
-    test("should throw error if participant id is not valid", async()=>{
-        // Arrange 
-        const id="";
-	    const type="fake type";
-        const isActive = true;
-        const currency= "fake currency";
-        const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, isActive, currency, subId);
-
-
-        // Assert
-        expect(() => {
-            Participant.validateParticipant(participant);
-          }).toThrowError(InvalidParticipantIdError);
-        
-        
-    });
-
-    test("should throw error if participant type is not valid", async()=>{
-        // Arrange 
-        const id="fake id";
-	    const type="";
-        const isActive= "fake boolean" as unknown as boolean;
-        const currency= "fake currency";
-        const subId="fake sub id";
-
-        // Act
-        const participant = new Participant(id, type, isActive, currency, subId);
-
-
-        // Assert
-
-        expect(() => {
-            Participant.validateParticipant(participant);
-          }).toThrowError(InvalidParticipantTypeError);
-        
-    });
-
-    //#endregion
-
+    
     //#region Init and Destroy
     test("should throw error if couldnt init oracle finder on init", async () => {
         // Arrange
@@ -525,8 +458,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, subId: null})
-            .mockResolvedValueOnce({ id:destinationFspId,type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true} as Participant as any)
+            .mockResolvedValueOnce({ id:destinationFspId,type: partyType, isActive: true} as Participant as any);
 
         
         jest.spyOn(messageProducer, "send");
@@ -561,15 +494,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partySubType: partySubType,
         };
 
-        const participant: IParticipant = {
+        const participant: Partial<Participant> = {
             id: requesterFspId,
-            type: partyType,
+            type: "DFSP",
             isActive: true,
-            subId: null
         }
   
         jest.spyOn(messageProducer, "send");        
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);        
 
         const event = new PartyQueryReceivedEvt(payload);
 
@@ -608,7 +540,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partySubType: null,
       };
           
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new PartyQueryReceivedEvt(payload);
@@ -649,7 +582,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
              partySubType,
        };
            
-         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+         jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any);
          jest.spyOn(aggregate, "oracleProvidersAdapters","get").mockReturnValue([]);
          jest.spyOn(messageProducer, "send");
  
@@ -692,15 +626,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partySubType,
         };
 
-        const participant: IParticipant = {
+        const participant: Partial<Participant> = {
             id: requesterFspId,
-            type: partyType,
+            type: "DFSP",
             isActive: true,
-            subId: null,
         }
 
         jest.spyOn(messageProducer, "send");
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant);        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);        
 
         const event = new PartyQueryReceivedEvt(payload);
    
@@ -782,7 +715,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: false, subId: null});
+            .mockResolvedValueOnce({ id: requesterFspId, type: "HUB", isActive: false} as Participant as any);
 
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = RequiredParticipantIsNotActive.name;
@@ -823,7 +756,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({ id: "no matching", type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({ id: "no matching", type: "HUB", isActive: true} as Participant as any);
 
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = InvalidParticipantIdError.name;
@@ -865,8 +798,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, subId: null})
-            .mockResolvedValueOnce({ id:destinationFspId,type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true} as Participant as any)
+            .mockResolvedValueOnce({ id:destinationFspId,type: "HUB", isActive: true} as Participant as any);
 
         const event = new PartyQueryReceivedEvt(payload);
         const responsePayload : PartyInfoRequestedEvtPayload= {
@@ -953,7 +886,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             };
     
             jest.spyOn(participantService, "getParticipantInfo")
-                .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null})
+                .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any)
                 .mockResolvedValueOnce(null);
             jest.spyOn(messageProducer, "send");
     
@@ -998,8 +931,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             };
 
             jest.spyOn(participantService, "getParticipantInfo")
-                .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null})
-                .mockResolvedValueOnce({id: "2", type: partyType, isActive: true, subId: null});
+                .mockResolvedValueOnce({id: requesterFspId, type: "HUB", isActive: true} as Participant as any)
+                .mockResolvedValueOnce({id: "2", type: "HUB", isActive: true} as Participant as any);
             jest.spyOn(messageProducer, "send");
 
             const event = new PartyInfoAvailableEvt(payload);
@@ -1086,8 +1019,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const oracleParticipantFspId = getParticipantFspIdForOracleTypeAndSuType(partyType, partySubType) as string;
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null})
-            .mockResolvedValueOnce({id: oracleParticipantFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any)
+            .mockResolvedValueOnce({id: oracleParticipantFspId, type: "DFSP", isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantQueryReceivedEvt(payload);
@@ -1126,7 +1059,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any);
         jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
         jest.spyOn(messageProducer, "send");
 
@@ -1168,7 +1101,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
         const event = new ParticipantQueryReceivedEvt(payload);
 
@@ -1251,7 +1184,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
@@ -1294,7 +1227,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
@@ -1374,8 +1307,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             currency: null,
         };
 
+        const returnedParticipant: Partial<Participant> = { 
+            id: ownerFspId,
+            type: "DFSP",
+            isActive: true,
+        };
+
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce(returnedParticipant as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
@@ -1418,7 +1357,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         };
 
         jest.spyOn(participantService, "getParticipantInfo")
-            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true, subId: null});
+            .mockResolvedValueOnce({id: ownerFspId, type: partyType, isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);

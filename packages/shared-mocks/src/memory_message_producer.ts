@@ -1,11 +1,10 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
@@ -36,31 +35,38 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 "use strict";
 
-import { IMessageProducer,IMessage} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
-export class MemoryMessageProducer implements IMessageProducer{
-    async init(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            resolve();
-          });
-    }
-    
-    async connect(): Promise<void> {
-        return;
-    }    
-    async disconnect(): Promise<void> {
-        return;
-    }
-    
-    async destroy(): Promise<void> {
-        return;
-    }
+export class MemoryMessageProducer implements IMessageProducer {
+	private readonly logger: ILogger;
 
-    async send(message: IMessage | IMessage[]): Promise<void> {
-        return;
-    }
+	constructor(
+		logger: ILogger,
+	) {
+		this.logger = logger;
+	}
+	
+	async connect (): Promise<void> {
+		return Promise.resolve();
+	}
+	
+	async disconnect(): Promise<void> {
+		return Promise.resolve();
+	}
+
+	async destroy(): Promise<void> {
+		return Promise.resolve();
+	}
+
+	async send(message: any): Promise<void>{
+		return Promise.resolve();
+	}
+
+
+	
 }

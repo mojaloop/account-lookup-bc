@@ -42,9 +42,9 @@
 
 import {
     IOracleFinder, Oracle
-} from "../../../src";
+} from "@mojaloop/account-lookup-bc-domain";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleAdapters, notIncludedOracleAdapters } from "./data";
+import { mockedOracleAdapters, notIncludedOracleAdapters } from "./mocked_data";
 
 export class MemoryOracleFinder implements IOracleFinder {
     private readonly _logger: ILogger;

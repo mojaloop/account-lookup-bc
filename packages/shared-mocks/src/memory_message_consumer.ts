@@ -40,27 +40,40 @@
 
  "use strict";
 
-
- import {
-	 IOracleProviderAdapter,
-     IOracleProviderFactory, Oracle,
- } from "@mojaloop/account-lookup-bc-domain";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
-
-
- export class MemoryOracleProviderFactory implements IOracleProviderFactory {
-	id: string;
-	partyType: string;
-	private readonly _logger: ILogger;
-	
-	constructor(
-		logger: ILogger,
-	) {
-		this._logger = logger;
-	}
-
-	create(oracle: Oracle): IOracleProviderAdapter {
-		return new MemoryOracleProviderAdapter(this._logger, oracle);
-	}
+ import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+ 
+ export class MemoryMessageConsumer implements IMessageConsumer{
+     
+    
+    setCallbackFn(handlerCallback: (message: IMessage) => Promise<void>): void {
+         return;
+    }
+     
+    setFilteringFn(filterFn: (message: IMessage) => boolean): void{
+         return;
+    }
+     
+    setTopics(topics: string[]): void {
+         return;
+    }
+      
+     async destroy(force: boolean) : Promise<void>{
+         return;
+    }
+     
+    async connect() : Promise<void> {
+         return;
+    }
+     
+    async disconnect(force: boolean) : Promise<void> {
+         return;
+    }
+     
+    async start() : Promise<void> {
+        return;
+    }
+     
+    async stop (): Promise<void> {
+        return;
+    } 
 }

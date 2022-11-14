@@ -42,7 +42,7 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "../../src/index";
+import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-infrastructure";
 import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { Collection, MongoClient } from "mongodb";
  
