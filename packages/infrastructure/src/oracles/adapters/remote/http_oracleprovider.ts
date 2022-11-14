@@ -107,7 +107,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         if(currency) url+=`?currency=${currency}`;
 
         return await this.httpClient.post(url, { fspId: fspId}).then((
-                response: AxiosResponse) => {
+                _: AxiosResponse) => {
                 this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
@@ -125,7 +125,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         return await this.httpClient.delete(url, { data:{
                 fspId: fspId
             }}).then((
-            response: AxiosResponse) => {
+            _: AxiosResponse) => {
                 this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {

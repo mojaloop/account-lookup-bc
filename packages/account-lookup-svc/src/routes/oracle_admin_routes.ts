@@ -38,8 +38,7 @@
  --------------
  **/
 
- "use strict";
-
+"use strict";
 
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
@@ -93,7 +92,7 @@ export class OracleAdminExpressRoutes {
 
 
 
-     private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }             
@@ -109,9 +108,9 @@ export class OracleAdminExpressRoutes {
                  msg: err.message
              });
          }
-     }
+    }
 
-     private async getOracleById (req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getOracleById (req: express.Request, res: express.Response, next: express.NextFunction) {
          if (!this.validateRequest(req, res)) {
              return;
          }
@@ -136,9 +135,9 @@ export class OracleAdminExpressRoutes {
                  msg: err.message
              });
          }
-     }
+    }
 
-     private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }         
@@ -163,10 +162,10 @@ export class OracleAdminExpressRoutes {
                  msg: err.message
              });
          }
-     }
+    }
 
 
-     private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -188,7 +187,7 @@ export class OracleAdminExpressRoutes {
         }
     }
 
-     private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -214,4 +213,4 @@ export class OracleAdminExpressRoutes {
         }
     } 
  
- }
+}

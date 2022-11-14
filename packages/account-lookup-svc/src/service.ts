@@ -49,7 +49,7 @@ import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, M
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-infrastructure";
 import express, {Express} from "express";
-import { IOracleAdminRoutes, OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
+import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 

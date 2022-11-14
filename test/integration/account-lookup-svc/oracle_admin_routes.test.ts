@@ -37,13 +37,55 @@
 
  --------------
 **/
+"use strict";
+import request from "supertest";
+import { AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService } from "@mojaloop/account-lookup-shared-mocks";
+import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { start, stop } from "@mojaloop/account-lookup-bc-svc";
 
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
 
+const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
+
+const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
+
+const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
+
+const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
+
+const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
+
+const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
+    logger,
+    mockedOracleFinder,
+    mockedOracleProviderFactory,
+    mockedProducer,
+    mockedParticipantService
+);
+
+const server = process.env["ADMIN_URL"] || "http://localhost:3030";
 
 describe("Oracle Admin Routes - Integration", () => {
 
-    //Tests for the Oracle Admin Routes
-    
+    beforeAll(async () => {
+        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
+    });
 
+    afterAll(async () => {
+        await stop();
+    });
+
+    it("should return 200 when calling /health", async () => {
+        // Arrange && Act
+        const response = await request(server)
+            .get('/parties/MSISDN/123456789')
+            .expect(200);
+
+        // Assert
+        expect(response.status).toBe(200);
+    });
 
 });

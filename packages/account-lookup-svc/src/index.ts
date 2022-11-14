@@ -40,8 +40,11 @@
 
 "use strict";
 
-import { start } from "./service";
+import { start, stop } from "./service";
 
 start().then(() => {
     console.log("Started account lookup service");
 });
+
+// export start and stop functions for testing
+export { start, stop };
