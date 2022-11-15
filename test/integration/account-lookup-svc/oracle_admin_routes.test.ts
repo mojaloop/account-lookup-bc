@@ -45,6 +45,7 @@ import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, M
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";
+import { randomUUID } from "crypto";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.DEBUG);
@@ -72,6 +73,7 @@ describe("Oracle Admin Routes - Integration", () => {
     });
 
     test("should fetch empty array when no oracles available", async () => {
+        // Act && Assert
         const response = await request(server)
             .get("/oracles")
             .expect(200);
@@ -80,6 +82,7 @@ describe("Oracle Admin Routes - Integration", () => {
     });
 
     test("should throw a bad request when trying to add an oracle with an invalid body", async () => {
+        // Act && Assert
         await request(server)
             .post("/oracles")
             .send({
@@ -92,6 +95,7 @@ describe("Oracle Admin Routes - Integration", () => {
 
 
     test("should add a new oracle", async () => {
+        // Act && Assert
         const response = await request(server)
             .post("/oracles")
             .send({
@@ -122,15 +126,74 @@ describe("Oracle Admin Routes - Integration", () => {
         expect(response.body.partyType).toBe("party type");
     });
 
-    test("should return null if trying to fetch an oracle by id that doesnt exist", async () => {
+    test("should return not found if trying to fetch an oracle by id that doesnt exist", async () => {
         // Arrange
-        const oracleId = "invalid-id";
+        const fakeId = randomUUID();
         
+        // Act && Assert
         const response = await request(server)
-            .get(`/oracles/${oracleId}`)   
-            .expect(200);
+            .get(`/oracles/${fakeId}`)   
+            .expect(404);
+    });
 
-        expect(response.body).toBeNull();
+    test("should return bad request if trying to fetch an oracle by id with an invalid id", async () => {
+        // Arrange
+        const fakeId = 22;
+        
+        // Act && Assert
+        const response = await request(server)
+            .get(`/oracles/${fakeId}`)   
+            .expect(404);
+    });
+
+
+    test("should return not found if trying to health check an oracle that doesnt exist", async () => {
+        // Arrange
+        const fakeId = randomUUID();
+
+        // Act && Assert
+        const response = await request(server)
+            .get(`/oracles/health/${fakeId}`)
+            .expect(404);
+    });
+
+    test("should return health check condition of an oracle", async () => {
+        // Arrange
+        const oracles = await request(server)
+            .get("/oracles");
+
+        const oracleId = oracles.body[0].id;
+
+        // Act && Assert
+        const response = await request(server)
+            .get(`/oracles/health/${oracleId}`)
+            .expect(200);
+        
+        expect(response.body).toEqual(true);
+
+    });
+
+    test("should return not found if trying to delete an oracle that doesnt exist", async () => {
+        // Arrange
+        const fakeId = randomUUID();
+        
+        // Act && Assert
+        const response = await request(server)
+            .delete(`/oracles/${fakeId}`)   
+            .expect(404);
+    });
+
+    test("should delete an oracle", async () => {
+        // Arrange
+        const oracles = await request(server)
+            .get("/oracles");
+
+        const oracleId = oracles.body[0].id;
+
+        // Act && Assert
+        await request(server)
+            .delete(`/oracles/${oracleId}`)   
+            .expect(200);
     });
 
 
