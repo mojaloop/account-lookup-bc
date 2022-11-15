@@ -38,15 +38,16 @@
  --------------
 **/
 "use strict";
+
 import request from "supertest";
-import { AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import { IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
 import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService } from "@mojaloop/account-lookup-shared-mocks";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
+logger.setLogLevel(LogLevel.DEBUG);
 
 const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
@@ -54,19 +55,11 @@ const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
 const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
 
-const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
+const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger, false);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
 
-const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
-    logger,
-    mockedOracleFinder,
-    mockedOracleProviderFactory,
-    mockedProducer,
-    mockedParticipantService
-);
-
-const server = process.env["ADMIN_URL"] || "http://localhost:3030";
+const server = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 
 describe("Oracle Admin Routes - Integration", () => {
 
@@ -78,14 +71,75 @@ describe("Oracle Admin Routes - Integration", () => {
         await stop();
     });
 
-    it("should return 200 when calling /health", async () => {
-        // Arrange && Act
+    test("should fetch empty array when no oracles available", async () => {
         const response = await request(server)
-            .get('/parties/MSISDN/123456789')
+            .get("/oracles")
             .expect(200);
-
-        // Assert
-        expect(response.status).toBe(200);
+            
+        expect(response.body).toEqual([]);
     });
 
+    test("should throw a bad request when trying to add an oracle with an invalid body", async () => {
+        await request(server)
+            .post("/oracles")
+            .send({
+               type:"invalid",
+               name:"new oracle",
+               partyType: "party type"
+            })
+            .expect(422);    
+    });
+
+
+    test("should add a new oracle", async () => {
+        const response = await request(server)
+            .post("/oracles")
+            .send({
+               type:"builtin",
+               name:"new oracle",
+               partyType: "party type"
+            })
+            .expect(200);
+
+        expect(checkIfValidUUID(response.body.id)).toBe(true);
+   
+    });
+
+    test("should fetch the added oracle by id", async () => {
+        // Arrange
+        const oracles = await request(server)
+            .get("/oracles")
+            .expect(200);
+        
+        const oracleId = oracles.body[0].id;
+        
+        // Act && Assert
+        const response = await request(server)
+            .get(`/oracles/${oracleId}`)
+            .expect(200);
+        expect(response.body.name).toBe("new oracle");
+        expect(response.body.type).toBe("builtin");
+        expect(response.body.partyType).toBe("party type");
+    });
+
+    test("should return null if trying to fetch an oracle by id that doesnt exist", async () => {
+        // Arrange
+        const oracleId = "invalid-id";
+        
+        const response = await request(server)
+            .get(`/oracles/${oracleId}`)   
+            .expect(200);
+
+        expect(response.body).toBeNull();
+    });
+
+
 });
+
+function checkIfValidUUID(str:string): boolean {
+    // Regular expression to check if string is a valid UUID
+    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+  
+    return regexExp.test(str);
+}
+

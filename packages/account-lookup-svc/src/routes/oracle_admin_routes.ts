@@ -66,9 +66,9 @@ export class OracleAdminExpressRoutes {
          ], this.deleteOracle.bind(this));
          
          this.mainRouter.post("/oracles",[
-            body("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
-            body("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            body("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail()
+            check("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
+            check("type").isString().isIn(['builtin','http-remote']).withMessage("type must be valid").bail(),
+            check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail()
          ], this.createOracle.bind(this));
 
          this.mainRouter.get("/oracles/health/:id",[

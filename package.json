@@ -25,7 +25,7 @@
     "test:unit": "npm run test:unit --forceExit -ws",
     "test:coverage": "npm run test:coverage -ws --parallel -v",
     "test:coverage-check": "npm run test:coverage-check -ws --parallel -v",
-    "test:integration": "jest --passWithNoTests --testMatch **/tests/integration/**/*.test.ts",
+    "test:integration": "jest --passWithNoTests --testMatch **/test/integration/account-lookup-svc/**/*.test.ts",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "npm exec ncu -- -e 2; npm -ws --parallel run dep:check",
     "dep:update": "npm exec ncu -- -e 2 -u; npm -ws --parallel run dep:update"

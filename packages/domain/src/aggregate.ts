@@ -78,7 +78,7 @@ import {
 	ParticipantQueryResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {randomUUID} from "crypto";
+import { randomUUID } from "crypto";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
