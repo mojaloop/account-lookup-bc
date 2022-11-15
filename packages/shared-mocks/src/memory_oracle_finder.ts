@@ -53,7 +53,7 @@ export class MemoryOracleFinder implements IOracleFinder {
     
     constructor(
         logger: ILogger,
-        startWithPredefinedOracles: boolean = true
+        startWithPredefinedOracles = true
     ) {
         this._logger = logger;
         this._oraclesThatBelongToAggregate = startWithPredefinedOracles ? mockedOracleAdapters : [];
