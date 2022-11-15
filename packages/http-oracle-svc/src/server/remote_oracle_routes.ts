@@ -43,7 +43,7 @@ optionally within square brackets <email>.
 
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {body, check, validationResult} from "express-validator";
+import { check, validationResult} from "express-validator";
 import {RemoteOracle} from "../remote_oracle";
 
 
@@ -68,14 +68,14 @@ export class RemoteOracleExpressRoutes {
         this.mainRouter.delete("/participants/:partyType/:partyId/:partySubId?", [
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
-            body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
+            check("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
             check("partySubId").optional(),
         ], this.disassociateParticipant.bind(this));
 
         this.mainRouter.post("/participants/:partyType/:partyId/:partySubId?", [
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
-            body("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
+            check("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
             check("partySubId").optional(),
         ], this.associateParticipant.bind(this));
 
