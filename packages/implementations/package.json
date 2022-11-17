@@ -1,9 +1,9 @@
 {
-  "name": "@mojaloop/account-lookup-bc-infrastructure",
+  "name": "@mojaloop/account-lookup-bc-implementations",
   "version": "0.0.1",
-  "description": "Account Lookup BC infrastructure.",
+  "description": "Account Lookup BC implementations.",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/infrastructure",
+  "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/implementations",
   "bugs": {
     "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
   },

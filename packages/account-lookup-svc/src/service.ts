@@ -47,7 +47,7 @@ import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-s
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-infrastructure";
+import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-implementations";
 import express, {Express} from "express";
 import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { Server } from "net";

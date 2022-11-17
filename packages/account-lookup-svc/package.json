@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
-    "@mojaloop/account-lookup-bc-infrastructure": "*",
+    "@mojaloop/account-lookup-bc-implementations": "*",
     "@mojaloop/auditing-bc-client-lib": "^0.0.10",
     "@mojaloop/auditing-bc-public-types-lib": "^0.0.11"
   },

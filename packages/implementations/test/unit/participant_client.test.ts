@@ -30,7 +30,7 @@
 
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { ParticipantClient} from "../../src/external_adapters/participant_client";
-import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-infrastructure";
+import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations";
 import { Participant} from "@mojaloop/participant-bc-public-types-lib";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";

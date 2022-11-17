@@ -54,7 +54,7 @@
   },
   "workspaces": [
     "packages/domain",
-    "packages/infrastructure",
+    "packages/implementations",
     "packages/client",
     "packages/account-lookup-svc",
     "packages/http-oracle-sv",

@@ -42,7 +42,7 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-infrastructure";
+import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-implementations";
 import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { Collection, MongoClient } from "mongodb";
  
@@ -180,7 +180,6 @@ describe("Infrastructure - Builtin Oracle Provider Integration tests", () => {
     });
  
  });
- 
  
  
  
