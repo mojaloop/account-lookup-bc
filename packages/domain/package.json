@@ -31,9 +31,7 @@
     "dep:update": "npm exec ncu -- -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --runInBand --testMatch **/test/unit/**/*.test.ts ",
-    "test:coverage": "jest --passWithNoTests --coverage --coverageThreshold='{}' --testMatch **/test/unit/**/*.test.ts",
-    "test:coverage-check": "jest --coverage --testMatch **/test/unit/**/*.test.ts"
+    "test:unit": "jest --runInBand --forceExit --detectOpenHandles --verbose || ECHO."
   },
   "dependencies": {
     "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.15",

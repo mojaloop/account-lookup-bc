@@ -27,15 +27,13 @@
     "clean:dist": "rm -rf dist",
     "clean:node-modules": "rm -rf node_modules",
     "clean:dist-and-node-modules": "rm -rf dist node_modules",
-    "clean": "npm run clean:dist",
+    "clean": "npm run clean:dist && npm run clean:node-modules",
     "audit:check": "npm npm audit",
     "dep:check": "npm exec ncu -- -e 2",
     "dep:update": "npm exec ncu -- -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --runInBand --testMatch **/test/unit/*.test.ts || ECHO.",
-    "test:coverage": "jest --passWithNoTests --coverage --coverageThreshold='{}' --testMatch **/test/unit/**/*.test.ts",
-    "test:coverage-check": "jest --coverage --testMatch **/test/unit/**/*.test.ts"
+    "test:unit": "jest --runInBand --forceExit --detectOpenHandles --verbose || ECHO."
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
