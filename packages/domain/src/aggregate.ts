@@ -455,5 +455,19 @@ export class AccountLookupAggregate  {
 
 	//#endregion
 
+	//#region Client Lib
+	public async getParticipantId(partyId:string, partyType:string, partySubType:string | null, currency:string | null): Promise<string> {
+		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
+		
+		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency);
+
+		if(!(fspId)) {
+			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
+			throw new NoSuchParticipantFspIdError();
+		}
+
+		return fspId;
+	}
+	//#endregion
 
 }
