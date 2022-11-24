@@ -30,8 +30,7 @@
     "dep:check": "npm exec ncu -- -e 2",
     "dep:update": "npm exec ncu -- -u",
     "lint": "eslint ./src",
-    "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --runInBand --testMatch **/test/unit/*.test.ts || ECHO."
+    "lint:fix": "eslint ./src --fix"
   },
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
