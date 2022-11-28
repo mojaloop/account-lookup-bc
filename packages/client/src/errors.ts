@@ -33,4 +33,4 @@
 
 export class ConnectionRefusedError extends Error{}
 
-export class UnableToGetParticipantFspIdError extends Error{}
+export class UnableToGetFspIdError extends Error{}

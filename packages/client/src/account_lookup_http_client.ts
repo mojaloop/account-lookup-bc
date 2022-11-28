@@ -34,12 +34,8 @@
 import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
-	Participant,
-	ParticipantEndpoint
-} from "@mojaloop/participant-bc-public-types-lib";
-import {
 	ConnectionRefusedError,
-	UnableToGetParticipantFspIdError,
+	UnableToGetFspIdError,
 } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 5000;
@@ -94,7 +90,7 @@ export class AccountLookupHttpClient {
 		throw new errorType(this.UNKNOWN_ERROR_MESSAGE);
 	}
 
-	async getParticipantFspIdByTypeAndId(partyId:string, partyType:string,currency:string | null): Promise<Participant | null> {
+	async getFspIdByTypeAndId(partyId:string, partyType:string,currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
 				`/account-lookup/${partyType}/${partyId}?currency=${currency}`,
@@ -111,12 +107,12 @@ export class AccountLookupHttpClient {
 			
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			this._handleServerError(e, UnableToGetParticipantFspIdError);
+			this._handleServerError(e, UnableToGetFspIdError);
 			return null;
 		}
 	}
 
-	async getParticipantFspIdByTypeAndIdAndSubId(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<ParticipantEndpoint[] | null> {
+	async getFspIdByTypeAndIdAndSubId(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
 				`/account-lookup/${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
@@ -133,7 +129,7 @@ export class AccountLookupHttpClient {
 
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			this._handleServerError(e, UnableToGetParticipantFspIdError);
+			this._handleServerError(e, UnableToGetFspIdError);
 			return null;
 		}
 	}
