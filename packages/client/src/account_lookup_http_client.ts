@@ -44,7 +44,7 @@ import {
 
 const DEFAULT_TIMEOUT_MS = 5000;
 
-export class ParticipantsHttpClient {
+export class AccountLookupHttpClient {
 	// Properties received through the constructor.
 	private readonly logger: ILogger;
 	// Other properties.
