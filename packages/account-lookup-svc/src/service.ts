@@ -50,6 +50,7 @@ import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-implementations";
 import express, {Express} from "express";
 import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
+import { AccountLookupExpressRoutes } from "./routes/client_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
@@ -97,11 +98,16 @@ const PARTICIPANT_SVC_BASEURL = process.env["PARTICIPANT_SVC_BASEURL"] || "http:
 const fixedToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVVbFFjbkpJUk93dDIxYXFJRGpRdnVnZERvUlYzMzEzcTJtVllEQndDbWMifQ.eyJ0eXAiOiJCZWFyZXIiLCJhenAiOiJwYXJ0aWNpcGFudHMtc3ZjIiwicm9sZXMiOlsiNTI0YTQ1Y2QtNGIwOS00NmVjLThlNGEtMzMxYTVkOTcyNmVhIl0sImlhdCI6MTY2Njc3MTgyOSwiZXhwIjoxNjY3Mzc2NjI5LCJhdWQiOiJtb2phbG9vcC52bmV4dC5kZWZhdWx0X2F1ZGllbmNlIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMjAxLyIsInN1YiI6ImFwcDo6cGFydGljaXBhbnRzLXN2YyIsImp0aSI6IjMzNDUyODFiLThlYzktNDcyOC1hZGVkLTdlNGJmMzkyMGZjMSJ9.s2US9fEAE3SDdAtxxttkPIyxmNcACexW3Z-8T61w96iji9muF_Zdj2koKvf9tICd25rhtCkolI03hBky3mFNe4c7U1sV4YUtCNNRgReMZ69rS9xdfquO_gIaABIQFsu1WTc7xLkAccPhTHorartdQe7jvGp-tOSkqA-azj0yGjwUccFhX3Bgg3rWasmJDbbblIMih4SJuWE7MGHQxMzhX6c9l1TI-NpFRRFDTYTg1H6gXhBvtHMXnC9PPbc9x_RxAPBqmMcleIJZiMZ8Cn805OL9Wt_sMFfGPdAQm0l4cdjdesgfQahsrtCOAcp5l7NKmehY0pbLmjvP6zlrDM_D3A";
 let participantService: IParticipantService;
 
-// Admin routes
-const ADMIN_PORT = process.env["ADMIN_PORT"] || 3030;
+// Express Server
+const SVC_DEFAULT_HTTP_PORT = process.env["SVC_DEFAULT_HTTP_PORT"] || 3030;
 let expressApp: Express;
-let oracleAdminServer: Server;
+let expressServer: Server;
+
+// Admin routes
 let oracleAdminRoutes: OracleAdminExpressRoutes;
+
+// AccountLookupClient routes
+let accountLookupClientRoutes: AccountLookupExpressRoutes;
 
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
@@ -136,23 +142,26 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     
     messageConsumer.setCallbackFn(callbackFunction);
 
-    // Start admin http routes
+    // Start express server
     expressApp = express();
     expressApp.use(express.json()); // for parsing application/json
     expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+
+    // Add admin and client http routes
     oracleAdminRoutes = new OracleAdminExpressRoutes(aggregate, logger);
+    accountLookupClientRoutes = new AccountLookupExpressRoutes(aggregate, logger);
     expressApp.use("/admin", oracleAdminRoutes.MainRouter);
+    expressApp.use("/account-lookup", accountLookupClientRoutes.MainRouter);
 
     expressApp.use((req, res) => {
       // catch all
       res.send(404);
     });
 
-    oracleAdminServer = expressApp.listen(ADMIN_PORT, () => {
-      logger.info(`🚀 Server ready at: http://localhost:${ADMIN_PORT}`);
+    expressServer = expressApp.listen(SVC_DEFAULT_HTTP_PORT, () => {
+      logger.info(`🚀 Server ready at: http://localhost:${SVC_DEFAULT_HTTP_PORT}`);
       logger.info("Oracle Admin Server started");
     });
-
   }
   catch(err){
     logger.error(err);
@@ -189,7 +198,7 @@ export async function stop(): Promise<void> {
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
   logger.debug("Tearing down oracle admin server");
-  oracleAdminServer.close();
+  expressServer.close();
 }
 
 /**

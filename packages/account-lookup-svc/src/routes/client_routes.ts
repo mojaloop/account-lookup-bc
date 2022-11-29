@@ -36,19 +36,19 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
 
 
-export class ExpressRoutes {
+export class AccountLookupExpressRoutes {
     private _logger: ILogger;
     private _accountLookUpAgg: AccountLookupAggregate;
     private mainRouter = express.Router();
 
-    constructor(participantsAgg: AccountLookupAggregate, logger: ILogger) {
+    constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
         this._logger = logger.createChild("AccountLookupExpressRoutes");
-        this._accountLookUpAgg = participantsAgg;
+        this._accountLookUpAgg = accountLookupAgg;
 
         // GET Participant by Type & ID
-        this.mainRouter.get("/account-lookup/:type/:id", this.getParticipantFspIdByTypeAndId.bind(this));
+        this.mainRouter.get("/:type/:id", this.getParticipantFspIdByTypeAndId.bind(this));
         // GET Participants by Type, ID & SubId
-        this.mainRouter.get("/account-lookup/:type/:id/:subId", this.getParticipantFspIdByTypeAndIdAndSubId.bind(this));
+        this.mainRouter.get("/:type/:id/:subId", this.getParticipantFspIdByTypeAndIdAndSubId.bind(this));
     
     }
 
@@ -64,8 +64,8 @@ export class ExpressRoutes {
         this._logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id}.`);
 
         try {
-            await this._accountLookUpAgg.getParticipantId(type, id, null, currency);
-            res.send();
+            const result = await this._accountLookUpAgg.getParticipantId(id, type, null, currency);
+            res.send(result);
         } catch (err: any) {
 
             this._logger.error(err);
@@ -85,10 +85,9 @@ export class ExpressRoutes {
         this._logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id} and subId: ${partySubIdOrType}.`);
 
         try {
-            await this._accountLookUpAgg.getParticipantId(type, id, partySubIdOrType, currency);
+            await this._accountLookUpAgg.getParticipantId(id, type, partySubIdOrType, currency);
             res.send();
         } catch (err: any) {
-
             this._logger.error(err);
             res.status(500).json({
                 status: "error",
