@@ -43,14 +43,14 @@
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain";
-import { check, validationResult } from "express-validator"; 
-export class OracleAdminExpressRoutes {
-     private readonly _logger: ILogger;
+import { check } from "express-validator"; 
+import { BaseRoutes } from "./_base_routes";
+export class OracleAdminExpressRoutes extends BaseRoutes {
      private readonly _accountLookupAggregate: AccountLookupAggregate;
-     private mainRouter = express.Router();
  
      constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
-         this._logger = logger.createChild(this.constructor.name);
+         super(logger);
+         this.logger.createChild(this.constructor.name);
          this._accountLookupAggregate = accountLookupAggregate;
  
          // account lookup admin routes
@@ -76,33 +76,19 @@ export class OracleAdminExpressRoutes {
          ], this.healthCheck.bind(this));
  
      }
- 
-     get MainRouter(): express.Router {
-         return this.mainRouter;
-     }
      
-     private validateRequest(req: express.Request, res: express.Response<any, Record<string, any>>) : boolean {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            res.status(422).json({ errors: errors.array() });
-            return false;
-        }
-        return true;
-    }
-
-
 
     private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }             
         
-        this._logger.debug("Fetching all oracles");
+        this.logger.debug("Fetching all oracles");
          try {
              const fetched = await this._accountLookupAggregate.getAllOracles();
              res.send(fetched);
          } catch (err: any) {
-             this._logger.error(err);
+             this.logger.error(err);
              res.status(500).json({
                  status: "error",
                  msg: err.message
@@ -116,7 +102,7 @@ export class OracleAdminExpressRoutes {
          }
 
          const id = req.params["id"] ?? null;
-         this._logger.debug(`Fetching Oracle [${id}].`);
+         this.logger.debug(`Fetching Oracle [${id}].`);
 
          try {
              const fetched = await this._accountLookupAggregate.getOracleById(id);
@@ -129,7 +115,7 @@ export class OracleAdminExpressRoutes {
              }
              res.send(fetched);
          } catch (err: any) {
-             this._logger.error(err);
+             this.logger.error(err);
              res.status(500).json({
                  status: "error",
                  msg: err.message
@@ -142,7 +128,7 @@ export class OracleAdminExpressRoutes {
             return;
         }         
         const id = req.params["id"] ?? null;
-         this._logger.debug(`Deleting Oracle [${id}].`);
+         this.logger.debug(`Deleting Oracle [${id}].`);
  
          try {
              const fetched = await this._accountLookupAggregate.removeOracle(id);
@@ -156,7 +142,7 @@ export class OracleAdminExpressRoutes {
                  return;
              }
 
-             this._logger.error(err);
+             this.logger.error(err);
              res.status(500).json({
                  status: "error",
                  msg: err.message
@@ -171,7 +157,7 @@ export class OracleAdminExpressRoutes {
         }
 
         const oracle = req.body;
-        this._logger.debug(`Received Oracle [${oracle}] in createOracle.`);
+        this.logger.debug(`Received Oracle [${oracle}] in createOracle.`);
 
         try {
             const createdId = await this._accountLookupAggregate.addOracle(oracle);
@@ -179,7 +165,7 @@ export class OracleAdminExpressRoutes {
                 id: createdId
             });
         } catch (err: any) {
-            this._logger.error(err);
+            this.logger.error(err);
             res.status(500).json({
                 status: "error",
                 msg: err.message
@@ -192,7 +178,7 @@ export class OracleAdminExpressRoutes {
             return;
         }
         const id = req.params["id"];
-        this._logger.debug(`Health check for Oracle ${id}.`);
+        this.logger.debug(`Health check for Oracle ${id}.`);
         try {
             const fetched = await this._accountLookupAggregate.healthCheck(id);
             res.send(fetched);
@@ -205,7 +191,7 @@ export class OracleAdminExpressRoutes {
                 return;
             }
 
-            this._logger.error(err);
+            this.logger.error(err);
             res.status(500).json({
                 status: "error",
                 msg: err.message

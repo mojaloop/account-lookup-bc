@@ -397,7 +397,7 @@ export class AccountLookupAggregate  {
 	}
 	// #endregion
 	
-	//#region Oracle Admin
+	//#region Oracle Admin Routes
 	public async addOracle(oracle: AddOracleDTO): Promise<string> {
 
 		if(oracle.id && await this._oracleFinder.getOracleById(oracle.id)) {
@@ -455,7 +455,7 @@ export class AccountLookupAggregate  {
 
 	//#endregion
 
-	//#region Client Lib
+	//#region Account Lookup Routes
 	public async getParticipantId(partyId:string, partyType:string, partySubType:string | null, currency:string | null): Promise<string> {
 		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
 		

@@ -50,7 +50,7 @@ import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-implementations";
 import express, {Express} from "express";
 import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
-import { AccountLookupExpressRoutes } from "./routes/client_routes";
+import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
@@ -150,8 +150,8 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     // Add admin and client http routes
     oracleAdminRoutes = new OracleAdminExpressRoutes(aggregate, logger);
     accountLookupClientRoutes = new AccountLookupExpressRoutes(aggregate, logger);
-    expressApp.use("/admin", oracleAdminRoutes.MainRouter);
-    expressApp.use("/account-lookup", accountLookupClientRoutes.MainRouter);
+    expressApp.use("/admin", oracleAdminRoutes.mainRouter);
+    expressApp.use("/account-lookup", accountLookupClientRoutes.mainRouter);
 
     expressApp.use((req, res) => {
       // catch all
@@ -160,7 +160,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
     expressServer = expressApp.listen(SVC_DEFAULT_HTTP_PORT, () => {
       logger.info(`🚀 Server ready at: http://localhost:${SVC_DEFAULT_HTTP_PORT}`);
-      logger.info("Oracle Admin Server started");
+      logger.info("Oracle Admin and Account Lookup server started");
     });
   }
   catch(err){

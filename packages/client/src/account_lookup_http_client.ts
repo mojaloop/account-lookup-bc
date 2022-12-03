@@ -56,15 +56,7 @@ export class AccountLookupHttpClient {
 
 		this.httpClient = axios.create({
 			baseURL: baseUrlHttpService,
-			headers: {
-				"Content-Type": "application/json",
-			},
 			timeout: timeoutMs
-		});
-
-		// TODO: implement authentication
-		this.httpClient.interceptors.request.use((config)=>{
-			return config;
 		});
 	}
 
@@ -93,10 +85,10 @@ export class AccountLookupHttpClient {
 	async getFspIdByTypeAndId(partyId:string, partyType:string,currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`/account-lookup/${partyType}/${partyId}?currency=${currency}`,
+				`${partyType}/${partyId}?currency=${currency}`,
 				{
 					validateStatus: (statusCode: number) => {
-						return statusCode === 200 || statusCode === 404; // Resolve only 200s and 404s.
+						return statusCode === 200 || statusCode === 404;
 					}
 				}
 			);
@@ -115,10 +107,10 @@ export class AccountLookupHttpClient {
 	async getFspIdByTypeAndIdAndSubId(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`/account-lookup/${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
+				`${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
 				{
 					validateStatus: (statusCode: number) => {
-						return statusCode === 200 || statusCode === 404; // Resolve only 200s and 404s.
+						return statusCode === 200 || statusCode === 404;
 					}
 				}
 			);

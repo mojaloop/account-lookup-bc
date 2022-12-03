@@ -34,41 +34,49 @@
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
+import { check } from "express-validator";
+import { BaseRoutes } from "./_base_routes";
 
 
-export class AccountLookupExpressRoutes {
-    private _logger: ILogger;
-    private _accountLookUpAgg: AccountLookupAggregate;
-    private mainRouter = express.Router();
+export class AccountLookupExpressRoutes extends BaseRoutes {
+    private readonly _accountLookUpAgg: AccountLookupAggregate;
 
     constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
-        this._logger = logger.createChild("AccountLookupExpressRoutes");
+        super(logger);
+        logger.createChild("AccountLookupExpressRoutes");
         this._accountLookUpAgg = accountLookupAgg;
 
         // GET Participant by Type & ID
-        this.mainRouter.get("/:type/:id", this.getParticipantFspIdByTypeAndId.bind(this));
+        this.mainRouter.get("/:type/:id",[
+            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+            check("id").isString().notEmpty().withMessage("id must be a non empty string")
+         ], this.getParticipantFspIdByTypeAndId.bind(this));
         // GET Participants by Type, ID & SubId
-        this.mainRouter.get("/:type/:id/:subId", this.getParticipantFspIdByTypeAndIdAndSubId.bind(this));
+        this.mainRouter.get("/:type/:id/:subId", [
+            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+            check("subId").isString().notEmpty().withMessage("subId must be a non empty string")
+         ], this.getParticipantFspIdByTypeAndIdAndSubId.bind(this));
     
     }
 
-    get MainRouter(): express.Router {
-        return this.mainRouter;
-    }
-
     private async getParticipantFspIdByTypeAndId(req: express.Request, res: express.Response, next: express.NextFunction) {
-        const type = req.params["type"] as string;
-        const id = req.params["id"] as string;
-        const currency = req.params["currency"] as string || null;
+        if (!this.validateRequest(req, res)) {
+            return;
+        }
+        
+        const type = req.params["type"];
+        const id = req.params["id"];
+        const currency = req.params["currency"] ?? null;
 
-        this._logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id}.`);
+        this.logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id}.`);
 
         try {
             const result = await this._accountLookUpAgg.getParticipantId(id, type, null, currency);
             res.send(result);
         } catch (err: any) {
 
-            this._logger.error(err);
+            this.logger.error(err);
             res.status(500).json({
                 status: "error",
                 msg: err.message
@@ -77,18 +85,22 @@ export class AccountLookupExpressRoutes {
     }
 
     private async getParticipantFspIdByTypeAndIdAndSubId(req: express.Request, res: express.Response, next: express.NextFunction) {
-        const type = req.params["type"] as string;
-        const id = req.params["id"] as string;
-        const partySubIdOrType = req.params["subId"] as string;
-        const currency = req.params["currency"] as string || null;
+        if (!this.validateRequest(req, res)) {
+            return;
+        }
         
-        this._logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id} and subId: ${partySubIdOrType}.`);
+        const type = req.params["type"];
+        const id = req.params["id"];
+        const partySubIdOrType = req.params["subId"];
+        const currency = req.params["currency"] ?? null;
+        
+        this.logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id} and subId: ${partySubIdOrType}.`);
 
         try {
             await this._accountLookUpAgg.getParticipantId(id, type, partySubIdOrType, currency);
             res.send();
         } catch (err: any) {
-            this._logger.error(err);
+            this.logger.error(err);
             res.status(500).json({
                 status: "error",
                 msg: err.message
