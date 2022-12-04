@@ -1,5 +1,5 @@
-import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
-import * as express from 'express';
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import express from "express";
 import { validationResult } from "express-validator";
 
 export abstract class BaseRoutes {

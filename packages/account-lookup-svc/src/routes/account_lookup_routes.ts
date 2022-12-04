@@ -37,7 +37,6 @@ import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
 import { check } from "express-validator";
 import { BaseRoutes } from "./_base_routes";
 
-
 export class AccountLookupExpressRoutes extends BaseRoutes {
     private readonly _accountLookUpAgg: AccountLookupAggregate;
 

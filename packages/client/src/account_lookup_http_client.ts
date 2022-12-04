@@ -85,7 +85,7 @@ export class AccountLookupHttpClient {
 	async getFspIdByTypeAndId(partyId:string, partyType:string,currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`${partyType}/${partyId}?currency=${currency}`,
+				`/account-lookup/${partyType}/${partyId}?currency=${currency}`,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -107,7 +107,7 @@ export class AccountLookupHttpClient {
 	async getFspIdByTypeAndIdAndSubId(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<string | null> {
 		try {
 			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
+				`/account-lookup/${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;

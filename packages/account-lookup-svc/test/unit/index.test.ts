@@ -70,7 +70,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
 const useSpy = jest.fn();
 const closeSpy = jest.fn();
 const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
-const oracleAdminRoutesSpy = {
+const routerSpy = {
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
@@ -88,7 +88,7 @@ jest.mock('express', () => {
 
 express.json = jest.fn();
 express.urlencoded = jest.fn();
-express.Router = jest.fn().mockImplementation(() => { return oracleAdminRoutesSpy });
+express.Router = jest.fn().mockImplementation(() => { return routerSpy });
 
 describe("Account Lookup Service", () => {
     
@@ -120,7 +120,8 @@ describe("Account Lookup Service", () => {
         expect(spyConsumerCallback).toBeCalledTimes(1); 
         expect(spyProducerInit).toBeCalledTimes(1);
         expect(spyAggregateInit).toBeCalledTimes(1);
-        expect(useSpy).toBeCalledWith("/admin", oracleAdminRoutesSpy);
+        expect(useSpy).toBeCalledWith("/admin", routerSpy);
+        expect(useSpy).toBeCalledWith("/account-lookup", routerSpy);
         expect(listenSpy).toBeCalledTimes(1);
     
     });
