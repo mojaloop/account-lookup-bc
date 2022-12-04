@@ -7,13 +7,13 @@ export abstract class BaseRoutes {
     private readonly _mainRouter: express.Router;
     private readonly _logger: ILogger;
      
-    constructor(_logger: ILogger) {
+    constructor(logger: ILogger) {
         this._mainRouter = express.Router();
-        this._logger = _logger;
+        this._logger = logger;
     }
 
     public get logger(): ILogger {
-        return this.logger;
+        return this._logger;
     }
    
     get mainRouter(): express.Router {
