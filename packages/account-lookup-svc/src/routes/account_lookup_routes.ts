@@ -35,7 +35,7 @@ import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
 import { check } from "express-validator";
-import { BaseRoutes } from "./_base_routes";
+import { BaseRoutes } from "./base/base_routes";
 
 export class AccountLookupExpressRoutes extends BaseRoutes {
     private readonly _accountLookUpAgg: AccountLookupAggregate;

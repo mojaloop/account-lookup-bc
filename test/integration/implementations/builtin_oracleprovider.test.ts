@@ -68,7 +68,7 @@ let mongoClient: MongoClient;
 let collection : Collection;
 const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
  
-describe("Infrastructure - Builtin Oracle Provider Integration tests", () => {
+describe("Implementations - Builtin Oracle Provider Integration tests", () => {
  
      beforeAll(async () => {
          mongoClient = await MongoClient.connect(connectionString);

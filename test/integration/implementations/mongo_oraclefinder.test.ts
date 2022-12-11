@@ -59,7 +59,7 @@ let mongoClient: MongoClient;
 let collection : Collection;
 const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
 
-describe("Infrastructure - Oracle Finder Integration tests", () => {
+describe("Implementations - Oracle Finder Integration tests", () => {
 
     beforeAll(async () => {
         mongoClient = await MongoClient.connect(connectionString);

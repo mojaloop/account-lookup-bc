@@ -29,7 +29,7 @@
 "use strict";
 
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { ParticipantClient} from "../../src/external_adapters/participant_client";
+import { ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations";
 import { Participant} from "@mojaloop/participant-bc-public-types-lib";
 
@@ -50,15 +50,15 @@ jest.mock("@mojaloop/participants-bc-client-lib", () => {
     }
 });
 
-let participantClient: ParticipantClient;
+let participantClient: ParticipantAdapter;
 let localCache: ILocalCache;
  
-describe("Account Lookup Client Library - Unit Tests", () => {
+describe("Participant Adapter - Unit Tests", () => {
     beforeAll(async () => {
          const logger: ILogger = new ConsoleLogger();
          logger.setLogLevel(LogLevel.FATAL);
          localCache = new LocalCache(logger);         
-         participantClient = new ParticipantClient(
+         participantClient = new ParticipantAdapter(
              logger,
              BASE_URL_PARTICIPANT_CLIENT,
              FAKE_TOKEN,

@@ -47,7 +47,7 @@ import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-s
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantClient } from "@mojaloop/account-lookup-bc-implementations";
+import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations";
 import express, {Express} from "express";
 import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
@@ -187,7 +187,7 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantClient(logger,PARTICIPANT_SVC_BASEURL, fixedToken);
+  participantService = participantServiceParam ?? new ParticipantAdapter(logger,PARTICIPANT_SVC_BASEURL, fixedToken);
 }
 
 export async function stop(): Promise<void> {

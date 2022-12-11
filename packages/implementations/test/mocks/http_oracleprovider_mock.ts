@@ -28,8 +28,8 @@
 
  "use strict";
 
- import nock from "nock";
- import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import nock from "nock";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
  
 export const NOT_FOUND_PARTY_TYPE = "NOT_FOUND_PARTY_TYPE";
 export const NOT_FOUND_PARTY_ID = "NOT_FOUND_PARTY_ID"; 
