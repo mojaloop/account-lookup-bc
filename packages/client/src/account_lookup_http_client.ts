@@ -33,28 +33,29 @@
 
 import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { ParticipantLookup } from "@mojaloop/account-lookup-bc-domain";
 import {
 	ConnectionRefusedError,
 	UnableToGetFspIdError,
 } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 5000;
-
 export class AccountLookupHttpClient {
 	// Properties received through the constructor.
-	private readonly logger: ILogger;
+	private readonly _logger: ILogger;
 	// Other properties.
-	private readonly httpClient: AxiosInstance;
+	private readonly _httpClient: AxiosInstance;
+	private readonly BASE_URL = "/account-lookup";
 	private readonly UNKNOWN_ERROR_MESSAGE: string = "Unknown error";
-
+	
 	constructor(
 		logger: ILogger,
 		baseUrlHttpService: string,
 		timeoutMs: number = DEFAULT_TIMEOUT_MS
 	) {
-		this.logger = logger;
+		this._logger = logger;
 
-		this.httpClient = axios.create({
+		this._httpClient = axios.create({
 			baseURL: baseUrlHttpService,
 			timeout: timeoutMs
 		});
@@ -66,7 +67,7 @@ export class AccountLookupHttpClient {
 		// handle connection refused
 		if(axiosError.code === "ECONNREFUSED"){
 			const err = new ConnectionRefusedError();
-			this.logger.error(err);
+			this._logger.error(err);
 			throw err;
 		}
 
@@ -74,7 +75,7 @@ export class AccountLookupHttpClient {
 		if (axiosError.response !== undefined) {
 			const errMsg =  (axiosError.response.data as any).msg || "unknown error";
 			const err = new errorType(errMsg);
-			this.logger.error(err);
+			this._logger.error(err);
 			throw err;
 		}
 
@@ -83,10 +84,10 @@ export class AccountLookupHttpClient {
 	}
 
 	async participantLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
-		const url = this.composeLookUpUrl(partyType, partyId, partySubId, currency);
+		const url = this.composeGetLookUpUrl(partyType, partyId, partySubId, currency);
 		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get(url,
+			const axiosResponse: AxiosResponse = await this._httpClient.get(url,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -105,10 +106,9 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	async participantBulkLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
-		const url = this.composeLookUpUrl(partyType, partyId, partySubId, currency);
+	async participantBulkLookUp(partyIdentifiers :{[key:string]: ParticipantLookup}): Promise<string | null> {
 		try {	
-			const axiosResponse: AxiosResponse = await this.httpClient.post(url,
+			const axiosResponse: AxiosResponse = await this._httpClient.post(this.BASE_URL, partyIdentifiers,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -127,8 +127,8 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	private composeLookUpUrl(partyType: string, partyId: string, partySubId: string | null, currency: string | null) {
-		let url = `/account-lookup/${partyType}/${partyId}`;
+	private composeGetLookUpUrl(partyType: string, partyId: string, partySubId: string | null, currency: string | null) {
+		let url = this.BASE_URL + `/${partyType}/${partyId}`;
 		if (partySubId) {
 			url += `/${partySubId}`;
 		}
