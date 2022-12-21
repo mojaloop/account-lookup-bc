@@ -79,6 +79,7 @@ import {
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { randomUUID } from "crypto";
+import { ParticipantLookup } from "./types";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -148,7 +149,7 @@ export class AccountLookupAggregate  {
 					await this.handleEvent(message);
 				}
 			}
-			catch(error:any) {
+			catch(error: any) {
 				const errorMessage = error.constructor.name;
 				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
 
@@ -456,18 +457,41 @@ export class AccountLookupAggregate  {
 	//#endregion
 
 	//#region Account Lookup Routes
-	public async getParticipantId(partyId:string, partyType:string, partySubType:string | null, currency:string | null): Promise<string> {
+	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string | null> {
+		const {partyId, partyType, partySubType, currency} = accountIdentifier;
+
 		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
 		
 		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency);
 
 		if(!(fspId)) {
 			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
-			throw new NoSuchParticipantFspIdError();
+			return null;
 		}
 
 		return fspId;
 	}
+		
+	public async getBulkAccountLookup(identifiersList: { [id:string] : ParticipantLookup}): Promise<{[x: string]: string | null}[]> {
+		
+		const participantsList = [];
+
+		for await (const [key, value] of Object.entries(identifiersList)) {
+			const oracleAdapter = await this.getOracleAdapter(value.partyId, value.partySubType);
+			if(!oracleAdapter)
+			{
+				participantsList.push({[key]:null});
+				this._logger.error(`oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
+			}
+			else{
+				const fspId = await oracleAdapter.getParticipantFspId(value.partyType,value.partyId, value.partySubType, value.currency);
+				participantsList.push({[key]:fspId});
+			}
+		}
+
+		return participantsList;
+	}
+
 	//#endregion
 
 }

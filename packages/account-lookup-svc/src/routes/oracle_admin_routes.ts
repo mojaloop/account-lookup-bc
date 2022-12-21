@@ -47,13 +47,10 @@ import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
 export class OracleAdminExpressRoutes extends BaseRoutes {
-     private readonly _accountLookupAggregate: AccountLookupAggregate;
- 
      constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
-         super(logger);
+         super(logger, accountLookupAggregate);
          this.logger.createChild(this.constructor.name);
-         this._accountLookupAggregate = accountLookupAggregate;
- 
+         
          // account lookup admin routes
 
          this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
@@ -84,9 +81,9 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             return;
         }             
         
-        this.logger.debug("Fetching all oracles");
+        this.logger.info("Fetching all oracles");
          try {
-             const fetched = await this._accountLookupAggregate.getAllOracles();
+             const fetched = await this.accountLookupAggregate.getAllOracles();
              res.send(fetched);
          } catch (err: any) {
              this.logger.error(err);
@@ -103,10 +100,10 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
          }
 
          const id = req.params["id"] ?? null;
-         this.logger.debug(`Fetching Oracle [${id}].`);
+         this.logger.info(`Fetching Oracle [${id}].`);
 
          try {
-             const fetched = await this._accountLookupAggregate.getOracleById(id);
+             const fetched = await this.accountLookupAggregate.getOracleById(id);
              if(!fetched){
                  res.status(404).json({
                      status: "error",
@@ -129,10 +126,10 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             return;
         }         
         const id = req.params["id"] ?? null;
-         this.logger.debug(`Deleting Oracle [${id}].`);
+         this.logger.info(`Deleting Oracle [${id}].`);
  
          try {
-             const fetched = await this._accountLookupAggregate.removeOracle(id);
+             const fetched = await this.accountLookupAggregate.removeOracle(id);
              res.send(fetched);
          } catch (err: any) {
              if(err instanceof NoSuchOracleError){
@@ -158,10 +155,10 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
         }
 
         const oracle = req.body;
-        this.logger.debug(`Received Oracle [${oracle}] in createOracle.`);
+        this.logger.info(`Received Oracle [${oracle}] in createOracle.`);
 
         try {
-            const createdId = await this._accountLookupAggregate.addOracle(oracle);
+            const createdId = await this.accountLookupAggregate.addOracle(oracle);
             res.send({
                 id: createdId
             });
@@ -179,9 +176,9 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             return;
         }
         const id = req.params["id"];
-        this.logger.debug(`Health check for Oracle ${id}.`);
+        this.logger.info(`Health check for Oracle ${id}.`);
         try {
-            const fetched = await this._accountLookupAggregate.healthCheck(id);
+            const fetched = await this.accountLookupAggregate.healthCheck(id);
             res.send(fetched);
         } catch (err: any) {
             if(err instanceof NoSuchOracleError){

@@ -38,14 +38,14 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
 
  // Logger.
- import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
- import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
- import {Party} from "../../src/entities/party";
- import {
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {Party} from "../../src/entities/party";
+import {
      AccountLookupAggregate,
      InvalidMessagePayloadError,
      InvalidMessageTypeError,
@@ -68,7 +68,6 @@ import { getParticipantFspIdForOracleTypeAndSuType, mockedOracleAdapters, mocked
 import { AccountLookUperrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { Participant } from "@mojaloop/participant-bc-public-types-lib";
 
-
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
@@ -81,7 +80,6 @@ const oracleProviderFactory = new MemoryOracleProviderFactory(logger);
 const messageProducer: IMessageProducer = new MemoryMessageProducer(
     logger,
 );
-
 
 const participantService: IParticipantService = new MemoryParticipantService(
     logger,

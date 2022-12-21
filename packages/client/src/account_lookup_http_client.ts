@@ -82,10 +82,11 @@ export class AccountLookupHttpClient {
 		throw new errorType(this.UNKNOWN_ERROR_MESSAGE);
 	}
 
-	async getFspIdByTypeAndId(partyId:string, partyType:string,currency:string | null): Promise<string | null> {
+	async participantLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
+		const url = this.composeLookUpUrl(partyType, partyId, partySubId, currency);
+		
 		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`/account-lookup/${partyType}/${partyId}?currency=${currency}`,
+			const axiosResponse: AxiosResponse = await this.httpClient.get(url,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -104,10 +105,10 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	async getFspIdByTypeAndIdAndSubId(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<string | null> {
-		try {
-			const axiosResponse: AxiosResponse = await this.httpClient.get(
-				`/account-lookup/${partyType}/${partyId}/${partySubIdOrType}?currency=${currency}`,
+	async participantBulkLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
+		const url = this.composeLookUpUrl(partyType, partyId, partySubId, currency);
+		try {	
+			const axiosResponse: AxiosResponse = await this.httpClient.post(url,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -126,4 +127,14 @@ export class AccountLookupHttpClient {
 		}
 	}
 
+	private composeLookUpUrl(partyType: string, partyId: string, partySubId: string | null, currency: string | null) {
+		let url = `/account-lookup/${partyType}/${partyId}`;
+		if (partySubId) {
+			url += `/${partySubId}`;
+		}
+		if (currency) {
+			url += `?currency=${currency}`;
+		}
+		return url;
+	}
 }

@@ -33,45 +33,52 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
-import { check } from "express-validator";
+import { AccountLookupAggregate, ParticipantLookup } from "@mojaloop/account-lookup-bc-domain";
+import { body, check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
 export class AccountLookupExpressRoutes extends BaseRoutes {
-    private readonly _accountLookUpAgg: AccountLookupAggregate;
 
     constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
-        super(logger);
+        super(logger, accountLookupAgg);
         logger.createChild("AccountLookupExpressRoutes");
-        this._accountLookUpAgg = accountLookupAgg;
+        
+        this.mainRouter.get("/:id/:type/:subType",[
+            check("id").isString().notEmpty().withMessage("id must be a non empty string").bail(),
+            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+            check("subType").optional({
+                nullable: true,
+            })
+         ], this.getAccountLookUp.bind(this));
 
-        // GET Participant by Type & ID
-        this.mainRouter.get("/:type/:id",[
-            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ], this.getParticipantFspIdByTypeAndId.bind(this));
-        // GET Participants by Type, ID & SubId
-        this.mainRouter.get("/:type/:id/:subId", [
-            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            check("subId").isString().notEmpty().withMessage("subId must be a non empty string")
-         ], this.getParticipantFspIdByTypeAndIdAndSubId.bind(this));
-    
+         this.mainRouter.post(""),[
+            body().isArray().withMessage("body must be an array").bail(),
+            body("*.partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
+            body("*.partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
+         ];
+
     }
 
-    private async getParticipantFspIdByTypeAndId(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getAccountLookUp(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
-        
-        const type = req.params["type"];
-        const id = req.params["id"];
+    
+        const partyId = req.params["id"];
+        const partyType = req.params["type"];
+        const partySubType = req.params["subType"] ?? null;
         const currency = req.params["currency"] ?? null;
 
-        this.logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id}.`);
+        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
 
         try {
-            const result = await this._accountLookUpAgg.getParticipantId(id, type, null, currency);
+            const payload: ParticipantLookup = {
+               currency,
+               partyId,
+               partySubType,
+               partyType 
+            };
+            const result = await this.accountLookupAggregate.getAccountLookUp(payload);
             res.send(result);
         } catch (err: any) {
 
@@ -83,22 +90,19 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         }
     }
 
-    private async getParticipantFspIdByTypeAndIdAndSubId(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getBulkAccountLookUp(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
-        
-        const type = req.params["type"];
-        const id = req.params["id"];
-        const partySubIdOrType = req.params["subId"];
-        const currency = req.params["currency"] ?? null;
-        
-        this.logger.debug(`Received request to get Participant FspId with type: ${type}, id: ${id} and subId: ${partySubIdOrType}.`);
+    
+        const identifiersList = req.body;
+        this.logger.info(`AccountLookupExpressRoutes::getBulkAccountLookUp - ${identifiersList}`);
 
         try {
-            await this._accountLookUpAgg.getParticipantId(id, type, partySubIdOrType, currency);
-            res.send();
+            const result = await this.accountLookupAggregate.getAccountLookUp(identifiersList);
+            res.send(result);
         } catch (err: any) {
+
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -106,4 +110,6 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             });
         }
     }
+
+
 }

@@ -57,3 +57,10 @@ export interface IPartyAccount {
 	currency: string[];
 	extensionList: string[];
 }
+
+export type ParticipantLookup = {
+	partyId: string;
+	partyType: string;
+	partySubType: string | null;
+	currency: string | null;
+}
