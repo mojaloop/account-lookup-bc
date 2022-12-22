@@ -106,7 +106,7 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	async participantBulkLookUp(partyIdentifiers :{[key:string]: ParticipantLookup}): Promise<string | null> {
+	async participantBulkLookUp(partyIdentifiers :{[key:string]: ParticipantLookup}): Promise<{[key: string]: string | null}| null> {
 		try {	
 			const axiosResponse: AxiosResponse = await this._httpClient.post(this.BASE_URL, partyIdentifiers,
 				{
