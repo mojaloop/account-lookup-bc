@@ -43,6 +43,11 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         super(logger, accountLookupAgg);
         logger.createChild("AccountLookupExpressRoutes");
         
+        this.mainRouter.get("/:id/:type",[
+            check("id").isString().notEmpty().withMessage("id must be a non empty string").bail(),
+            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
+         ], this.getAccountLookUp.bind(this));
+
         this.mainRouter.get("/:id/:type/:subType",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string").bail(),
             check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
