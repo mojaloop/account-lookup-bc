@@ -56,11 +56,11 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             })
          ], this.getAccountLookUp.bind(this));
 
-         this.mainRouter.post(""),[
-            body().isArray().withMessage("body must be an array").bail(),
+         this.mainRouter.post("",[
+            body().isObject().withMessage("body must be an object").bail(),
             body("*.partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
             body("*.partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
-         ];
+        ], this.getBulkAccountLookUp.bind(this));
 
     }
 
@@ -104,7 +104,7 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         this.logger.info(`AccountLookupExpressRoutes::getBulkAccountLookUp - ${identifiersList}`);
 
         try {
-            const result = await this.accountLookupAggregate.getAccountLookUp(identifiersList);
+            const result = await this.accountLookupAggregate.getBulkAccountLookup(identifiersList);
             res.send(result);
         } catch (err: any) {
 

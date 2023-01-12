@@ -472,20 +472,19 @@ export class AccountLookupAggregate  {
 		return fspId;
 	}
 		
-	public async getBulkAccountLookup(identifiersList: { [id:string] : ParticipantLookup}): Promise<{[x: string]: string | null}[]> {
+	public async getBulkAccountLookup(identifiersList: { [id:string] : ParticipantLookup}): Promise<{[x: string]: string | null}> {
 		
-		const participantsList = [];
+		const participantsList:{[x: string]: string | null} = {};
 
 		for await (const [key, value] of Object.entries(identifiersList)) {
-			const oracleAdapter = await this.getOracleAdapter(value.partyId, value.partySubType);
-			if(!oracleAdapter)
-			{
-				participantsList.push({[key]:null});
+			const oracleAdapter = await this.getOracleAdapter(value.partyType, value.partySubType);
+			if(!oracleAdapter){
+				participantsList[key] = null;
 				this._logger.error(`oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
 			}
 			else{
 				const fspId = await oracleAdapter.getParticipantFspId(value.partyType,value.partyId, value.partySubType, value.currency);
-				participantsList.push({[key]:fspId});
+				participantsList[key] = fspId;
 			}
 		}
 

@@ -116,17 +116,17 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		}
 	}
 	async removeOracle(id: string): Promise<void> {
-		
-			const deleteResult = await this.oracleProviders.deleteOne({id}).catch((e: any) => {
-				this._logger.error(`Unable to delete oracle: ${e.message}`);
-				throw new UnableToDeleteOracleError();
-			});
-			if(deleteResult.deletedCount == 1){
-				return;
-			}
-			else{
-				throw new NoSuchOracleError();
-			}
+		const deleteResult = await this.oracleProviders.deleteOne({id}).catch((e: any) => {
+			this._logger.error(`Unable to delete oracle: ${e.message}`);
+			throw new UnableToDeleteOracleError();
+		});
+
+		if(deleteResult.deletedCount == 1){
+			return;
+		}
+		else{
+			throw new NoSuchOracleError();
+		}
 	}
 	
 	async getAllOracles(): Promise<Oracle[]> {
@@ -165,12 +165,11 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 	
     async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
-		
 		const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
-		{
+			{
 				partyType: partyType,
 				partySubType: partySubtype
-			},
+			}
 		).catch((e: any) => {
 			this._logger.error(`Unable to get oracle: ${e.message}`);
 			throw new UnableToGetOracleError();
