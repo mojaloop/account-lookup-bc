@@ -460,14 +460,19 @@ export class AccountLookupAggregate  {
 	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string | null> {
 		const {partyId, partyType, partySubType, currency} = accountIdentifier;
 
-		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
-		
-		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency);
+		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType).catch((err) => {
+			this._logger.debug(`getAccountLookup - oracle adapter for ${partyType}, ${partySubType} not found - ${err}`);
+			return null;
+		});
 
-		if(!(fspId)) {
-			this._logger.debug(`partyId:${partyId} has no existing fspId owner`);
+		if(!oracleAdapter) {
 			return null;
 		}
+		
+		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency).catch((err) => {
+			this._logger.debug(`getAccountLookup - oracle adapter for ${partyType}, ${partySubType} not found - ${err}`);
+			return null;
+		});
 
 		return fspId;
 	}
@@ -477,13 +482,19 @@ export class AccountLookupAggregate  {
 		const participantsList:{[x: string]: string | null} = {};
 
 		for await (const [key, value] of Object.entries(identifiersList)) {
-			const oracleAdapter = await this.getOracleAdapter(value.partyType, value.partySubType);
+			const oracleAdapter = await this.getOracleAdapter(value.partyType, value.partySubType).catch((err) => {
+				this._logger.debug(`getBulkAccountLookup - oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
+				return null;
+			});
 			if(!oracleAdapter){
 				participantsList[key] = null;
-				this._logger.error(`oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
+				this._logger.debug(`getBulkAccountLookup - oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
 			}
 			else{
-				const fspId = await oracleAdapter.getParticipantFspId(value.partyType,value.partyId, value.partySubType, value.currency);
+				const fspId = await oracleAdapter.getParticipantFspId(value.partyType,value.partyId, value.partySubType, value.currency).catch((err) => {
+					this._logger.debug(`getBulkAccountLookup - partyType:${value.partyType}, partyId:${value.partyId}, partySubType:${value.partySubType}, currency:${value.currency} has no existing fspId owner`);
+					return null;
+				});
 				participantsList[key] = fspId;
 			}
 		}

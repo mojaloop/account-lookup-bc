@@ -22,14 +22,6 @@
 
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
-
- * Coil
- - Jason Bruwer <jason.bruwer@coil.com>
-
- * Crosslake
- - Pedro Sousa Barreto <pedrob@crosslaketech.com>
-
- * Gonçalo Garcia <goncalogarcia99@gmail.com>
  
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
@@ -84,7 +76,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 );
 
 
-describe("Domain - Unit Tests oracle admin", () => {
+describe("Domain - Unit Tests oracle admin routes", () => {
     
     beforeAll(async () => {
         await aggregate.init();
@@ -248,10 +240,5 @@ describe("Domain - Unit Tests oracle admin", () => {
         // Assert
         expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
     });
-
-
-
-
-
 
 });
