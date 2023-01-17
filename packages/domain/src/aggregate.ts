@@ -461,16 +461,17 @@ export class AccountLookupAggregate  {
 		const {partyId, partyType, partySubType, currency} = accountIdentifier;
 
 		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType).catch((err) => {
-			this._logger.debug(`getAccountLookup - oracle adapter for ${partyType}, ${partySubType} not found - ${err}`);
+			this._logger.error(`getAccountLookup - error getting oracle adapter for ${partyType}, ${partySubType} - ${err}`);
 			return null;
 		});
 
 		if(!oracleAdapter) {
+			this._logger.debug(`getAccountLookup - oracle adapter for ${partyType}, ${partySubType} not found`);
 			return null;
 		}
 		
 		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency).catch((err) => {
-			this._logger.debug(`getAccountLookup - oracle adapter for ${partyType}, ${partySubType} not found - ${err}`);
+			this._logger.error(`getAccountLookUp - error getting participant Id for partyType:${partyType}, partyId:${partyId}, partySubType:${partySubType}, currency:${currency}`);
 			return null;
 		});
 
@@ -483,7 +484,7 @@ export class AccountLookupAggregate  {
 
 		for await (const [key, value] of Object.entries(identifiersList)) {
 			const oracleAdapter = await this.getOracleAdapter(value.partyType, value.partySubType).catch((err) => {
-				this._logger.debug(`getBulkAccountLookup - oracle adapter for ${value.partyType}, ${value.partySubType} not found`);
+				this._logger.error(`getBulkAccountLookup - error getting oracle adapter for ${value.partyType}, ${value.partySubType}`);
 				return null;
 			});
 			if(!oracleAdapter){
@@ -492,7 +493,7 @@ export class AccountLookupAggregate  {
 			}
 			else{
 				const fspId = await oracleAdapter.getParticipantFspId(value.partyType,value.partyId, value.partySubType, value.currency).catch((err) => {
-					this._logger.debug(`getBulkAccountLookup - partyType:${value.partyType}, partyId:${value.partyId}, partySubType:${value.partySubType}, currency:${value.currency} has no existing fspId owner`);
+					this._logger.error(`getBulkAccountLookup - error getting participant Id for partyType:${value.partyType}, partyId:${value.partyId}, partySubType:${value.partySubType}, currency:${value.currency}`);
 					return null;
 				});
 				participantsList[key] = fspId;

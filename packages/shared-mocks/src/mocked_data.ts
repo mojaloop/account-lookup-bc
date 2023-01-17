@@ -135,9 +135,11 @@ export const mockedParticipantFspIds = ["fspId1","fspId2","fspId3","fspId4","fsp
 export type OracleAdapterResults = {
     partyType: string;
     partySubType: string|null;
+    partyId : string;
     fspId: string | null;
     association: boolean;
     disassociation: boolean;
+    currency: string | null;
 }
 
 export const mockedOracleAdapterResults:OracleAdapterResults[] = [
@@ -145,50 +147,64 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyType: mockedPartyTypes[0],
         partySubType: mockedPartySubTypes[0],
         fspId: mockedParticipantFspIds[0],
+        partyId: mockedPartyIds[0],
         association: true,
-        disassociation: true
+        disassociation: true,
+        currency: "USD"
     },
     {
         partyType: mockedPartyTypes[0],
         partySubType: null,
+        partyId: mockedPartyIds[0],
         fspId: mockedParticipantFspIds[0],
         association: false,
-        disassociation: false
+        disassociation: false,
+        currency: "USD"
     },
     {
         partyType: mockedPartyTypes[1],
         partySubType: mockedPartySubTypes[1],
         fspId: mockedParticipantFspIds[1],
+        partyId: mockedPartyIds[1],
         association: false,
-        disassociation: true
+        disassociation: true,
+        currency: "EUR"
     },
     {
         partyType: mockedPartyTypes[1],
         partySubType: null,
+        partyId: mockedPartyIds[1],
         fspId: mockedParticipantFspIds[1],
         association: false,
-        disassociation: false
+        disassociation: false,
+        currency: "EUR"
     },
     {
         partyType: mockedPartyTypes[2],
         partySubType: mockedPartySubTypes[2],
         fspId: mockedParticipantFspIds[2],
+        partyId: mockedPartyIds[2],
         association: true,
-        disassociation: true
+        disassociation: true,
+        currency: "USD"
     },
     {
         partyType: mockedPartyTypes[2],
         partySubType: null,
+        partyId: mockedPartyIds[2],
         fspId: mockedParticipantFspIds[2],
         association: false,
-        disassociation: false
+        disassociation: false,
+        currency: "USD"
     },
     {
         partyType: mockedPartyTypes[0],
         partySubType: mockedPartySubTypes[1],
+        partyId: mockedPartyIds[0],
         fspId: null,
         association: false,
-        disassociation: false
+        disassociation: false,
+        currency: null
     },
 ];
 
