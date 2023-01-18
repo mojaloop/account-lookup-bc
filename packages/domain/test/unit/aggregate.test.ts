@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -64,7 +64,7 @@ import {
      UnableToDisassociateParticipantError,
  } from "../../src";
 import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-shared-mocks";
-import { getParticipantFspIdForOracleTypeAndSuType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-shared-mocks";
+import { getParticipantFspIdForOracleTypeAndSubType as getParticipantFspIdForOracleTypeAndSubType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-shared-mocks";
 import { AccountLookUperrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { Participant } from "@mojaloop/participant-bc-public-types-lib";
 
@@ -95,18 +95,18 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 );
 
 describe("Domain - Unit Tests for event handler and entities", () => {
-       
+
     afterEach(async () => {
         jest.restoreAllMocks();
     });
-    
+
     afterAll(async () => {
         jest.clearAllMocks();
     });
 
     //#region Party entity
     test("should create a new party entity", async()=>{
-        // Arrange 
+        // Arrange
         const id="fakeId";
 	    const type="fake type";
         const currency= "fake currency";
@@ -120,11 +120,11 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(party.type).toBe(type);
         expect(party.currency).toBe(currency);
         expect(party.subId).toBe(subId);
-        
+
     });
 
     test("should throw error if party id is not valid", async()=>{
-        // Arrange 
+        // Arrange
         const id="";
 	    const type="fake type";
         const currency= "fake currency";
@@ -138,13 +138,13 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(() => {
             Party.validateParty(party);
         }).toThrowError(InvalidPartyIdError);
-        
-        
+
+
     });
 
 
     test("should throw error if party type is not valid", async()=>{
-        // Arrange 
+        // Arrange
         const id="fake id";
 	    const type="";
         const currency= "fake currency";
@@ -159,11 +159,11 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(() => {
             Party.validateParty(party);
         }).toThrowError(InvalidPartyTypeError);
-        
+
     });
     //#endregion
 
-    
+
     //#region Init and Destroy
     test("should throw error if couldnt init oracle finder on init", async () => {
         // Arrange
@@ -173,7 +173,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         await expect(aggregate.init()).rejects.toThrowError();
 
-        
+
     });
 
     test("should throw error if couldnt create oracle adapter on init", async () => {
@@ -184,19 +184,19 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         await expect(aggregate.init()).rejects.toThrowError();
 
-        
+
     });
 
     test("should be able to init aggregate", async () => {
         // Act && Assert
         expect(aggregate.init()).resolves;
-        
+
     });
 
     test("should be able to get oracle adapters", async () => {
         // Arrange
         const expectedArrayLength = mockedOracleAdapters.length;
-        
+
         // Act
         const oracleAdapters = aggregate.oracleProvidersAdapters;
 
@@ -219,7 +219,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         }
         const oracleAdapters = aggregate.oracleProvidersAdapters;
         oracleAdapters.push(new MemoryOracleProviderAdapter(logger, mockedOracle));
-        
+
         // Act
         const oracleAdaptersAfterPush = aggregate.oracleProvidersAdapters;
 
@@ -237,7 +237,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         await expect(aggregate.destroy()).rejects.toThrowError();
 
-        
+
     });
 
 
@@ -283,7 +283,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
+            "payload": errorPayload,
            }));
 
     });
@@ -331,7 +331,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
+            "payload": errorPayload,
            }));
 
     });
@@ -379,7 +379,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
+            "payload": errorPayload,
            }));
 
     });
@@ -416,7 +416,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "fspiopOpaqueState": "fake opaque state", 
+            "fspiopOpaqueState": "fake opaque state",
            }));
 
     });
@@ -463,7 +463,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             .mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true} as Participant as any)
             .mockResolvedValueOnce({ id:destinationFspId,type: partyType, isActive: true} as Participant as any);
 
-        
+
         jest.spyOn(messageProducer, "send");
 
         // Act
@@ -501,9 +501,9 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             type: "DFSP",
             isActive: true,
         }
-  
-        jest.spyOn(messageProducer, "send");        
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);        
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);
 
         const event = new PartyQueryReceivedEvt(payload);
 
@@ -523,13 +523,13 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
+            "payload": errorPayload,
         }));
-        
+
      });
 
     test("handlePartyQueryReceivedEvt - should publish error message if is unable to get an oracle from oracle finder", async () => {
-       //Arrange 
+       //Arrange
        const partyId = mockedPartyIds[0];
        const requesterFspId = mockedParticipantIds[0];
        const partyType = "no oracle";
@@ -541,13 +541,13 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             currency:null,
             partySubType: null,
       };
-          
+
         jest.spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any);
         jest.spyOn(messageProducer, "send");
 
         const event = new PartyQueryReceivedEvt(payload);
-     
+
         const errorMsg = NoSuchOracleError.name;
 
         const errorPayload: AccountLookUperrorEvtPayload = {
@@ -564,13 +564,13 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
+            "payload": errorPayload,
            }));
-        
+
     });
 
     test("handlePartyQueryReceivedEvt - should publish error message if is unable to get an oracle from oracle provider list", async () => {
-        //Arrange 
+        //Arrange
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
         const partyType = mockedPartyTypes[3];
@@ -583,16 +583,16 @@ describe("Domain - Unit Tests for event handler and entities", () => {
              currency:null,
              partySubType,
        };
-           
+
          jest.spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any);
          jest.spyOn(aggregate, "oracleProvidersAdapters","get").mockReturnValue([]);
          jest.spyOn(messageProducer, "send");
- 
+
          const event = new PartyQueryReceivedEvt(payload);
-      
+
          const errorMsg = NoSuchOracleAdapterError.name;
- 
+
          const errorPayload: AccountLookUperrorEvtPayload = {
              errorMsg,
              partyId,
@@ -601,22 +601,22 @@ describe("Domain - Unit Tests for event handler and entities", () => {
              partyType,
              requesterFspId,
          };
- 
+
          // Act
          await aggregate.handleAccountLookUpEvent(event);
- 
+
          // Assert
          expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-             "payload": errorPayload, 
+             "payload": errorPayload,
             }));
-         
+
      });
 
      test("handlePartyQueryReceivedEvt - should publish error message if oracle returns no participant", async () => {
-        // Arrange 
+        // Arrange
         const partyType = mockedPartyTypes[0];
         const partySubType = mockedPartySubTypes[1];
-        
+
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
         const payload :PartyQueryReceivedEvtPayload = {
@@ -635,12 +635,12 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         }
 
         jest.spyOn(messageProducer, "send");
-        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);        
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(participant as Participant as any);
 
         const event = new PartyQueryReceivedEvt(payload);
-   
+
         const errorMsg = NoSuchParticipantFspIdError.name;
-    
+
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
@@ -649,18 +649,18 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId,
         };
-    
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
-    
+
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
-        }));         
+            "payload": errorPayload,
+        }));
      });
 
      test("handlePartyQueryReceivedEvt - should publish error message if participant info not found", async () => {
-        //Arrange 
+        //Arrange
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
@@ -680,7 +680,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = NoSuchParticipantError.name;
-    
+
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
@@ -689,19 +689,19 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId,
         };
-    
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
-    
+
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
-        }));      
-         
+            "payload": errorPayload,
+        }));
+
     });
 
      test("handlePartyQueryReceivedEvt - should publish error message if participant is not active", async () => {
-        //Arrange 
+        //Arrange
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
@@ -721,7 +721,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = RequiredParticipantIsNotActive.name;
-    
+
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
@@ -730,19 +730,19 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId,
         };
-    
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
-    
+
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
-        }));      
-         
+            "payload": errorPayload,
+        }));
+
     });
 
     test("handlePartyQueryReceivedEvt - should publish error message if participant id received from client service isnt equal to the requester", async () => {
-        //Arrange 
+        //Arrange
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
@@ -762,7 +762,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = InvalidParticipantIdError.name;
-    
+
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
             partyId,
@@ -771,20 +771,20 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId,
         };
-    
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
-    
+
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload, 
-        }));      
-         
+            "payload": errorPayload,
+        }));
+
     });
 
-   
+
      test("handlePartyQueryReceivedEvt - should publish response with PartyInfoRequestedEvt", async () => {
-        //Arrange 
+        //Arrange
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
@@ -812,15 +812,15 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             currency: null,
             partySubType: null
         };
-    
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
-    
+
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": responsePayload, 
-        }));         
-         
+            "payload": responsePayload,
+        }));
+
     });
 
     //#endregion
@@ -848,7 +848,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         jest.spyOn(messageProducer, "send");
 
         const event = new PartyInfoAvailableEvt(payload);
-        
+
         const errorMsg = NoSuchParticipantError.name;
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
@@ -867,7 +867,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload,
             }));
-        
+
         });
 
         test("handlePartyInfoAvailableEvt - should publish error message if information from destination is invalid", async () => {
@@ -886,14 +886,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
                 partyDoB:new Date(),
                 partyName:"name",
             };
-    
+
             jest.spyOn(participantService, "getParticipantInfo")
                 .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any)
                 .mockResolvedValueOnce(null);
             jest.spyOn(messageProducer, "send");
-    
+
             const event = new PartyInfoAvailableEvt(payload);
-            
+
             const errorMsg = NoSuchParticipantError.name;
             const errorPayload: AccountLookUperrorEvtPayload = {
                 errorMsg,
@@ -903,12 +903,12 @@ describe("Domain - Unit Tests for event handler and entities", () => {
                 partyType,
                 requesterFspId,
             };
-    
+
             // Act
             await aggregate.handleAccountLookUpEvent(event);
-    
+
             // Assert
-    
+
             expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
                 "payload": errorPayload,
             }));
@@ -1009,16 +1009,16 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const partySubType = mockedPartySubTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
-        
+
         const payload :ParticipantQueryReceivedEvtPayload = {
             partyId,
             partyType,
             requesterFspId ,
-            currency:null,
+            currency:"USD",
             partySubType,
         };
 
-        const oracleParticipantFspId = getParticipantFspIdForOracleTypeAndSuType(partyType, partySubType) as string;
+        const oracleParticipantFspId = getParticipantFspIdForOracleTypeAndSubType(partyType, partySubType) as string;
 
         jest.spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as Participant as any)
@@ -1031,7 +1031,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             partyId,
             partySubType,
-            currency: null,
+            currency: "USD",
             ownerFspId: oracleParticipantFspId,
         };
 
@@ -1126,7 +1126,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             "payload": errorPayload,
         }));
     });
-            
+
     //#endregion
 
     //#region handleParticipantAssociationRequestReceivedEvt
@@ -1134,7 +1134,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
     test("handleParticipantAssociationRequestReceivedEvt - should publish error message if information from owner is invalid", async () => {
         // Arrange
         const partyType = mockedPartyTypes[0];
-        
+
         const partyId = mockedPartyIds[0];
         const ownerFspId = mockedParticipantIds[0];
         const payload :ParticipantAssociationRequestReceivedEvtPayload = {
@@ -1150,7 +1150,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
-        
+
         const errorMsg = NoSuchParticipantError.name;
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
@@ -1233,14 +1233,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
-        
+
         const expectedPayload: ParticipantAssociationCreatedEvtPayload = {
             partyId,
             partyType,
             ownerFspId,
             partySubType,
         };
-        
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
 
@@ -1249,9 +1249,9 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": expectedPayload,
         }));
-        
+
     });
- 
+
     //#endregion
 
     //#region handleParticipantDisassociateRequestReceivedEvt
@@ -1274,7 +1274,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
-        
+
         const errorMsg = NoSuchParticipantError.name;
         const errorPayload: AccountLookUperrorEvtPayload = {
             errorMsg,
@@ -1309,7 +1309,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             currency: null,
         };
 
-        const returnedParticipant: Partial<Participant> = { 
+        const returnedParticipant: Partial<Participant> = {
             id: ownerFspId,
             type: "DFSP",
             isActive: true,
@@ -1363,14 +1363,14 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         jest.spyOn(messageProducer, "send");
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
-        
+
         const expectedPayload: ParticipantAssociationRemovedEvtPayload = {
             partyId,
             partyType,
             ownerFspId,
             partySubType,
         };
-        
+
         // Act
         await aggregate.handleAccountLookUpEvent(event);
 
@@ -1379,7 +1379,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": expectedPayload,
         }));
-        
+
     });
 //#endregion
 

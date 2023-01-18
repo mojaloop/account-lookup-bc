@@ -43,13 +43,13 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         super(logger, accountLookupAgg);
         logger.createChild("AccountLookupExpressRoutes");
         
-        this.mainRouter.get("/:id/:type",[
-            check("id").isString().notEmpty().withMessage("id must be a non empty string").bail(),
+        this.mainRouter.get("/:partyId/:type",[
+            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
             check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
          ], this.getAccountLookUp.bind(this));
 
-        this.mainRouter.get("/:id/:type/:subType",[
-            check("id").isString().notEmpty().withMessage("id must be a non empty string").bail(),
+        this.mainRouter.get("/:partyId/:type/:subType",[
+            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
             check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
             check("subType").optional({
                 nullable: true,
@@ -69,10 +69,10 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             return;
         }
     
-        const partyId = req.params["id"];
+        const partyId = req.params["partyId"];
         const partyType = req.params["type"];
         const partySubType = req.params["subType"] ?? null;
-        const currency = req.params["currency"] ?? null;
+        const currency = req.query.currency?.toString() ?? null;
 
         this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
 

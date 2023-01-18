@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -206,9 +206,28 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         disassociation: false,
         currency: null
     },
+    {
+        partyType: mockedPartyTypes[0],
+        partySubType: null,
+        partyId: mockedPartyIds[0],
+        fspId: mockedParticipantFspIds[3],
+        association: false,
+        disassociation: false,
+        currency: null
+    },
+    {
+        partyType: mockedPartyTypes[0],
+        partySubType: mockedPartySubTypes[0],
+        partyId: mockedPartyIds[0],
+        fspId: mockedParticipantFspIds[3],
+        association: false,
+        disassociation: false,
+        currency: null
+    }
+
 ];
 
-export const getParticipantFspIdForOracleTypeAndSuType = (partyType: string, partySubType: string|null): string|null => {
+export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, partySubType: string|null): string|null => {
     const result = mockedOracleAdapterResults.find((oracleAdapterResult) => {
         return oracleAdapterResult.partyType === partyType && oracleAdapterResult.partySubType === partySubType;
     });

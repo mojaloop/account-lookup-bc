@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -64,7 +64,7 @@ const APP_VERSION = "0.0.1";
 let logger: ILogger;
 const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
 
-// Message Consumer/Publisher 
+// Message Consumer/Publisher
 const KAFKA_LOGS_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_LOG_TOPIC"] || "logs";
 const KAFKA_URL = process.env["ACCOUNT_LOOKUP_KAFKA_URL"] || "localhost:9092";
 
@@ -80,7 +80,7 @@ const producerOptions : MLKafkaJsonProducerOptions = {
   kafkaBrokerList: KAFKA_URL,
   producerClientId: `${BC_NAME}_${APP_NAME}`,
   skipAcknowledgements: true,
-  
+
 };
 
 //Oracles
@@ -110,7 +110,7 @@ let oracleAdminRoutes: OracleAdminExpressRoutes;
 let accountLookupClientRoutes: AccountLookupExpressRoutes;
 
 
-export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
+export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
   oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService,
   aggregateParam?:AccountLookupAggregate,
   )
@@ -118,7 +118,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
   console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
   try{
-    
+
     await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
 
     messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
@@ -127,10 +127,10 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
     logger.info("Kafka Consumer Initialized");
 
     await messageProducer.connect();
-   
-    logger.info("Kafka Producer Initialized");    
+
+    logger.info("Kafka Producer Initialized");
     aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProviderFactory, messageProducer, participantService);
-    
+
     await aggregate.init();
     logger.info("Aggregate Initialized");
 
@@ -139,7 +139,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
       logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
       await aggregate.handleAccountLookUpEvent(message);
     };
-    
+
     messageConsumer.setCallbackFn(callbackFunction);
 
     // Start express server
@@ -169,22 +169,22 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
   }
 }
 
-async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder, 
+async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
   oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
-  
+
   if (!loggerParam) {
     await (logger as KafkaLogger).init();
     logger.info("Kafka Logger Initialized");
   }
-  
+
   oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,MONGO_URL, DB_NAME);
-  
+
   oracleProviderFactory = oracleProviderFactoryParam ?? new OracleAdapterFactory(MONGO_URL, DB_NAME, logger);
 
   messageProducer = messageProducerParam ?? new MLKafkaJsonProducer(producerOptions, logger);
-  
+
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
   participantService = participantServiceParam ?? new ParticipantAdapter(logger,PARTICIPANT_SVC_BASEURL, fixedToken);

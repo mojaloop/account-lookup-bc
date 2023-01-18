@@ -50,8 +50,6 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
      constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
          super(logger, accountLookupAggregate);
          this.logger.createChild(this.constructor.name);
-         
-         // account lookup admin routes
 
          this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
 

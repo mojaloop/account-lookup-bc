@@ -19,9 +19,6 @@
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
-
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -31,5 +28,13 @@
 
 "use strict";
 
-export class UnableToGetFspIdError extends Error{}
-export class UnableToGetFspIdBulkError extends Error{}
+export const PARTY_ID = "123456789";
+export const PARTY_TYPE = "MSISDN";
+export const PARTY_SUB_TYPE = "PHONE";
+export const FSP_ID = "fsp1";
+export const FSP_ID2 = "fsp2";
+export const FSP_ID_WITH_SUB_TYPE = "fsp3";
+export const FSP_ID_WITH_CURRENCY_EUR = "fsp4";
+export const FSP_ID_WITH_CURRENCY_USD = "fsp5";
+export const ID_1 = "1";
+export const ID_2 = "2";

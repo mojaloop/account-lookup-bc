@@ -35,7 +35,7 @@ import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { ParticipantLookup } from "@mojaloop/account-lookup-bc-domain";
 import {
-	ConnectionRefusedError,
+	UnableToGetFspIdBulkError,
 	UnableToGetFspIdError,
 } from "./errors";
 
@@ -45,47 +45,25 @@ export class AccountLookupHttpClient {
 	private readonly _logger: ILogger;
 	// Other properties.
 	private readonly _httpClient: AxiosInstance;
-	private readonly BASE_URL = "/account-lookup";
+	private readonly CLIENT_URL = "/account-lookup";
 	private readonly UNKNOWN_ERROR_MESSAGE: string = "Unknown error";
-	
+
 	constructor(
 		logger: ILogger,
-		baseUrlHttpService: string,
+		baseUrl: string,
 		timeoutMs: number = DEFAULT_TIMEOUT_MS
 	) {
 		this._logger = logger;
 
 		this._httpClient = axios.create({
-			baseURL: baseUrlHttpService,
+			baseURL: baseUrl,
 			timeout: timeoutMs
 		});
 	}
 
-	private _handleServerError<T extends Error>(err: unknown, errorType: new(msg:string) => T):void{
-		const axiosError: AxiosError = err as AxiosError;
-
-		// handle connection refused
-		if(axiosError.code === "ECONNREFUSED"){
-			const err = new ConnectionRefusedError();
-			this._logger.error(err);
-			throw err;
-		}
-
-		// handle errors with a data.msg prop in the body
-		if (axiosError.response !== undefined) {
-			const errMsg =  (axiosError.response.data as any).msg || "unknown error";
-			const err = new errorType(errMsg);
-			this._logger.error(err);
-			throw err;
-		}
-
-		// handle everything else
-		throw new errorType(this.UNKNOWN_ERROR_MESSAGE);
-	}
-
 	async participantLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
 		const url = this.composeGetLookUpUrl(partyType, partyId, partySubId, currency);
-		
+
 		try {
 			const axiosResponse: AxiosResponse = await this._httpClient.get(url,
 				{
@@ -94,21 +72,21 @@ export class AccountLookupHttpClient {
 					}
 				}
 			);
-			
-			if (axiosResponse.status === 404) {
-				return null;
-			}
-			
+
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			this._handleServerError(e, UnableToGetFspIdError);
-			return null;
+			this._logger.error("account lookup client - participantLookUp - error " + e);
+			if (e instanceof Error){
+				throw e;
+			}
+
+			throw new UnableToGetFspIdError();
 		}
 	}
 
 	async participantBulkLookUp(partyIdentifiers :{[key:string]: ParticipantLookup}): Promise<{[key: string]: string | null}| null> {
-		try {	
-			const axiosResponse: AxiosResponse = await this._httpClient.post(this.BASE_URL, partyIdentifiers,
+		try {
+			const axiosResponse: AxiosResponse = await this._httpClient.post(this.CLIENT_URL, partyIdentifiers,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -116,19 +94,18 @@ export class AccountLookupHttpClient {
 				}
 			);
 
-			if (axiosResponse.status === 404) {
-				return null;
-			}
-
 			return axiosResponse.data;
 		} catch (e: unknown) {
-			this._handleServerError(e, UnableToGetFspIdError);
-			return null;
+			this._logger.error("account lookup client - participantBulkLookUp - error " + e);
+			if (e instanceof Error){
+				throw e;
+			}
+			throw new UnableToGetFspIdBulkError();
 		}
 	}
 
 	private composeGetLookUpUrl(partyType: string, partyId: string, partySubId: string | null, currency: string | null) {
-		let url = this.BASE_URL + `/${partyType}/${partyId}`;
+		let url = this.CLIENT_URL + `/${partyId}/${partyType}`;
 		if (partySubId) {
 			url += `/${partySubId}`;
 		}

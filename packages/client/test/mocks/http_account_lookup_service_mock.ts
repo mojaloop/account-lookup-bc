@@ -30,24 +30,13 @@
 
 import nock from "nock";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
- 
-export const NOT_FOUND_PARTY_TYPE = "NOT_FOUND_PARTY_TYPE";
-export const NOT_FOUND_PARTY_ID = "NOT_FOUND_PARTY_ID"; 
-export const NOT_FOUND_PARTY_SUB_ID = "NOT_FOUND_PARTY_SUB";
-export const ERROR_FSP_ID = "ERROR_FSP_ID";
+import { ID_1, ID_2, FSP_ID, FSP_ID2, FSP_ID_WITH_CURRENCY_EUR, FSP_ID_WITH_CURRENCY_USD, FSP_ID_WITH_SUB_TYPE, PARTY_ID, PARTY_SUB_TYPE, PARTY_TYPE } from "./data";
 
-export const PARTY_TYPE = "PARTY_TYPE";
-export const PARTY_ID = "PARTY_ID";
-export const PARTY_SUB_ID = "PARTY_SUB_ID";
-export const FSP_ID = "FSP_ID";
-
-export const FSP_ID_RESPONSE = 1;
-
-export class RemoteOracleProviderHttpMock {
+export class HttpAccountLookupServiceMock {
      // Properties received through the constructor.
      private readonly logger: ILogger;
      private readonly BASE_URL: string;
- 
+
      constructor(
          logger: ILogger,
          baseUrl: string
@@ -55,46 +44,62 @@ export class RemoteOracleProviderHttpMock {
          this.logger = logger;
          this.BASE_URL = baseUrl;
     }
- 
+
     public setUp(): void {
         nock(this.BASE_URL)
             .persist()
 
-            .get(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
-            .reply(404,"Participant not found")
-            
-            .get(/participants.*/)
-            .query(true)
-            .reply(200,{
-                fspId: FSP_ID_RESPONSE
-            })
-            
-            .post(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
-            .query({fspId: ERROR_FSP_ID})
-            .reply(500, "Couldn't associate participant")
-            
-            .post(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
-            .query(true)
-            .reply(200, {})
+            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
+            .reply(200, FSP_ID)
 
-            .delete(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
-            .query({fspId: ERROR_FSP_ID})
-            .reply(500, "Couldn't disassociate participant")
-        
-            .delete(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
-            .query(true)
-            .reply(200, {})
-        
-            .get(`/health`)
-            .reply(200, {});
+            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}/${PARTY_SUB_TYPE}`)
+            .reply(200, FSP_ID_WITH_SUB_TYPE)
+
+            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
+            .query({currency: "EUR"})
+            .reply(200, FSP_ID_WITH_CURRENCY_EUR)
+
+            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}/${PARTY_SUB_TYPE}`)
+            .query({currency: "USD"})
+            .reply(200, FSP_ID_WITH_CURRENCY_USD)
+
+            .post("/account-lookup", {
+                [ID_1] : {
+                    partyId: PARTY_ID,
+                    partyType: PARTY_TYPE,
+                    partySubType: PARTY_SUB_TYPE,
+                    currency: null
+                },
+                [ID_2] : {
+                    partyId: PARTY_ID,
+                    partyType: PARTY_TYPE,
+                    partySubType: PARTY_SUB_TYPE,
+                    currency: "USD"
+                }
+            })
+            .reply(200, {[ID_1]: FSP_ID, [ID_2]: FSP_ID2})
+
+            .post("/account-lookup", {
+                [ID_1] : {
+                    partySubType: PARTY_SUB_TYPE,
+                    currency: null
+                },
+                [ID_2] : {
+                    partyId: PARTY_ID,
+                    partyType: PARTY_TYPE,
+                    partySubType: PARTY_SUB_TYPE,
+                    currency: "USD"
+                }
+            })
+            .reply(422, "Invalid Body");
      }
- 
+
      public disable(): void {
          nock.restore();
      }
- 
+
      public enable(): void {
          nock.activate();
      }
- }
- 
+}
+
