@@ -31,7 +31,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -60,15 +60,15 @@ const oracle: Oracle = {
     partySubType: null
 }
 
-describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
+describe("Implementations - Remote Oracle Provider Unit tests", () => {
     beforeAll(async () => {
         oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger,oracle.endpoint as string);
         oracleproviderHttpServerMock.setUp();
         //oracleproviderHttpServerMock.enable();
-        
+
         remoteOracleProvider = new HttpOracleProvider(oracle, logger);
     });
-    
+
     afterAll(async () => {
         oracleproviderHttpServerMock.disable();
         jest.clearAllMocks();
@@ -77,7 +77,7 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     test("should set correct values on initialization", async () => {
         // Act
         remoteOracleProvider.init();
-        
+
         // Assert
         expect(remoteOracleProvider.type).toEqual(oracle.type);
         expect(remoteOracleProvider.oracleId).toEqual(oracle.id);
@@ -104,13 +104,13 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
 
         // Act && Assert
         expect(() => badRemoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);
-    
+
     });
 
     test("should be able to health check remote oracle",async()=>{
         // Act
         const healthCheck = await remoteOracleProvider.healthCheck();
-        
+
         // Assert
         expect(healthCheck).toEqual(true);
     });
@@ -123,7 +123,7 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     test("should be able to get Participant FspId",async()=>{
         // Act
         const result = await remoteOracleProvider.getParticipantFspId("MSISDN","123456789",null, null);
-        
+
         // Assert
         expect(result).toEqual(FSP_ID_RESPONSE);
     });
@@ -137,7 +137,7 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     test("should be able to associate participant",async()=>{
          // Act
          const result = await remoteOracleProvider.associateParticipant("fakeSpId", PARTY_TYPE,PARTY_ID, PARTY_SUB_ID, null);
-        
+
          // Assert
          expect(result).toBeNull();
     });
@@ -151,7 +151,7 @@ describe("Infrastructure - Remote Oracle Provider Unit tests", () => {
     test("should be able to disassociate participant",async()=>{
             // Act
             const result = await remoteOracleProvider.disassociateParticipant("fakeFspId", PARTY_TYPE,PARTY_ID, PARTY_SUB_ID, null);
-            
+
             // Assert
             expect(result).toBeNull();
     });

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -48,26 +48,26 @@ let localCache: LocalCache;
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
-describe("Infrastructure - Local Cache Unit Tests", () => {
-    
+describe("Implementations - Local Cache Unit Tests", () => {
+
     afterAll(async () => {
         jest.clearAllMocks();
     });
 
-    test("should create a new local cache instance", async()=>{ 
-        
-        //Arrange && Act 
+    test("should create a new local cache instance", async()=>{
+
+        //Arrange && Act
         localCache = new LocalCache(logger);
         localCache.set(1,"type","key");
-        
+
         //Assert
         expect(localCache).toBeDefined();
         expect(localCache.get("type:key")).toBe(1);
     });
 
-    test("should return null if time to live for the specific entry is surpassed", async()=>{ 
-        
-        //Arrange 
+    test("should return null if time to live for the specific entry is surpassed", async()=>{
+
+        //Arrange
         localCache = new LocalCache(logger,1);
         localCache.set(1,"type","key");
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -79,9 +79,9 @@ describe("Infrastructure - Local Cache Unit Tests", () => {
         expect(result).toBeNull();
     });
 
-    test("should return value if time to live for the specific entry is not surpassed", async()=>{ 
-        
-        //Arrange 
+    test("should return value if time to live for the specific entry is not surpassed", async()=>{
+
+        //Arrange
         localCache = new LocalCache(logger,10);
         localCache.set(1, "type", "key");
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -93,12 +93,12 @@ describe("Infrastructure - Local Cache Unit Tests", () => {
         expect(result).toBe(1);
     });
 
-    test("should return null if no key is present", async()=>{ 
-        
-        //Arrange 
+    test("should return null if no key is present", async()=>{
+
+        //Arrange
         localCache = new LocalCache(logger);
         localCache.set(1,"type","key");
-        
+
         //Act
         const result = localCache.get("InvalidKey");
 
@@ -106,24 +106,24 @@ describe("Infrastructure - Local Cache Unit Tests", () => {
         expect(result).toBeNull();
     });
 
-    test("should throw error when try to set a entry that already exists", async()=>{ 
-        
-        //Arrange 
+    test("should throw error when try to set a entry that already exists", async()=>{
+
+        //Arrange
         localCache = new LocalCache(logger);
         localCache.set(1,"key");
-        
+
         //Act && Assert
         expect(() => localCache.set(1,"key")).toThrowError();
-        
+
     });
 
-    test("should clear cache", async()=>{ 
-        
-        //Arrange 
+    test("should clear cache", async()=>{
+
+        //Arrange
         localCache = new LocalCache(logger);
         localCache.set(1, "key");
         localCache.destroy();
-        
+
         //Act
         const result = localCache.get("key");
 

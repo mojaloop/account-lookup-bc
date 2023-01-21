@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -54,8 +54,8 @@ logger.setLogLevel(LogLevel.FATAL);
 
 const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger);
 
-describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
-    
+describe("Implementations - Oracle Adapter Factory Unit tests", () => {
+
     afterAll(async() => {
         jest.clearAllMocks();
     });
@@ -69,9 +69,9 @@ describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
             endpoint: "http://localhost:3000",
             partyType: "MSISDN",
             partySubType: null
-            
+
         }
-        
+
         // Act
         const oracleAdapter = oracleAdapterFactory.create(oracle);
 
@@ -89,9 +89,9 @@ describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
             endpoint: null,
             partyType: "MSISDN",
             partySubType: null
-            
+
         }
-        
+
         // Act
         const oracleAdapter = oracleAdapterFactory.create(oracle);
 
@@ -109,13 +109,13 @@ describe("Infrastructure - Oracle Adapter Factory Unit tests", () => {
             endpoint: null,
             partyType: "MSISDN",
             partySubType: null
-            
+
         }
         // Act and Assert
 
         expect(() => oracleAdapterFactory.create(oracle)).toThrowError(OracleTypeNotSupportedError);
     });
 
-}); 
+});
 
 

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -76,6 +76,12 @@ export class RequiredParticipantIsNotActive extends Error {
     }
 }
 
+export class UnableToGetParticipantFspIdError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to get participant fsp id");
+    }
+}
+
 // Participant Association
 export class UnableToAssociateParticipantError extends Error {
     constructor(message?: string) {
@@ -83,7 +89,7 @@ export class UnableToAssociateParticipantError extends Error {
     }
 }
 
-// Participant Dissociation  
+// Participant Dissociation
 export class UnableToDisassociateParticipantError extends Error {
     constructor(message?: string) {
         super(message || "Unable to disassociate participant");
@@ -91,7 +97,16 @@ export class UnableToDisassociateParticipantError extends Error {
 }
 
 // Oracle
-export class DuplicateOracleError extends Error{}
+export class UnableToGetOracleFromOracleFinderError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to get oracle from oracle finder");
+    }
+}
+export class DuplicateOracleError extends Error{
+    constructor(message?: string) {
+        super(message || "Duplicate oracle");
+    }
+}
 export class NoSuchOracleAdapterError extends Error {
     constructor(message?: string) {
         super(message || "No such oracle adapter");

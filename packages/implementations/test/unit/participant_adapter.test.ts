@@ -41,7 +41,7 @@ const getParticipantsByIdsSpy = jest.fn();
 
 jest.mock("@mojaloop/participants-bc-client-lib", () => {
         return {
-            ParticipantsHttpClient: jest.fn().mockImplementation(() => { 
+            ParticipantsHttpClient: jest.fn().mockImplementation(() => {
                 return {
                     getParticipantById: getParticipantByIdSpy,
                     getParticipantsByIds: getParticipantsByIdsSpy
@@ -52,12 +52,12 @@ jest.mock("@mojaloop/participants-bc-client-lib", () => {
 
 let participantClient: ParticipantAdapter;
 let localCache: ILocalCache;
- 
-describe("Participant Adapter - Unit Tests", () => {
+
+describe("Implementations - Participant Adapter Unit Tests", () => {
     beforeAll(async () => {
          const logger: ILogger = new ConsoleLogger();
          logger.setLogLevel(LogLevel.FATAL);
-         localCache = new LocalCache(logger);         
+         localCache = new LocalCache(logger);
          participantClient = new ParticipantAdapter(
              logger,
              BASE_URL_PARTICIPANT_CLIENT,
@@ -74,7 +74,7 @@ describe("Participant Adapter - Unit Tests", () => {
     afterAll(async () => {
         jest.clearAllMocks();
     });
- 
+
      // Get participant.
     test("should receive null if participant doesnt exist", async () => {
         // Arrange
@@ -87,7 +87,7 @@ describe("Participant Adapter - Unit Tests", () => {
         // Assert
         expect(participantInfo).toBeNull();
     });
- 
+
     test("should get participant info", async () => {
         // Arrange
         const participantId: string = "existingParticipantId";
@@ -108,11 +108,11 @@ describe("Participant Adapter - Unit Tests", () => {
          // Act
          const participantInfo =
              await participantClient.getParticipantInfo(participantId);
-         
+
          // Assert
          expect(participantInfo).toEqual(participant);
         });
-    
+
     test("should throw null if getting an error while getting participant info", async () => {
         // Arrange
         const participantId: string = "existingParticipantId";
@@ -124,7 +124,7 @@ describe("Participant Adapter - Unit Tests", () => {
         // Assert
         expect(participantInfo).toBeNull();
     });
-    
+
     test("should get participants info", async () => {
         // Arrange
         const participantId1: string = "existingParticipantId1";
@@ -204,17 +204,17 @@ describe("Participant Adapter - Unit Tests", () => {
         // Assert
         expect(participantsInfo).toEqual([participant1, participant2]);
     });
- 
+
     test("should retrieve participant from cache", async () => {
          // Arrange
         const participantId: string = "existingParticipantId";
         jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
-        
+
          // Act
         const participantInfo = await participantClient.getParticipantInfo(participantId);
-         
+
          // Assert
          expect(participantInfo).toEqual({"id":1, "name":"cache"});
     });
- 
+
 });
