@@ -25,12 +25,13 @@
     "test": "npm run test:unit",
     "test:unit": "npm -ws --if-present run test:unit",
     "test:integration": "jest --runInBand --forceExit --detectOpenHandles --testPathPattern=integration",
-    "posttest": "npm run coverage:merge && npm run coverage:gen-report", 
+    "posttest": "npm run coverage:merge && npm run coverage:gen-report",
     "coverage:merge": "nyc merge ./coverage/ ./coverage/coverage.json",
     "coverage:gen-report": "nyc report --reporter=lcov --temp-dir=./coverage",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "npm exec ncu -- -e 2; npm -ws --parallel run dep:check",
-    "dep:update": "npm exec ncu -- -e 2 -u; npm -ws --parallel run dep:update"
+    "dep:update": "npm exec ncu -- -e 2 -u; npm -ws --parallel run dep:update",
+    "publish:account-lookup-client": "npm -w @mojaloop/account-lookup-bc-client-lib run npm_publish"
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.16",
