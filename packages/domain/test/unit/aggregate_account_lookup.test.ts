@@ -22,7 +22,7 @@
 
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -77,7 +77,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 );
 
 describe("Domain - Unit Tests Account LookUp", () => {
-    
+
     beforeAll(async () => {
         await aggregate.init();
     });
@@ -98,15 +98,15 @@ describe("Domain - Unit Tests Account LookUp", () => {
             partySubType: "PERSONAL",
             partyType: "DFSP",
         }
-        
+
         // Act
-        const result = await aggregate.getAccountLookUp(accountLookupRequest);
-        
-        // Assert
-        expect(result).toBeNull();
+       const result = aggregate.getAccountLookUp(accountLookupRequest);
+
+       // Assert
+       await expect(result).rejects.toThrowError();
     });
 
-    test("getAccountLookUp - should return null if its unable to get an oracle due to error", async () => {
+    test("getAccountLookUp - should throw error if its unable to get an oracle due to error", async () => {
         // Arrange
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
@@ -118,16 +118,17 @@ describe("Domain - Unit Tests Account LookUp", () => {
         jest.spyOn(oracleFinder, "getOracle").mockImplementationOnce(() => {
             throw new Error("Error");
         });
-        
+
         // Act
-        const result = await aggregate.getAccountLookUp(accountLookupRequest);
-        
+        const result = aggregate.getAccountLookUp(accountLookupRequest);
+
         // Assert
-        expect(result).toBeNull();
+        await expect(result).rejects.toThrowError();
+
     });
 
 
-    test("getAccountLookUp - should return null if couldnt get a fspId", async () => {
+    test("getAccountLookUp - should throw error if couldnt get a fspId", async () => {
         // Arrange
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
@@ -135,11 +136,12 @@ describe("Domain - Unit Tests Account LookUp", () => {
             partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[2],
         };
+
         // Act
-        const result = await aggregate.getAccountLookUp(accountLookupRequest);
-        
+        const result = aggregate.getAccountLookUp(accountLookupRequest);
+
         // Assert
-        expect(result).toBeNull();
+        await expect(result).rejects.toThrowError();
     });
 
     test("getAccountLookUp - should return fspId", async () => {
@@ -152,7 +154,7 @@ describe("Domain - Unit Tests Account LookUp", () => {
         };
         // Act
         const result = await aggregate.getAccountLookUp(accountLookupRequest);
-        
+
         // Assert
         expect(result).toBe(mockedParticipantFspIds[0]);
     });
@@ -167,10 +169,10 @@ describe("Domain - Unit Tests Account LookUp", () => {
         }
 
         const bulkRequest = {"id":accountLookupRequest};
-        
+
         // Act
         const result = await aggregate.getBulkAccountLookup(bulkRequest);
-        
+
         // Assert
         expect(result).toStrictEqual({"id":null});
     });
@@ -185,15 +187,15 @@ describe("Domain - Unit Tests Account LookUp", () => {
         }
 
         const bulkRequest = {"id":accountLookupRequest};
-        
+
 
         jest.spyOn(oracleFinder, "getOracle").mockImplementationOnce(() => {
             throw new Error("Error");
         });
-        
+
         // Act
         const result = await aggregate.getBulkAccountLookup(bulkRequest);
-        
+
         // Assert
         expect(result).toStrictEqual({"id":null});
     });
@@ -222,10 +224,10 @@ describe("Domain - Unit Tests Account LookUp", () => {
         }
 
         const bulkRequest = {"id1":accountLookupRequest1, "id2":accountLookupRequest2, "id3":accountLookupRequest3};
-        
+
         // Act
         const result = await aggregate.getBulkAccountLookup(bulkRequest);
-        
+
         // Assert
         expect(result).toStrictEqual({"id1":mockedParticipantFspIds[0], "id2":mockedParticipantFspIds[0], "id3":mockedParticipantFspIds[1]});
     });

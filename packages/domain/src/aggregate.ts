@@ -473,7 +473,7 @@ export class AccountLookupAggregate  {
 
 		const fspId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
 			this._logger.error(`getAccountLookUp - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, partySubType: ${partySubType}, currency: ${currency} ` + error);
-			return null;
+			throw new UnableToGetParticipantFspIdError();
 		});
 
 		return fspId;
@@ -486,7 +486,7 @@ export class AccountLookupAggregate  {
 		for await (const [key, value] of Object.entries(identifiersList)) {
 				const {partyId, partyType, partySubType, currency} = value;
 
-				let fspId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
+				const fspId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
 					this._logger.error(`getBulkAccountLookup - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, partySubType: ${partySubType}, currency: ${currency} ` + error);
 					return null;
 				});

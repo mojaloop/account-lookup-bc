@@ -127,4 +127,8 @@ devspace*
 !.yarn/versions
 
 .idea/
-.vscode/settings.json
+
+# --------------- #
+# Visual Studio Code #
+# --------------- #
+.vscode/*

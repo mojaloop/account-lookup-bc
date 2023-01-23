@@ -46,7 +46,6 @@ export class AccountLookupHttpClient {
 	// Other properties.
 	private readonly _httpClient: AxiosInstance;
 	private readonly CLIENT_URL = "/account-lookup";
-	private readonly UNKNOWN_ERROR_MESSAGE: string = "Unknown error";
 
 	constructor(
 		logger: ILogger,
