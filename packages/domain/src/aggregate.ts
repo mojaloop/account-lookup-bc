@@ -61,8 +61,8 @@ import {
 } from "./errors";
 import { AddOracleDTO, IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
 import {
-	AccountLookUperrorEvt,
-	AccountLookUperrorEvtPayload,
+	AccountLookUpErrorEvt,
+	AccountLookUpErrorEvtPayload,
 	ParticipantAssociationRemovedEvt,
 	ParticipantAssociationCreatedEvt,
 	ParticipantAssociationCreatedEvtPayload,
@@ -157,7 +157,7 @@ export class AccountLookupAggregate  {
 
 				// TODO: find a way to publish the correct error event type
 
-				const errorPayload: AccountLookUperrorEvtPayload = {
+				const errorPayload: AccountLookUpErrorEvtPayload = {
 					errorMsg: errorMessage,
 					partyId: message.payload?.partyId ?? "N/A",
 					sourceEvent: message.msgName,
@@ -166,7 +166,7 @@ export class AccountLookupAggregate  {
 					requesterFspId: message.payload?.requesterFspId ?? "N/A",
 
 				};
-				const messageToPublish = new AccountLookUperrorEvt(errorPayload);
+				const messageToPublish = new AccountLookUpErrorEvt(errorPayload);
 				messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
 				await this._messageProducer.send(messageToPublish);
 			}

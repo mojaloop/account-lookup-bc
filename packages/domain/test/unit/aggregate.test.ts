@@ -65,7 +65,7 @@ import {
  } from "../../src";
 import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-shared-mocks";
 import { getParticipantFspIdForOracleTypeAndSubType as getParticipantFspIdForOracleTypeAndSubType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-shared-mocks";
-import { AccountLookUperrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import { AccountLookUpErrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { Participant } from "@mojaloop/participant-bc-public-types-lib";
 
 const logger: ILogger = new ConsoleLogger();
@@ -266,7 +266,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = InvalidMessagePayloadError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId:"N/A",
             sourceEvent : "fake msg name",
@@ -314,7 +314,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = InvalidMessageTypeError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId:"1",
             sourceEvent : "fake msg name",
@@ -363,7 +363,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = InvalidMessageTypeError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId:"1",
             sourceEvent : "fake msg name",
@@ -509,7 +509,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = NoSuchParticipantFspIdError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId,
             sourceEvent : event.msgName,
@@ -550,7 +550,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = NoSuchOracleError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId,
             sourceEvent : event.msgName,
@@ -593,7 +593,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
          const errorMsg = NoSuchOracleAdapterError.name;
 
-         const errorPayload: AccountLookUperrorEvtPayload = {
+         const errorPayload: AccountLookUpErrorEvtPayload = {
              errorMsg,
              partyId,
              sourceEvent : event.msgName,
@@ -641,7 +641,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = NoSuchParticipantFspIdError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -681,7 +681,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = NoSuchParticipantError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -722,7 +722,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = RequiredParticipantIsNotActive.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -763,7 +763,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new PartyQueryReceivedEvt(payload);
         const errorMsg = InvalidParticipantIdError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -850,7 +850,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new PartyInfoAvailableEvt(payload);
 
         const errorMsg = NoSuchParticipantError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -895,7 +895,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             const event = new PartyInfoAvailableEvt(payload);
 
             const errorMsg = NoSuchParticipantError.name;
-            const errorPayload: AccountLookUperrorEvtPayload = {
+            const errorPayload: AccountLookUpErrorEvtPayload = {
                 errorMsg,
                 partyId,
                 sourceEvent : event.msgName,
@@ -983,7 +983,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new ParticipantQueryReceivedEvt(payload);
 
         const errorMsg = NoSuchParticipantError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1068,7 +1068,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new ParticipantQueryReceivedEvt(payload);
 
         const errorMsg = NoSuchOracleError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1108,7 +1108,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new ParticipantQueryReceivedEvt(payload);
 
         const errorMsg = NoSuchParticipantFspIdError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1152,7 +1152,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
 
         const errorMsg = NoSuchParticipantError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1193,7 +1193,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = UnableToAssociateParticipantError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1276,7 +1276,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
         const errorMsg = NoSuchParticipantError.name;
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,
@@ -1323,7 +1323,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorMsg = UnableToDisassociateParticipantError.name;
 
-        const errorPayload: AccountLookUperrorEvtPayload = {
+        const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
             sourceEvent : event.msgName,

@@ -42,11 +42,10 @@
  import {
 	Collection,
 	Document,
-	MongoClient,
-	WithId
-	} from 'mongodb';
-import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
-import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from '../errors';
+	MongoClient
+	} from "mongodb";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from "../errors";
 import {IOracleFinder, NoSuchOracleError, Oracle} from "@mojaloop/account-lookup-bc-domain";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
@@ -89,7 +88,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
 	async addOracle(oracle: Oracle): Promise<void> {
-		const oracleAlreadyPresent : WithId<Document> | null = await this.oracleProviders.findOne(
+		const oracleAlreadyPresent : Document | null = await this.oracleProviders.findOne(
 			{
 				partyType: oracle.partyType,
 				partySubType: oracle.partySubType,
@@ -102,14 +101,14 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			this._logger.error(`Unable to add oracle: ${e.message}`);
 			throw new UnableToGetOracleError();
 		});
-		
+
 		if(oracleAlreadyPresent){
 			throw new OracleAlreadyRegisteredError();
 		}
-		
+
 		try {
 			await this.oracleProviders.insertOne(oracle);
-			
+
 		} catch (e: any) {
 			this._logger.error(`Unable to insert oracle: ${e.message}`);
 			throw new UnableToRegisterOracleError();
@@ -128,7 +127,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			throw new NoSuchOracleError();
 		}
 	}
-	
+
 	async getAllOracles(): Promise<Oracle[]> {
 		const oracles = await this.oracleProviders.find().toArray().catch((e: any) => {
 			this._logger.error(`Unable to get all oracles: ${e.message}`);
@@ -136,11 +135,11 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		});
 
 		const mappedOracles: Oracle[] = [];
-		
+
 		oracles.map((oracle: any) => {
-			mappedOracles.push(this.mapToOracle(oracle));	
+			mappedOracles.push(this.mapToOracle(oracle));
 		});
-		
+
 		return mappedOracles;
 	}
 
@@ -151,7 +150,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		});
 		if(!oracle){
 			return null;
-		} 
+		}
 		return this.mapToOracle(oracle);
 	}
 
@@ -163,9 +162,9 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		if(!oracle) return null;
 		return this.mapToOracle(oracle);
 	}
-	
+
     async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
-		const foundOracle: WithId<Document> | null = await this.oracleProviders.findOne(
+		const foundOracle: Document | null = await this.oracleProviders.findOne(
 			{
 				partyType: partyType,
 				partySubType: partySubtype
@@ -178,14 +177,14 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		if(!foundOracle) {
 			throw new NoSuchOracleError();
 		}
-		
+
 		const mappedOracle: Oracle = this.mapToOracle(foundOracle);
-			
+
 		return mappedOracle;
-		
+
     }
 
-	private mapToOracle(oracle: WithId<Document>): Oracle {
+	private mapToOracle(oracle: Document): Oracle {
 		return {
 			id: oracle.id,
 			name: oracle.name,

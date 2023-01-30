@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -49,8 +49,8 @@ const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
-// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://localhost:27017/";
+//const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "oracles";
 
 let oracleFinder : MongoOracleFinderRepo;
@@ -85,7 +85,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
     test("should return an empty array if there are no oracles in the database", async () => {
         // Act
         const oracles = await oracleFinder.getAllOracles();
-        
+
         // Assert
         expect(oracles).toEqual([]);
     });
@@ -93,7 +93,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
     test("should throw error when is unable to init oracle finder", async () => {
         // Arrange
         const badOracleFinder = new MongoOracleFinderRepo(logger, "invalid connection", "invalid_db_name");
-        
+
         // Act
         await expect(badOracleFinder.init()).rejects.toThrowError();
 
@@ -139,7 +139,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
         expect(oracles[1].id).toEqual(remoteOracle.id);
         expect(oracles[1].name).toEqual(remoteOracle.name);
         expect(oracles[1].type==="remote-http").toBeTruthy();
-        
+
     });
 
     test("should return error if oracle is already registered", async () => {
@@ -250,7 +250,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
     });
 
     test("should throw error if there are no oracles with the given party type and party sub type", async () => {
-       
+
         //Act && Assert
         await expect(oracleFinder.getOracle("nonExistingOracleType","nonExistingOracleSubType")).rejects.toThrow(NoSuchOracleError);
 
@@ -270,7 +270,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
         //Act
         await oracleFinder.addOracle(oracle);
         await oracleFinder.removeOracle(oracle.id);
-        
+
         //Assert
         const oracles = await oracleFinder.getAllOracles();
         expect(oracles).toEqual([]);
@@ -292,7 +292,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
         await expect(oracleFinder.removeOracle("nonExistingOracleId")).rejects.toThrow(NoSuchOracleError);
     });
 
-    
+
 });
 
 

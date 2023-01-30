@@ -35,7 +35,7 @@
   "dependencies": {
     "@mojaloop/account-lookup-bc-domain": "*",
     "@mojaloop/logging-bc-public-types-lib" : "^0.1.13",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.14"
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.66"
   },
   "devDependencies": {
     "eslint": "^8.25.0",

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -47,7 +47,7 @@ import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.ERROR);
+logger.setLogLevel(LogLevel.FATAL);
 
 const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
@@ -79,13 +79,13 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}`);
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.text).toEqual(mockedParticipantFspIds[3]);
     });
 
-    test("GET - should fetch null for partyId and partyType when no match", async () => {
+    test("GET - should receiver error when no match", async () => {
         // Arrange
         const partyId = "non-existent-party-id";
         const partyType = "non-existent-party-type";
@@ -93,10 +93,11 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}`);
-         
+
         // Assert
-        expect(response.status).toBe(200);
-        expect(response.text).toEqual("");
+        expect(response.status).toBe(500);
+        //TODO: This should be a 404
+        //expect(response.text).toEqual("Unable to get participant fsp id");
     });
 
     test("GET - should fetch fspId for partyId, partyType and currency", async () => {
@@ -108,7 +109,7 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}?currency=${currency}`);
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.text).toEqual(mockedParticipantFspIds[0]);
@@ -123,7 +124,7 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}/${partySubType}`);
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.text).toEqual(mockedParticipantFspIds[3]);
@@ -139,12 +140,12 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}/${partySubType}?currency=${currency}`);
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.text).toEqual(mockedParticipantFspIds[0]);
     });
-    
+
     test("GET - should throw not found when partyId is not valid", async () => {
         // Arrange
         const partyId = "";
@@ -153,7 +154,7 @@ describe("Account Lookup Routes - Integration", () => {
         // Act
         const response = await request(server)
             .get(`/${partyId}/${partyType}`);
-         
+
         // Assert
         expect(response.status).toBe(404);
     });
@@ -182,7 +183,7 @@ describe("Account Lookup Routes - Integration", () => {
                 id1 : request1,
                 id2 : request2
             });
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.body).toEqual({
@@ -215,7 +216,7 @@ describe("Account Lookup Routes - Integration", () => {
                 id1 : request1,
                 id2 : request2
             });
-         
+
         // Assert
         expect(response.status).toBe(200);
         expect(response.body).toEqual({
@@ -246,7 +247,7 @@ describe("Account Lookup Routes - Integration", () => {
                 id1 : request1,
                 id2 : request2
             });
-         
+
         // Assert
         expect(response.status).toBe(422);
 

@@ -38,12 +38,8 @@ import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-type
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
     AccountLookupAggregate,
-    AddOracleDTO,
-    DuplicateOracleError,
     IOracleFinder,
     IParticipantService,
-    NoSuchOracleError,
-    Oracle,
     ParticipantLookup,
 } from "../../src";
 import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-shared-mocks";

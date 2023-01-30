@@ -31,7 +31,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -45,15 +45,15 @@ import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types
 import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-implementations";
 import { Oracle } from "@mojaloop/account-lookup-bc-domain";
 import { Collection, MongoClient } from "mongodb";
- 
+
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
- 
+
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
-// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://localhost:27017/";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "builtinOracleParties";
- 
+
 let builtInOracleProvider: MongoOracleProviderRepo;
 const oracle: Oracle = {
      id: "1",
@@ -67,20 +67,21 @@ const oracle: Oracle = {
 let mongoClient: MongoClient;
 let collection : Collection;
 const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
- 
+
 describe("Implementations - Builtin Oracle Provider Integration tests", () => {
- 
      beforeAll(async () => {
-         mongoClient = await MongoClient.connect(connectionString);
+         mongoClient = await MongoClient.connect(connectionString).catch((err) => {
+            throw new Error(`Unable to connect to mongo at ${connectionString} with error: ${err.message}`);
+        });
          collection = mongoClient.db(DB_NAME).collection(COLLECTION_NAME);
          builtInOracleProvider = new MongoOracleProviderRepo(oracle,logger,CONNECTION_STRING,DB_NAME);
          await builtInOracleProvider.init();
      });
- 
+
      afterEach(async () => {
          await collection.deleteMany({});
      });
- 
+
      afterAll(async () => {
          await builtInOracleProvider.destroy();
          await mongoClient.close();
@@ -100,7 +101,7 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const nonWorkingBuiltInOracleProvider = new MongoOracleProviderRepo(oracle,logger,CONNECTION_STRING,"fakeName");
         await expect(nonWorkingBuiltInOracleProvider.destroy()).rejects.toThrowError();
     });
- 
+
      test("should get participant fspid", async () => {
         // Arrange
         const fspId = "fsp1";
@@ -109,15 +110,15 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const partySubId = "987654321";
         const currency = "USD";
         await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
-        
+
         // Act
         const result = await builtInOracleProvider.getParticipantFspId(partyType, partyId, partySubId, currency);
 
         // Assert
         expect(result).toEqual(fspId);
-            
+
     });
-    
+
     test("should be able to associate a participant to an oracle", async () => {
             // Arrange
             const fspId = "fsp1";
@@ -128,7 +129,7 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
 
             // Act
            await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
-            
+
             // Assert
             const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
             expect(queryResult).toBeDefined();
@@ -144,11 +145,11 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const partySubId = "987654321";
         const currency = "USD";
         await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
-        
+
         // Act and Assert
         await expect(builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency)).rejects.toThrow(ParticipantAssociationAlreadyExistsError);
-        
-        
+
+
     });
 
     test("should be able to disassociate a participant from an oracle", async () => {
@@ -159,27 +160,27 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const partySubId = "987654321";
         const currency = "USD";
         await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
-        
+
         // Act
         const result = await builtInOracleProvider.disassociateParticipant(fspId,partyType, partyId, partySubId, currency);
-        
+
         // Assert
         expect(result).toBeNull();
         const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
         expect(queryResult).toBeNull();
-    
+
     });
 
 
-    test("should be able to perform health check", async () => {   
+    test("should be able to perform health check", async () => {
         // Act
         const result = await builtInOracleProvider.healthCheck();
-        
+
         // Assert
         expect(result).toEqual(true);
     });
- 
+
  });
- 
- 
- 
+
+
+

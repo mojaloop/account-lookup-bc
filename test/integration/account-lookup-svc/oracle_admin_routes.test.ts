@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -48,7 +48,7 @@ import { start, stop } from "@mojaloop/account-lookup-bc-svc";
 import { randomUUID } from "crypto";
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.ERROR);
+logger.setLogLevel(LogLevel.FATAL);
 
 const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
@@ -77,7 +77,7 @@ describe("Oracle Admin Routes - Integration", () => {
         const response = await request(server)
             .get("/oracles")
             .expect(200);
-            
+
         expect(response.body).toEqual([]);
     });
 
@@ -90,7 +90,7 @@ describe("Oracle Admin Routes - Integration", () => {
                name:"new oracle",
                partyType: "party type"
             })
-            .expect(422);    
+            .expect(422);
     });
 
 
@@ -106,7 +106,7 @@ describe("Oracle Admin Routes - Integration", () => {
             .expect(200);
 
         expect(checkIfValidUUID(response.body.id)).toBe(true);
-   
+
     });
 
     test("GET OracleById - should fetch the added oracle by id", async () => {
@@ -114,9 +114,9 @@ describe("Oracle Admin Routes - Integration", () => {
         const oracles = await request(server)
             .get("/oracles")
             .expect(200);
-        
+
         const oracleId = oracles.body[0].id;
-        
+
         // Act && Assert
         const response = await request(server)
             .get(`/oracles/${oracleId}`)
@@ -129,10 +129,10 @@ describe("Oracle Admin Routes - Integration", () => {
     test("GET Oracle By Id - should return not found if trying to fetch an oracle by id that doesnt exist", async () => {
         // Arrange
         const fakeId = randomUUID();
-        
+
         // Act && Assert
         const response = await request(server)
-            .get(`/oracles/${fakeId}`)   
+            .get(`/oracles/${fakeId}`)
             .expect(404);
     });
 
@@ -157,7 +157,7 @@ describe("Oracle Admin Routes - Integration", () => {
         const response = await request(server)
             .get(`/oracles/health/${oracleId}`)
             .expect(200);
-        
+
         expect(response.body).toEqual(true);
 
     });
@@ -165,10 +165,10 @@ describe("Oracle Admin Routes - Integration", () => {
     test("GET Health Check - should return not found if trying to delete an oracle that doesnt exist", async () => {
         // Arrange
         const fakeId = randomUUID();
-        
+
         // Act && Assert
         const response = await request(server)
-            .delete(`/oracles/${fakeId}`)   
+            .delete(`/oracles/${fakeId}`)
             .expect(404);
     });
 
@@ -181,7 +181,7 @@ describe("Oracle Admin Routes - Integration", () => {
 
         // Act && Assert
         await request(server)
-            .delete(`/oracles/${oracleId}`)   
+            .delete(`/oracles/${oracleId}`)
             .expect(200);
     });
 
@@ -191,7 +191,7 @@ describe("Oracle Admin Routes - Integration", () => {
 function checkIfValidUUID(str:string): boolean {
     // Regular expression to check if string is a valid UUID
     const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
-  
+
     return regexExp.test(str);
 }
 
