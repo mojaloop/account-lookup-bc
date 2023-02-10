@@ -53,6 +53,10 @@ import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {
+	AuthenticatedHttpRequester,
+	IAuthenticatedHttpRequester
+} from "@mojaloop/security-bc-client-lib";
 
 // Global vars
 const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
@@ -187,7 +191,20 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
-  participantService = participantServiceParam ?? new ParticipantAdapter(logger,PARTICIPANT_SVC_BASEURL, fixedToken);
+  const participantLogger = logger.createChild("participantLogger");
+
+  const AUTH_TOKEN_ENPOINT = "http://localhost:3201/token";
+  const USERNAME = "admin";
+  const PASSWORD = "superMegaPass";
+  const CLIENT_ID = "security-bc-ui";
+  const PARTICIPANTS_BASE_URL: string = "http://localhost:3010";
+  const HTTP_CLIENT_TIMEOUT_MS: number = 10_000;
+
+  const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT);
+
+  authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
+  participantLogger.setLogLevel(LogLevel.INFO);
+  participantService = new ParticipantAdapter(participantLogger, PARTICIPANTS_BASE_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
 }
 
 export async function stop(): Promise<void> {

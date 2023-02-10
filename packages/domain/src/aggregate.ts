@@ -159,11 +159,11 @@ export class AccountLookupAggregate  {
 
 				const errorPayload: AccountLookUpErrorEvtPayload = {
 					errorMsg: errorMessage,
-					partyId: message.payload?.partyId ?? "N/A",
+					partyId: message.payload?.partyId,
 					sourceEvent: message.msgName,
-					partyType: message.payload?.partyType ?? "N/A",
-					partySubType: message.payload?.partySubType ?? "N/A",
-					requesterFspId: message.payload?.requesterFspId ?? "N/A",
+					partyType: message.payload?.partyType,
+					partySubType: message.payload?.partySubType,
+					requesterFspId: message.payload?.requesterFspId,
 
 				};
 				const messageToPublish = new AccountLookUpErrorEvt(errorPayload);
@@ -289,6 +289,8 @@ export class AccountLookupAggregate  {
 
 		const event = new ParticipantQueryResponseEvt(payload);
 
+		event.fspiopOpaqueState = msg.fspiopOpaqueState;
+
 		return event;
 	}
 
@@ -338,6 +340,8 @@ export class AccountLookupAggregate  {
 		};
 
 		const event = new ParticipantAssociationRemovedEvt(payload);
+
+		event.fspiopOpaqueState = msg.fspiopOpaqueState;
 
 		return event;
 
