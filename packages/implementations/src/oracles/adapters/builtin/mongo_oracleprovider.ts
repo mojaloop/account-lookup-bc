@@ -80,8 +80,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			this.mongoClient = new MongoClient(this._connectionString);
 			this.mongoClient.connect();
 			this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
-		} catch (e: any) {
-			this._logger.error(`Unable to connect to the database: ${e.message}`);
+		} catch (e: unknown) {
+			this._logger.error(`Unable to connect to the database: ${(e as Error).message}`);
 			throw new UnableToInitOracleProvider();
 		}
 	}
@@ -90,8 +90,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		try{
 			await this.mongoClient.close();
 		}
-		catch(e: any){
-			this._logger.error(`Unable to close database connection: ${e.message}`);
+		catch(e: unknown){
+			this._logger.error(`Unable to close database connection: ${(e as Error).message}`);
 			throw new UnableToCloseDatabaseConnectionError();
 		}
 		
@@ -114,8 +114,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 			return data.fspId as unknown as string;
 
-		} catch (e: any) {
-			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
+		} catch (e: unknown) {
+			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToGetParticipantError();
 		}
 	}
@@ -142,8 +142,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			partyType: partyType,
 			partySubId: partySubId,
 			currency: currency,
-		}).catch((e: any) => {
-			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
+		}).catch((e: unknown) => {
+			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToStoreParticipantAssociationError();
 		}
 		);
@@ -159,8 +159,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			partyType: partyType,
 			partySubId: partySubId,
 			currency: currency,
-		}).catch((e: any) => {
-			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${e.message}`);
+		}).catch((e: unknown) => {
+			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToDeleteParticipantAssociationError();
 		});
 
@@ -169,8 +169,8 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 	
 	async healthCheck(): Promise<boolean> {
-		await this.mongoClient.db().command({ping: 1}).catch((e: any) => {
-			this._logger.debug(`Unable to ping database: ${e.message}`);
+		await this.mongoClient.db().command({ping: 1}).catch((e: unknown) => {
+			this._logger.debug(`Unable to ping database: ${(e as Error).message}`);
 			return false;
 		});
 		return true;

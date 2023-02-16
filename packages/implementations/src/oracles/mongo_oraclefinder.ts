@@ -42,7 +42,8 @@
  import {
 	Collection,
 	Document,
-	MongoClient
+	MongoClient,
+	WithId
 	} from "mongodb";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from "../errors";
@@ -71,8 +72,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			this.mongoClient = new MongoClient(this._connectionString);
 			this.mongoClient.connect();
 			this.oracleProviders = this.mongoClient.db(this._dbName).collection(this._collectionName);
-		} catch (e: any) {
-			this._logger.error(`Unable to connect to the database: ${e.message}`);
+		} catch (e: unknown) {
+			this._logger.error(`Unable to connect to the database: ${(e as Error).message}`);
 			throw new UnableToInitOracleFinderError();
 		}
 	}
@@ -81,8 +82,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		try{
 			await this.mongoClient.close();
 		}
-		catch(e: any){
-			this._logger.error(`Unable to close the database connection: ${e.message}`);
+		catch(e: unknown){
+			this._logger.error(`Unable to close the database connection: ${(e as Error).message}`);
 			throw new UnableToCloseDatabaseConnectionError();
 		}
 	}
@@ -97,8 +98,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 				name: oracle.name,
 				endpoint: oracle.endpoint,
 			},
-		).catch((e: any) => {
-			this._logger.error(`Unable to add oracle: ${e.message}`);
+		).catch((e: unknown) => {
+			this._logger.error(`Unable to add oracle: ${(e as Error).message}`);
 			throw new UnableToGetOracleError();
 		});
 
@@ -109,14 +110,14 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		try {
 			await this.oracleProviders.insertOne(oracle);
 
-		} catch (e: any) {
-			this._logger.error(`Unable to insert oracle: ${e.message}`);
+		} catch (e: unknown) {
+			this._logger.error(`Unable to insert oracle: ${(e as Error).message}`);
 			throw new UnableToRegisterOracleError();
 		}
 	}
 	async removeOracle(id: string): Promise<void> {
-		const deleteResult = await this.oracleProviders.deleteOne({id}).catch((e: any) => {
-			this._logger.error(`Unable to delete oracle: ${e.message}`);
+		const deleteResult = await this.oracleProviders.deleteOne({id}).catch((e: unknown) => {
+			this._logger.error(`Unable to delete oracle: ${(e as Error).message}`);
 			throw new UnableToDeleteOracleError();
 		});
 
@@ -129,14 +130,14 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
 	async getAllOracles(): Promise<Oracle[]> {
-		const oracles = await this.oracleProviders.find().toArray().catch((e: any) => {
-			this._logger.error(`Unable to get all oracles: ${e.message}`);
+		const oracles = await this.oracleProviders.find().toArray().catch((e: unknown) => {
+			this._logger.error(`Unable to get all oracles: ${(e as Error).message}`);
 			throw new UnableToGetOracleError();
 		});
 
 		const mappedOracles: Oracle[] = [];
 
-		oracles.map((oracle: any) => {
+		oracles.map((oracle: WithId<Document>) => {
 			mappedOracles.push(this.mapToOracle(oracle));
 		});
 
@@ -144,8 +145,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
 	async getOracleById(id:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({id: id }).catch((e: any) => {
-			this._logger.error(`Unable to get oracle by id: ${e.message}`);
+		const oracle = await this.oracleProviders.findOne({id: id }).catch((e: unknown) => {
+			this._logger.error(`Unable to get oracle by id: ${(e as Error).message}`);
 			throw new UnableToGetOracleError();
 		});
 		if(!oracle){
@@ -155,8 +156,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 	}
 
 	async getOracleByName(name:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({name: name }).catch((e: any) => {
-			this._logger.error(`Unable to get oracle by name: ${e.message}`);
+		const oracle = await this.oracleProviders.findOne({name: name }).catch((e: unknown) => {
+			this._logger.error(`Unable to get oracle by name: ${(e as Error).message}`);
 			throw new UnableToGetOracleError();
 		});
 		if(!oracle) return null;
@@ -169,8 +170,8 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 				partyType: partyType,
 				partySubType: partySubtype
 			}
-		).catch((e: any) => {
-			this._logger.error(`Unable to get oracle: ${e.message}`);
+		).catch((e: unknown) => {
+			this._logger.error(`Unable to get oracle: ${(e as Error).message}`);
 			throw new UnableToGetOracleError();
 		});
 

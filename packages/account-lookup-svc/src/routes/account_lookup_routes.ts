@@ -64,7 +64,7 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
 
     }
 
-    private async getAccountLookUp(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getAccountLookUp(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -85,17 +85,17 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             };
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
             res.send(result);
-        } catch (err: any) {
+        } catch (err: unknown) {
 
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }
 
-    private async getBulkAccountLookUp(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getBulkAccountLookUp(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -106,12 +106,12 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         try {
             const result = await this.accountLookupAggregate.getBulkAccountLookup(identifiersList);
             res.send(result);
-        } catch (err: any) {
+        } catch (err: unknown) {
 
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }

@@ -59,7 +59,6 @@ import {
 } from "@mojaloop/security-bc-client-lib";
 
 // Global vars
-const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false; // eslint-disable-line
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
 const APP_VERSION = "0.0.1";
@@ -98,8 +97,6 @@ let oracleProviderFactory: IOracleProviderFactory;
 let aggregate: AccountLookupAggregate;
 
 // Participant service
-const PARTICIPANT_SVC_BASEURL = process.env["PARTICIPANT_SVC_BASEURL"] || "http://127.0.0.1:3010";
-const fixedToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6InVVbFFjbkpJUk93dDIxYXFJRGpRdnVnZERvUlYzMzEzcTJtVllEQndDbWMifQ.eyJ0eXAiOiJCZWFyZXIiLCJhenAiOiJwYXJ0aWNpcGFudHMtc3ZjIiwicm9sZXMiOlsiNTI0YTQ1Y2QtNGIwOS00NmVjLThlNGEtMzMxYTVkOTcyNmVhIl0sImlhdCI6MTY2Njc3MTgyOSwiZXhwIjoxNjY3Mzc2NjI5LCJhdWQiOiJtb2phbG9vcC52bmV4dC5kZWZhdWx0X2F1ZGllbmNlIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDozMjAxLyIsInN1YiI6ImFwcDo6cGFydGljaXBhbnRzLXN2YyIsImp0aSI6IjMzNDUyODFiLThlYzktNDcyOC1hZGVkLTdlNGJmMzkyMGZjMSJ9.s2US9fEAE3SDdAtxxttkPIyxmNcACexW3Z-8T61w96iji9muF_Zdj2koKvf9tICd25rhtCkolI03hBky3mFNe4c7U1sV4YUtCNNRgReMZ69rS9xdfquO_gIaABIQFsu1WTc7xLkAccPhTHorartdQe7jvGp-tOSkqA-azj0yGjwUccFhX3Bgg3rWasmJDbbblIMih4SJuWE7MGHQxMzhX6c9l1TI-NpFRRFDTYTg1H6gXhBvtHMXnC9PPbc9x_RxAPBqmMcleIJZiMZ8Cn805OL9Wt_sMFfGPdAQm0l4cdjdesgfQahsrtCOAcp5l7NKmehY0pbLmjvP6zlrDM_D3A";
 let participantService: IParticipantService;
 
 // Express Server
@@ -197,14 +194,14 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
   const USERNAME = "admin";
   const PASSWORD = "superMegaPass";
   const CLIENT_ID = "security-bc-ui";
-  const PARTICIPANTS_BASE_URL: string = "http://localhost:3010";
-  const HTTP_CLIENT_TIMEOUT_MS: number = 10_000;
+  const PARTICIPANTS_BASE_URL = "http://localhost:3010";
+  const HTTP_CLIENT_TIMEOUT_MS = 10_000;
 
   const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT);
 
   authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
   participantLogger.setLogLevel(LogLevel.INFO);
-  participantService = new ParticipantAdapter(participantLogger, PARTICIPANTS_BASE_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
+  participantService = participantServiceParam ?? new ParticipantAdapter(participantLogger, PARTICIPANTS_BASE_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
 }
 
 export async function stop(): Promise<void> {
@@ -225,7 +222,7 @@ export async function stop(): Promise<void> {
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
   console.info(`Service - ${signal} received - cleaning up...`);
   let clean_exit = false;
-  setTimeout(args => { clean_exit || process.abort();}, 5000);
+  setTimeout(() => { clean_exit || process.abort();}, 5000);
 
   // call graceful stop routine
   await stop();

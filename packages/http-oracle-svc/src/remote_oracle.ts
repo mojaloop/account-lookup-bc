@@ -78,7 +78,7 @@ export class RemoteOracle {
 
         let fsWait:NodeJS.Timeout | undefined; // debounce wait
         
-        this._fileWatcher = watch(this._filePath, async (eventType, filename) => {
+        this._fileWatcher = watch(this._filePath, async (eventType) => {
             if (eventType === "change") {
                 if (fsWait) return;
                 fsWait = setTimeout(() => {
@@ -96,7 +96,7 @@ export class RemoteOracle {
 
     private async _loadFromFile(): Promise<void>{
         this._associations.clear();
-        let fileData: any;
+        let fileData: {[key:string]: string};
         try{
             const strContents = await readFile(this._filePath, "utf8");
             if(!strContents || !strContents.length){

@@ -85,7 +85,7 @@ export class RemoteOracleExpressRoutes {
         return this.mainRouter;
     }
 
-    private validateRequest(req: express.Request, res: express.Response<any, Record<string, any>>): boolean {
+    private validateRequest(req: express.Request, res: express.Response): boolean {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             res.status(422).json({errors: errors.array()});
@@ -104,7 +104,7 @@ export class RemoteOracleExpressRoutes {
     }
 
 
-    private async getParticipantFspId(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getParticipantFspId(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -122,17 +122,17 @@ export class RemoteOracleExpressRoutes {
                     fspId: fetched
                 });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             this._logger.error(`Error Fetching FSP ID with params [${params}]. -${err}`);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }
 
 
-    private async disassociateParticipant(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async disassociateParticipant(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -144,16 +144,16 @@ export class RemoteOracleExpressRoutes {
             await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
             this._logger.debug(`Disassociated Participant with params [${params}].`);
             res.sendStatus(200);
-        } catch (err: any) {
+        } catch (err: unknown) {
             this._logger.error(`Error disassociating Participant with params [${params}]. -${err}`);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }
 
-    private async associateParticipant(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async associateParticipant(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -165,26 +165,26 @@ export class RemoteOracleExpressRoutes {
             await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
             this._logger.debug(`Associated Participant with params [${params}].`);
             res.sendStatus(200);
-        } catch (err: any) {
+        } catch (err: unknown) {
             this._logger.error(`Error associating Participant with params [${params}]. -${err}`);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }
 
-    private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async healthCheck(_req: express.Request, res: express.Response, _next: express.NextFunction) {
         try {
             this._logger.debug(`Health Check.`);
             const fetched = await this._oracle.healthCheck();
             this._logger.debug(`Health Check Result [${fetched}].`);
             res.send(fetched);
-        } catch (err: any) {
+        } catch (err: unknown) {
             this._logger.error(`Error Health Check. -${err}`);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }

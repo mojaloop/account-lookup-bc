@@ -31,7 +31,7 @@
 
 "use strict";
 
-import axios, {AxiosInstance, AxiosResponse, AxiosError} from "axios";
+import axios, {AxiosInstance, AxiosResponse} from "axios";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { ParticipantLookup } from "@mojaloop/account-lookup-bc-domain";
 import {

@@ -151,8 +151,8 @@ export class AccountLookupAggregate  {
 					await this.handleEvent(message);
 				}
 			}
-			catch(error: any) {
-				const errorMessage = error.constructor.name;
+			catch(error: unknown) {
+				const errorMessage = (error as Error).constructor.name;
 				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
 
 				// TODO: find a way to publish the correct error event type

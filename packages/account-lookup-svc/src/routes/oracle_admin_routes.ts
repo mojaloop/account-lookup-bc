@@ -74,7 +74,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
      }
      
 
-    private async getAllOracles(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getAllOracles(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }             
@@ -83,16 +83,16 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
          try {
              const fetched = await this.accountLookupAggregate.getAllOracles();
              res.send(fetched);
-         } catch (err: any) {
+         } catch (err: unknown) {
              this.logger.error(err);
              res.status(500).json({
                  status: "error",
-                 msg: err.message
+                 msg: (err as Error).message
              });
          }
     }
 
-    private async getOracleById (req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async getOracleById (req: express.Request, res: express.Response, _next: express.NextFunction) {
          if (!this.validateRequest(req, res)) {
              return;
          }
@@ -110,16 +110,16 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
                  return;
              }
              res.send(fetched);
-         } catch (err: any) {
+         } catch (err: unknown) {
              this.logger.error(err);
              res.status(500).json({
                  status: "error",
-                 msg: err.message
+                 msg: (err as Error).message
              });
          }
     }
 
-    private async deleteOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async deleteOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }         
@@ -129,11 +129,11 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
          try {
              const fetched = await this.accountLookupAggregate.removeOracle(id);
              res.send(fetched);
-         } catch (err: any) {
+         } catch (err: unknown) {
              if(err instanceof NoSuchOracleError){
                  res.status(404).json({
                      status: "error",
-                     msg: err.message
+                     msg: (err as Error).message
                  });
                  return;
              }
@@ -141,13 +141,13 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
              this.logger.error(err);
              res.status(500).json({
                  status: "error",
-                 msg: err.message
+                 msg: (err as Error).message
              });
          }
     }
 
 
-    private async createOracle(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async createOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -160,16 +160,16 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             res.send({
                 id: createdId
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     }
 
-    private async healthCheck(req: express.Request, res: express.Response, next: express.NextFunction) {
+    private async healthCheck(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -178,11 +178,11 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
         try {
             const fetched = await this.accountLookupAggregate.healthCheck(id);
             res.send(fetched);
-        } catch (err: any) {
+        } catch (err: unknown) {
             if(err instanceof NoSuchOracleError){
                 res.status(404).json({
                     status: "error",
-                    msg: err.message
+                    msg: (err as Error).message
                 });
                 return;
             }
@@ -190,7 +190,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
-                msg: err.message
+                msg: (err as Error).message
             });
         }
     } 
