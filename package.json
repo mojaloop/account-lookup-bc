@@ -36,13 +36,6 @@
     "dep:update": "npm exec ncu -- -e 2 -u; npm -ws run dep:update",
     "publish:account-lookup-client": "npm -w @mojaloop/account-lookup-bc-client-lib run npm_publish"
   },
-  "dependencies": {
-    "@mojaloop/logging-bc-client-lib": "^0.1.16",
-    "@mojaloop/logging-bc-public-types-lib": "^0.1.13",
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.28",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.67",
-    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.67"
-  },
   "devDependencies": {
     "@types/jest": "^29.1.2",
     "@types/supertest": "^2.0.12",

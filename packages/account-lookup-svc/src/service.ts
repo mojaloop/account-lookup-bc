@@ -38,7 +38,7 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
 //TODO re-enable configs
 //import appConfigs from "./config";
@@ -48,15 +48,15 @@ import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations";
-import express, {Express} from "express";
-import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
-import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
-import { Server } from "net";
 import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {
 	AuthenticatedHttpRequester,
 	IAuthenticatedHttpRequester
 } from "@mojaloop/security-bc-client-lib";
+import express, {Express} from "express";
+import { Server } from "net";
+import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
+import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";
@@ -110,9 +110,12 @@ let oracleAdminRoutes: OracleAdminExpressRoutes;
 // AccountLookupClient routes
 let accountLookupClientRoutes: AccountLookupExpressRoutes;
 
+// Auth Requester
+let authRequester: IAuthenticatedHttpRequester;
+
 
 export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
-  oracleProviderFactoryParam?:IOracleProviderFactory,  participantServiceParam?:IParticipantService,
+  oracleProviderFactoryParam?:IOracleProviderFactory,  authRequesterParam?: IAuthenticatedHttpRequester, participantServiceParam?:IParticipantService,
   aggregateParam?:AccountLookupAggregate,
   )
   :Promise<void> {
@@ -120,7 +123,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 
   try{
 
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, participantServiceParam);
+    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, authRequesterParam, participantServiceParam);
 
     messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
     await messageConsumer.connect();
@@ -171,7 +174,7 @@ export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessage
 }
 
 async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
-  oracleProviderFactoryParam?: IOracleProviderFactory, participantServiceParam?: IParticipantService):Promise<void>  {
+  oracleProviderFactoryParam?: IOracleProviderFactory, authRequesterParam?: IAuthenticatedHttpRequester, participantServiceParam?: IParticipantService):Promise<void>  {
 
   logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
 
@@ -188,20 +191,29 @@ async function initExternalDependencies(loggerParam?:ILogger, messageConsumerPar
 
   messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
 
-  const participantLogger = logger.createChild("participantLogger");
+  if(!authRequesterParam){
+    const AUTH_TOKEN_ENPOINT = "http://localhost:3201/token";
+    const USERNAME = "admin";
+    const PASSWORD = "superMegaPass";
+    const CLIENT_ID = "security-bc-ui";
+    authRequester = new AuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT);
+    authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
+  }
+  else {
+    authRequester = authRequesterParam;
+  }
 
-  const AUTH_TOKEN_ENPOINT = "http://localhost:3201/token";
-  const USERNAME = "admin";
-  const PASSWORD = "superMegaPass";
-  const CLIENT_ID = "security-bc-ui";
-  const PARTICIPANTS_BASE_URL = "http://localhost:3010";
-  const HTTP_CLIENT_TIMEOUT_MS = 10_000;
+  if(!participantServiceParam){
+    const participantLogger = logger.createChild("participantLogger");
+    participantLogger.setLogLevel(LogLevel.INFO);
+    const PARTICIPANTS_BASE_URL = "http://localhost:3010";
+    const HTTP_CLIENT_TIMEOUT_MS = 10_000;
+    participantService = new ParticipantAdapter(participantLogger, PARTICIPANTS_BASE_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
 
-  const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT);
-
-  authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
-  participantLogger.setLogLevel(LogLevel.INFO);
-  participantService = participantServiceParam ?? new ParticipantAdapter(participantLogger, PARTICIPANTS_BASE_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
+  }
+  else {
+    participantService = participantServiceParam;
+  }
 }
 
 export async function stop(): Promise<void> {
@@ -211,7 +223,9 @@ export async function stop(): Promise<void> {
   await messageConsumer.destroy(true);
   logger.debug("Tearing down message producer");
   await messageProducer.destroy();
-  logger.debug("Tearing down oracle admin server");
+  logger.debug("Tearing down oracle finder");
+  await oracleFinder.destroy();
+  logger.debug("Tearing down express server");
   expressServer.close();
 }
 

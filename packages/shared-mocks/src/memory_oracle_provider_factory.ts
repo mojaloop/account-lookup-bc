@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -48,12 +48,11 @@ import {
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 
-
  export class MemoryOracleProviderFactory implements IOracleProviderFactory {
 	id: string;
 	partyType: string;
 	private readonly _logger: ILogger;
-	
+
 	constructor(
 		logger: ILogger,
 	) {
@@ -63,9 +62,9 @@ import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 	create(oracle: Oracle): IOracleProviderAdapter {
 		if(oracle.type=="builtin" || oracle.type=="remote-http"){
 			return new MemoryOracleProviderAdapter(this._logger, oracle);
-		} 
+		}
 
 		throw new Error("Oracle type not supported");
-		
+
 	}
 }

@@ -34,14 +34,16 @@
     "test:unit": "jest --runInBand --forceExit --detectOpenHandles --verbose || ECHO."
   },
   "dependencies": {
-    "@mojaloop/account-lookup-bc-domain": "*",
+    "@mojaloop/logging-bc-public-types-lib": "^0.1.13",
     "@mojaloop/participant-bc-public-types-lib": "~0.0.3",
     "@mojaloop/participants-bc-client-lib": "~0.1.2",
     "@mojaloop/security-bc-client-lib": "^0.1.11",
+    "@mojaloop/account-lookup-bc-domain":"*",
     "axios": "^1.1.2",
     "mongodb": "^4.10.0"
   },
   "devDependencies": {
+    "@mojaloop/account-lookup-shared-mocks": "*",
     "eslint": "^8.25.0",
     "jest": "^29.1.2",
     "npm-check-updates": "^16.3.11",

@@ -42,7 +42,7 @@
 
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
 	DuplicateOracleError,
 	InvalidMessagePayloadError,
@@ -79,7 +79,6 @@ import {
 	PartyQueryResponseEvtPayload,
 	ParticipantQueryResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { randomUUID } from "crypto";
 import { ParticipantLookup } from "./types";
 

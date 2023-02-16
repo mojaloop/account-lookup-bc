@@ -26,7 +26,7 @@
  --------------
  ******/
 
- "use strict";
+"use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
@@ -34,7 +34,7 @@ import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
 export class MemoryAuthenticatedHttpRequesterMock implements IAuthenticatedHttpRequester {
     private readonly logger: ILogger;
     private readonly authTokenUrl: string;
-    
+
     private client_id: string | null = null;
     private client_secret: string | null = null;
 	private username: string | null = null;
@@ -66,7 +66,7 @@ export class MemoryAuthenticatedHttpRequesterMock implements IAuthenticatedHttpR
 			const mockResponse = <Response>{
                 body: {}
             };
-    
+
             return Promise.resolve(mockResponse);
 		});
     }

@@ -36,8 +36,8 @@
     "test:unit": "jest --passWithNoTests --runInBand --testMatch **/test/unit/*.test.ts || ECHO."
   },
   "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.1.12",
-    "@mojaloop/logging-bc-client-lib": "0.1.15",
+    "@mojaloop/logging-bc-public-types-lib": "^0.1.13",
+    "@mojaloop/logging-bc-client-lib": "^0.1.16",
     "express": "^4.18.2",
     "express-validator": "^6.14.2"
   },

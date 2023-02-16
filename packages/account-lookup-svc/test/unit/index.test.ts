@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -39,9 +39,10 @@
 **/
 
 import { AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService } from "@mojaloop/account-lookup-shared-mocks";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import { start, stop } from "../../src/service";
 const express = require("express");
 
@@ -58,6 +59,8 @@ const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
 
+const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
+
 const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     logger,
     mockedOracleFinder,
@@ -66,7 +69,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     mockedParticipantService
 );
 
-// Express mock 
+// Express mock
 const useSpy = jest.fn();
 const closeSpy = jest.fn();
 const listenSpy = jest.fn().mockReturnValue({ close: closeSpy });
@@ -91,10 +94,6 @@ express.urlencoded = jest.fn();
 express.Router = jest.fn().mockImplementation(() => { return routerSpy });
 
 describe("Account Lookup Service", () => {
-    
-    afterEach(async () => {
-        jest.restoreAllMocks()
-    });
 
     afterAll(async () => {
         jest.clearAllMocks();
@@ -108,22 +107,22 @@ describe("Account Lookup Service", () => {
         const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
         const spyProducerInit = jest.spyOn(mockedProducer, "connect");
         const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
-     
+
         // Act
-        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
+        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester,
             mockedParticipantService, mockedAggregate);
 
         // Assert
-        expect(spyConsumerSetTopics).toBeCalledTimes(1); 
+        expect(spyConsumerSetTopics).toBeCalledTimes(1);
         expect(spyConsumerConnect).toBeCalledTimes(1);
         expect(spyConsumerStart).toBeCalledTimes(1);
-        expect(spyConsumerCallback).toBeCalledTimes(1); 
+        expect(spyConsumerCallback).toBeCalledTimes(1);
         expect(spyProducerInit).toBeCalledTimes(1);
         expect(spyAggregateInit).toBeCalledTimes(1);
         expect(useSpy).toBeCalledWith("/admin", routerSpy);
         expect(useSpy).toBeCalledWith("/account-lookup", routerSpy);
         expect(listenSpy).toBeCalledTimes(1);
-    
+
     });
 
     test("should teardown instances when server stopped", async()=>{
@@ -131,12 +130,12 @@ describe("Account Lookup Service", () => {
         const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
         const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
         const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
-        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, 
-            mockedOracleProviderFactory, mockedParticipantService, mockedAggregate);
-        
+        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder,
+            mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService, mockedAggregate);
+
         // Act
         await stop();
-        
+
         // Assert
         expect(spyMockedConsumer).toBeCalledTimes(1);
         expect(spyMockedProducer).toBeCalledTimes(1);
@@ -144,5 +143,5 @@ describe("Account Lookup Service", () => {
         expect(closeSpy).toBeCalledTimes(1);
     });
 
-    
+
 });

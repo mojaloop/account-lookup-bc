@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -38,8 +38,7 @@
  --------------
  **/
 
- "use strict";
-
+"use strict";
 
 import { InvalidPartyIdError, InvalidPartyTypeError } from "../errors";
 import { IParty } from "../types";

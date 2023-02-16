@@ -41,11 +41,12 @@
 
 import request from "supertest";
 import { IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService } from "@mojaloop/account-lookup-shared-mocks";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";
 import { randomUUID } from "crypto";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -60,12 +61,14 @@ const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger, false);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
 
+const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
+
 const server = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 
 describe("Oracle Admin Routes - Integration", () => {
 
     beforeAll(async () => {
-        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
+        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService);
     });
 
     afterAll(async () => {

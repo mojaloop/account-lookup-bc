@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -38,42 +38,42 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
- import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
- 
- export class MemoryMessageConsumer implements IMessageConsumer{
-     
-    
+import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+
+export class MemoryMessageConsumer implements IMessageConsumer{
+
+
     setCallbackFn(_handlerCallback: (message: IMessage) => Promise<void>): void {
          return;
     }
-     
+
     setFilteringFn(_filterFn: (message: IMessage) => boolean): void{
          return;
     }
-     
+
     setTopics(_topics: string[]): void {
          return;
     }
-      
+
      async destroy(_force: boolean) : Promise<void>{
          return;
     }
-     
+
     async connect() : Promise<void> {
          return;
     }
-     
+
     async disconnect(_force: boolean) : Promise<void> {
          return;
     }
-     
+
     async start() : Promise<void> {
         return;
     }
-     
+
     async stop (): Promise<void> {
         return;
-    } 
+    }
 }

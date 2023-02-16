@@ -35,11 +35,12 @@
     "test:debug": "SET DEBUG=nock.* && jest --runInBand --forceExit --detectOpenHandles --verbose --inspect-brk || ECHO.",
     "npm_publish": "npm version patch && npm publish --tag=latest --access public"
   },
-  "devDependencies": {
-    "@mojaloop/logging-bc-client-lib": "~0.1.12",
-    "nock": "^13.2.9"
-  },
   "dependencies": {
+    "@mojaloop/logging-bc-client-lib": "^0.1.16",
+    "@mojaloop/account-lookup-bc-domain":"*",
     "axios": "^1.1.2"
+  },
+  "devDependencies": {
+    "nock": "^13.2.9"
   }
 }
