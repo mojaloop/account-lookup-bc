@@ -33,7 +33,7 @@
  "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { ParticipantsHttpClient} from "@mojaloop/participants-bc-client-lib";
+import { ParticipantsHttpClient } from "@mojaloop/participants-bc-client-lib";
 import { Participant } from "@mojaloop/participant-bc-public-types-lib";
 import { IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 import { ILocalCache, LocalCache } from "../local_cache";
@@ -43,8 +43,8 @@ export class ParticipantAdapter implements IParticipantService {
 	private readonly _logger: ILogger;
 	private readonly _localCache: ILocalCache;
 	private readonly _clientBaseUrl: string;
-	private readonly _externalParticipantClient :ParticipantsHttpClient;
-	private readonly _authRequester :IAuthenticatedHttpRequester;
+	private readonly _externalParticipantClient: ParticipantsHttpClient;
+	private readonly _authRequester: IAuthenticatedHttpRequester;
 	private readonly _timeoutMs :number;
 	private validateStatus = (status: number): boolean => status === 200;
 

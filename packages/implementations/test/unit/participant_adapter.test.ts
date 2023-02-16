@@ -32,18 +32,20 @@ import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-type
 import { ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations";
 import { Participant} from "@mojaloop/participant-bc-public-types-lib";
-import { AuthenticatedHttpRequester, IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
-const AUTH_TOKEN_ENPOINT = "http://localhost:3201/token";
-const USERNAME = "admin";
-const PASSWORD = "superMegaPass";
-const CLIENT_ID = "security-bc-ui";
+const AUTH_TOKEN_ENPOINT = "http://localhost:3101/authTokenEndpoint";
 const HTTP_CLIENT_TIMEOUT_MS = 10_000;
 
 
 const getParticipantByIdSpy = jest.fn();
 const getParticipantsByIdsSpy = jest.fn();
+
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
+let authenticatedHttpRequesterMock : IAuthenticatedHttpRequester;
 
 jest.mock("@mojaloop/participants-bc-client-lib", () => {
         return {
@@ -61,16 +63,12 @@ let localCache: ILocalCache;
 
 describe("Implementations - Participant Adapter Unit Tests", () => {
     beforeAll(async () => {
-        const logger: ILogger = new ConsoleLogger();
-        logger.setLogLevel(LogLevel.FATAL);
-        const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT);
-        authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
-
+        authenticatedHttpRequesterMock = new MemoryAuthenticatedHttpRequesterMock(logger, AUTH_TOKEN_ENPOINT)
         localCache = new LocalCache(logger);         
         participantAdapter = new ParticipantAdapter(
            logger,
            BASE_URL_PARTICIPANT_CLIENT,
-           authRequester,
+           authenticatedHttpRequesterMock,
            HTTP_CLIENT_TIMEOUT_MS,
            localCache
         );
