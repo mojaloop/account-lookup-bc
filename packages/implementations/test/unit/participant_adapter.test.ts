@@ -71,7 +71,8 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
            logger,
            BASE_URL_PARTICIPANT_CLIENT,
            authRequester,
-           HTTP_CLIENT_TIMEOUT_MS
+           HTTP_CLIENT_TIMEOUT_MS,
+           localCache
         );
      });
 
@@ -214,17 +215,17 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         expect(participantsInfo).toEqual([participant1, participant2]);
     });
 
-    // test("should retrieve participant from cache", async () => {
-    //      // Arrange
-    //     const participantId: string = "existingParticipantId";
-    //     jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
+    test("should retrieve participant from cache", async () => {
+         // Arrange
+        const participantId: string = "existingParticipantId";
+        jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});
 
-    //      // Act
-    //     const participantInfo = await participantAdapter.getParticipantInfo(participantId);
+         // Act
+        const participantInfo = await participantAdapter.getParticipantInfo(participantId);
 
-    //      // Assert
-    //      expect(participantInfo?.id).toEqual(1);
-    //      expect(participantInfo?.name).toEqual("cache");
-    // });
+         // Assert
+         expect(participantInfo?.id).toEqual(1);
+         expect(participantInfo?.name).toEqual("cache");
+    });
 
 });

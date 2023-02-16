@@ -383,41 +383,45 @@ describe("Domain - Unit Tests for event handler and entities", () => {
     });
 
 
-    // test("should publish opaque state when publishing error event", async () => {
-    //     // Arrange
-    //     const payload:PartyQueryReceivedEvtPayload = {
-    //         partyId: "1",
-    //         partyType: "type",
-    //         requesterFspId: "2" ,
-    //         destinationFspId: null,
-    //         currency: null,
-    //         partySubType: null,
-    //     }
+    test("should publish opaque state when publishing error event", async () => {
+        // Arrange
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId: "1",
+            partyType: "type",
+            requesterFspId: "2" ,
+            destinationFspId: null,
+            currency: null,
+            partySubType: null,
+        }
 
-    //     const message: IMessage = {
-    //         fspiopOpaqueState: "fake opaque state",
-    //         msgId: "fake msg id",
-    //         msgKey: "fake msg key",
-    //         msgTopic: "fake msg topic",
-    //         msgName: "invalid name",
-    //         msgOffset: 0,
-    //         msgPartition: 0,
-    //         msgTimestamp: 0,
-    //         msgType: MessageTypes.DOMAIN_EVENT,
-    //         payload: payload,
-    //     };
+        const message: IMessage = {
+            fspiopOpaqueState: { 
+                fake: "fake opaque state"
+            },
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: "invalid name",
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: MessageTypes.DOMAIN_EVENT,
+            payload: payload,
+        };
 
-    //     jest.spyOn(messageProducer, "send");
+        jest.spyOn(messageProducer, "send");
 
-    //     // Act
-    //     await aggregate.handleAccountLookUpEvent(message);
+        // Act
+        await aggregate.handleAccountLookUpEvent(message);
 
-    //     // Assert
-    //     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-    //         "fspiopOpaqueState": "fake opaque state",
-    //     }));
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "fspiopOpaqueState": { 
+                fake: "fake opaque state"
+            },
+        }));
 
-    // });
+    });
 
 
     test("should publish opaque state when publishing successful event", async () => {
