@@ -41,7 +41,7 @@
 "use strict";
 
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { LocalCache } from "./../../src/local_cache";
+import { LocalCache } from "../../src/local_cache";
 
 let localCache: LocalCache;
 

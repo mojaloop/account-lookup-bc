@@ -145,29 +145,27 @@ export class AccountLookupAggregate  {
 
 	//#region Event handlers
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
-		try{
+		try {
 				const isMessageValid = this.validateMessage(message);
 				if(isMessageValid) {
 					await this.handleEvent(message);
 				}
-			}
-			catch(error: unknown) {
+		} catch(error: unknown) {
 				const errorMessage = (error as Error).constructor.name;
-				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
+				// this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
 
 				// TODO: find a way to publish the correct error event type
-
 				const errorPayload: AccountLookUpErrorEvtPayload = {
 					errorMsg: errorMessage,
-					partyId: message.payload?.partyId,
+					partyId: message.payload?.partyId || null,
 					sourceEvent: message.msgName,
-					partyType: message.payload?.partyType,
-					partySubType: message.payload?.partySubType,
-					requesterFspId: message.payload?.requesterFspId,
+					partyType: message.payload?.partyType || null,
+					partySubType: message.payload?.partySubType || null,
+					requesterFspId: message.payload?.requesterFspId || null,
 
 				};
 				const messageToPublish = new AccountLookUpErrorEvt(errorPayload);
-				messageToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
+				messageToPublish.fspiopOpaqueState = { ...message.fspiopOpaqueState };
 				await this._messageProducer.send(messageToPublish);
 			}
 	}

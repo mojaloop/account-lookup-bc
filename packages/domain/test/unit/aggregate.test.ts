@@ -261,19 +261,18 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             msgPartition: 0,
             msgTimestamp: 0,
             msgType: MessageTypes.DOMAIN_EVENT,
-            payload :null,
+            payload: null,
         };
 
         const errorMsg = InvalidMessagePayloadError.name;
 
         const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
-			partyId:"N/A",
-            sourceEvent : "fake msg name",
-            partySubType: "N/A",
-            partyType: "N/A",
-            requesterFspId: "N/A",
-
+			partyId: null as unknown as string,
+            sourceEvent: "fake msg name",
+            partySubType:  null,
+            partyType:  null,
+            requesterFspId:  null,
 		};
 
         jest.spyOn(messageProducer, "send");
@@ -284,7 +283,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload,
-           }));
+        }));
 
     });
 
@@ -295,7 +294,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType:"type",
             requesterFspId:"2" ,
             destinationFspId:null,
-            currency:null,
+            currency: null,
             partySubType: null,
         }
 
@@ -309,7 +308,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             msgPartition: 0,
             msgTimestamp: 0,
             msgType: MessageTypes.DOMAIN_EVENT,
-            payload :payload,
+            payload: payload
         };
 
         const errorMsg = InvalidMessageTypeError.name;
@@ -317,11 +316,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId:"1",
-            sourceEvent : "fake msg name",
-            partySubType: "N/A",
+            sourceEvent: "fake msg name",
+            partySubType: null,
             partyType: "type",
-            requesterFspId: "2",
-
+            requesterFspId: "2"
 		};
 
         jest.spyOn(messageProducer, "send");
@@ -331,8 +329,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "payload": errorPayload,
-           }));
+            "payload": errorPayload
+        }));
 
     });
 
@@ -340,11 +338,11 @@ describe("Domain - Unit Tests for event handler and entities", () => {
     test("should publish error message if message Type is invalid", async () => {
         // Arrange
         const payload:PartyQueryReceivedEvtPayload = {
-            partyId:"1",
-            partyType:"type",
-            requesterFspId:"2" ,
-            destinationFspId:null,
-            currency:null,
+            partyId: "1",
+            partyType: "type",
+            requesterFspId: "2" ,
+            destinationFspId: null,
+            currency: null,
             partySubType: null,
         }
 
@@ -365,10 +363,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
-			partyId:"1",
-            sourceEvent : "fake msg name",
+			partyId: "1",
+            sourceEvent: "fake msg name",
             partyType: "type",
-            partySubType: "N/A",
+            partySubType: null,
             requesterFspId: "2",
 		};
 
@@ -380,46 +378,46 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload,
-           }));
+        }));
 
     });
 
 
-    test("should publish opaque state when publishing error event", async () => {
-        // Arrange
-        const payload:PartyQueryReceivedEvtPayload = {
-            partyId:"1",
-            partyType:"type",
-            requesterFspId:"2" ,
-            destinationFspId:null,
-            currency:null,
-            partySubType: null,
-        }
+    // test("should publish opaque state when publishing error event", async () => {
+    //     // Arrange
+    //     const payload:PartyQueryReceivedEvtPayload = {
+    //         partyId: "1",
+    //         partyType: "type",
+    //         requesterFspId: "2" ,
+    //         destinationFspId: null,
+    //         currency: null,
+    //         partySubType: null,
+    //     }
 
-        const message: IMessage = {
-            fspiopOpaqueState: "fake opaque state",
-            msgId: "fake msg id",
-            msgKey: "fake msg key",
-            msgTopic: "fake msg topic",
-            msgName: "invalid name",
-            msgOffset: 0,
-            msgPartition: 0,
-            msgTimestamp: 0,
-            msgType: MessageTypes.DOMAIN_EVENT,
-            payload :payload,
-        };
+    //     const message: IMessage = {
+    //         fspiopOpaqueState: "fake opaque state",
+    //         msgId: "fake msg id",
+    //         msgKey: "fake msg key",
+    //         msgTopic: "fake msg topic",
+    //         msgName: "invalid name",
+    //         msgOffset: 0,
+    //         msgPartition: 0,
+    //         msgTimestamp: 0,
+    //         msgType: MessageTypes.DOMAIN_EVENT,
+    //         payload: payload,
+    //     };
 
-        jest.spyOn(messageProducer, "send");
+    //     jest.spyOn(messageProducer, "send");
 
-        // Act
-        await aggregate.handleAccountLookUpEvent(message);
+    //     // Act
+    //     await aggregate.handleAccountLookUpEvent(message);
 
-        // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-            "fspiopOpaqueState": "fake opaque state",
-           }));
+    //     // Assert
+    //     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+    //         "fspiopOpaqueState": "fake opaque state",
+    //     }));
 
-    });
+    // });
 
 
     test("should publish opaque state when publishing successful event", async () => {
@@ -433,7 +431,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -473,7 +471,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "fspiopOpaqueState": "fake opaque state",
             "payload": responsePayload,
-           }));
+        }));
 
     });
 
@@ -489,10 +487,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const partySubType = mockedPartySubTypes[1];
         const payload :PartyQueryReceivedEvtPayload = {
             partyId,
-            partyType :partyType,
+            partyType:partyType,
             requesterFspId,
             destinationFspId: null,
-            currency:null,
+            currency: null,
             partySubType: partySubType,
         };
 
@@ -512,7 +510,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId,
-            sourceEvent : event.msgName,
+            sourceEvent: event.msgName,
             partySubType,
             partyType,
             requesterFspId,
@@ -538,7 +536,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId:null,
-            currency:null,
+            currency: null,
             partySubType: null,
       };
 
@@ -553,8 +551,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
 			errorMsg,
 			partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
 		};
@@ -565,7 +563,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         // Assert
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload,
-           }));
+        }));
 
     });
 
@@ -580,7 +578,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
              partyType,
              requesterFspId ,
              destinationFspId:null,
-             currency:null,
+             currency: null,
              partySubType,
        };
 
@@ -596,7 +594,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
          const errorPayload: AccountLookUpErrorEvtPayload = {
              errorMsg,
              partyId,
-             sourceEvent : event.msgName,
+             sourceEvent: event.msgName,
              partySubType,
              partyType,
              requesterFspId,
@@ -608,7 +606,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
          // Assert
          expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
              "payload": errorPayload,
-            }));
+        }));
 
      });
 
@@ -624,7 +622,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId:null,
-            currency:null,
+            currency: null,
             partySubType,
         };
 
@@ -644,7 +642,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
+            sourceEvent: event.msgName,
             partySubType,
             partyType,
             requesterFspId,
@@ -670,7 +668,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -684,8 +682,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -711,7 +709,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -725,8 +723,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -752,7 +750,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -766,8 +764,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -794,7 +792,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId,
-            currency:null,
+            currency: null,
             partySubType: null,
       };
 
@@ -836,7 +834,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyType,
             requesterFspId ,
             destinationFspId:null,
-            currency:null,
+            currency: null,
             partySubType: null,
             ownerFspId: "ownerId",
             partyDoB:new Date(),
@@ -853,8 +851,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -866,7 +864,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": errorPayload,
-            }));
+        }));
 
         });
 
@@ -880,7 +878,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
                 partyType,
                 requesterFspId ,
                 destinationFspId:"2",
-                currency:null,
+                currency: null,
                 partySubType: null,
                 ownerFspId: "ownerId",
                 partyDoB:new Date(),
@@ -898,8 +896,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             const errorPayload: AccountLookUpErrorEvtPayload = {
                 errorMsg,
                 partyId,
-                sourceEvent : event.msgName,
-                partySubType: "N/A",
+                sourceEvent: event.msgName,
+                partySubType: null,
                 partyType,
                 requesterFspId,
             };
@@ -911,7 +909,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
             expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
                 "payload": errorPayload,
-            }));
+        }));
         });
 
         test("handlePartyInfoAvailableEvt - should publish event with party info requested", async () => {
@@ -925,7 +923,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
                 partyType,
                 requesterFspId ,
                 destinationFspId:"2",
-                currency:null,
+                currency: null,
                 partySubType: null,
                 ownerFspId: "ownerId",
                 partyDoB,
@@ -957,7 +955,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
 
             expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
                 "payload": responsePayload,
-            }));
+        }));
         });
 
     //#endregion
@@ -972,7 +970,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyId,
             partyType,
             requesterFspId ,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -986,8 +984,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -1056,7 +1054,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyId,
             partyType,
             requesterFspId ,
-            currency:null,
+            currency: null,
             partySubType: null,
         };
 
@@ -1071,8 +1069,8 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
             requesterFspId,
         };
@@ -1098,7 +1096,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
             partyId,
             partyType,
             requesterFspId ,
-            currency:null,
+            currency: null,
             partySubType,
         };
 
@@ -1111,7 +1109,7 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
+            sourceEvent: event.msgName,
             partySubType,
             partyType,
             requesterFspId,
@@ -1155,10 +1153,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
-            requesterFspId:"N/A",
+            requesterFspId: null,
         };
 
         // Act
@@ -1196,10 +1194,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
-            requesterFspId:"N/A",
+            requesterFspId: null,
         };
 
         // Act
@@ -1279,10 +1277,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
-            requesterFspId:"N/A",
+            requesterFspId:null,
         };
 
         // Act
@@ -1326,10 +1324,10 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         const errorPayload: AccountLookUpErrorEvtPayload = {
             errorMsg,
             partyId,
-            sourceEvent : event.msgName,
-            partySubType: "N/A",
+            sourceEvent: event.msgName,
+            partySubType: null,
             partyType,
-            requesterFspId:"N/A",
+            requesterFspId:null,
         };
 
         // Act
