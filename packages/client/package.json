@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/account-lookup-bc-client-lib",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "Account Lookup BC - Clients",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/modules/client",
@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.16",
-    "@mojaloop/account-lookup-bc-domain":"*",
+    "@mojaloop/account-lookup-bc-domain": "*",
     "axios": "^1.1.2"
   },
   "devDependencies": {
