@@ -42,8 +42,6 @@
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
 
-/* infrastructure interfaces */
-
 export type OracleType = "builtin" | "remote-http";
 
 export type Oracle = {
