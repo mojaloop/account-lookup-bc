@@ -34,8 +34,8 @@
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.16",
-    "@mojaloop/security-bc-client-lib": "^0.1.11",
-    "@mojaloop/participant-bc-public-types-lib": "~0.0.3",
+    "@mojaloop/security-bc-client-lib": "^0.1.12",
+    "@mojaloop/participant-bc-public-types-lib": "~0.0.7",
     "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.67",
     "@mojaloop/account-lookup-bc-domain": "*"
   },
