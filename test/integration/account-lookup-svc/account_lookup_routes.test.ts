@@ -1,3 +1,4 @@
+import {IAuthenticatedHttpRequester} from '@mojaloop/security-bc-client-lib';
 /**
  License
  --------------
@@ -41,7 +42,7 @@
 
 import request from "supertest";
 import { IOracleFinder, IOracleProviderFactory, IParticipantService, ParticipantLookup} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes } from "@mojaloop/account-lookup-shared-mocks";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";
@@ -59,12 +60,14 @@ const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
 
+const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
+
 const server = (process.env["ACCOUNT_LOOKUP_URL"] || "http://localhost:3030") + "/account-lookup";
 
 describe("Account Lookup Routes - Integration", () => {
 
     beforeAll(async () => {
-        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
+        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,mockedAuthRequester, mockedParticipantService);
     });
 
     afterAll(async () => {

@@ -31,7 +31,7 @@
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations";
-import { Participant} from "@mojaloop/participant-bc-public-types-lib";
+import { IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
 
@@ -61,10 +61,10 @@ jest.mock("@mojaloop/participants-bc-client-lib", () => {
 let participantAdapter: ParticipantAdapter;
 let localCache: ILocalCache;
 
-describe("Implementations - Participant Adapter Unit Tests", () => {
+describe("Implementations - IParticipant Adapter Unit Tests", () => {
     beforeAll(async () => {
         authenticatedHttpRequesterMock = new MemoryAuthenticatedHttpRequesterMock(logger, AUTH_TOKEN_ENPOINT)
-        localCache = new LocalCache(logger);         
+        localCache = new LocalCache(logger);
         participantAdapter = new ParticipantAdapter(
            logger,
            BASE_URL_PARTICIPANT_CLIENT,
@@ -83,8 +83,8 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         jest.clearAllMocks();
     });
 
-     // Get participant.
-    test("should receive null if participant doesnt exist", async () => {
+     // Get IParticipant.
+    test("should receive null if IParticipant doesnt exist", async () => {
         // Arrange
         const participantId: string = "nonExistingParticipantId";
         getParticipantByIdSpy.mockResolvedValueOnce(null);
@@ -96,10 +96,10 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         expect(participantInfo).toBeNull();
     });
 
-    test("should get participant info", async () => {
+    test("should get IParticipant info", async () => {
         // Arrange
         const participantId: string = "existingParticipantId";
-        const participant: Partial<Participant> = {
+        const IParticipant: Partial<IParticipant> = {
             id: participantId,
             name: "existingParticipantName",
             isActive: true,
@@ -111,17 +111,17 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
             approvedDate: 1232131,
             description: "existingParticipantDescription"
         }
-        getParticipantByIdSpy.mockResolvedValueOnce(participant);
+        getParticipantByIdSpy.mockResolvedValueOnce(IParticipant);
 
          // Act
          const participantInfo =
              await participantAdapter.getParticipantInfo(participantId);
 
          // Assert
-         expect(participantInfo).toEqual(participant);
+         expect(participantInfo).toEqual(IParticipant);
     });
 
-    test("should throw null if getting an error while getting participant info", async () => {
+    test("should throw null if getting an error while getting IParticipant info", async () => {
         // Arrange
         const participantId: string = "nonExistingParticipantId";
         getParticipantByIdSpy.mockRejectedValueOnce(null);
@@ -137,7 +137,7 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         // Arrange
         const participantId1: string = "existingParticipantId1";
         const participantId2: string = "existingParticipantId2";
-        const participant1: Partial<Participant> = {
+        const participant1: Partial<IParticipant> = {
             id: participantId1,
             name: "existingParticipantName1",
             isActive: true,
@@ -149,7 +149,7 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
             approvedDate: 1232131,
             description: "existingParticipantDescription1"
         }
-        const participant2: Partial<Participant> = {
+        const participant2: Partial<IParticipant> = {
             id: participantId2,
             name: "existingParticipantName2",
             isActive: true,
@@ -176,7 +176,7 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         // Arrange
         const participantId1: string = "existingParticipantId1";
         const participantId2: string = "existingParticipantId2";
-        const participant1: Partial<Participant> = {
+        const participant1: Partial<IParticipant> = {
             id: participantId1,
             name: "existingParticipantName1",
             isActive: true,
@@ -188,7 +188,7 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
             approvedDate: 1232131,
             description: "existingParticipantDescription1"
         }
-        const participant2: Partial<Participant> = {
+        const participant2: Partial<IParticipant> = {
             id: participantId2,
             name: "existingParticipantName2",
             isActive: true,
@@ -213,7 +213,7 @@ describe("Implementations - Participant Adapter Unit Tests", () => {
         expect(participantsInfo).toEqual([participant1, participant2]);
     });
 
-    test("should retrieve participant from cache", async () => {
+    test("should retrieve IParticipant from cache", async () => {
          // Arrange
         const participantId: string = "existingParticipantId";
         jest.spyOn(localCache, "get").mockReturnValue({"id":1, "name":"cache"});

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -40,8 +40,8 @@
 
 "use strict";
 
-import { Participant } from "@mojaloop/participant-bc-public-types-lib";
- 
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
+
 /* infrastructure interfaces */
 
 export type OracleType = "builtin" | "remote-http";
@@ -80,7 +80,7 @@ export interface IOracleProviderAdapter{
     type:  OracleType;
     init(): Promise<void>;
     destroy(): Promise<void>;
-    healthCheck(): Promise<boolean>;	
+    healthCheck(): Promise<boolean>;
     getParticipantFspId(partyType:string, partyId: string, partySubType:string|null, currency:string| null ):Promise<string|null>;
     associateParticipant(fspId:string, partyType:string, partyId: string,partySubType:string|null, currency:string| null):Promise<null>;
     disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubType:string|null, currency:string| null):Promise<null>;
@@ -91,8 +91,8 @@ export interface IOracleProviderFactory {
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string): Promise<Participant| null>;
-    getParticipantsInfo(fspIds: string[]): Promise<Participant[]|null>;
+    getParticipantInfo(fspId: string): Promise<IParticipant| null>;
+    getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]|null>;
 }
 
 
