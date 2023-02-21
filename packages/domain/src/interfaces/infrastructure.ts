@@ -40,7 +40,7 @@
 
 "use strict";
 
-import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
  
 /* infrastructure interfaces */
 
@@ -91,8 +91,8 @@ export interface IOracleProviderFactory {
 }
 
 export interface IParticipantService {
-    getParticipantInfo(fspId: string): Promise<Participant| null>;
-    getParticipantsInfo(fspIds: string[]): Promise<Participant[]|null>;
+    getParticipantInfo(fspId: string): Promise<IParticipant| null>;
+    getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]|null>;
 }
 
 

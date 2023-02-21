@@ -40,7 +40,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { Participant } from "@mojaloop/participant-bc-public-types-lib";
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
 import { IParticipantService } from "@mojaloop/account-lookup-bc-domain";
 
 export class MemoryParticipantService implements IParticipantService {
@@ -52,11 +52,11 @@ export class MemoryParticipantService implements IParticipantService {
 		this.logger = logger;
 	}
 
-	async getParticipantInfo(_fspId: string): Promise<Participant|null> {
+	async getParticipantInfo(_fspId: string): Promise<IParticipant|null> {
 		return Promise.resolve(null);
 	}
 
-	async getParticipantsInfo(_fspIds: string[]): Promise<Participant[]> {
+	async getParticipantsInfo(_fspIds: string[]): Promise<IParticipant[]> {
 		return Promise.resolve([]);
 	}
 	
