@@ -30,23 +30,41 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
-
+ 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
  **/
-
+ 
 "use strict";
 
-import { Service } from "./service";
-export * from "./service";
+import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { OracleTypeNotSupportedError } from "../errors";
+import { MongoOracleProviderRepo } from "./adapters/builtin/mongo_oracleprovider";
+import { HttpOracleProvider } from "./adapters/remote/http_oracleprovider";
 
-const argv = process.argv;
+export class OracleAdapterFactory implements IOracleProviderFactory {
+    private readonly _logger: ILogger;
+    private readonly _builtinOracleMongoUrl: string;
+    private readonly _dbName:string;
 
-if(!argv.includes("jest")) {
-    Service.start().then(() => {
-        console.log("Started account lookup service");
-    });
+    constructor(builtinOracleMongoUrl: string, dbName:string, logger: ILogger) {
+        this._logger = logger.createChild(this.constructor.name);
+        this._builtinOracleMongoUrl = builtinOracleMongoUrl;
+        this._dbName = dbName;
+    }
+
+    create(oracle: Oracle): IOracleProviderAdapter {
+        switch (oracle.type) {
+            case "builtin":
+                return new MongoOracleProviderRepo(oracle, this._logger, this._builtinOracleMongoUrl, this._dbName);
+            case "remote-http":
+                return new HttpOracleProvider(oracle, this._logger);
+            default:
+                throw new OracleTypeNotSupportedError();
+        }
+    }
 }

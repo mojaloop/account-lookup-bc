@@ -41,8 +41,8 @@ import {IAuthenticatedHttpRequester} from '@mojaloop/security-bc-client-lib';
 "use strict";
 
 import request from "supertest";
-import { IOracleFinder, IOracleProviderFactory, IParticipantService, ParticipantLookup} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
+import { IOracleFinder, IOracleProviderFactory, IParticipantService, ParticipantLookup} from "@mojaloop/account-lookup-bc-domain-lib";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { start, stop } from "@mojaloop/account-lookup-bc-svc";

@@ -38,12 +38,12 @@
  --------------
 **/
 
-import { AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-shared-mocks";
+import { AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain-lib";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
-import { start, stop } from "../../src/service";
+import { Service } from "../../src/service";
 const express = require("express");
 
 const logger: ILogger = new ConsoleLogger();
@@ -106,11 +106,11 @@ describe("Account Lookup Service", () => {
         const spyConsumerStart = jest.spyOn(mockedConsumer, "connect");
         const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
         const spyProducerInit = jest.spyOn(mockedProducer, "connect");
-        const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
+        // const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
 
         // Act
-        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester,
-            mockedParticipantService, mockedAggregate);
+        await Service.start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester,
+            mockedParticipantService);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1);
@@ -118,7 +118,7 @@ describe("Account Lookup Service", () => {
         expect(spyConsumerStart).toBeCalledTimes(1);
         expect(spyConsumerCallback).toBeCalledTimes(1);
         expect(spyProducerInit).toBeCalledTimes(1);
-        expect(spyAggregateInit).toBeCalledTimes(1);
+        // expect(spyAggregateInit).toBeCalledTimes(1);
         expect(useSpy).toBeCalledWith("/admin", routerSpy);
         expect(useSpy).toBeCalledWith("/account-lookup", routerSpy);
         expect(listenSpy).toBeCalledTimes(1);
@@ -130,16 +130,16 @@ describe("Account Lookup Service", () => {
         const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
         const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
         const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
-        await start(logger,mockedConsumer, mockedProducer, mockedOracleFinder,
+        await Service.start(logger,mockedConsumer, mockedProducer, mockedOracleFinder,
             mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService, mockedAggregate);
 
         // Act
-        await stop();
+        await Service.stop();
 
         // Assert
         expect(spyMockedConsumer).toBeCalledTimes(1);
         expect(spyMockedProducer).toBeCalledTimes(1);
-        expect(spyMockedAggregate).toBeCalledTimes(1);
+        //expect(spyMockedAggregate).toBeCalledTimes(1);
         expect(closeSpy).toBeCalledTimes(1);
     });
 

@@ -41,8 +41,8 @@
 "use strict";
 
 import { ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "@mojaloop/account-lookup-bc-implementations";
-import { NoSuchOracleError, Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "@mojaloop/account-lookup-bc-implementations-lib";
+import { NoSuchOracleError, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 import { MongoClient, Collection } from "mongodb";
 
 const logger: ILogger = new ConsoleLogger();

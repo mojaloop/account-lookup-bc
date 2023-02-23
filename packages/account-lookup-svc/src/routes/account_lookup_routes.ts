@@ -33,7 +33,7 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup } from "@mojaloop/account-lookup-bc-domain";
+import { AccountLookupAggregate, ParticipantLookup } from "@mojaloop/account-lookup-bc-domain-lib";
 import { body, check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 

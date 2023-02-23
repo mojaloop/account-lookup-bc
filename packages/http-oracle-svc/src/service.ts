@@ -50,10 +50,11 @@ import {DefaultLogger} from "@mojaloop/logging-bc-client-lib";
 // Oracle routes
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "http-oracle-svc";
-const APP_VERSION = "0.0.1";
+const APP_VERSION = process.env.npm_package_version || "0.0.0";
 
 const REMOTE_ORACLE_PORT = process.env["REMOTE_ORACLE_PORT"] || 3031;
-const FILE_PATH = process.env["ORACLE_FILE"] || "./dist/db.json";
+const ORACLE_DB_FILE_PATH = process.env["ORACLE_DB_FILE_PATH"] || "/app/data/db.json";
+
 let logger: ILogger;
 let expressApp: Express;
 let remoteOracleServer: Server;
@@ -62,7 +63,7 @@ let remoteOracle: RemoteOracle;
 export async function start(){
     try{
         logger = new DefaultLogger(BC_NAME, APP_NAME, APP_VERSION);
-        remoteOracle = new RemoteOracle(FILE_PATH, logger);
+        remoteOracle = new RemoteOracle(ORACLE_DB_FILE_PATH, logger);
         await remoteOracle.init();
 
         // Start oracle http routes
@@ -80,8 +81,8 @@ export async function start(){
         });
 
         remoteOracleServer = expressApp.listen(REMOTE_ORACLE_PORT, () => {
-            logger.info(`🚀 Server ready at: http://localhost:${REMOTE_ORACLE_PORT}`);
-            logger.info("Remote Oracle Server started");
+            logger.info(`🚀 Server ready at port: ${REMOTE_ORACLE_PORT}`);
+            logger.info(`Remote Oracle Service v: ${APP_VERSION} started`);
         });
 
     }

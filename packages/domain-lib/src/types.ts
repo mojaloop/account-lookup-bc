@@ -30,23 +30,37 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
-
+ 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 "use strict";
 
-import { Service } from "./service";
-export * from "./service";
+export enum CurrencyType {
+	DOLLAR = "dollar",
+	EURO = "euro",
+}
 
-const argv = process.argv;
+export interface IParty {
+    id: string;
+    type: string;
+    currency: string | null;
+    subId: string | null;
+}
 
-if(!argv.includes("jest")) {
-    Service.start().then(() => {
-        console.log("Started account lookup service");
-    });
+export interface IPartyAccount {
+	fspId: string;
+	currency: string[];
+	extensionList: string[];
+}
+
+export type ParticipantLookup = {
+	partyId: string;
+	partyType: string;
+	partySubType: string | null;
+	currency: string | null;
 }

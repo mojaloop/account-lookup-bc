@@ -1,4 +1,4 @@
-import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain";
+import { AccountLookupAggregate } from "@mojaloop/account-lookup-bc-domain-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import express from "express";
 import { validationResult } from "express-validator";

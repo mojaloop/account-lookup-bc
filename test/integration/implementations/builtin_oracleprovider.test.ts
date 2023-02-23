@@ -42,8 +42,8 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-implementations";
-import { Oracle } from "@mojaloop/account-lookup-bc-domain";
+import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "@mojaloop/account-lookup-bc-implementations-lib";
+import { Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 import { Collection, MongoClient } from "mongodb";
 
 const logger: ILogger = new ConsoleLogger();

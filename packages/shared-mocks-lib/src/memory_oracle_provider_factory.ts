@@ -36,17 +36,35 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 "use strict";
 
-import { Service } from "./service";
-export * from "./service";
 
-const argv = process.argv;
+import {
+	IOracleProviderAdapter,
+	IOracleProviderFactory, Oracle,
+} from "@mojaloop/account-lookup-bc-domain-lib";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { MemoryOracleProviderAdapter } from "./memory_oracle_provider_adapter";
 
-if(!argv.includes("jest")) {
-    Service.start().then(() => {
-        console.log("Started account lookup service");
-    });
+ export class MemoryOracleProviderFactory implements IOracleProviderFactory {
+	id: string;
+	partyType: string;
+	private readonly _logger: ILogger;
+
+	constructor(
+		logger: ILogger,
+	) {
+		this._logger = logger;
+	}
+
+	create(oracle: Oracle): IOracleProviderAdapter {
+		if(oracle.type=="builtin" || oracle.type=="remote-http"){
+			return new MemoryOracleProviderAdapter(this._logger, oracle);
+		}
+
+		throw new Error("Oracle type not supported");
+
+	}
 }

@@ -42,75 +42,61 @@
 
 //TODO re-enable configs
 //import appConfigs from "./config";
-import {AccountLookupAggregate, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain";
+import {
+	AccountLookupAggregate,
+	IOracleFinder,
+	IOracleProviderFactory,
+	IParticipantService
+} from "@mojaloop/account-lookup-bc-domain-lib";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { MLKafkaJsonConsumer, MLKafkaJsonProducer, MLKafkaJsonConsumerOptions, MLKafkaJsonProducerOptions } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
-import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { MongoOracleFinderRepo, OracleAdapterFactory, ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations";
-import { AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {
+	MLKafkaJsonConsumer,
+	MLKafkaJsonProducer,
+	MLKafkaJsonConsumerOptions,
+	MLKafkaJsonProducerOptions
+} from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
+import {KafkaLogger} from "@mojaloop/logging-bc-client-lib";
+import {
+	MongoOracleFinderRepo,
+	OracleAdapterFactory,
+	ParticipantAdapter
+} from "@mojaloop/account-lookup-bc-implementations-lib";
+import {AccountLookupBCTopics, BOUNDED_CONTEXT_NAME} from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {
 	AuthenticatedHttpRequester,
 	IAuthenticatedHttpRequester
 } from "@mojaloop/security-bc-client-lib";
 import express, {Express} from "express";
-import { Server } from "net";
-import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
-import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
+import {Server} from "net";
+import process from "process";
+import {OracleAdminExpressRoutes} from "./routes/oracle_admin_routes";
+import {AccountLookupExpressRoutes} from "./routes/account_lookup_routes";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
-const APP_VERSION = "0.0.1";
+const APP_VERSION = process.env.npm_package_version || "0.0.0";
 
 // Logger
-let logger: ILogger;
-const DEFAULT_LOGLEVEL = LogLevel.DEBUG;
+// service constants
+const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
+const LOG_LEVEL: LogLevel = process.env["LOG_LEVEL"] as LogLevel || LogLevel.DEBUG;
 
 // Message Consumer/Publisher
-const KAFKA_LOGS_TOPIC = process.env["ACCOUNT_LOOKUP_KAFKA_LOG_TOPIC"] || "logs";
-const KAFKA_URL = process.env["ACCOUNT_LOOKUP_KAFKA_URL"] || "localhost:9092";
-
-
-let messageConsumer: IMessageConsumer;
-const consumerOptions: MLKafkaJsonConsumerOptions = {
-  kafkaBrokerList: KAFKA_URL,
-  kafkaGroupId: `${BC_NAME}_${APP_NAME}`
-};
-
-let messageProducer: IMessageProducer;
-const producerOptions : MLKafkaJsonProducerOptions = {
-  kafkaBrokerList: KAFKA_URL,
-  producerClientId: `${BC_NAME}_${APP_NAME}`,
-  skipAcknowledgements: true,
-
-};
+const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+//const KAFKA_AUDITS_TOPIC = process.env["KAFKA_AUDITS_TOPIC"] || "audits";
+const KAFKA_LOGS_TOPIC = process.env["KAFKA_LOGS_TOPIC"] || "logs";
 
 //Oracles
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
-const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
+const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:example@localhost:27017/";
 
-let oracleFinder: IOracleFinder;
-let oracleProviderFactory: IOracleProviderFactory;
-
-// Aggregate
-let aggregate: AccountLookupAggregate;
-
-// Participant service
-let participantService: IParticipantService;
 const PARTICIPANTS_SVC_URL = process.env["PARTICIPANTS_SVC_URL"] || "http://localhost:3010";
 const HTTP_CLIENT_TIMEOUT_MS = 10_000;
 
 // Express Server
 const SVC_DEFAULT_HTTP_PORT = process.env["SVC_DEFAULT_HTTP_PORT"] || 3030;
-let expressApp: Express;
-let expressServer: Server;
-
-// Admin routes
-let oracleAdminRoutes: OracleAdminExpressRoutes;
-
-// AccountLookupClient routes
-let accountLookupClientRoutes: AccountLookupExpressRoutes;
 
 // Auth Requester
 let authRequester: IAuthenticatedHttpRequester;
@@ -119,114 +105,166 @@ const SVC_CLIENT_SECRET = process.env["SVC_CLIENT_ID"] || "superServiceSecret";
 
 const AUTH_N_SVC_BASEURL = process.env["AUTH_N_SVC_BASEURL"] || "http://localhost:3201";
 const AUTH_N_SVC_TOKEN_URL = AUTH_N_SVC_BASEURL + "/token"; // TODO this should not be known here, libs that use the base should add the suffix
+const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
+const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
 
+const consumerOptions: MLKafkaJsonConsumerOptions = {
+	kafkaBrokerList: KAFKA_URL,
+	kafkaGroupId: `${BC_NAME}_${APP_NAME}`
+};
 
-export async function start(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
-  oracleProviderFactoryParam?:IOracleProviderFactory,  authRequesterParam?: IAuthenticatedHttpRequester, participantServiceParam?:IParticipantService,
-  aggregateParam?:AccountLookupAggregate,
-  )
-  :Promise<void> {
-  console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
+const producerOptions: MLKafkaJsonProducerOptions = {
+	kafkaBrokerList: KAFKA_URL,
+	producerClientId: `${BC_NAME}_${APP_NAME}`,
+};
 
-  try{
-
-    await initExternalDependencies(loggerParam, messageConsumerParam, messageProducerParam, oracleFinderParam, oracleProviderFactoryParam, authRequesterParam, participantServiceParam);
-
-    messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
-    await messageConsumer.connect();
-    await messageConsumer.start();
-    logger.info("Kafka Consumer Initialized");
-
-    await messageProducer.connect();
-
-    logger.info("Kafka Producer Initialized");
-    aggregate = aggregateParam ?? new AccountLookupAggregate(logger, oracleFinder, oracleProviderFactory, messageProducer, participantService);
-
-    await aggregate.init();
-    logger.info("Aggregate Initialized");
-
-
-    const callbackFunction = async (message:IMessage):Promise<void> => {
-      logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-      await aggregate.handleAccountLookUpEvent(message);
-    };
-
-    messageConsumer.setCallbackFn(callbackFunction);
-
-    // Start express server
-    expressApp = express();
-    expressApp.use(express.json()); // for parsing application/json
-    expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
-
-    // Add admin and client http routes
-    oracleAdminRoutes = new OracleAdminExpressRoutes(aggregate, logger);
-    accountLookupClientRoutes = new AccountLookupExpressRoutes(aggregate, logger);
-    expressApp.use("/admin", oracleAdminRoutes.mainRouter);
-    expressApp.use("/account-lookup", accountLookupClientRoutes.mainRouter);
-
-    expressApp.use((req, res) => {
-      // catch all
-      res.send(404);
-    });
-
-    expressServer = expressApp.listen(SVC_DEFAULT_HTTP_PORT, () => {
-      logger.info(`🚀 Server ready at: http://localhost:${SVC_DEFAULT_HTTP_PORT}`);
-      logger.info("Oracle Admin and Account Lookup server started");
-    });
-  }
-  catch(err){
-    logger.error(err);
-    await stop();
-  }
+// kafka logger
+const kafkaProducerOptions = {
+	kafkaBrokerList: KAFKA_URL
 }
 
-async function initExternalDependencies(loggerParam?:ILogger, messageConsumerParam?:IMessageConsumer, messageProducerParam?:IMessageProducer, oracleFinderParam?:IOracleFinder,
-  oracleProviderFactoryParam?: IOracleProviderFactory, authRequesterParam?: IAuthenticatedHttpRequester, participantServiceParam?: IParticipantService):Promise<void>  {
+let globalLogger: ILogger;
 
-  logger = loggerParam ?? new KafkaLogger(BC_NAME, APP_NAME, APP_VERSION,{kafkaBrokerList: KAFKA_URL}, KAFKA_LOGS_TOPIC,DEFAULT_LOGLEVEL);
+export class Service {
+	static logger: ILogger;
+	static app: Express;
+	static messageConsumer: IMessageConsumer
+	static messageProducer: IMessageProducer
+	static oracleFinder: IOracleFinder
+	static oracleProviderFactory: IOracleProviderFactory
+	static authRequester: IAuthenticatedHttpRequester
+	static participantsServiceAdapter: IParticipantService
+	static aggregate: AccountLookupAggregate
+	static expressServer: Server;
 
-  if (!loggerParam) {
-    await (logger as KafkaLogger).init();
-    logger.info("Kafka Logger Initialized");
-  }
 
-  oracleFinder = oracleFinderParam ?? new MongoOracleFinderRepo(logger,MONGO_URL, DB_NAME);
+	static async start(
+		logger?: ILogger,
+		messageConsumer?: IMessageConsumer,
+		messageProducer?: IMessageProducer,
+		oracleFinder?: IOracleFinder,
+		oracleProviderFactory?: IOracleProviderFactory,
+		authRequester?: IAuthenticatedHttpRequester,
+		participantsServiceAdapter?: IParticipantService,
+		aggregateParam?: AccountLookupAggregate
+	): Promise<void> {
+		console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
-  oracleProviderFactory = oracleProviderFactoryParam ?? new OracleAdapterFactory(MONGO_URL, DB_NAME, logger);
+		if (!logger) {
+			logger = new KafkaLogger(
+				BOUNDED_CONTEXT_NAME,
+				APP_NAME,
+				APP_VERSION,
+				kafkaProducerOptions,
+				KAFKA_LOGS_TOPIC,
+				LOG_LEVEL
+			);
+			await (logger as KafkaLogger).init();
+		}
+		globalLogger = this.logger = logger.createChild("Service");
 
-  messageProducer = messageProducerParam ?? new MLKafkaJsonProducer(producerOptions, logger);
+		if (!oracleFinder) {
+			oracleFinder = new MongoOracleFinderRepo(logger, MONGO_URL, DB_NAME);
+		}
+		this.oracleFinder = oracleFinder;
 
-  messageConsumer = messageConsumerParam ?? new MLKafkaJsonConsumer(consumerOptions, logger);
+		if (!oracleProviderFactory) {
+			oracleProviderFactory = new OracleAdapterFactory(MONGO_URL, DB_NAME, logger);
+		}
+		this.oracleProviderFactory = oracleProviderFactory;
 
-  if(!authRequesterParam){
-    authRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
-    authRequester.setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
-  }
-  else {
-    authRequester = authRequesterParam;
-  }
+		if (!messageProducer) {
+			messageProducer = new MLKafkaJsonProducer(producerOptions, logger);
+		}
+		this.messageProducer = messageProducer;
 
-  if(!participantServiceParam){
-    const participantLogger = logger.createChild("participantLogger");
-    participantLogger.setLogLevel(LogLevel.INFO);
-    participantService = new ParticipantAdapter(participantLogger, PARTICIPANTS_SVC_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
-  }
-  else {
-    participantService = participantServiceParam;
-  }
-}
+		if (!messageConsumer) {
+			messageConsumer = new MLKafkaJsonConsumer(consumerOptions, logger);
+		}
+		this.messageConsumer = messageConsumer;
 
-export async function stop(): Promise<void> {
-  logger.debug("Tearing down aggregate");
-  await aggregate.destroy();
-  logger.debug("Tearing down message consumer");
-  await messageConsumer.destroy(true);
-  logger.debug("Tearing down message producer");
-  await messageProducer.destroy();
-  logger.debug("Tearing down oracle finder");
-  await oracleFinder.destroy();
-  logger.debug("Tearing down express server");
-  expressServer.close();
+		if (!authRequester) {
+			authRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
+			authRequester.setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
+		}
+		this.authRequester = authRequester;
+
+
+		if (!participantsServiceAdapter) {
+			const participantLogger = logger.createChild("participantLogger");
+			participantLogger.setLogLevel(LogLevel.INFO);
+			participantsServiceAdapter = new ParticipantAdapter(participantLogger, PARTICIPANTS_SVC_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
+		}
+		this.participantsServiceAdapter = participantsServiceAdapter;
+
+		// all inits done
+
+		this.messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
+		await this.messageConsumer.connect();
+		await this.messageConsumer.start();
+		logger.info("Kafka Consumer Initialized");
+
+		await this.messageProducer.connect();
+
+		this.logger.info("Kafka Producer Initialized");
+		this.aggregate = new AccountLookupAggregate(
+			this.logger,
+			this.oracleFinder,
+			this.oracleProviderFactory,
+			this.messageProducer,
+			this.participantsServiceAdapter
+		);
+
+		await this.aggregate.init();
+		this.logger.info("Aggregate Initialized");
+
+
+		const callbackFunction = async (message: IMessage): Promise<void> => {
+			this.logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
+			await this.aggregate.handleAccountLookUpEvent(message);
+		};
+
+		this.messageConsumer.setCallbackFn(callbackFunction);
+
+		this.setupAndStartExpress();
+	}
+
+	static setupAndStartExpress(): void {
+		// Start express server
+		this.app = express();
+		this.app.use(express.json()); // for parsing application/json
+		this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+
+		// Add admin and client http routes
+		const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger);
+		const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger);
+		this.app.use("/admin", oracleAdminRoutes.mainRouter);
+		this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
+
+		this.app.use((req, res) => {
+			// catch all
+			res.send(404);
+		});
+
+		this.expressServer = this.app.listen(SVC_DEFAULT_HTTP_PORT, () => {
+			this.logger.info(`🚀 Server ready on port ${SVC_DEFAULT_HTTP_PORT}`);
+			this.logger.info(`Oracle Admin and Account Lookup server v: ${APP_VERSION} started`);
+		});
+	}
+
+	static async stop(): Promise<void> {
+		this.logger.debug("Tearing down aggregate");
+		await this.aggregate.destroy();
+		this.logger.debug("Tearing down message consumer");
+		await this.messageConsumer.destroy(true);
+		this.logger.debug("Tearing down message producer");
+		await this.messageProducer.destroy();
+		this.logger.debug("Tearing down oracle finder");
+		await this.oracleFinder.destroy();
+		this.logger.debug("Tearing down express server");
+		if (this.expressServer) this.expressServer.close();
+	}
+
 }
 
 /**
@@ -234,15 +272,17 @@ export async function stop(): Promise<void> {
  */
 
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
-  console.info(`Service - ${signal} received - cleaning up...`);
-  let clean_exit = false;
-  setTimeout(() => { clean_exit || process.abort();}, 5000);
+	console.info(`Service - ${signal} received - cleaning up...`);
+	let clean_exit = false;
+	setTimeout(() => {
+		clean_exit || process.abort();
+	}, 5000);
 
-  // call graceful stop routine
-  await stop();
+	// call graceful stop routine
+	await Service.stop();
 
-  clean_exit = true;
-  process.exit();
+	clean_exit = true;
+	process.exit();
 }
 
 //catches ctrl+c event
@@ -252,10 +292,10 @@ process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
 process.on("exit", async () => {
-  logger.info("Microservice - exiting...");
+	globalLogger.info("Microservice - exiting...");
 });
 process.on("uncaughtException", (err: Error) => {
-  logger.error(err);
-  console.log("UncaughtException - EXITING...");
-  process.exit(999);
+	globalLogger.error(err);
+	console.log("UncaughtException - EXITING...");
+	process.exit(999);
 });
