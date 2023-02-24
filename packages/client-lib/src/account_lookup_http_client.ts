@@ -60,8 +60,8 @@ export class AccountLookupHttpClient {
 		});
 	}
 
-	async participantLookUp(partyId:string, partyType:string, partySubId:string | null, currency:string | null): Promise<string | null> {
-		const url = this.composeGetLookUpUrl(partyType, partyId, partySubId, currency);
+	async participantLookUp(partyId:string, partyType:string, partySubIdOrType:string | null, currency:string | null): Promise<string | null> {
+		const url = this.composeGetLookUpUrl(partyType, partyId, partySubIdOrType, currency);
 
 		try {
 			const axiosResponse: AxiosResponse = await this._httpClient.get(url,
@@ -83,7 +83,7 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	async participantBulkLookUp(partyIdentifiers :{[key:string]: { partyType: string, partyId: string, partySubId: string | null, currency: string | null}}): Promise<{[key: string]: string | null}| null> {
+	async participantBulkLookUp(partyIdentifiers :{[key:string]: { partyType: string, partyId: string, partySubIdOrType: string | null, currency: string | null}}): Promise<{[key: string]: string | null}| null> {
 		try {
 			const axiosResponse: AxiosResponse = await this._httpClient.post(this.CLIENT_URL, partyIdentifiers,
 				{
@@ -103,10 +103,10 @@ export class AccountLookupHttpClient {
 		}
 	}
 
-	private composeGetLookUpUrl(partyType: string, partyId: string, partySubId: string | null, currency: string | null) {
+	private composeGetLookUpUrl(partyType: string, partyId: string, partySubIdOrType: string | null, currency: string | null) {
 		let url = this.CLIENT_URL + `/${partyId}/${partyType}`;
-		if (partySubId) {
-			url += `/${partySubId}`;
+		if (partySubIdOrType) {
+			url += `/${partySubIdOrType}`;
 		}
 		if (currency) {
 			url += `?currency=${currency}`;
