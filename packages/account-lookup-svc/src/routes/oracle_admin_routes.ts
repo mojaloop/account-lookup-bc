@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -43,7 +43,7 @@
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain-lib";
-import { check } from "express-validator"; 
+import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
 export class OracleAdminExpressRoutes extends BaseRoutes {
@@ -53,14 +53,16 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
          this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
 
+         this.mainRouter.get("/oracles/builtin-associations",this.getAllBuiltinOracleAssociations.bind(this));
+
          this.mainRouter.get("/oracles/:id",[
              check("id").isString().notEmpty().withMessage("id must be a non empty string")
          ],this.getOracleById.bind(this));
-         
+
          this.mainRouter.delete("/oracles/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
          ], this.deleteOracle.bind(this));
-         
+
          this.mainRouter.post("/oracles",[
             check("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
             check("type").isString().isIn(['builtin','http-remote']).withMessage("type must be valid").bail(),
@@ -70,18 +72,36 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
          this.mainRouter.get("/oracles/health/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
          ], this.healthCheck.bind(this));
- 
+
      }
-     
+
 
     private async getAllOracles(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
-        }             
-        
+        }
+
         this.logger.info("Fetching all oracles");
          try {
              const fetched = await this.accountLookupAggregate.getAllOracles();
+             res.send(fetched);
+         } catch (err: unknown) {
+             this.logger.error(err);
+             res.status(500).json({
+                 status: "error",
+                 msg: (err as Error).message
+             });
+         }
+    }
+
+    private async getAllBuiltinOracleAssociations(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        if (!this.validateRequest(req, res)) {
+            return;
+        }
+
+        this.logger.info("Fetching all builtin oracle associations");
+         try {
+             const fetched = await this.accountLookupAggregate.getBuiltInOracleAssociations();
              res.send(fetched);
          } catch (err: unknown) {
              this.logger.error(err);
@@ -122,10 +142,10 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
     private async deleteOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
         if (!this.validateRequest(req, res)) {
             return;
-        }         
+        }
         const id = req.params["id"] ?? null;
          this.logger.info(`Deleting Oracle [${id}].`);
- 
+
          try {
              const fetched = await this.accountLookupAggregate.removeOracle(id);
              res.send(fetched);
@@ -193,6 +213,6 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
                 msg: (err as Error).message
             });
         }
-    } 
- 
+    }
+
 }

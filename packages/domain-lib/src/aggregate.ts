@@ -59,7 +59,8 @@ import {
 	UnableToGetParticipantFspIdError,
 	UnableToProcessMessageError
 } from "./errors";
-import { AddOracleDTO, IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService, Oracle} from "./interfaces/infrastructure";
+import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "./interfaces/infrastructure";
+
 import {
 	AccountLookUpErrorEvt,
 	AccountLookUpErrorEvtPayload,
@@ -80,7 +81,7 @@ import {
 	ParticipantQueryResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { randomUUID } from "crypto";
-import { ParticipantLookup } from "./types";
+import { ParticipantLookup, Oracle, AddOracleDTO, BuiltInOracleAssociationsDTO, OracleType } from "./types";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -447,6 +448,24 @@ export class AccountLookupAggregate  {
 		await this._oracleFinder.removeOracle(id);
 
 		this._oracleProvidersAdapters = this._oracleProvidersAdapters.filter((o) => o.oracleId !== id);
+	}
+
+	public async getBuiltInOracleAssociations(): Promise<BuiltInOracleAssociationsDTO> {
+		const builtInOracleAssociations: BuiltInOracleAssociationsDTO = {};
+		const oracles = await this._oracleFinder.getAllOracles();
+		const builtInOracleType: OracleType = "builtin";
+		const builtinOracles = oracles.filter((o) => o.type === builtInOracleType);
+
+		for (const oracle of builtinOracles) {
+			builtInOracleAssociations[oracle.id] = {
+				name: oracle.name,
+				id: oracle.id,
+				partySubType: oracle.partySubType,
+				partyType: oracle.partyType,
+			}
+		}
+
+		return builtInOracleAssociations;
 	}
 
 	public async getAllOracles(): Promise<Oracle[]> {

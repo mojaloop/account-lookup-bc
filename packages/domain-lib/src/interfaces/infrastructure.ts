@@ -41,26 +41,8 @@
 "use strict";
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
+import { Oracle, OracleType } from "./../types";
 
-export type OracleType = "builtin" | "remote-http";
-
-export type Oracle = {
-    id: string;
-    name: string;
-    type: OracleType;
-    partyType: string;
-    partySubType: string | null;
-    endpoint: string | null;
-}
-
-export type AddOracleDTO = {
-    id: string| null;
-    name: string;
-    type: OracleType;
-    partyType: string;
-    partySubType: string | null;
-    endpoint: string | null;
-}
 
 export interface IOracleFinder{
 	init(): Promise<void>;

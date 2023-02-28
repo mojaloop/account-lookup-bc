@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -63,4 +63,28 @@ export type ParticipantLookup = {
 	partyType: string;
 	partySubType: string | null;
 	currency: string | null;
+}
+
+export type OracleType = "builtin" | "remote-http";
+
+export type Oracle = {
+    id: string;
+    name: string;
+    type: OracleType;
+    partyType: string;
+    partySubType: string | null;
+    endpoint: string | null;
+}
+
+export type AddOracleDTO = {
+    id: string| null;
+    name: string;
+    type: OracleType;
+    partyType: string;
+    partySubType: string | null;
+    endpoint: string | null;
+}
+
+export type BuiltInOracleAssociationsDTO = {
+	[id: string]: Omit<Oracle, "endpoint"| "type">;
 }

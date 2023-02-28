@@ -22,7 +22,7 @@
 
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -45,7 +45,7 @@ import {
     NoSuchOracleError,
     Oracle,
 } from "../../src";
-import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -77,7 +77,7 @@ const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
 
 
 describe("Domain - Unit Tests oracle admin routes", () => {
-    
+
     beforeAll(async () => {
         await aggregate.init();
     });
@@ -91,34 +91,34 @@ describe("Domain - Unit Tests oracle admin routes", () => {
     });
 
     test("should be able to get all oracles", async () => {
-        // Arrange 
+        // Arrange
         const expectedOraclesLength = mockedOracleAdapters.length;
-        
+
         // Act
         const oracles = await aggregate.getAllOracles();
-        
+
         // Assert
         expect(oracles.length).toBe(expectedOraclesLength);
     });
 
     test("should be able to get an oracle by its id", async () => {
-        // Arrange 
+        // Arrange
         const id = mockedOracleAdapters[0].id;
-        
+
         // Act
         const oracle = await aggregate.getOracleById(id);
-        
+
         // Assert
         expect(oracle?.id).toBe(id);
     });
 
     test("should be able to perform an health check on an existing oracle", async () => {
-        // Arrange 
+        // Arrange
         const id = mockedOracleAdapters[0].id;
-        
+
         // Act
         const result = await aggregate.healthCheck(id);
-        
+
         // Assert
         expect(result).toBeTruthy();
 
@@ -207,7 +207,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
         // Assert
         expect(result).toBeDefined();
         expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === result)).toBeTruthy();
-        
+
     });
 
     test("shouldnt be able to remove oracle if oracle doesn't exist", async () => {
@@ -239,6 +239,23 @@ describe("Domain - Unit Tests oracle admin routes", () => {
 
         // Assert
         expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
+    });
+
+    test("should return builtin oracle associations", async()=>{
+        // Arrange
+        const oracleLength = mockedOracleAdapters.filter((o) => o.type === "builtin").length;
+
+        // Act
+        const result = await aggregate.getBuiltInOracleAssociations();
+
+        // Assert
+        const objectKeys = Object.keys(result);
+        expect(result).toBeDefined();
+        expect(objectKeys.length).toBe(oracleLength);
+        expect(result[objectKeys[0]].id).toBeDefined();
+        expect(result[objectKeys[0]].name).toBeDefined();
+        expect(result[objectKeys[0]].partySubType).toBeDefined();
+        expect(result[objectKeys[0]].partyType).toBeDefined();
     });
 
 });
