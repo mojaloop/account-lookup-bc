@@ -174,12 +174,12 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async getAllAssociations():Promise<Association[]> {
-		const transfers = await this.parties.find({}).toArray().catch((e: unknown) => {
+		const associations = await this.parties.find({}).toArray().catch((e: unknown) => {
 			this._logger.error(`Unable to get associations: ${(e as Error).message}`);
 			throw new UnableToGetAssociationError();
 		});
 
-		const mappedAssociations = transfers.map(this.mapToAssociation);
+		const mappedAssociations = associations.map(this.mapToAssociation);
 
 		return mappedAssociations;
 	}
