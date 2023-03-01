@@ -40,7 +40,7 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import {IOracleProviderAdapter, Oracle, OracleType} from "@mojaloop/account-lookup-bc-domain-lib";
+import {IOracleProviderAdapter, Oracle, OracleType, Association} from "@mojaloop/account-lookup-bc-domain-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
 import { UnableToInitRemoteOracleProvider } from "../../../errors";
@@ -133,4 +133,8 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
                 throw new Error('Error disassociating participant');
             });    
     }
+
+    async getAllAssociations():Promise<Association[]> {
+		return []
+	}
 }

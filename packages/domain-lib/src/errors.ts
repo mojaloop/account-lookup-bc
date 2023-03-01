@@ -122,6 +122,11 @@ export class NoSuchOracleError extends Error {
         super(message || "No such oracle");
     }
 }
+export class UnableToGetOracleAssociationsError extends Error {
+    constructor(message?: string) {
+        super(message || "Unable to get associations from oracle adapter");
+    }
+}
 
 // Message Producer
 export class InvalidMessagePayloadError extends Error {

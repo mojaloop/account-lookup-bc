@@ -41,12 +41,9 @@ optionally within square brackets <email>.
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {MongoClient, Collection} from "mongodb";
-import {
-	IOracleProviderAdapter,
-	OracleType, Oracle
-} from "@mojaloop/account-lookup-bc-domain-lib";
-import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToStoreParticipantAssociationError } from "../../../errors";
+import {MongoClient, Collection, WithId, Document} from "mongodb";
+import { IOracleProviderAdapter, OracleType, Oracle, Association } from "@mojaloop/account-lookup-bc-domain-lib";
+import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToGetAssociationError, UnableToStoreParticipantAssociationError } from "../../../errors";
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
@@ -176,5 +173,27 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		return true;
 	}
 
+	async getAllAssociations():Promise<Association[]> {
+		const transfers = await this.parties.find({}).toArray().catch((e: unknown) => {
+			this._logger.error(`Unable to get associations: ${(e as Error).message}`);
+			throw new UnableToGetAssociationError();
+		});
+
+		const mappedAssociations = transfers.map(this.mapToAssociation);
+
+		return mappedAssociations;
+	}
+
+	private mapToAssociation(association: WithId<Document>): Association {
+		const associationMapped: Association = {
+			partyId: association.partyId ?? null,
+			fspId: association.fspId ?? null,
+			partyType: association.partyType ?? null,
+			partySubId: association.partySubId ?? null,
+			currency: association.currency ?? null
+		};
+
+		return associationMapped;
+	}
 }
 

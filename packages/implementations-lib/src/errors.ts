@@ -112,6 +112,11 @@ export class UnableToStoreParticipantAssociationError extends Error {
         super(message || 'Unable to store participant association');
     }
 }
+export class UnableToGetAssociationError extends Error {
+    constructor(message?: string) {
+        super(message || 'Unable to store participant association');
+    }
+}
 export class ParticipantAssociationAlreadyExistsError extends Error {
     constructor(message?: string) {
         super(message || 'Participant association already exists');

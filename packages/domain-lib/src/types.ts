@@ -88,3 +88,11 @@ export type AddOracleDTO = {
 export type BuiltInOracleAssociationsDTO = {
 	[id: string]: Omit<Oracle, "endpoint"| "type">;
 }
+
+export type Association = {
+    fspId: string;
+    partyType: string;
+    partyId: string;
+    partySubId: string|null;
+    currency: string|null;
+}

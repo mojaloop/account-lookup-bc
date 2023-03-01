@@ -41,11 +41,8 @@
 "use strict";
 
 
-import {
-    IOracleProviderAdapter,
-    Oracle, OracleType,
-} from "@mojaloop/account-lookup-bc-domain-lib";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { IOracleProviderAdapter, Oracle, OracleType, Association } from "@mojaloop/account-lookup-bc-domain-lib";
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleAdapterResults } from "./mocked_data";
 
 
@@ -100,4 +97,8 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         return Promise.reject(new Error("Disassociation not possible"));
 
      }
+
+     async getAllAssociations():Promise<Association[]> {
+		return []
+	}
 }
