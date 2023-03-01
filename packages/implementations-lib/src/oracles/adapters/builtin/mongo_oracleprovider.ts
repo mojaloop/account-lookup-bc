@@ -71,7 +71,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		this._dbName = dbName;
 		this.type = "builtin";
 	}
-	
+
 	async init(): Promise<void> {
 		try {
 			this.mongoClient = new MongoClient(this._connectionString);
@@ -91,7 +91,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			this._logger.error(`Unable to close database connection: ${(e as Error).message}`);
 			throw new UnableToCloseDatabaseConnectionError();
 		}
-		
+
 	}
 
 	async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null> {
@@ -101,7 +101,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 				partyType: partyType,
 				partySubId: partySubId,
 				currency: currency,
-				
+
 			});
 
 			if(!data) {
@@ -164,7 +164,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
 		return null;
 	}
-	
+
 	async healthCheck(): Promise<boolean> {
 		await this.mongoClient.db().command({ping: 1}).catch((e: unknown) => {
 			this._logger.debug(`Unable to ping database: ${(e as Error).message}`);
@@ -179,21 +179,17 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			throw new UnableToGetAssociationError();
 		});
 
-		const mappedAssociations = associations.map(this.mapToAssociation);
+		const mappedAssociations = associations.map((association: WithId<Document>) => {
+			return {
+				partyId: association.partyId ?? null,
+				fspId: association.fspId ?? null,
+				partyType: association.partyType ?? null,
+				partySubId: association.partySubId ?? null,
+				currency: association.currency ?? null
+			} as Association;
+		});
 
 		return mappedAssociations;
-	}
-
-	private mapToAssociation(association: WithId<Document>): Association {
-		const associationMapped: Association = {
-			partyId: association.partyId ?? null,
-			fspId: association.fspId ?? null,
-			partyType: association.partyType ?? null,
-			partySubId: association.partySubId ?? null,
-			currency: association.currency ?? null
-		};
-
-		return associationMapped;
 	}
 }
 

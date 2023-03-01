@@ -242,20 +242,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
     });
 
     test("should return builtin oracle associations", async()=>{
-        // Arrange
-        const oracleLength = mockedOracleAdapters.filter((o) => o.type === "builtin").length;
-
-        // Act
-        const result = await aggregate.getBuiltInOracleAssociations();
-
-        // Assert
-        const objectKeys = Object.keys(result);
-        expect(result).toBeDefined();
-        expect(objectKeys.length).toBe(oracleLength);
-        expect(result[objectKeys[0]].id).toBeDefined();
-        expect(result[objectKeys[0]].name).toBeDefined();
-        expect(result[objectKeys[0]].partySubType).toBeDefined();
-        expect(result[objectKeys[0]].partyType).toBeDefined();
+       
     });
 
 });

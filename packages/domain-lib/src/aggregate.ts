@@ -82,7 +82,7 @@ import {
 	ParticipantQueryResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { randomUUID } from "crypto";
-import { ParticipantLookup, Oracle, AddOracleDTO, BuiltInOracleAssociationsDTO, OracleType, Association } from "./types";
+import { ParticipantLookup, Oracle, AddOracleDTO, OracleType, Association } from "./types";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -456,15 +456,13 @@ export class AccountLookupAggregate  {
 		const builtInOracleType: OracleType = "builtin";
 		const builtinOracles = oracles.filter((o) => o.type === builtInOracleType);
 
-		const associations = [];
-		for (const oracle of builtinOracles) {
+		let associations: Association[] = [];
+		for await (const oracle of builtinOracles) {
 			const oracleProvider = await this.getOracleAdapter(oracle.partyType, oracle.partySubType);
-	
-			associations.push(await oracleProvider.getAllAssociations().catch(error=>{
+			associations = await oracleProvider.getAllAssociations().catch(error=>{
 				throw new UnableToGetOracleAssociationsError();
-			}));
+			});
 		}
-
 
 		return associations.flat();
 	}

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -49,36 +49,42 @@ import { mockedOracleAdapterResults } from "./mocked_data";
 export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
 	oracleId: string;
     type: OracleType;
-   
+
     private readonly _logger: ILogger;
-	
+
 	constructor(
 		logger: ILogger,
         oracle: Oracle,
 	) {
 		this._logger = logger;
         this.oracleId = oracle.id;
-        this.type = oracle.type; 
+        this.type = oracle.type;
 	}
-     init(): Promise<void> {
+
+    init(): Promise<void> {
         return Promise.resolve();
-     }
-     destroy(): Promise<void> {
-         return Promise.resolve();
-     }
-     healthCheck(): Promise<boolean> {
+    }
+
+    destroy(): Promise<void> {
+        return Promise.resolve();
+    }
+
+    healthCheck(): Promise<boolean> {
         return Promise.resolve(true);
-     }
-     getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
+    }
+
+    getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
         const result = mockedOracleAdapterResults.find((result) => {
             return result.partyId === partyId && result.partyType === partyType && result.partySubType === partySubType && result.currency === currency;
         });
+
         if(result) {
             return Promise.resolve(result.fspId);
         }
         return Promise.resolve(null);
-     }
-     associateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
+    }
+
+    associateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
         const isAssociationPossible = mockedOracleAdapterResults.find((result) => {
             return result.partyType === partyType && result.partySubType === partySubType;
         })?.association;
@@ -86,8 +92,9 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
             return Promise.resolve(null);
         }
         return Promise.reject(new Error("Association not possible"));
-     }
-     disassociateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
+    }
+
+    disassociateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
         const isDisassociationPossible = mockedOracleAdapterResults.find((result) => {
             return result.partyType === partyType && result.partySubType === partySubType;
         })?.disassociation;
@@ -96,9 +103,17 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         }
         return Promise.reject(new Error("Disassociation not possible"));
 
-     }
+    }
 
-     async getAllAssociations():Promise<Association[]> {
-		return []
+    async getAllAssociations():Promise<Association[]> {
+	    return mockedOracleAdapterResults.map((result) => {
+            return {
+                fspId: result.fspId,
+                partyType: result.partyType,
+                partySubType: result.partySubType,
+                partyId: result.partyId,
+                currency: result.currency,
+            } as Association;
+        });
 	}
 }
