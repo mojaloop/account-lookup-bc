@@ -66,7 +66,7 @@ const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
     mockedOracleFinder,
     mockedOracleProviderFactory,
     mockedProducer,
-    mockedParticipantService
+    mockedParticipantService,
 );
 
 // Express mock
@@ -106,11 +106,11 @@ describe("Account Lookup Service", () => {
         const spyConsumerStart = jest.spyOn(mockedConsumer, "connect");
         const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
         const spyProducerInit = jest.spyOn(mockedProducer, "connect");
-        // const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
+        const spyAggregateInit = jest.spyOn(mockedAggregate, "init");
 
         // Act
         await Service.start(logger,mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester,
-            mockedParticipantService);
+            mockedParticipantService, mockedAggregate);
 
         // Assert
         expect(spyConsumerSetTopics).toBeCalledTimes(1);
@@ -118,7 +118,7 @@ describe("Account Lookup Service", () => {
         expect(spyConsumerStart).toBeCalledTimes(1);
         expect(spyConsumerCallback).toBeCalledTimes(1);
         expect(spyProducerInit).toBeCalledTimes(1);
-        // expect(spyAggregateInit).toBeCalledTimes(1);
+        expect(spyAggregateInit).toBeCalledTimes(1);
         expect(useSpy).toBeCalledWith("/admin", routerSpy);
         expect(useSpy).toBeCalledWith("/account-lookup", routerSpy);
         expect(listenSpy).toBeCalledTimes(1);
@@ -130,6 +130,7 @@ describe("Account Lookup Service", () => {
         const spyMockedConsumer = jest.spyOn(mockedConsumer, "destroy");
         const spyMockedProducer = jest.spyOn(mockedProducer, "destroy");
         const spyMockedAggregate = jest.spyOn(mockedAggregate, "destroy");
+        const spyMockedOracleFinder = jest.spyOn(mockedOracleFinder, "destroy");
         await Service.start(logger,mockedConsumer, mockedProducer, mockedOracleFinder,
             mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService, mockedAggregate);
 
@@ -139,7 +140,8 @@ describe("Account Lookup Service", () => {
         // Assert
         expect(spyMockedConsumer).toBeCalledTimes(1);
         expect(spyMockedProducer).toBeCalledTimes(1);
-        //expect(spyMockedAggregate).toBeCalledTimes(1);
+        expect(spyMockedAggregate).toBeCalledTimes(1);
+        expect(spyMockedOracleFinder).toBeCalledTimes(1);
         expect(closeSpy).toBeCalledTimes(1);
     });
 

@@ -135,6 +135,6 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
     }
 
     async getAllAssociations():Promise<Association[]> {
-		return []
+		return [];
 	}
 }

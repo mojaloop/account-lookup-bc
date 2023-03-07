@@ -106,14 +106,15 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
     }
 
     async getAllAssociations():Promise<Association[]> {
-	    return mockedOracleAdapterResults.map((result) => {
-            return {
-                fspId: result.fspId,
-                partyType: result.partyType,
-                partySubType: result.partySubType,
-                partyId: result.partyId,
-                currency: result.currency,
-            } as Association;
-        });
+        const association = mockedOracleAdapterResults[0];
+
+        return [{
+            fspId: association.fspId,
+            partyType: association.partyType,
+            partySubId: association.partySubType,
+            partyId: association.partyId,
+            currency: association.currency,
+        } as Association];
+
 	}
 }

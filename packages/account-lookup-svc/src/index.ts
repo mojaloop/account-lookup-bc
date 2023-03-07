@@ -41,7 +41,6 @@
 "use strict";
 
 import { Service } from "./service";
-export * from "./service";
 
 const argv = process.argv;
 
@@ -50,3 +49,6 @@ if(!argv.includes("jest")) {
         console.log("Started account lookup service");
     });
 }
+
+
+export { Service } from "./service";

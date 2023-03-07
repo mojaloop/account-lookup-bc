@@ -31,7 +31,7 @@
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --testMatch --runInBand --detectOpenHandles"
+    "test:unit": "jest --passWithNoTests --runInBand --detectOpenHandles"
   },
   "dependencies": {
     "@mojaloop/participant-bc-public-types-lib": "~0.0.7",

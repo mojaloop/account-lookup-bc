@@ -45,7 +45,7 @@ import {
     NoSuchOracleError,
     Oracle,
 } from "../../src";
-import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -241,8 +241,32 @@ describe("Domain - Unit Tests oracle admin routes", () => {
         expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
     });
 
+    test("should return all oracles", async () => {
+        // Arrange
+        const expectedOraclesLength = mockedOracleAdapters.length;
+
+        // Act
+        const oracles = await aggregate.getAllOracles();
+
+        // Assert
+        expect(oracles.length).toBe(expectedOraclesLength);
+    });
+
     test("should return builtin oracle associations", async()=>{
-       
+        // Arrange
+        const mockedOracleAdapter = mockedOracleAdapterResults[0];
+
+        // Act
+        const result = await aggregate.getBuiltInOracleAssociations();
+
+        // Assert
+        expect(result).toBeDefined();
+        expect(result.length).toBe(1);
+        expect(result[0].fspId).toBe(mockedOracleAdapter.fspId);
+        expect(result[0].currency).toBe(mockedOracleAdapter.currency);
+        expect(result[0].partyId).toBe(mockedOracleAdapter.partyId);
+        expect(result[0].partySubId).toBe(mockedOracleAdapter.partySubType);
+        expect(result[0].partyType).toBe(mockedOracleAdapter.partyType);
     });
 
 });

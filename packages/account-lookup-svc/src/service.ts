@@ -121,20 +121,20 @@ const producerOptions: MLKafkaJsonProducerOptions = {
 // kafka logger
 const kafkaProducerOptions = {
 	kafkaBrokerList: KAFKA_URL
-}
+};
 
 let globalLogger: ILogger;
 
 export class Service {
 	static logger: ILogger;
 	static app: Express;
-	static messageConsumer: IMessageConsumer
-	static messageProducer: IMessageProducer
-	static oracleFinder: IOracleFinder
-	static oracleProviderFactory: IOracleProviderFactory
-	static authRequester: IAuthenticatedHttpRequester
-	static participantsServiceAdapter: IParticipantService
-	static aggregate: AccountLookupAggregate
+	static messageConsumer: IMessageConsumer;
+	static messageProducer: IMessageProducer;
+	static oracleFinder: IOracleFinder;
+	static oracleProviderFactory: IOracleProviderFactory;
+	static authRequester: IAuthenticatedHttpRequester;
+	static participantsServiceAdapter: IParticipantService;
+	static aggregate: AccountLookupAggregate;
 	static expressServer: Server;
 
 
@@ -207,13 +207,17 @@ export class Service {
 		await this.messageProducer.connect();
 
 		this.logger.info("Kafka Producer Initialized");
-		this.aggregate = new AccountLookupAggregate(
-			this.logger,
-			this.oracleFinder,
-			this.oracleProviderFactory,
-			this.messageProducer,
-			this.participantsServiceAdapter
-		);
+
+		if (!aggregateParam) {
+			aggregateParam = new AccountLookupAggregate(
+				this.logger,
+				this.oracleFinder,
+				this.oracleProviderFactory,
+				this.messageProducer,
+				this.participantsServiceAdapter
+			);
+		}
+		this.aggregate = aggregateParam;
 
 		await this.aggregate.init();
 		this.logger.info("Aggregate Initialized");
@@ -259,10 +263,10 @@ export class Service {
 		await this.messageConsumer.destroy(true);
 		this.logger.debug("Tearing down message producer");
 		await this.messageProducer.destroy();
-		this.logger.debug("Tearing down oracle finder");
-		await this.oracleFinder.destroy();
 		this.logger.debug("Tearing down express server");
-		if (this.expressServer) this.expressServer.close();
+		if (this.expressServer){
+			this.expressServer.close();
+		}
 	}
 
 }

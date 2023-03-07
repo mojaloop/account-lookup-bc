@@ -40,11 +40,11 @@
 "use strict";
 
 import request from "supertest";
-import { IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain-lib";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { Association, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain-lib";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { start, stop } from "@mojaloop/account-lookup-bc-svc";
+import { Service } from "@mojaloop/account-lookup-bc-account-lookup-svc";
 import { randomUUID } from "crypto";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 
@@ -68,11 +68,11 @@ const server = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 describe("Oracle Admin Routes - Integration", () => {
 
     beforeAll(async () => {
-        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService);
+        await Service.start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, mockedAuthRequester, mockedParticipantService);
     });
 
     afterAll(async () => {
-        await stop();
+        await Service.stop();
     });
 
     test("GET Oracles - should fetch empty array when no oracles available", async () => {
@@ -109,6 +109,25 @@ describe("Oracle Admin Routes - Integration", () => {
             .expect(200);
 
         expect(checkIfValidUUID(response.body.id)).toBe(true);
+
+    });
+
+    test("GET Oracle Associations - should fetch oracle associations available", async () => {
+        // Arrange
+        const expectedAssociations = [mockedOracleAdapterResults[0]];
+
+        // Act
+        const response = await request(server)
+            .get("/oracles/builtin-associations")
+            .expect(200);
+
+        // Assert
+        const associationResponse : Association = response.body[0];
+        expect(associationResponse.fspId).toBe(expectedAssociations[0].fspId);
+        expect(associationResponse.currency).toBe(expectedAssociations[0].currency);
+        expect(associationResponse.partyId).toBe(expectedAssociations[0].partyId);
+        expect(associationResponse.partySubId).toBe(expectedAssociations[0].partySubType);
+        expect(associationResponse.partyType).toBe(expectedAssociations[0].partyType);
 
     });
 

@@ -45,7 +45,7 @@ import { IOracleFinder, IOracleProviderFactory, IParticipantService, Participant
 import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes, MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { start, stop } from "@mojaloop/account-lookup-bc-svc";
+import { Service } from "@mojaloop/account-lookup-bc-account-lookup-svc";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -67,11 +67,11 @@ const server = (process.env["ACCOUNT_LOOKUP_URL"] || "http://localhost:3030") + 
 describe("Account Lookup Routes - Integration", () => {
 
     beforeAll(async () => {
-        await start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,mockedAuthRequester, mockedParticipantService);
+        await Service.start(logger,mockedConsumer,mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,mockedAuthRequester, mockedParticipantService);
     });
 
     afterAll(async () => {
-        await stop();
+        await Service.stop();
     });
 
     test("GET - should fetch fspId for partyId and partyType", async () => {

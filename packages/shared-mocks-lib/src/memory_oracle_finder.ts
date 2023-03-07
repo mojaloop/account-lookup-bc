@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -50,7 +50,7 @@ export class MemoryOracleFinder implements IOracleFinder {
     private readonly _logger: ILogger;
     private readonly _oraclesThatBelongToAggregate: Oracle[] ;
     private readonly _oraclesThatDontBelongToAggregate: Oracle[];
-    
+
     constructor(
         logger: ILogger,
         startWithPredefinedOracles = true
@@ -85,7 +85,7 @@ export class MemoryOracleFinder implements IOracleFinder {
     }
     getOracleByName(name: string): Promise<Oracle | null> {
         return Promise.resolve(this._oraclesThatBelongToAggregate.find(o => o.name === name) || null);
-    }    
+    }
     getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null> {
         let oracle = this._oraclesThatBelongToAggregate.find(o => o.partyType === partyType && o.partySubType === partySubtype);
         if(!oracle) {

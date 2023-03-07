@@ -153,7 +153,7 @@ export class AccountLookupAggregate  {
 				}
 		} catch(error: unknown) {
 				const errorMessage = (error as Error).constructor.name;
-				// this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
+				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
 
 				// TODO: find a way to publish the correct error event type
 				const errorPayload: AccountLookUpErrorEvtPayload = {
@@ -460,6 +460,7 @@ export class AccountLookupAggregate  {
 		for await (const oracle of builtinOracles) {
 			const oracleProvider = await this.getOracleAdapter(oracle.partyType, oracle.partySubType);
 			associations = await oracleProvider.getAllAssociations().catch(error=>{
+				this._logger.error(`Unable to get oracle associations for oracle: ${oracle.id} ` + error);
 				throw new UnableToGetOracleAssociationsError();
 			});
 		}
