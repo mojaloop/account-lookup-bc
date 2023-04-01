@@ -42,7 +42,7 @@ import {
     IParticipantService,
     ParticipantLookup,
 } from "../../src";
-import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -91,7 +91,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: "123456789",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
         }
 
@@ -107,7 +106,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: "123456789",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
         };
 
@@ -129,7 +127,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: mockedPartyIds[1],
-            partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[2],
         };
 
@@ -145,7 +142,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: mockedPartyIds[0],
-            partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[0],
         };
         // Act
@@ -160,7 +156,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: "123456789",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
         }
 
@@ -178,7 +173,6 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest : ParticipantLookup = {
             currency: "USD",
             partyId: "123456789",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
         }
 
@@ -201,21 +195,18 @@ describe("Domain - Unit Tests Account LookUp", () => {
         const accountLookupRequest1 : ParticipantLookup = {
             currency: "USD",
             partyId: mockedPartyIds[0],
-            partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[0],
         }
 
         const accountLookupRequest2 : ParticipantLookup = {
             currency: "USD",
             partyId: mockedPartyIds[0],
-            partySubType: null,
             partyType: mockedPartyTypes[0],
         }
 
         const accountLookupRequest3 : ParticipantLookup = {
             currency: "EUR",
             partyId: mockedPartyIds[1],
-            partySubType: mockedPartySubTypes[1],
             partyType: mockedPartyTypes[1],
         }
 

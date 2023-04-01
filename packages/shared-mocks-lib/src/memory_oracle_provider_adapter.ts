@@ -73,9 +73,10 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         return Promise.resolve(true);
     }
 
-    getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
+    getParticipantFspId(partyType: string, partyId: string, currency: string | null): Promise<string | null> {
+        const test = mockedOracleAdapterResults
         const result = mockedOracleAdapterResults.find((result) => {
-            return result.partyId === partyId && result.partyType === partyType && result.partySubType === partySubType && result.currency === currency;
+            return result.partyId === partyId && result.partyType === partyType && result.currency === currency;
         });
 
         if(result) {
@@ -84,9 +85,9 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         return Promise.resolve(null);
     }
 
-    associateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
+    associateParticipant(_fspId: string, partyType: string, _partyId: string, _currency: string | null): Promise<null> {
         const isAssociationPossible = mockedOracleAdapterResults.find((result) => {
-            return result.partyType === partyType && result.partySubType === partySubType;
+            return result.partyType === partyType;
         })?.association;
         if(isAssociationPossible) {
             return Promise.resolve(null);
@@ -94,9 +95,9 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         return Promise.reject(new Error("Association not possible"));
     }
 
-    disassociateParticipant(_fspId: string, partyType: string, _partyId: string, partySubType: string | null, _currency: string | null): Promise<null> {
+    disassociateParticipant(_fspId: string, partyType: string, _partyId: string, _currency: string | null): Promise<null> {
         const isDisassociationPossible = mockedOracleAdapterResults.find((result) => {
-            return result.partyType === partyType && result.partySubType === partySubType;
+            return result.partyType === partyType;
         })?.disassociation;
         if(isDisassociationPossible) {
             return Promise.resolve(null);
@@ -111,7 +112,6 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         return [{
             fspId: association.fspId,
             partyType: association.partyType,
-            partySubId: association.partySubType,
             partyId: association.partyId,
             currency: association.currency,
         } as Association];

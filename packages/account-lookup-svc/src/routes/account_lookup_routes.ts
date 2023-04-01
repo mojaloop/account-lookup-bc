@@ -48,14 +48,6 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
          ], this.getAccountLookUp.bind(this));
 
-        this.mainRouter.get("/:partyId/:type/:subType",[
-            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
-            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-            check("subType").optional({
-                nullable: true,
-            })
-         ], this.getAccountLookUp.bind(this));
-
          this.mainRouter.post("",[
             body().isObject().withMessage("body must be an object").bail(),
             body("*.partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
@@ -80,7 +72,6 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const payload: ParticipantLookup = {
                currency,
                partyId,
-               partySubType,
                partyType 
             };
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);

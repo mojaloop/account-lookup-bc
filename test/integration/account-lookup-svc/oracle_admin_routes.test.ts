@@ -126,7 +126,6 @@ describe("Oracle Admin Routes - Integration", () => {
         expect(associationResponse.fspId).toBe(expectedAssociations[0].fspId);
         expect(associationResponse.currency).toBe(expectedAssociations[0].currency);
         expect(associationResponse.partyId).toBe(expectedAssociations[0].partyId);
-        expect(associationResponse.partySubId).toBe(expectedAssociations[0].partySubType);
         expect(associationResponse.partyType).toBe(expectedAssociations[0].partyType);
 
     });
@@ -206,7 +205,6 @@ describe("Oracle Admin Routes - Integration", () => {
             .delete(`/oracles/${oracleId}`)
             .expect(200);
     });
-
 
 });
 

@@ -59,24 +59,21 @@ export class RemoteOracleExpressRoutes {
 
         this.mainRouter.get("/health", this.healthCheck.bind(this));
 
-        this.mainRouter.get("/participants/:partyType/:partyId/:partySubId?", [
+        this.mainRouter.get("/participants/:partyType/:partyId", [
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
-            check("partySubId").optional(),
         ], this.getParticipantFspId.bind(this));
 
-        this.mainRouter.delete("/participants/:partyType/:partyId/:partySubId?", [
+        this.mainRouter.delete("/participants/:partyType/:partyId", [
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
-            check("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
-            check("partySubId").optional(),
+            check("fspId").isString().notEmpty().withMessage(" fspId is required").bail()
         ], this.disassociateParticipant.bind(this));
 
-        this.mainRouter.post("/participants/:partyType/:partyId/:partySubId?", [
+        this.mainRouter.post("/participants/:partyType/:partyId", [
             check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
             check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
             check("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
-            check("partySubId").optional(),
         ], this.associateParticipant.bind(this));
 
     }
@@ -97,10 +94,9 @@ export class RemoteOracleExpressRoutes {
     private extractRequestParams(req: express.Request) {
         const partyType = req.params["partyType"];
         const partyId = req.params["partyId"];
-        const partySubId = req.params["partySubId"] ?? null;
         const currency = req.query["currency"]?.toString() ?? null;
         const fspId = req.body["fspId"] ?? null;
-        return {partyType, partyId, partySubId, currency, fspId};
+        return { partyType, partyId, currency, fspId };
     }
 
 
@@ -113,7 +109,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Fetching Participant FSP ID  with params [${params}].`);
 
         try {
-            const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.partySubId, params.currency);
+            const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.currency);
             this._logger.debug(`Fetched Participant FSP ID [${fetched}] with params [${params}].`);
             if(!fetched){
                 res.sendStatus(404);
@@ -141,7 +137,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Disassociating Participant with params [${params}].`);
 
         try {
-            await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
+            await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.currency);
             this._logger.debug(`Disassociated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
@@ -162,7 +158,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Associating Participant with params [${params}].`);
 
         try {
-            await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubId, params.currency);
+            await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.currency);
             this._logger.debug(`Associated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {

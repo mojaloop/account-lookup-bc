@@ -61,7 +61,6 @@ export interface IPartyAccount {
 export type ParticipantLookup = {
 	partyId: string;
 	partyType: string;
-	partySubType: string | null;
 	currency: string | null;
 }
 
@@ -72,7 +71,6 @@ export type Oracle = {
     name: string;
     type: OracleType;
     partyType: string;
-    partySubType: string | null;
     endpoint: string | null;
 }
 
@@ -81,7 +79,6 @@ export type AddOracleDTO = {
     name: string;
     type: OracleType;
     partyType: string;
-    partySubType: string | null;
     endpoint: string | null;
 }
 
@@ -89,6 +86,5 @@ export type Association = {
     fspId: string;
     partyType: string;
     partyId: string;
-    partySubId: string|null;
     currency: string|null;
 }

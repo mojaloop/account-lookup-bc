@@ -42,13 +42,10 @@
 
 import { Service } from "./service";
 
-const argv = process.argv;
-
-if(!argv.includes("jest")) {
+if(process.env.JEST_WORKER_ID === undefined) {
     Service.start().then(() => {
         console.log("Started account lookup service");
     });
 }
-
 
 export { Service } from "./service";

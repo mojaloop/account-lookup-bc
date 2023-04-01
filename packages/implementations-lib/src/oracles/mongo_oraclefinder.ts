@@ -92,7 +92,6 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		const oracleAlreadyPresent : Document | null = await this.oracleProviders.findOne(
 			{
 				partyType: oracle.partyType,
-				partySubType: oracle.partySubType,
 				type: oracle.type,
 				id: oracle.id,
 				name: oracle.name,
@@ -164,11 +163,10 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		return this.mapToOracle(oracle);
 	}
 
-    async getOracle(partyType: string, partySubtype: string | null): Promise<Oracle | null>{
+    async getOracle(partyType: string): Promise<Oracle | null>{
 		const foundOracle: Document | null = await this.oracleProviders.findOne(
 			{
 				partyType: partyType,
-				partySubType: partySubtype
 			}
 		).catch((e: unknown) => {
 			this._logger.error(`Unable to get oracle: ${(e as Error).message}`);
@@ -190,7 +188,6 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			id: oracle.id,
 			name: oracle.name,
 			partyType: oracle.partyType,
-			partySubType: oracle.partySubType,
 			endpoint: oracle.endpoint,
 			type: oracle.type,
 		};

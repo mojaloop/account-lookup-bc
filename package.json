@@ -26,7 +26,7 @@
     "lint:fix": "npm run lint:fix -ws -p",
     "pretest": "npm run build",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'",
+    "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts",
     "test:integration": "jest --runInBand --forceExit --detectOpenHandles --testPathPattern=integration",
     "posttest": "npm run coverage:merge && npm run coverage:gen-report",
     "coverage:merge": "nyc merge ./coverage/ ./coverage/coverage.json",

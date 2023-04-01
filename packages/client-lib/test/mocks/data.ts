@@ -30,7 +30,6 @@
 
 export const PARTY_ID = "123456789";
 export const PARTY_TYPE = "MSISDN";
-export const PARTY_SUB_TYPE = "PHONE";
 export const FSP_ID = "fsp1";
 export const FSP_ID2 = "fsp2";
 export const FSP_ID_WITH_SUB_TYPE = "fsp3";

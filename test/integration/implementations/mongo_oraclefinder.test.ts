@@ -49,8 +49,8 @@ const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-//const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "oracles";
 
 let oracleFinder : MongoOracleFinderRepo;
@@ -62,7 +62,7 @@ const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
 describe("Implementations - Oracle Finder Integration tests", () => {
 
     beforeAll(async () => {
-        mongoClient = await MongoClient.connect(connectionString);
+        mongoClient = await MongoClient.connect(CONNECTION_STRING);
         collection = mongoClient.db(DB_NAME).collection(COLLECTION_NAME);
         oracleFinder = new MongoOracleFinderRepo(logger, CONNECTION_STRING, DB_NAME);
         await oracleFinder.init();
@@ -114,8 +114,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: null,
             name: "testName",
             partyType: "testPartyType",
-            type: "builtin",
-            partySubType: "testPartySubType",
+            type: "builtin"
         };
 
         const remoteOracle: Oracle = {
@@ -123,8 +122,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         // Act
@@ -149,8 +147,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: null,
             name: "testName",
             partyType: "testPartyType",
-            type: "builtin",
-            partySubType: "testPartySubType",
+            type: "builtin"
         };
 
         await oracleFinder.addOracle(oracle);
@@ -166,8 +163,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         // Act
@@ -194,8 +190,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         //Act
@@ -214,8 +209,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         //Act
@@ -234,25 +228,23 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         //Act
         await oracleFinder.addOracle(oracle);
-        const oracleFound = await oracleFinder.getOracle(oracle.partyType, oracle.partySubType);
+        const oracleFound = await oracleFinder.getOracle(oracle.partyType);
 
         //Assert
         expect(oracleFound?.id).toEqual(oracle.id);
         expect(oracleFound?.partyType).toEqual(oracle.partyType);
-        expect(oracleFound?.partySubType).toEqual(oracle.partySubType);
 
     });
 
     test("should throw error if there are no oracles with the given party type and party sub type", async () => {
 
         //Act && Assert
-        await expect(oracleFinder.getOracle("nonExistingOracleType","nonExistingOracleSubType")).rejects.toThrow(NoSuchOracleError);
+        await expect(oracleFinder.getOracle("nonExistingOracleType")).rejects.toThrow(NoSuchOracleError);
 
     });
 
@@ -263,8 +255,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         //Act
@@ -283,8 +274,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http",
-            partySubType: "testPartySubType",
+            type: "remote-http"
         };
 
         //Act && Assert

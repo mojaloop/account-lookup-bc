@@ -67,9 +67,7 @@ describe("Implementations - Oracle Adapter Factory Unit tests", () => {
             name: "oracle 1",
             type: "remote-http",
             endpoint: "http://localhost:3000",
-            partyType: "MSISDN",
-            partySubType: null
-
+            partyType: "MSISDN"
         }
 
         // Act
@@ -87,9 +85,7 @@ describe("Implementations - Oracle Adapter Factory Unit tests", () => {
             name: "oracle 1",
             type: "builtin",
             endpoint: null,
-            partyType: "MSISDN",
-            partySubType: null
-
+            partyType: "MSISDN"
         }
 
         // Act
@@ -107,12 +103,10 @@ describe("Implementations - Oracle Adapter Factory Unit tests", () => {
             name: "oracle 1",
             type: "unsupported",
             endpoint: null,
-            partyType: "MSISDN",
-            partySubType: null
-
+            partyType: "MSISDN"
         }
+        
         // Act and Assert
-
         expect(() => oracleAdapterFactory.create(oracle)).toThrowError(OracleTypeNotSupportedError);
     });
 

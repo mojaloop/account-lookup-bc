@@ -147,7 +147,6 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             name: mockedOracleAdapters[0].name,
             endpoint: "http://localhost:3000",
             id: "not-existing-id",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
             type: "builtin",
         };
@@ -162,7 +161,6 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             name: "not-supported-oracle",
             endpoint: "http://localhost:3000",
             id: "not-existing-id",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
             type: "not-supported-type",
         };
@@ -177,7 +175,6 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             name: "not-supported-oracle",
             endpoint: "http://localhost:3000",
             id: "not-existing-id",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
             type: "not-supported-type",
         };
@@ -196,7 +193,6 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             id: null,
             name: "new-oracle",
             endpoint: "http://localhost:3000",
-            partySubType: "PERSONAL",
             partyType: "DFSP",
             type: "builtin",
         };
@@ -265,7 +261,6 @@ describe("Domain - Unit Tests oracle admin routes", () => {
         expect(result[0].fspId).toBe(mockedOracleAdapter.fspId);
         expect(result[0].currency).toBe(mockedOracleAdapter.currency);
         expect(result[0].partyId).toBe(mockedOracleAdapter.partyId);
-        expect(result[0].partySubId).toBe(mockedOracleAdapter.partySubType);
         expect(result[0].partyType).toBe(mockedOracleAdapter.partyType);
     });
 

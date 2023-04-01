@@ -43,7 +43,7 @@
 import { AccountLookupHttpClient } from "../../src";
 import { ILogger,ConsoleLogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { HttpAccountLookupServiceMock } from "../mocks/http_account_lookup_service_mock";
-import { FSP_ID, FSP_ID2, FSP_ID_WITH_CURRENCY_EUR, FSP_ID_WITH_CURRENCY_USD, FSP_ID_WITH_SUB_TYPE, ID_1, ID_2, PARTY_ID, PARTY_SUB_TYPE, PARTY_TYPE } from "../mocks/data";
+import { FSP_ID, FSP_ID2, FSP_ID_WITH_CURRENCY_EUR, FSP_ID_WITH_CURRENCY_USD, FSP_ID_WITH_SUB_TYPE, ID_1, ID_2, PARTY_ID, PARTY_TYPE } from "../mocks/data";
 import { ParticipantLookup } from "@mojaloop/account-lookup-bc-domain-lib";
 
 const logger: ILogger = new ConsoleLogger();
@@ -70,11 +70,10 @@ describe("Client - Account Lookup Client Unit tests", () => {
         // Arrange
         const partyId = "error";
         const partyType = "error";
-        const partySubIdOrType = "error";
         const currency = "error";
 
         // Act
-        const result = accountLookupClient.participantLookUp(partyId, partyType, partySubIdOrType, currency);
+        const result = accountLookupClient.participantLookUp(partyId, partyType, currency);
 
         // Assert
         await expect(result).rejects.toThrowError();
@@ -83,7 +82,7 @@ describe("Client - Account Lookup Client Unit tests", () => {
 
     test("GET - participantLookUp - should be able to get individual fspId using partyId and partyType", async () => {
         // Act
-        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, null, null);
+        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, null);
 
         // Assert
         expect(result).toEqual(FSP_ID);
@@ -91,27 +90,10 @@ describe("Client - Account Lookup Client Unit tests", () => {
 
     test("GET - participantLookUp - should be able to get individual fspId using partyId and partyType and currency", async () => {
         // Act
-        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, null, "EUR");
+        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, "EUR");
 
         // Assert
         expect(result).toEqual(FSP_ID_WITH_CURRENCY_EUR);
-    });
-
-
-    test("GET - participantLookUp - should be able to get individual fspId using partyId and partyType and partySubType", async () => {
-        // Act
-        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, PARTY_SUB_TYPE, null);
-
-        // Assert
-        expect(result).toEqual(FSP_ID_WITH_SUB_TYPE);
-    });
-
-    test("GET - participantLookUp - should be able to get individual fspId using partyId and partyType and partySubType and currency", async () => {
-        // Act
-        const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, PARTY_SUB_TYPE, "USD");
-
-        // Assert
-        expect(result).toEqual(FSP_ID_WITH_CURRENCY_USD);
     });
 
     test("POST - participantBulkLookUp - should throw error if endpoint is not found", async () => {
@@ -120,7 +102,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         const body: ParticipantLookup = {
             partyId: "error",
             partyType: "error",
-            partySubType: "error",
             currency: "error"
         }
 
@@ -141,7 +122,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         const firstParticipant: ParticipantLookup = {
             partyId: PARTY_ID,
             partyType: PARTY_TYPE,
-            partySubType: PARTY_SUB_TYPE,
             currency: null
         }
 
@@ -149,7 +129,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         const secondParticipant: ParticipantLookup = {
             partyId: PARTY_ID,
             partyType: PARTY_TYPE,
-            partySubType: PARTY_SUB_TYPE,
             currency: "USD"
         }
 
@@ -172,7 +151,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         // Arrange
         const id= ID_1;
         const firstParticipant  = {
-            partySubType: PARTY_SUB_TYPE,
             currency: null
         } as any;
 
@@ -180,7 +158,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         const secondParticipant: ParticipantLookup = {
             partyId: PARTY_ID,
             partyType: PARTY_TYPE,
-            partySubType: PARTY_SUB_TYPE,
             currency: "USD"
         }
 

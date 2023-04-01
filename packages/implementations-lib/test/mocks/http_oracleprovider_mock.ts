@@ -33,12 +33,10 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
  
 export const NOT_FOUND_PARTY_TYPE = "NOT_FOUND_PARTY_TYPE";
 export const NOT_FOUND_PARTY_ID = "NOT_FOUND_PARTY_ID"; 
-export const NOT_FOUND_PARTY_SUB_ID = "NOT_FOUND_PARTY_SUB";
 export const ERROR_FSP_ID = "ERROR_FSP_ID";
 
 export const PARTY_TYPE = "PARTY_TYPE";
 export const PARTY_ID = "PARTY_ID";
-export const PARTY_SUB_ID = "PARTY_SUB_ID";
 export const FSP_ID = "FSP_ID";
 
 export const FSP_ID_RESPONSE = 1;
@@ -60,7 +58,7 @@ export class RemoteOracleProviderHttpMock {
         nock(this.BASE_URL)
             .persist()
 
-            .get(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
+            .get(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}`)
             .reply(404,"Participant not found")
             
             .get(/participants.*/)
@@ -69,19 +67,19 @@ export class RemoteOracleProviderHttpMock {
                 fspId: FSP_ID_RESPONSE
             })
             
-            .post(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
+            .post(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}`)
             .query({fspId: ERROR_FSP_ID})
             .reply(500, "Couldn't associate participant")
             
-            .post(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
+            .post(`/participants/${PARTY_TYPE}/${PARTY_ID}`)
             .query(true)
             .reply(200, {})
 
-            .delete(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}/${NOT_FOUND_PARTY_SUB_ID}`)
+            .delete(`/participants/${NOT_FOUND_PARTY_TYPE}/${NOT_FOUND_PARTY_ID}`)
             .query({fspId: ERROR_FSP_ID})
             .reply(500, "Couldn't disassociate participant")
         
-            .delete(`/participants/${PARTY_TYPE}/${PARTY_ID}/${PARTY_SUB_ID}`)
+            .delete(`/participants/${PARTY_TYPE}/${PARTY_ID}`)
             .query(true)
             .reply(200, {})
         

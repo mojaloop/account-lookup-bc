@@ -76,8 +76,8 @@ describe("Account Lookup Routes - Integration", () => {
 
     test("GET - should fetch fspId for partyId and partyType", async () => {
         // Arrange
-        const partyId = mockedPartyIds[0];
-        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[2];
+        const partyType = mockedPartyTypes[2];
 
         // Act
         const response = await request(server)
@@ -85,7 +85,7 @@ describe("Account Lookup Routes - Integration", () => {
 
         // Assert
         expect(response.status).toBe(200);
-        expect(response.text).toEqual(mockedParticipantFspIds[3]);
+        expect(response.text).toEqual(mockedParticipantFspIds[2]);
     });
 
     test("GET - should receiver error when no match", async () => {
@@ -118,37 +118,6 @@ describe("Account Lookup Routes - Integration", () => {
         expect(response.text).toEqual(mockedParticipantFspIds[0]);
     });
 
-    test("GET - should fetch fspId for partyId, partyType and partySubType", async () => {
-        // Arrange
-        const partyId = mockedPartyIds[0];
-        const partyType = mockedPartyTypes[0];
-        const partySubType = mockedPartySubTypes[0];
-
-        // Act
-        const response = await request(server)
-            .get(`/${partyId}/${partyType}/${partySubType}`);
-
-        // Assert
-        expect(response.status).toBe(200);
-        expect(response.text).toEqual(mockedParticipantFspIds[3]);
-    });
-
-    test("GET - should fetch fspId for partyId, partyType, partySubType and currency", async () => {
-        // Arrange
-        const partyId = mockedPartyIds[0];
-        const partyType = mockedPartyTypes[0];
-        const partySubType = mockedPartySubTypes[0];
-        const currency = "USD";
-
-        // Act
-        const response = await request(server)
-            .get(`/${partyId}/${partyType}/${partySubType}?currency=${currency}`);
-
-        // Assert
-        expect(response.status).toBe(200);
-        expect(response.text).toEqual(mockedParticipantFspIds[0]);
-    });
-
     test("GET - should throw not found when partyId is not valid", async () => {
         // Arrange
         const partyId = "";
@@ -168,14 +137,12 @@ describe("Account Lookup Routes - Integration", () => {
         const request1: ParticipantLookup = {
             partyId: mockedPartyIds[0],
             partyType: mockedPartyTypes[0],
-            partySubType: null,
             currency: "USD"
         }
         const id2= "1235";
         const request2: ParticipantLookup = {
             partyId: mockedPartyIds[1],
             partyType: mockedPartyTypes[1],
-            partySubType: mockedPartySubTypes[1],
             currency: "EUR"
         }
 
@@ -201,14 +168,12 @@ describe("Account Lookup Routes - Integration", () => {
         const request1: ParticipantLookup = {
             partyId: mockedPartyIds[0],
             partyType: mockedPartyTypes[0],
-            partySubType: null,
             currency: "USD"
         }
         const id2= "1235";
         const request2: ParticipantLookup = {
             partyId: "non-existent-party-id",
             partyType: "non-existent-party-type",
-            partySubType: "non-existent-party-sub-type",
             currency: "EUR"
         }
 
@@ -239,7 +204,6 @@ describe("Account Lookup Routes - Integration", () => {
         const request2: ParticipantLookup = {
             partyId: "non-existent-party-id",
             partyType: "non-existent-party-type",
-            partySubType: "non-existent-party-sub-type",
             currency: "EUR"
         }
 

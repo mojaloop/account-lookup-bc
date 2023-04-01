@@ -45,7 +45,7 @@ import { Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { HttpOracleProvider } from "../../src/oracles/adapters/remote/http_oracleprovider";
 import { UnableToInitRemoteOracleProvider } from "../../src/errors";
-import { FSP_ID_RESPONSE, NOT_FOUND_PARTY_ID, NOT_FOUND_PARTY_SUB_ID, NOT_FOUND_PARTY_TYPE, PARTY_ID, PARTY_SUB_ID, PARTY_TYPE, RemoteOracleProviderHttpMock } from "../mocks/http_oracleprovider_mock";
+import { FSP_ID_RESPONSE, NOT_FOUND_PARTY_ID, NOT_FOUND_PARTY_TYPE, PARTY_ID, PARTY_TYPE, RemoteOracleProviderHttpMock } from "../mocks/http_oracleprovider_mock";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -57,12 +57,11 @@ const oracle: Oracle = {
     endpoint: "http://localhost:3000",
     name: "test",
     partyType: "MSISDN",
-    partySubType: null
 }
 
 describe("Implementations - Remote Oracle Provider Unit tests", () => {
     beforeAll(async () => {
-        oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger,oracle.endpoint as string);
+        oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger, oracle.endpoint as string);
         oracleproviderHttpServerMock.setUp();
         //oracleproviderHttpServerMock.enable();
 
@@ -98,7 +97,6 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
             endpoint: null,
             name: "test",
             partyType: "MSISDN",
-            partySubType: null
         }
         const badRemoteOracleProvider = new HttpOracleProvider(oracle, logger);
 
@@ -117,12 +115,12 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
 
     test("should throw error if couldn't get Participant FspId",async()=>{
         // Act && Assert
-        await expect(remoteOracleProvider.getParticipantFspId(NOT_FOUND_PARTY_TYPE,NOT_FOUND_PARTY_ID,NOT_FOUND_PARTY_SUB_ID, null)).rejects.toThrowError();
+        await expect(remoteOracleProvider.getParticipantFspId(NOT_FOUND_PARTY_TYPE, NOT_FOUND_PARTY_ID, null)).rejects.toThrowError();
     });
 
     test("should be able to get Participant FspId",async()=>{
         // Act
-        const result = await remoteOracleProvider.getParticipantFspId("MSISDN","123456789",null, null);
+        const result = await remoteOracleProvider.getParticipantFspId("MSISDN", "123456789", null);
 
         // Assert
         expect(result).toEqual(FSP_ID_RESPONSE);
@@ -130,13 +128,13 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
 
     test("should throw error if couldn't associate participant",async()=>{
         // Act && Assert
-        await expect(remoteOracleProvider.associateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE,NOT_FOUND_PARTY_ID,NOT_FOUND_PARTY_SUB_ID, null))
+        await expect(remoteOracleProvider.associateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE,NOT_FOUND_PARTY_ID, null))
             .rejects.toThrowError();
     });
 
     test("should be able to associate participant",async()=>{
          // Act
-         const result = await remoteOracleProvider.associateParticipant("fakeSpId", PARTY_TYPE,PARTY_ID, PARTY_SUB_ID, null);
+         const result = await remoteOracleProvider.associateParticipant("fakeSpId", PARTY_TYPE,PARTY_ID, null);
 
          // Assert
          expect(result).toBeNull();
@@ -144,13 +142,13 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
 
     test("should throw error if couldn't disassociate participant",async()=>{
         // Act && Assert
-        await expect(remoteOracleProvider.disassociateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE,NOT_FOUND_PARTY_ID,NOT_FOUND_PARTY_SUB_ID, null))
+        await expect(remoteOracleProvider.disassociateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE, NOT_FOUND_PARTY_ID, null))
             .rejects.toThrowError();
     });
 
     test("should be able to disassociate participant",async()=>{
             // Act
-            const result = await remoteOracleProvider.disassociateParticipant("fakeFspId", PARTY_TYPE,PARTY_ID, PARTY_SUB_ID, null);
+            const result = await remoteOracleProvider.disassociateParticipant("fakeFspId", PARTY_TYPE, PARTY_ID, null);
 
             // Assert
             expect(result).toBeNull();

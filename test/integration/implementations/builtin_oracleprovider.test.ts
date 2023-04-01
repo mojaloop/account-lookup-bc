@@ -50,8 +50,8 @@ const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-//const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "builtinOracleParties";
 
 let builtInOracleProvider: MongoOracleProviderRepo;
@@ -60,7 +60,6 @@ const oracle: Oracle = {
      endpoint:null,
      name: "test",
      partyType: "MSISDN",
-     partySubType:"PHONE",
      type: "builtin",
  };
 
@@ -70,7 +69,7 @@ const connectionString = `${CONNECTION_STRING}/${DB_NAME}`;
 
 describe("Implementations - Builtin Oracle Provider Integration tests", () => {
      beforeAll(async () => {
-         mongoClient = await MongoClient.connect(connectionString).catch((err) => {
+         mongoClient = await MongoClient.connect(CONNECTION_STRING).catch((err) => {
             throw new Error(`Unable to connect to mongo at ${connectionString} with error: ${err.message}`);
         });
          collection = mongoClient.db(DB_NAME).collection(COLLECTION_NAME);
@@ -107,12 +106,11 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const fspId = "fsp1";
         const partyType = "MSISDN";
         const partyId = "123456789";
-        const partySubId = "987654321";
         const currency = "USD";
-        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
+        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency);
 
         // Act
-        const result = await builtInOracleProvider.getParticipantFspId(partyType, partyId, partySubId, currency);
+        const result = await builtInOracleProvider.getParticipantFspId(partyType, partyId, currency);
 
         // Assert
         expect(result).toEqual(fspId);
@@ -124,14 +122,13 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
             const fspId = "fsp1";
             const partyType = "MSISDN";
             const partyId = "123456789";
-            const partySubId = "987654321";
             const currency = "USD";
 
             // Act
-           await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
+           await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency);
 
             // Assert
-            const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
+            const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, currency: currency});
             expect(queryResult).toBeDefined();
             expect(queryResult?.fspId).toEqual(fspId);
 
@@ -142,12 +139,12 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const fspId = "fsp1";
         const partyType = "MSISDN";
         const partyId = "123456789";
-        const partySubId = "987654321";
         const currency = "USD";
-        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
+
+        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency);
 
         // Act and Assert
-        await expect(builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency)).rejects.toThrow(ParticipantAssociationAlreadyExistsError);
+        await expect(builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency)).rejects.toThrow(ParticipantAssociationAlreadyExistsError);
 
 
     });
@@ -157,16 +154,15 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
         const fspId = "fsp1";
         const partyType = "MSISDN";
         const partyId = "123456789";
-        const partySubId = "987654321";
         const currency = "USD";
-        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, partySubId, currency);
+        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency);
 
         // Act
-        const result = await builtInOracleProvider.disassociateParticipant(fspId,partyType, partyId, partySubId, currency);
+        const result = await builtInOracleProvider.disassociateParticipant(fspId, partyType, partyId, currency);
 
         // Assert
         expect(result).toBeNull();
-        const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, partySubId: partySubId, currency: currency});
+        const queryResult = await collection.findOne({fspId: fspId, partyType: partyType, partyId: partyId, currency: currency});
         expect(queryResult).toBeNull();
 
     });

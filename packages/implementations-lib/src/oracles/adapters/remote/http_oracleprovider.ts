@@ -87,49 +87,49 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         });
     }
 
-    async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ): Promise<string|null> {
+    async getParticipantFspId(partyType:string, partyId: string, currency:string| null ): Promise<string|null> {
         let url = `/participants/${partyType}/${partyId}`;
-        if(partySubId) url+=`/${partySubId}`;
+
         if(currency) url+=`?currency=${currency}`;
 
         return this.httpClient.get(url).then((
             response: AxiosResponse) => {
             return response.data?.fspId ?? null;
         }).catch((error: Error) => {
-            this._logger.error(`getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} - ${error}`);
+            this._logger.error(`getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} - ${error}`);
             throw new Error('Error getting participant fspId');
         });
     }
 
-    async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null> {
+    async associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
         let url = `/participants/${partyType}/${partyId}`;
-        if(partySubId) url+=`/${partySubId}`;
+
         if(currency) url+=`?currency=${currency}`;
 
         return await this.httpClient.post(url, { fspId: fspId}).then((
                 _: AxiosResponse) => {
-                this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
+                this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
-                const err= new Error(`associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
+                const err= new Error(`associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
                 this._logger.error(err);
                 throw err;
             });
     }
 
-    async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null> {
+    async disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
         let url = `/participants/${partyType}/${partyId}`;
-        if(partySubId) url+=`/${partySubId}`;
+       
         if(currency) url+=`?currency=${currency}`;
 
         return await this.httpClient.delete(url, { data:{
                 fspId: fspId
             }}).then((
             _: AxiosResponse) => {
-                this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
+                this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
-                this._logger.error(`disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
+                this._logger.error(`disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
                 throw new Error('Error disassociating participant');
             });    
     }

@@ -94,42 +94,40 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	}
 
-	async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null> {
+	async getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null> {
 		try {
 			const data = await this.parties.findOne({
 				partyId: partyId,
 				partyType: partyType,
-				partySubId: partySubId,
 				currency: currency,
 
 			});
 
 			if(!data) {
-				this._logger.debug(`Unable to find participant for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
+				this._logger.debug(`Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
                 throw new NoSuchParticipantError();
             }
 
 			return data.fspId as unknown as string;
 
 		} catch (e: unknown) {
-			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
+			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToGetParticipantError();
 		}
 	}
 
 
-	async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null):Promise<null> {
+	async associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
 	{
 		const participant = await this.parties.findOne({
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubId: partySubId,
 			currency: currency,
 		});
 
 		if(participant) {
-			this._logger.debug(`Participant association already exists for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
+			this._logger.debug(`Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 			throw new ParticipantAssociationAlreadyExistsError();
 		}
 
@@ -137,31 +135,29 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubId: partySubId,
 			currency: currency,
 		}).catch((e: unknown) => {
-			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
+			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToStoreParticipantAssociationError();
 		}
 		);
-			this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
+			this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 			return null;
 		}
 	}
 
-	async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null):Promise<null> {
+	async disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
 		await this.parties.deleteOne({
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
-			partySubId: partySubId,
 			currency: currency,
 		}).catch((e: unknown) => {
-			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, partySubId ${partySubId}, currency ${currency}: ${(e as Error).message}`);
+			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToDeleteParticipantAssociationError();
 		});
 
-		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and partySubId ${partySubId} and currency ${currency}`);
+		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 		return null;
 	}
 
@@ -184,7 +180,6 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 				partyId: association.partyId ?? null,
 				fspId: association.fspId ?? null,
 				partyType: association.partyType ?? null,
-				partySubId: association.partySubId ?? null,
 				currency: association.currency ?? null
 			} as Association;
 		});

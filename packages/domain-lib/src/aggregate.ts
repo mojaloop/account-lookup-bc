@@ -220,7 +220,7 @@ export class AccountLookupAggregate  {
 		await this.validateParticipant(msg.payload.requesterFspId);
 
 		if(!destinationFspIdToUse){
-			destinationFspIdToUse = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.partySubType, msg.payload.currency);
+			destinationFspIdToUse = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.currency);
 		}
 
 		await this.validateParticipant(destinationFspIdToUse);
@@ -273,7 +273,7 @@ export class AccountLookupAggregate  {
 		this._logger.debug(`Got getParticipantEvent msg for partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId} currency: ${msg.payload.currency} - requesterFspId: ${msg.payload.requesterFspId}`);
 		await this.validateParticipant(msg.payload.requesterFspId);
 
-		const participantId = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.partySubType, msg.payload.currency);
+		const participantId = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.currency);
 
 		await this.validateParticipant(participantId);
 
@@ -297,9 +297,9 @@ export class AccountLookupAggregate  {
 		this._logger.debug(`Got participantAssociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
 		await this.validateParticipant(msg.payload.ownerFspId);
 
-		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType, msg.payload.partySubType);
+		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType);
 
-		await oracleProvider.associateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.partySubType, msg.payload.currency).catch(error=>{
+		await oracleProvider.associateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.currency).catch(error=>{
 			this._logger.error(`Unable to associate party id: ${msg.payload.partyId} ` + error);
 			throw new UnableToAssociateParticipantError();
 		});
@@ -324,9 +324,9 @@ export class AccountLookupAggregate  {
 		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
 		await this.validateParticipant(msg.payload.ownerFspId);
 
-		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType, msg.payload.partySubType);
+		const oracleProvider = await this.getOracleAdapter(msg.payload.partyType);
 
-		await oracleProvider.disassociateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.partySubType, msg.payload.currency).catch(error=>{
+		await oracleProvider.disassociateParticipant(msg.payload.ownerFspId, msg.payload.partyType, msg.payload.partyId, msg.payload.currency).catch(error=>{
 			this._logger.error(`Unable to disassociate party id: ${msg.payload.partyId} ` + error);
 			throw new UnableToDisassociateParticipantError();
 		});
@@ -371,10 +371,10 @@ export class AccountLookupAggregate  {
 	//#endregion
 
 	//#region Oracles
-	private async getOracleAdapter(partyType:string, partySubType:string | null): Promise<IOracleProviderAdapter> {
-		const oracle = await this._oracleFinder.getOracle(partyType, partySubType)
+	private async getOracleAdapter(partyType:string): Promise<IOracleProviderAdapter> {
+		const oracle = await this._oracleFinder.getOracle(partyType)
 			.catch(error=>{
-				this._logger.error(`Unable to get oracle for partyType: ${partyType} and partySubType: ${partySubType} ` + error);
+				this._logger.error(`Unable to get oracle for partyType: ${partyType} ` + error);
 				throw new UnableToGetOracleFromOracleFinderError();
 		});
 
@@ -395,12 +395,12 @@ export class AccountLookupAggregate  {
 
 
 
-	private async getParticipantIdFromOracle(partyId:string, partyType:string, partySubType:string | null, currency:string | null): Promise<string> {
-		const oracleAdapter = await this.getOracleAdapter(partyType, partySubType);
+	private async getParticipantIdFromOracle(partyId:string, partyType:string, currency:string | null): Promise<string> {
+		const oracleAdapter = await this.getOracleAdapter(partyType);
 
-		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, partySubType, currency)
+		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, currency)
 			.catch(error=>{
-				this._logger.error(`getParticipantFspId - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, partySubType: ${partySubType}, currency: ${currency} ` + error);
+				this._logger.error(`getParticipantFspId - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error);
 				throw new UnableToGetParticipantFspIdError();
 			});
 
@@ -458,7 +458,7 @@ export class AccountLookupAggregate  {
 
 		let associations: Association[] = [];
 		for await (const oracle of builtinOracles) {
-			const oracleProvider = await this.getOracleAdapter(oracle.partyType, oracle.partySubType);
+			const oracleProvider = await this.getOracleAdapter(oracle.partyType);
 			associations = await oracleProvider.getAllAssociations().catch(error=>{
 				this._logger.error(`Unable to get oracle associations for oracle: ${oracle.id} ` + error);
 				throw new UnableToGetOracleAssociationsError();
@@ -490,10 +490,10 @@ export class AccountLookupAggregate  {
 
 	//#region Account Lookup Routes
 	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string | null> {
-		const {partyId, partyType, partySubType, currency} = accountIdentifier;
+		const {partyId, partyType, currency} = accountIdentifier;
 
-		const fspId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
-			this._logger.error(`getAccountLookUp - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, partySubType: ${partySubType}, currency: ${currency} ` + error);
+		const fspId = await this.getParticipantIdFromOracle(partyId, partyType, currency).catch(error=>{
+			this._logger.error(`getAccountLookUp - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error);
 			throw new UnableToGetParticipantFspIdError();
 		});
 
@@ -505,10 +505,10 @@ export class AccountLookupAggregate  {
 		const participantsList:{[x: string]: string | null} = {};
 
 		for await (const [key, value] of Object.entries(identifiersList)) {
-				const {partyId, partyType, partySubType, currency} = value;
+				const {partyId, partyType, currency} = value;
 
-				const fspId = await this.getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
-					this._logger.error(`getBulkAccountLookup - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, partySubType: ${partySubType}, currency: ${currency} ` + error);
+				const fspId = await this.getParticipantIdFromOracle(partyId, partyType, currency).catch(error=>{
+					this._logger.error(`getBulkAccountLookup - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error);
 					return null;
 				});
 

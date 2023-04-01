@@ -49,7 +49,6 @@ type Association = {
     fspId: string;
     partyType: string;
     partyId: string;
-    partySubId: string|null;
     currency: string|null;
 }
 
@@ -116,7 +115,6 @@ export class RemoteOracle {
                     partyId: record.partyId,
                     fspId: record.fspId,
                     partyType: record.partyType,
-                    partySubId: record?.partySubId??"NULL",
                     currency: record?.currency??"NULL",
                 };
                 //Create key from partyId, partyType, partySubType and currency
@@ -152,51 +150,51 @@ export class RemoteOracle {
         const checkNull = (value:string|null|undefined):string => {
             return (value === null || value === undefined)?"NULL":value;
         };
-        return `${data.partyId}-${data.partyType}-${checkNull(data.partySubId)}-${checkNull(data.currency)}`;
+        return `${data.partyId}-${data.partyType}-${checkNull(data.currency)}`;
     }
 
-    async getParticipantFspId(partyType:string, partyId: string, partySubId:string|null, currency:string| null ):Promise<string|null> {
-        const key = this.createKey({partyId, partyType, partySubId, currency});
+    async getParticipantFspId(partyType:string, partyId: string, currency:string|null ):Promise<string|null> {
+        const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
         if(association){
-            this._logger.debug(`Found association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
+            this._logger.debug(`Found association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
             return association.fspId;
         }
-        this._logger.debug(`No association found for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
+        this._logger.debug(`No association found for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
         return null;
     }
     
-    async associateParticipant(fspId:string, partyType:string, partyId: string,partySubId:string|null, currency:string| null): Promise<null> {
+    async associateParticipant(fspId:string, partyType:string, partyId: string, currency:string|null): Promise<null> {
        //Create key from partyId, partyType,partySubType and currency
-        const key = this.createKey({partyId, partyType, partySubId, currency});
+        const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
         
         if(association){
-            this._logger.error(`Association already exists for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency}`);
-            throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${partySubId}, ${currency}`);
+            this._logger.error(`Association already exists for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
+            throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${currency}`);
         }
         else{
-            this._associations.set(key, {partyId, partyType, partySubId, currency, fspId});
-            this._logger.info(`Successfully added association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
+            this._associations.set(key, {partyId, partyType, currency, fspId});
+            this._logger.info(`Successfully added association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             this._saveToFile();
             return null;
         }
     }
 
-    async disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubId:string|null, currency:string| null): Promise<null> {
-        const key = this.createKey({partyId, partyType, partySubId, currency});
+    async disassociateParticipant(fspId:string, partyType:string, partyId: string , currency:string|null): Promise<null> {
+        const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
 
         if(association && association.fspId === fspId){
             this._associations.delete(key);
             this._saveToFile();
-            this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, partySubId: ${partySubId}, currency: ${currency} with fspId: ${fspId}`);
+            this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             return null;
         }
         else{
-            this._logger.error(`No association found for partyType: ${partyType}, partyId: ${partyId}, partySubId: ${partySubId}, currency: ${currency} and fspId: ${fspId}`);
+            this._logger.error(`No association found for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} and fspId: ${fspId}`);
             throw new Error(`No association found for partyId, partyType,
-            partySubType and currency: ${partyId}, ${partyType}, ${partySubId}, ${currency}`);
+            partySubType and currency: ${partyId}, ${partyType}, ${currency}`);
         }
     }
 

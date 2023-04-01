@@ -30,7 +30,7 @@
 
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import { ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
-import { ILocalCache, LocalCache } from "../../src/";
+import { ILocalCache, LocalCache } from "../../src";
 import { IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";

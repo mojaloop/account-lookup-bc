@@ -90,7 +90,7 @@ const KAFKA_LOGS_TOPIC = process.env["KAFKA_LOGS_TOPIC"] || "logs";
 
 //Oracles
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
-const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:example@localhost:27017/";
+const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
 
 const PARTICIPANTS_SVC_URL = process.env["PARTICIPANTS_SVC_URL"] || "http://localhost:3010";
 const HTTP_CLIENT_TIMEOUT_MS = 10_000;

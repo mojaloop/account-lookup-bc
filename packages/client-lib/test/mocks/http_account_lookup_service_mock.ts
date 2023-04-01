@@ -30,7 +30,7 @@
 
 import nock from "nock";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { ID_1, ID_2, FSP_ID, FSP_ID2, FSP_ID_WITH_CURRENCY_EUR, FSP_ID_WITH_CURRENCY_USD, FSP_ID_WITH_SUB_TYPE, PARTY_ID, PARTY_SUB_TYPE, PARTY_TYPE } from "./data";
+import { ID_1, ID_2, FSP_ID, FSP_ID2, FSP_ID_WITH_CURRENCY_EUR, FSP_ID_WITH_CURRENCY_USD, FSP_ID_WITH_SUB_TYPE, PARTY_ID, PARTY_TYPE } from "./data";
 
 export class HttpAccountLookupServiceMock {
      // Properties received through the constructor.
@@ -52,28 +52,19 @@ export class HttpAccountLookupServiceMock {
             .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
             .reply(200, FSP_ID)
 
-            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}/${PARTY_SUB_TYPE}`)
-            .reply(200, FSP_ID_WITH_SUB_TYPE)
-
             .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
             .query({currency: "EUR"})
             .reply(200, FSP_ID_WITH_CURRENCY_EUR)
-
-            .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}/${PARTY_SUB_TYPE}`)
-            .query({currency: "USD"})
-            .reply(200, FSP_ID_WITH_CURRENCY_USD)
 
             .post("/account-lookup", {
                 [ID_1] : {
                     partyId: PARTY_ID,
                     partyType: PARTY_TYPE,
-                    partySubType: PARTY_SUB_TYPE,
                     currency: null
                 },
                 [ID_2] : {
                     partyId: PARTY_ID,
                     partyType: PARTY_TYPE,
-                    partySubType: PARTY_SUB_TYPE,
                     currency: "USD"
                 }
             })
@@ -81,13 +72,11 @@ export class HttpAccountLookupServiceMock {
 
             .post("/account-lookup", {
                 [ID_1] : {
-                    partySubType: PARTY_SUB_TYPE,
                     currency: null
                 },
                 [ID_2] : {
                     partyId: PARTY_ID,
                     partyType: PARTY_TYPE,
-                    partySubType: PARTY_SUB_TYPE,
                     currency: "USD"
                 }
             })

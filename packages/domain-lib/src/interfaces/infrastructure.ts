@@ -52,7 +52,7 @@ export interface IOracleFinder{
     getAllOracles():Promise<Oracle[]>;
     getOracleById(id:string):Promise<Oracle|null>;
     getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string, partySubtype: string | null):Promise<Oracle | null>;
+    getOracle(partyType:string):Promise<Oracle | null>;
 }
 
 export interface IOracleProviderAdapter{
@@ -61,9 +61,9 @@ export interface IOracleProviderAdapter{
     init(): Promise<void>;
     destroy(): Promise<void>;
     healthCheck(): Promise<boolean>;
-    getParticipantFspId(partyType:string, partyId: string, partySubType:string|null, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string,partySubType:string|null, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string ,partySubType:string|null, currency:string| null):Promise<null>;
+    getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null>;
+    associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
+    disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
     getAllAssociations():Promise<Association[]>;
 }
 
