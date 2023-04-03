@@ -1,4 +1,4 @@
-"use strict";
+"use strict"
 
 module.exports = {
 	preset: "ts-jest",
@@ -12,10 +12,10 @@ module.exports = {
 	clearMocks: true,
 	coverageThreshold: {
 		"global": {
-			// "branches": 90,
-			// "functions": 90,
-			// "lines": 90,
-			// "statements": -10
+			"branches": 90,
+			"functions": 90,
+			"lines": 90,
+			"statements": -10
 		}
 	}
 }
