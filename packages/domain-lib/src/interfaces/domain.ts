@@ -36,13 +36,27 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
+
+import { IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+
+export interface IParty {
+    id: string;
+    type: string;
+    currency: string | null;
+    subId: string | null;
+}
+
+export interface IPartyAccount {
+	fspId: string;
+	currency: string[];
+	extensionList: string[];
+}
+
+export interface IErrorMessageFactory {
+    create(message:IMessage, error: Error): IMessage;
+}
 
 
-export * from "./aggregate";
-export * from "./types";
-export * from "./errors";
-export * from "./interfaces/infrastructure";
-export * from "./interfaces/domain";

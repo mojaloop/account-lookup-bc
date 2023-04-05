@@ -63,8 +63,6 @@ import {
 import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "./interfaces/infrastructure";
 
 import {
-	AccountLookUpErrorEvt,
-	AccountLookUpErrorEvtPayload,
 	ParticipantAssociationRemovedEvt,
 	ParticipantAssociationCreatedEvt,
 	ParticipantAssociationCreatedEvtPayload,
@@ -83,6 +81,8 @@ import {
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { randomUUID } from "crypto";
 import { ParticipantLookup, Oracle, AddOracleDTO, OracleType, Association } from "./types";
+import { IErrorMessageFactory } from "./interfaces/domain";
+import { ErrorMessageFactory } from "./factories/error_message_factory";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -90,6 +90,7 @@ export class AccountLookupAggregate  {
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantService;
+	private readonly _errorMessageFactory: IErrorMessageFactory;
 	private _oracleProvidersAdapters: IOracleProviderAdapter[];
 
 	constructor(
@@ -105,6 +106,7 @@ export class AccountLookupAggregate  {
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
 		this._oracleProvidersAdapters = [];
+		this._errorMessageFactory = new ErrorMessageFactory();
 	}
 
 	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
@@ -151,24 +153,11 @@ export class AccountLookupAggregate  {
 				if(isMessageValid) {
 					await this.handleEvent(message);
 				}
-		} catch(error: unknown) {
-				const errorMessage = (error as Error).constructor.name;
-				this._logger.error(`Error processing event : ${message.msgName} -> ` + errorMessage);
-
-				// TODO: find a way to publish the correct error event type
-				const errorPayload: AccountLookUpErrorEvtPayload = {
-					errorMsg: errorMessage,
-					partyId: message.payload?.partyId || null,
-					sourceEvent: message.msgName,
-					partyType: message.payload?.partyType || null,
-					partySubType: message.payload?.partySubType || null,
-					requesterFspId: message.payload?.requesterFspId || null,
-
-				};
-				const messageToPublish = new AccountLookUpErrorEvt(errorPayload);
-				messageToPublish.fspiopOpaqueState = { ...message.fspiopOpaqueState };
-				await this._messageProducer.send(messageToPublish);
-			}
+		} catch(error: any) {
+			this._logger.error(`Error processing event : ${message.msgName} -> ` + error.message);
+			const errorEvent = this._errorMessageFactory.create(message, error);
+			this._messageProducer.send(errorEvent);
+		}
 	}
 
 	private validateMessage(message:IMessage): boolean {

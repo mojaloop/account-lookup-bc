@@ -45,19 +45,6 @@ export enum CurrencyType {
 	EURO = "euro",
 }
 
-export interface IParty {
-    id: string;
-    type: string;
-    currency: string | null;
-    subId: string | null;
-}
-
-export interface IPartyAccount {
-	fspId: string;
-	currency: string[];
-	extensionList: string[];
-}
-
 export type ParticipantLookup = {
 	partyId: string;
 	partyType: string;

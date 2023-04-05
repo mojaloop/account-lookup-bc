@@ -41,7 +41,7 @@
 "use strict";
 
 import { InvalidPartyIdError, InvalidPartyTypeError } from "../errors";
-import { IParty } from "../types";
+import { IParty } from "../interfaces/domain";
 
 export class Party implements IParty{
 	id: string;

@@ -62,7 +62,7 @@ import {
 	OracleAdapterFactory,
 	ParticipantAdapter
 } from "@mojaloop/account-lookup-bc-implementations-lib";
-import {AccountLookupBCTopics, BOUNDED_CONTEXT_NAME} from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {AccountLookupBCTopics, ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME} from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {
 	AuthenticatedHttpRequester,
 	IAuthenticatedHttpRequester
@@ -152,7 +152,7 @@ export class Service {
 
 		if (!logger) {
 			logger = new KafkaLogger(
-				BOUNDED_CONTEXT_NAME,
+				ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
 				APP_NAME,
 				APP_VERSION,
 				kafkaProducerOptions,
