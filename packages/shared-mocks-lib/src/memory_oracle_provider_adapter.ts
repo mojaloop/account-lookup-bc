@@ -74,7 +74,7 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
     }
 
     getParticipantFspId(partyType: string, partyId: string, currency: string | null): Promise<string | null> {
-        const test = mockedOracleAdapterResults
+        const test = mockedOracleAdapterResults;
         const result = mockedOracleAdapterResults.find((result) => {
             return result.partyId === partyId && result.partyType === partyType && result.currency === currency;
         });

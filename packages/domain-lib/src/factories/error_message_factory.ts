@@ -47,15 +47,13 @@ import { AccountLookUpUnknownErrorEvent, AccountLookupBCInvalidMessagePayloadErr
 
 export class ErrorMessageFactory implements IErrorMessageFactory {
 
-    constructor() {}
-
     public create(message:IMessage, error: Error): IMessage {
         const errorMessage = error.message;
         const partyId = message.payload?.partyId || null;
         const partyType = message.payload?.partyType || null;
         const partySubType = message.payload?.partySubType || null;
         const requesterFspId = message.payload?.requesterFspId || null;
-        const sourceEvent = message.msgName
+        const sourceEvent = message.msgName;
 
         const errorPayload: AccountLookupErrorPayload = {
             errorMessage,
