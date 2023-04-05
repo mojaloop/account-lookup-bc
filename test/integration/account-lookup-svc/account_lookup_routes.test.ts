@@ -1,4 +1,3 @@
-import {IAuthenticatedHttpRequester} from '@mojaloop/security-bc-client-lib';
 /**
  License
  --------------
@@ -46,6 +45,7 @@ import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, M
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { Service } from "@mojaloop/account-lookup-bc-account-lookup-svc";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
