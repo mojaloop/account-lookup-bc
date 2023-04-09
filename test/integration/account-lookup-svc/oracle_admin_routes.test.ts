@@ -40,11 +40,11 @@
 "use strict";
 
 import request from "supertest";
-import { Association, IOracleFinder, IOracleProviderFactory, IParticipantService} from "@mojaloop/account-lookup-bc-domain-lib";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { Association, IOracleFinder, IOracleProviderFactory, IParticipantService} from "../../../packages/domain-lib/src";
+import { Service } from "../../../packages/account-lookup-svc/src";
+import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, MemoryAuthenticatedHttpRequesterMock, mockedOracleAdapterResults } from "../../../packages/shared-mocks-lib/src";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { Service } from "@mojaloop/account-lookup-bc-account-lookup-svc";
 import { randomUUID } from "crypto";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 

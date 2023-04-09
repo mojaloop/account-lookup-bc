@@ -46,8 +46,8 @@
 	WithId
 	} from "mongodb";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from "../errors";
-import {IOracleFinder, NoSuchOracleError, Oracle} from "@mojaloop/account-lookup-bc-domain-lib";
+import { NoSuchOracleError, OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from "../errors";
+import {IOracleFinder, Oracle} from "@mojaloop/account-lookup-bc-domain-lib";
 
 export class MongoOracleFinderRepo implements IOracleFinder{
 	private readonly _logger: ILogger;

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -40,6 +40,11 @@
 
  "use strict";
 
+export class NoSuchOracleError extends Error {
+    constructor(message?: string) {
+        super(message || "No such oracle");
+    }
+}
 
 export class OracleTypeNotSupportedError extends Error {
   constructor(message?: string) {
@@ -67,7 +72,7 @@ export class UnableToGetOracleError extends Error {
     constructor(message?: string) {
         super(message || 'Unable to get oracle');
     }
-}   
+}
 export class OracleAlreadyRegisteredError extends Error {
     constructor(message?:string) {
         super(message || 'Oracle already registered');

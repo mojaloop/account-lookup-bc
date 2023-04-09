@@ -41,16 +41,16 @@
 "use strict";
 
 import { ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleFinderRepo, OracleAlreadyRegisteredError } from "@mojaloop/account-lookup-bc-implementations-lib";
-import { NoSuchOracleError, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
+import { MongoOracleFinderRepo, OracleAlreadyRegisteredError, NoSuchOracleError } from "../../../packages/implementations-lib/src";
+import { Oracle } from "../../../packages/domain-lib/src";
 import { MongoClient, Collection } from "mongodb";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
-// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
+// const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "oracles";
 
 let oracleFinder : MongoOracleFinderRepo;
@@ -244,7 +244,7 @@ describe("Implementations - Oracle Finder Integration tests", () => {
     test("should throw error if there are no oracles with the given party type and party sub type", async () => {
 
         //Act && Assert
-        await expect(oracleFinder.getOracle("nonExistingOracleType")).rejects.toThrow(NoSuchOracleError);
+        await expect(oracleFinder.getOracle("nonExistingOracleType")).rejects.toThrowError(NoSuchOracleError);
 
     });
 
