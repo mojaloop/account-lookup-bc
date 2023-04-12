@@ -40,8 +40,8 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import { start } from "./service";
+import { Service } from "./service";
 
-start().then(() => {
+Service.start().then(() => {
  console.log("Started remote oracle routes");
 });

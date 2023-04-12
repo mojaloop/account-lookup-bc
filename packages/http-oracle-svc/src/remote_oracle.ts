@@ -40,10 +40,10 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import fs from "fs";
-import { readFile, writeFile } from "fs/promises";
-import { watch } from "node:fs";
+import {readFile, writeFile} from "fs/promises";
+import {watch} from "node:fs";
 
 type Association = {
     fspId: string;
@@ -52,7 +52,16 @@ type Association = {
     currency: string|null;
 }
 
-export class RemoteOracle {
+export interface IRemoteOracle {
+    init(): Promise<void>;
+    destroy(): Promise<void>;
+    getParticipantFspId(partyType: string, partyId: string, currency: string | null): Promise<string | null>;
+    associateParticipant(fspId: string, partyType: string, partyId: string, currency: string | null): Promise<null>;
+    disassociateParticipant(fspId: string, partyType: string, partyId: string, currency: string | null): Promise<null>;
+    healthCheck(): Promise<boolean>;
+}
+
+export class RemoteOracle implements IRemoteOracle {
     private readonly _logger: ILogger;
     private readonly _filePath: string;
     private _associations:Map<string, Association> = new Map<string, Association>();
@@ -68,29 +77,31 @@ export class RemoteOracle {
     async init(): Promise<void> {
         const exists = fs.existsSync(this._filePath);
 
-        if(!exists){
+        // TODO check that the directory exists, it should, we can only continue if the file does not exist
+
+        if (!exists) {
             this._logger.info(`File "${this._filePath}" does not exist. Creating it.`);
             return;
         }
 
         await this._loadFromFile();
 
-        let fsWait:NodeJS.Timeout | undefined; // debounce wait
-        
+        let fsWait: NodeJS.Timeout | undefined; // debounce wait
+
         this._fileWatcher = watch(this._filePath, async (eventType) => {
-            if (eventType === "change") {
+            if (eventType==="change") {
                 if (fsWait) return;
                 fsWait = setTimeout(() => {
                     fsWait = undefined;
                 }, 100);
-               this._logger.info(`File "${this._filePath}" changed. Reloading associations.`);
-               await this._loadFromFile();
+                this._logger.info(`File "${this._filePath}" changed. Reloading associations.`);
+                await this._loadFromFile();
             }
         });
     }
 
     async destroy(): Promise<void> {
-        this._fileWatcher.close();
+        if(this._fileWatcher) this._fileWatcher.close();
     }
 
     private async _loadFromFile(): Promise<void>{
@@ -153,27 +164,26 @@ export class RemoteOracle {
         return `${data.partyId}-${data.partyType}-${checkNull(data.currency)}`;
     }
 
-    async getParticipantFspId(partyType:string, partyId: string, currency:string|null ):Promise<string|null> {
+    async getParticipantFspId(partyType: string, partyId: string, currency: string | null): Promise<string | null> {
         const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
-        if(association){
+        if (association) {
             this._logger.debug(`Found association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
             return association.fspId;
         }
         this._logger.debug(`No association found for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
         return null;
     }
-    
-    async associateParticipant(fspId:string, partyType:string, partyId: string, currency:string|null): Promise<null> {
-       //Create key from partyId, partyType,partySubType and currency
+
+    async associateParticipant(fspId: string, partyType: string, partyId: string, currency: string | null): Promise<null> {
+        //Create key from partyId, partyType,partySubType and currency
         const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
-        
-        if(association){
+
+        if (association) {
             this._logger.error(`Association already exists for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
             throw new Error(`Duplicate association found for partyId, partyType, partySubType and currency: ${partyId}, ${partyType}, ${currency}`);
-        }
-        else{
+        } else {
             this._associations.set(key, {partyId, partyType, currency, fspId});
             this._logger.info(`Successfully added association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             this._saveToFile();
@@ -181,17 +191,16 @@ export class RemoteOracle {
         }
     }
 
-    async disassociateParticipant(fspId:string, partyType:string, partyId: string , currency:string|null): Promise<null> {
+    async disassociateParticipant(fspId: string, partyType: string, partyId: string, currency: string | null): Promise<null> {
         const key = this.createKey({partyId, partyType, currency});
         const association = this._associations.get(key);
 
-        if(association && association.fspId === fspId){
+        if (association && association.fspId===fspId) {
             this._associations.delete(key);
             this._saveToFile();
             this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             return null;
-        }
-        else{
+        } else {
             this._logger.error(`No association found for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} and fspId: ${fspId}`);
             throw new Error(`No association found for partyId, partyType,
             partySubType and currency: ${partyId}, ${partyType}, ${currency}`);
