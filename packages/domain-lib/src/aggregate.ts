@@ -42,7 +42,7 @@
 
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { DomainEventMsg, IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
 	DuplicateOracleError,
 	InvalidMessagePayloadError,
@@ -61,7 +61,7 @@ import {
 	UnableToProcessMessageError
 } from "./errors";
 import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "./interfaces/infrastructure";
-
+import { AccountLookUpUnknownErrorEvent, AccountLookupBCInvalidMessagePayloadErrorEvent, AccountLookupBCInvalidMessageTypeErrorEvent, AccountLookupBCInvalidMessageTypeErrorPayload, AccountLookupBCInvalidParticipantIdErrorEvent, AccountLookupBCNoSuchOracleAdapterErrorEvent, AccountLookupBCNoSuchOracleErrorEvent, AccountLookupBCNoSuchParticipantErrorEvent, AccountLookupBCNoSuchParticipantFspIdErrorEvent, AccountLookupBCUnableToAssociateParticipantErrorEvent, AccountLookupBCUnableToDisassociateParticipantErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent, AccountLookupBCUnableToGetParticipantFspIdErrorEvent, AccountLookupErrorPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {
 	ParticipantAssociationRemovedEvt,
 	ParticipantAssociationCreatedEvt,
@@ -81,8 +81,7 @@ import {
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { randomUUID } from "crypto";
 import { ParticipantLookup, Oracle, AddOracleDTO, OracleType, Association } from "./types";
-import { IErrorMessageFactory } from "./interfaces/domain";
-import { ErrorMessageFactory } from "./factories/error_message_factory";
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -90,7 +89,6 @@ export class AccountLookupAggregate  {
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantService;
-	private readonly _errorMessageFactory: IErrorMessageFactory;
 	private _oracleProvidersAdapters: IOracleProviderAdapter[];
 
 	constructor(
@@ -106,7 +104,6 @@ export class AccountLookupAggregate  {
 		this._messageProducer = messageProducer;
 		this._participantService = participantService;
 		this._oracleProvidersAdapters = [];
-		this._errorMessageFactory = new ErrorMessageFactory();
 	}
 
 	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
@@ -148,71 +145,87 @@ export class AccountLookupAggregate  {
 
 	//#region Event handlers
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
-		try {
-				const isMessageValid = this.validateMessage(message);
-				if(isMessageValid) {
-					await this.handleEvent(message);
-				}
-		} catch(error: any) {
-			this._logger.error(`Error processing event : ${message.msgName} -> ` + error.message);
-			const errorEvent = this._errorMessageFactory.create(message, error);
-			this._messageProducer.send(errorEvent);
-		}
+			let eventToPublish = null;
+			try{
+				this.validateMessage(message)
+			}
+			catch(error: any) {
+				this._logger.error("Invalid message received: " + error.message);
+				eventToPublish = this.createErrorEvent(message, error);
+				await this._messageProducer.send(eventToPublish);
+				return;
+			}
+
+			switch(message.msgName){
+				case PartyQueryReceivedEvt.name:
+					eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
+					break;
+				case PartyInfoAvailableEvt.name:
+					eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
+					break;
+				case ParticipantQueryReceivedEvt.name:
+					eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
+					break;
+				case ParticipantAssociationRequestReceivedEvt.name:
+					eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(message as ParticipantAssociationRequestReceivedEvt);
+					break;
+				case ParticipantDisassociateRequestReceivedEvt.name:
+					eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
+					break;
+				default:
+					const errorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
+						partyId: message.payload?.partyId || null,
+						partySubType: message.payload?.partySubType || null,
+						partyType: message.payload?.partyType || null,
+						requesterFspId: message.payload?.requesterFspId || null,
+					};
+					eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(errorPayload);
+					eventToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
+					this._logger.error(`message type has invalid format or value ${message.msgName}`);
+			}
+
+			await this._messageProducer.send(eventToPublish);
 	}
 
-	private validateMessage(message:IMessage): boolean {
+	private validateMessage(message:IMessage): void {
 		if(!message.payload){
-			this._logger.error(`AccountLookUpEventHandler: message payload has invalid format or value`);
-			throw new InvalidMessagePayloadError();
+			const errorMessage = `Message payload is missing`;
+			this._logger.error(errorMessage);
+			throw new InvalidMessagePayloadError(errorMessage);
 		}
 		if(message.msgType !== MessageTypes.DOMAIN_EVENT){
-			this._logger.error(`AccountLookUpEventHandler: message type is invalid : ${message.msgType}`);
-			throw new InvalidMessageTypeError();
+			const errorMessage = `Message type is invalid`;
+			this._logger.error(errorMessage);
+			throw new InvalidMessageTypeError(errorMessage);
 		}
-
-		return true;
-	}
-
-	private async handleEvent(message:IMessage):Promise<void> {
-		let eventToPublish = null;
-		switch(message.msgName){
-			case PartyQueryReceivedEvt.name:
-				eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
-				break;
-			case PartyInfoAvailableEvt.name:
-				eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
-				break;
-			case ParticipantQueryReceivedEvt.name:
-				eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
-				break;
-			case ParticipantAssociationRequestReceivedEvt.name:
-				eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(message as ParticipantAssociationRequestReceivedEvt);
-				break;
-			case ParticipantDisassociateRequestReceivedEvt.name:
-				eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
-				break;
-			default:
-				this._logger.error(`message type has invalid format or value ${message.msgName}`);
-				throw new InvalidMessageTypeError();
-			}
-		if(eventToPublish){
-			await this._messageProducer.send(eventToPublish);
-		}else{
-			throw new UnableToProcessMessageError();
-		}
-
 	}
 
 	private async handlePartyQueryReceivedEvt(msg: PartyQueryReceivedEvt):Promise<PartyInfoRequestedEvt>{
 		this._logger.debug(`Got getPartyEvent msg for partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId} - requesterFspId: ${msg.payload.requesterFspId} destinationFspId: ${msg.payload.destinationFspId}`);
 		let destinationFspIdToUse = msg.payload.destinationFspId;
-		await this.validateParticipant(msg.payload.requesterFspId);
+
+		try{
+			await this.validateParticipant(msg.payload.requesterFspId);
+		}
+		catch(error:any){
+			return this.createErrorEvent(msg, error) as any;
+		};
 
 		if(!destinationFspIdToUse){
-			destinationFspIdToUse = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.currency);
+			try{
+				destinationFspIdToUse = await this.getParticipantIdFromOracle(msg.payload.partyId, msg.payload.partyType, msg.payload.currency)
+			}
+			catch(error:any){
+				return this.createErrorEvent(msg, error) as any;
+			};
 		}
 
-		await this.validateParticipant(destinationFspIdToUse);
+		try{
+			await this.validateParticipant(destinationFspIdToUse);
+		}
+		catch(error:any){
+			return this.createErrorEvent(msg, error) as any;
+		};
 
 		const payload:PartyInfoRequestedEvtPayload = {
 			requesterFspId: msg.payload.requesterFspId ,
@@ -337,16 +350,27 @@ export class AccountLookupAggregate  {
 
 	private async validateParticipant(participantId: string | null):Promise<void>{
 		if(participantId){
-			const participant = await this._participantService.getParticipantInfo(participantId);
+			let participant: IParticipant | null = null;
+
+			try{
+				participant = await this._participantService.getParticipantInfo(participantId);
+			}
+			catch(error){
+				const errorMessage = `Unable to get participant info for participantId: ${participantId} ` + error;
+				this._logger.error(errorMessage + error);
+				throw new UnableToGetParticipantFspIdError(errorMessage);
+			}
 
 			if(!participant) {
-				this._logger.debug(`No participant found`);
-				throw new NoSuchParticipantError();
+				const errorMessage = `No participant found for participantId: ${participantId}`;
+				this._logger.error(errorMessage);
+				throw new NoSuchParticipantError(errorMessage);
 			}
 
 			if(participant.id !== participantId){
-				this._logger.debug(`Participant id mismatch ${participant.id} ${participantId}`);
-				throw new InvalidParticipantIdError();
+				const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
+				this._logger.error(errorMessage);
+				throw new InvalidParticipantIdError(errorMessage);
 			}
 
 			// TODO enable participant.isActive check once this is implemented over the participants side
@@ -401,6 +425,60 @@ export class AccountLookupAggregate  {
 		return fspId;
 	}
 	// #endregion
+
+	//#region Error Events
+
+	public createErrorEvent(message:IMessage, error: Error): IMessage {
+        const errorMessage = error.message;
+        const partyId = message.payload?.partyId || null;
+        const partyType = message.payload?.partyType || null;
+        const partySubType = message.payload?.partySubType || null;
+        const requesterFspId = message.payload?.requesterFspId || null;
+        const sourceEvent = message.msgName;
+
+        let errorEvent: DomainEventMsg;
+
+        switch(error.constructor.name){
+            case InvalidMessagePayloadError.name:
+                errorEvent = new AccountLookupBCInvalidMessagePayloadErrorEvent(errorPayload);
+                return errorEvent;
+            case InvalidMessageTypeError.name:
+                errorEvent = new AccountLookupBCInvalidMessageTypeErrorEvent(errorPayload);
+                return errorEvent;
+            case UnableToAssociateParticipantError.name:
+                errorEvent = new AccountLookupBCUnableToAssociateParticipantErrorEvent(errorPayload);
+                return errorEvent;
+            case UnableToDisassociateParticipantError.name:
+                errorEvent = new AccountLookupBCUnableToDisassociateParticipantErrorEvent(errorPayload);
+                return errorEvent;
+            case NoSuchParticipantError.name:
+                errorEvent = new AccountLookupBCNoSuchParticipantErrorEvent(errorPayload);
+                return errorEvent;
+            case InvalidParticipantIdError.name:
+                errorEvent = new AccountLookupBCInvalidParticipantIdErrorEvent(errorPayload);
+                return errorEvent;
+            case UnableToGetOracleFromOracleFinderError.name:
+                errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(errorPayload);
+                return errorEvent;
+            case NoSuchOracleError.name:
+                errorEvent = new  AccountLookupBCNoSuchOracleErrorEvent(errorPayload);
+                return errorEvent;
+            case NoSuchOracleAdapterError.name:
+                errorEvent = new AccountLookupBCNoSuchOracleAdapterErrorEvent(errorPayload);
+                return errorEvent;
+            case UnableToGetParticipantFspIdError.name:
+                errorEvent = new AccountLookupBCUnableToGetParticipantFspIdErrorEvent(errorPayload);
+                return errorEvent;
+            case NoSuchParticipantFspIdError.name:
+                errorEvent = new AccountLookupBCNoSuchParticipantFspIdErrorEvent(errorPayload);
+                return errorEvent;
+            default:
+                errorEvent = new AccountLookUpUnknownErrorEvent(errorPayload);
+                return errorEvent;
+        }
+    }
+
+	//#endregion
 
 	//#region Oracle Admin Routes
 	public async addOracle(oracle: AddOracleDTO): Promise<string> {

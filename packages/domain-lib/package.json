@@ -36,8 +36,8 @@
   "dependencies": {
     "@mojaloop/participant-bc-public-types-lib": "~0.0.7",
     "@mojaloop/logging-bc-public-types-lib": "^0.1.15",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.76",
-    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.76"
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.78",
+    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.78"
   },
   "devDependencies": {
     "@mojaloop/account-lookup-bc-shared-mocks-lib":"*",

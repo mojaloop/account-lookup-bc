@@ -36,7 +36,7 @@
     "@mojaloop/logging-bc-client-lib": "^0.1.18",
     "@mojaloop/security-bc-client-lib": "^0.1.12",
     "@mojaloop/participant-bc-public-types-lib": "~0.0.7",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.76",
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.78",
     "@mojaloop/account-lookup-bc-domain-lib": "*"
   },
   "devDependencies": {

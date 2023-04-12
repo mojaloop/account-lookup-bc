@@ -55,8 +55,4 @@ export interface IPartyAccount {
 	extensionList: string[];
 }
 
-export interface IErrorMessageFactory {
-    create(message:IMessage, error: Error): IMessage;
-}
-
 

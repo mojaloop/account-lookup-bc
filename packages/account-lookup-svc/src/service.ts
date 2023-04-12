@@ -201,7 +201,7 @@ export class Service {
 
 		this.messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
 		await this.messageConsumer.connect();
-		await this.messageConsumer.start();
+		await this.messageConsumer.startAndWaitForRebalance();
 		logger.info("Kafka Consumer Initialized");
 
 		await this.messageProducer.connect();
