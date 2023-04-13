@@ -117,6 +117,13 @@ export class UnableToAddOracleError extends Error {
         super(message);
     }
 }
+
+export class UnableToRemoveOracleError  extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
 export class NoSuchOracleError extends Error {
     constructor(message: string) {
         super(message);
