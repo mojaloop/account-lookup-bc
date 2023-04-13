@@ -64,10 +64,10 @@ export class Party implements IParty{
 
     static validateParty(party: Party): void {
 		if (!party.id) {
-			throw new InvalidPartyIdError();
+			throw new InvalidPartyIdError("Party ID is required");
 		}
 		if (!party.type) {
-			throw new InvalidPartyTypeError();
+			throw new InvalidPartyTypeError("Party type is required");
 		}
 	}
 }

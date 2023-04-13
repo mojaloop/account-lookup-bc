@@ -64,11 +64,6 @@ export class NoSuchParticipantError extends Error {
         super(message);
     }
 }
-export class NoSuchParticipantFspIdError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
 
 export class RequiredParticipantIsNotActive extends Error {
     constructor(message: string) {
@@ -78,20 +73,6 @@ export class RequiredParticipantIsNotActive extends Error {
 
 export class UnableToGetParticipantFspIdError extends Error {
     constructor(message: string) {
-        super(message);
-    }
-}
-
-// Participant Association
-export class UnableToAssociateParticipantError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-
-// Participant Dissociation
-export class UnableToDisassociateParticipantError extends Error {
-    constructor(message:string) {
         super(message);
     }
 }
@@ -142,11 +123,6 @@ export class InvalidMessagePayloadError extends Error {
     }
 }
 export class InvalidMessageTypeError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class UnableToProcessMessageError extends Error {
     constructor(message: string) {
         super(message);
     }
