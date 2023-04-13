@@ -40,6 +40,8 @@
 
 "use strict";
 
+import { AccountLookUpUnknownErrorEvent, AccountLookupBCInvalidMessagePayloadErrorEvent, AccountLookupBCInvalidMessageTypeErrorEvent, AccountLookupBCInvalidParticipantIdErrorEvent, AccountLookupBCNoSuchOracleAdapterErrorEvent, AccountLookupBCNoSuchOracleErrorEvent, AccountLookupBCNoSuchParticipantErrorEvent, AccountLookupBCNoSuchParticipantFspIdErrorEvent, AccountLookupBCUnableToAssociateParticipantErrorEvent, AccountLookupBCUnableToDisassociateParticipantErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent, AccountLookupBCUnableToGetParticipantFspIdErrorEvent } from "@mojaloop/platform-shared-lib-public-messages-lib";
+
 export enum CurrencyType {
 	DOLLAR = "dollar",
 	EURO = "euro",
@@ -75,3 +77,10 @@ export type Association = {
     partyId: string;
     currency: string|null;
 }
+
+export type AccountLookupErrorEvent = AccountLookUpUnknownErrorEvent | AccountLookupBCInvalidMessagePayloadErrorEvent |
+    AccountLookupBCInvalidMessageTypeErrorEvent | AccountLookupBCInvalidParticipantIdErrorEvent |
+    AccountLookupBCNoSuchOracleAdapterErrorEvent | AccountLookupBCNoSuchOracleErrorEvent |
+    AccountLookupBCNoSuchParticipantErrorEvent | AccountLookupBCNoSuchParticipantFspIdErrorEvent |
+    AccountLookupBCUnableToAssociateParticipantErrorEvent | AccountLookupBCUnableToDisassociateParticipantErrorEvent |
+    AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent | AccountLookupBCUnableToGetParticipantFspIdErrorEvent
