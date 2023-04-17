@@ -78,7 +78,7 @@ export type Association = {
     currency: string|null;
 }
 
-export type AccountLookupErrorEvent = AccountLookUpUnknownErrorEvent | AccountLookupBCInvalidMessagePayloadErrorEvent |
+export type AccountLookupErrorEvent = AccountLookUpUnknownErrorEvent |
     AccountLookupBCInvalidMessageTypeErrorEvent | AccountLookupBCInvalidParticipantIdErrorEvent |
     AccountLookupBCNoSuchOracleAdapterErrorEvent | AccountLookupBCNoSuchOracleErrorEvent |
     AccountLookupBCNoSuchParticipantErrorEvent | AccountLookupBCNoSuchParticipantFspIdErrorEvent |
