@@ -29,8 +29,20 @@
  ******/
 
 "use strict";
+import {randomUUID} from "crypto";
+import axios from "axios";
 
 import {Service} from "../../src/service";
+
+
+const partyType:string = "bank";
+const partyId:string = randomUUID();
+const fspId:string = "12";
+const url:string = `http://localhost:3031/participants/${partyType}/${partyId}?currency=UGX`;
+
+const sleep = (ms:number)=>{
+	return new Promise(resolve => setTimeout(resolve,ms));
+}
 
 describe("application X unit tests", () => {
 	beforeAll(async () => {
@@ -48,12 +60,62 @@ describe("application X unit tests", () => {
 	test("create test oracle record", async () => {
 		// Test item goes here
 		// use axios or even better, nod's builtin fetch()
+		await axios.request({
+			method:"post",
+			url:url,
+			headers: {
+				'Content-Type':"application/json"
+			},
+			data:JSON.stringify({"fspId":fspId})
+		}).then((res)=>{
+			console.log(res.data)
+			expect(res.status).toEqual(200)
+		}).catch((err) => {
+			console.log(`Error Encountered in post \n ${err}`);
+		});
+
 	});
 
 	test("get test oracle record", async () => {
-		// Test item goes here
+		// wait for db.json to be updated
+		await sleep(3000);
+		//verify that the record was created
+		await axios.request({
+			method:"get",
+			url:url
+		}).then((res)=>{
+			console.log(res.data);
+			expect(res.data.fspId).toEqual("12")
+		}).catch((err)=>{
+			console.log(`Error Encountered in get\n ${err}`);
+		});
 	});
 
+	test("delete test oracle record", async ()=>{
+		await axios.request({
+			method:"delete",
+			url:url,
+			headers:{
+				"Content-Type":"application/json"
+			},
+			data:JSON.stringify({"fspId":fspId})
+		}).then((res)=>{
+			console.log(res.data)
+			expect(res.status).toEqual(200)
+		}).catch((err)=>{
+			console.log(`Error Encountered in delete\n ${err}`);
+		})
+	});
+
+	test("test get health",async ()=>{
+		await axios.request({
+			method:"get",
+			url:"http://localhost:3031/health"
+		}).then((res)=>{
+			console.log(res.data)
+			expect(res.data).toBeTruthy()
+		})
+	})
 	/* Non-Happy path tests */
 
 });
