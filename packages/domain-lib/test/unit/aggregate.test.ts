@@ -52,49 +52,27 @@ import {
      InvalidParticipantIdError,
      InvalidPartyIdError,
      InvalidPartyTypeError,
-     IOracleFinder,
-     IParticipantService,
      NoSuchOracleAdapterError,
      NoSuchOracleError,
      NoSuchParticipantError,
-     NoSuchParticipantFspIdError,
      Oracle,
      RequiredParticipantIsNotActive,
-     UnableToAssociateParticipantError,
-     UnableToDisassociateParticipantError,
  } from "../../src";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import {  MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { getParticipantFspIdForOracleTypeAndSubType as getParticipantFspIdForOracleTypeAndSubType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { AccountLookUpErrorEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
+import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
 
-const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
-
-const oracleFinder: IOracleFinder = new MemoryOracleFinder(
-    logger,
-);
-
-const oracleProviderFactory = new MemoryOracleProviderFactory(logger);
-
-const messageProducer: IMessageProducer = new MemoryMessageProducer(
-    logger,
-);
-
-const participantService: IParticipantService = new MemoryParticipantService(
-    logger,
-);
+let aggregate: AccountLookupAggregate;
 
 // Domain.
-const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
-    logger,
-    oracleFinder,
-    oracleProviderFactory,
-    messageProducer,
-    participantService
-);
 
 describe("Domain - Unit Tests for event handler and entities", () => {
+
+    beforeAll(async () => {
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
+    });
 
     afterEach(async () => {
         jest.restoreAllMocks();
@@ -1295,53 +1273,53 @@ describe("Domain - Unit Tests for event handler and entities", () => {
         }));
     });
 
-    // test("handleParticipantDisassociateRequestReceivedEvt - should publish error message if couldnt disassociate IParticipant", async () => {
-    //     // Arrange
-    //     const partyType = mockedPartyTypes[0];
-    //     const partyId = mockedPartyIds[0];
-    //     const ownerFspId = mockedParticipantIds[0];
+    test("handleParticipantDisassociateRequestReceivedEvt - should publish error message if couldnt disassociate IParticipant", async () => {
+        // Arrange
+        const partyType = mockedPartyTypes[0];
+        const partyId = mockedPartyIds[0];
+        const ownerFspId = mockedParticipantIds[0];
 
-    //     const payload :ParticipantDisassociateRequestReceivedEvtPayload = {
-    //         partyId,
-    //         partyType,
-    //         ownerFspId,
-    //         partySubType: null,
-    //         currency: null,
-    //     };
+        const payload :ParticipantDisassociateRequestReceivedEvtPayload = {
+            partyId,
+            partyType,
+            ownerFspId,
+            partySubType: null,
+            currency: null,
+        };
 
-    //     const returnedParticipant: Partial<IParticipant> = {
-    //         id: ownerFspId,
-    //         type: "DFSP",
-    //         isActive: true,
-    //     };
+        const returnedParticipant: Partial<IParticipant> = {
+            id: ownerFspId,
+            type: "DFSP",
+            isActive: true,
+        };
 
-    //     jest.spyOn(participantService, "getParticipantInfo")
-    //         .mockResolvedValueOnce(returnedParticipant as IParticipant as any);
-    //     jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce(returnedParticipant as IParticipant as any);
+        jest.spyOn(messageProducer, "send");
 
-    //     const event = new ParticipantDisassociateRequestReceivedEvt(payload);
+        const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
-    //     const errorMsg = UnableToDisassociateParticipantError.name;
+        const errorMsg = UnableToDisassociateParticipantError.name;
 
-    //     const errorPayload: AccountLookUpErrorEvtPayload = {
-    //         errorMsg,
-    //         partyId,
-    //         sourceEvent: event.msgName,
-    //         partySubType: null,
-    //         partyType,
-    //         requesterFspId:null,
-    //     };
+        const errorPayload: AccountLookUpErrorEvtPayload = {
+            errorMsg,
+            partyId,
+            sourceEvent: event.msgName,
+            partySubType: null,
+            partyType,
+            requesterFspId:null,
+        };
 
-    //     // Act
-    //     await aggregate.handleAccountLookUpEvent(event);
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
 
-    //     // Assert
+        // Assert
 
-    //     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-    //         "payload": errorPayload,
-    //     }));
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload,
+        }));
 
-    // });
+    });
 
     test("handleParticipantDisassociateRequestReceivedEvt - should disassociate IParticipant and publish message", async () => {
         // Arrange

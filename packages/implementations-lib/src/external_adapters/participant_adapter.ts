@@ -77,8 +77,8 @@ export class ParticipantAdapter implements IParticipantService {
 				this._localCache.set(result, "getParticipantInfo", fspId);
 			}
 			return result;
-		} catch (e: unknown) {
-			this._logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${e}`);
+		} catch (error: unknown) {
+			this._logger.error(`getParticipantInfo: error getting participant info for fspId: ${fspId} - ${error}`);
 			return null;
 		}
 	}
@@ -109,8 +109,8 @@ export class ParticipantAdapter implements IParticipantService {
 			}
 			return result;
 
-		} catch (e: unknown) {
-			this._logger.error(`getParticipantInfo: error getting participants info for fspIds: ${fspIds} - ${e}`);
+		} catch (error: unknown) {
+			this._logger.error(`getParticipantInfo: error getting participants info for fspIds: ${fspIds} - ${error}`);
 			return null;
 		}
 	}

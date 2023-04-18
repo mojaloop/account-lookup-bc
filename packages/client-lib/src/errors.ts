@@ -31,5 +31,14 @@
 
 "use strict";
 
-export class UnableToGetFspIdError extends Error{}
-export class UnableToGetFspIdBulkError extends Error{}
+export class UnableToGetFspIdError extends Error{
+    constructor(message: string) {
+        super(message);
+    }
+}
+
+export class UnableToGetFspIdBulkError extends Error{
+    constructor(message: string) {
+        super(message);
+    }
+}
