@@ -57,6 +57,7 @@ const oracle: Oracle = {
     endpoint: "http://localhost:3000",
     name: "test",
     partyType: "MSISDN",
+    currency: "USD",
 }
 
 describe("Implementations - Remote Oracle Provider Unit tests", () => {
@@ -97,6 +98,7 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
             endpoint: null,
             name: "test",
             partyType: "MSISDN",
+            currency: "USD",
         }
         const badRemoteOracleProvider = new HttpOracleProvider(oracle, logger);
 

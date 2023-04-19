@@ -52,7 +52,7 @@ export interface IOracleFinder{
     getAllOracles():Promise<Oracle[]>;
     getOracleById(id:string):Promise<Oracle|null>;
     getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string):Promise<Oracle | null>;
+    getOracle(partyType:string, currency:string|null):Promise<Oracle | null>;
 }
 
 export interface IOracleProviderAdapter{

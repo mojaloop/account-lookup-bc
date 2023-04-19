@@ -61,6 +61,7 @@ const oracle: Oracle = {
      name: "test",
      partyType: "MSISDN",
      type: "builtin",
+     currency: "USD",
  };
 
 let mongoClient: MongoClient;

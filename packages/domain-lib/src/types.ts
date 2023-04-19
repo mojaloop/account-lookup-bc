@@ -60,6 +60,7 @@ export type Oracle = {
     name: string;
     type: OracleType;
     partyType: string;
+    currency: string | null;
     endpoint: string | null;
 }
 
@@ -68,6 +69,7 @@ export type AddOracleDTO = {
     name: string;
     type: OracleType;
     partyType: string;
+    currency: string | null;
     endpoint: string | null;
 }
 

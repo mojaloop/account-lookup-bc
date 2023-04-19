@@ -185,26 +185,40 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 		return this.mapToOracle(oracle);
 	}
 
-    async getOracle(partyType: string): Promise<Oracle | null>{
-		const foundOracle: Document | null = await this.oracleProviders.findOne(
+    async getOracle(partyType: string, currency: string|null): Promise<Oracle | null>{
+		const oracles: Document | null = await this.oracleProviders.find(
 			{
 				partyType: partyType,
 			}
-		).catch((error: unknown) => {
+		).toArray().catch((error: unknown) => {
 			const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToGetOracleError(errorMessage);
 		});
 
-		if(!foundOracle) {
-			const errorMessage = `Oracle with partyType ${partyType} not found`;
+
+		const mappedOraclesWithCurrency: Oracle[] = [];
+		const mappedOraclesWithoutCurrency: Oracle[] = [];
+
+		oracles.map((oracle: WithId<Document>) => {
+			if(oracle.currency === currency){
+				mappedOraclesWithCurrency.push(this.mapToOracle(oracle));
+			}
+			else{
+				mappedOraclesWithoutCurrency.push(this.mapToOracle(oracle));
+			}
+
+		});
+
+		const oracle = mappedOraclesWithCurrency.shift() ?? mappedOraclesWithoutCurrency.shift() ?? null;
+
+		if(!oracle){
+			const errorMessage = `Oracle with partyType ${partyType}  and currency ${currency} not found`;
 			this._logger.debug(errorMessage);
 			throw new NoSuchOracleError(errorMessage);
 		}
 
-		const mappedOracle: Oracle = this.mapToOracle(foundOracle);
-
-		return mappedOracle;
+		return oracle;
 
     }
 
@@ -215,6 +229,7 @@ export class MongoOracleFinderRepo implements IOracleFinder{
 			partyType: oracle.partyType,
 			endpoint: oracle.endpoint,
 			type: oracle.type,
+			currency: oracle.currency,
 		};
 	}
 }

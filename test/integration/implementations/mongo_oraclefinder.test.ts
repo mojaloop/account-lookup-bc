@@ -113,7 +113,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: null,
             name: "testName",
             partyType: "testPartyType",
-            type: "builtin"
+            type: "builtin",
+            currency: "USD"
         };
 
         const remoteOracle: Oracle = {
@@ -121,7 +122,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         // Act
@@ -133,9 +135,11 @@ describe("Implementations - Oracle Finder Integration tests", () => {
         expect(oracles[0].id).toEqual(builtInOracle.id);
         expect(oracles[0].name).toEqual(builtInOracle.name);
         expect(oracles[0].type==="builtin").toBeTruthy();
+        expect(oracles[0].currency).toEqual(builtInOracle.currency);
         expect(oracles[1].id).toEqual(remoteOracle.id);
         expect(oracles[1].name).toEqual(remoteOracle.name);
         expect(oracles[1].type==="remote-http").toBeTruthy();
+        expect(oracles[1].currency).toEqual(remoteOracle.currency);
 
     });
 
@@ -146,7 +150,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: null,
             name: "testName",
             partyType: "testPartyType",
-            type: "builtin"
+            type: "builtin",
+            currency: "USD"
         };
 
         await oracleFinder.addOracle(oracle);
@@ -162,7 +167,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         // Act
@@ -189,7 +195,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         //Act
@@ -208,7 +215,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         //Act
@@ -220,19 +228,20 @@ describe("Implementations - Oracle Finder Integration tests", () => {
 
     });
 
-    test("should return an oracle by its party type and party sub type", async () => {
+    test("should return an oracle by its party type and currency", async () => {
         //Arrange
         const oracle: Oracle = {
             id: "testOracleId5",
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "USD"
         };
 
         //Act
         await oracleFinder.addOracle(oracle);
-        const oracleFound = await oracleFinder.getOracle(oracle.partyType);
+        const oracleFound = await oracleFinder.getOracle(oracle.partyType, "USD");
 
         //Assert
         expect(oracleFound?.id).toEqual(oracle.id);
@@ -240,12 +249,36 @@ describe("Implementations - Oracle Finder Integration tests", () => {
 
     });
 
-    test("should throw error if there are no oracles with the given party type and party sub type", async () => {
+    test("should throw error if there are no oracles with the given party type and currency", async () => {
 
         //Act && Assert
-        await expect(oracleFinder.getOracle("nonExistingOracleType")).rejects.toThrowError(NoSuchOracleError);
+        await expect(oracleFinder.getOracle("nonExistingOracleType", null)).rejects.toThrowError(NoSuchOracleError);
 
     });
+
+    test("should return the oracle by partyType if currency not found", async () => {
+
+        //Act && Assert
+        const oracle: Oracle = {
+            id: "testOracleId5",
+            endpoint: "testEndpoint",
+            name: "testName",
+            partyType: "testPartyType",
+            type: "remote-http",
+            currency: null
+        };
+
+        //Act
+        await oracleFinder.addOracle(oracle);
+        const oracleFound = await oracleFinder.getOracle(oracle.partyType, "USD");
+
+        //Assert
+        expect(oracleFound?.id).toEqual(oracle.id);
+        expect(oracleFound?.partyType).toEqual(oracle.partyType);
+
+    });
+
+
 
     test("should be able to delete an oracle by its id", async () => {
         //Arrange
@@ -254,7 +287,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         //Act
@@ -273,7 +307,8 @@ describe("Implementations - Oracle Finder Integration tests", () => {
             endpoint: "testEndpoint",
             name: "testName",
             partyType: "testPartyType",
-            type: "remote-http"
+            type: "remote-http",
+            currency: "EUR"
         };
 
         //Act && Assert
