@@ -37,11 +37,11 @@
     "test:unit": "jest --passWithNoTests --detectOpenHandles"
   },
   "dependencies": {
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.39",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.43",
     "@mojaloop/logging-bc-client-lib": "^0.1.18",
     "@mojaloop/logging-bc-public-types-lib": "^0.1.15",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.78",
-    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.78",
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.82",
+    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.82",
     "@mojaloop/security-bc-client-lib": "^0.1.12",
     "@mojaloop/account-lookup-bc-domain-lib": "*",
     "@mojaloop/account-lookup-bc-implementations-lib": "*"

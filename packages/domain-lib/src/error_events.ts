@@ -44,56 +44,61 @@
 import { AccountLookupBCInvalidMessageTypeErrorPayload, AccountLookupBCInvalidMessageTypeErrorEvent, AccountLookupBCInvalidMessagePayloadErrorEvent, AccountLookupBCInvalidMessageErrorPayload, AccountLookupBCInvalidParticipantIdErrorPayload, AccountLookupBCInvalidParticipantIdErrorEvent, AccountLookupBCNoSuchParticipantErrorPayload, AccountLookupBCNoSuchParticipantErrorEvent, AccountLookupBCUnableToGetParticipantFspIdErrorPayload, AccountLookupBCUnableToGetParticipantFspIdErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent, AccountLookupBCNoSuchOracleErrorEvent, AccountLookupBCNoSuchOracleAdapterErrorEvent, AccountLookUpUnknownErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload, AccountLookupBCNoSuchOracleErrorPayload, AccountLookupBCNoSuchOracleAdapterErrorPayload, AccountLookupBCUnableToAssociateParticipantErrorEvent, AccountLookupBCUnableToAssociateParticipantErrorPayload, AccountLookupBCUnableToDisassociateParticipantErrorEvent, AccountLookupBCUnableToDisassociateParticipantErrorPayload, AccountLookUpUnknownErrorPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { UnableToGetOracleFromOracleFinderError, NoSuchOracleError, NoSuchOracleAdapterError } from "./errors";
 
-export function createInvalidMessageTypeError(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createInvalidMessageTypeError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
     const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
         partyId: partyId,
         partySubType: partySubType,
         partyType: partyType,
-        requesterFspId: fspId,
+        fspId,
+        errorDescription,
     };
     const errorEvent = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
     return errorEvent;
 }
 
-export function createInvalidMessagePayloadErrorEvent(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null):AccountLookupBCInvalidMessagePayloadErrorEvent  {
+export function createInvalidMessagePayloadErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null):AccountLookupBCInvalidMessagePayloadErrorEvent  {
     const invalidMessageErrorPayload: AccountLookupBCInvalidMessageErrorPayload = {
         partyId,
         partySubType,
         partyType,
-        requesterFspId:fspId,
+        fspId,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCInvalidMessagePayloadErrorEvent(invalidMessageErrorPayload);
     return errorEvent;
 }
 
-export function createInvalidParticipantIdError(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createInvalidParticipantIdError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
     const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
         partyId,
         partySubType,
         partyType,
-        requesterFspId: fspId,
+        fspId,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
     return errorEvent;
 }
 
-export function createNoSuchParticipantErrorEvent(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createNoSuchParticipantErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
     const noSuchParticipantErrorPayload: AccountLookupBCNoSuchParticipantErrorPayload = {
         partyId,
         partySubType,
         partyType,
-        requesterFspId: fspId,
+        fspId,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCNoSuchParticipantErrorEvent(noSuchParticipantErrorPayload);
     return errorEvent;
 }
 
-export function createUnableToGetParticipantFspIdErrorEvent(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createUnableToGetParticipantFspIdErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
     const unableToGetParticipantFspIdErrorPayload: AccountLookupBCUnableToGetParticipantFspIdErrorPayload = {
         partyId,
         partySubType,
         partyType,
-        requesterFspId: fspId,
+        fspId,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCUnableToGetParticipantFspIdErrorEvent(unableToGetParticipantFspIdErrorPayload);
     return errorEvent;
@@ -107,7 +112,8 @@ export function createOracleErrorEvent(error:Error, partyId: string, partyType: 
                 partyId,
                 partySubType,
                 partyType,
-                requesterFspId: fspId,
+                fspId,
+                errorDescription: error?.message
             };
             const errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
             return errorEvent;
@@ -118,7 +124,8 @@ export function createOracleErrorEvent(error:Error, partyId: string, partyType: 
                 partyId,
                 partySubType,
                 partyType,
-                requesterFspId: fspId,
+                fspId,
+                errorDescription: error?.message
             };
             const errorEvent = new AccountLookupBCNoSuchOracleErrorEvent(noSuchOracleErrorPayload);
             return errorEvent;
@@ -129,7 +136,8 @@ export function createOracleErrorEvent(error:Error, partyId: string, partyType: 
                 partyId,
                 partySubType,
                 partyType,
-                requesterFspId: fspId,
+                fspId,
+                errorDescription: error?.message
             };
             const errorEvent = new AccountLookupBCNoSuchOracleAdapterErrorEvent(noSuchOracleAdapterErrorPayload);
             return errorEvent;
@@ -139,37 +147,39 @@ export function createOracleErrorEvent(error:Error, partyId: string, partyType: 
     }
 }
 
-export function createUnableToAssociateErrorEvent(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToAssociateParticipantErrorEvent  {
+export function createUnableToAssociateErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToAssociateParticipantErrorEvent  {
     const errorPayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
-        requesterFspId: fspId,
+        fspId,
         partyType,
         partyId,
         partySubType,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCUnableToAssociateParticipantErrorEvent(errorPayload);
     return errorEvent;
 }
 
-export function createUnableToDisassociateErrorEvent(partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToDisassociateParticipantErrorEvent {
+export function createUnableToDisassociateErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToDisassociateParticipantErrorEvent {
 
     const errorPayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
-        requesterFspId: fspId,
+        fspId,
         partyType,
         partyId,
         partySubType,
+        errorDescription
     };
     const errorEvent = new AccountLookupBCUnableToDisassociateParticipantErrorEvent(errorPayload);
     return errorEvent;
 }
 
-export function createUnknownErrorEvent(error:any, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) : AccountLookUpUnknownErrorEvent {
+export function createUnknownErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) : AccountLookUpUnknownErrorEvent {
 
     const errorPayload: AccountLookUpUnknownErrorPayload = {
         partyId,
         partySubType,
         partyType,
-        requesterFspId: fspId,
-        errorDescription: error?.message || "Unknown error",
+        fspId,
+        errorDescription: errorDescription ?? "Unknown error"
     };
     const errorEvent = new AccountLookUpUnknownErrorEvent(errorPayload);
     return errorEvent;
