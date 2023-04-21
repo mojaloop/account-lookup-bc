@@ -15,6 +15,9 @@
     "Rui Rocha <rui.rocha@arg.software>"
   ],
   "private": true,
+  "mojaloop": {
+    "publish_to_dockerhub": false
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
