@@ -164,11 +164,10 @@ describe("Client - Account Lookup Client Unit tests", () => {
         const request = {[id]: firstParticipant, [id2]: secondParticipant};
 
         // Act
-        // @ts-ignore
         const result = accountLookupClient.participantBulkLookUp(request);
 
         // Assert
-        await expect(result).rejects.toThrowError("Request failed with status code 422");
+        await expect(result).rejects.toThrowError("Unable to Get FspId Bulk");
 
     });
 

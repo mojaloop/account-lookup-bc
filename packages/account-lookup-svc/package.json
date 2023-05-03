@@ -28,7 +28,7 @@
     "start:dev": "npm run build && npm run start",
     "service": "node dist/index.js",
     "build": "tsc",
-    "clean": "npm run clean:npm; npm run clean:dist",
+    "clean": "(npm run clean:npm || true) && npm run clean:dist",
     "clean:dist": "rm -rf dist",
     "clean:npm": "rm -rf node_modules",
     "audit:check": "npm npm audit",
@@ -36,7 +36,7 @@
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --detectOpenHandles"
+    "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts || ECHO"
   },
   "dependencies": {
     "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.43",

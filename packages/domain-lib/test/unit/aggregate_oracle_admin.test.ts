@@ -50,7 +50,7 @@ import { logger, oracleFinder, oracleProviderFactory, messageProducer, participa
 
 let aggregate: AccountLookupAggregate;
 
-describe("Domain - Unit Tests oracle admin routes", () => {
+describe("Domain - Unit Tests Oracle admin routes", () => {
 
     beforeAll(async () => {
         aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
@@ -124,6 +124,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             id: "not-existing-id",
             partyType: "DFSP",
             type: "builtin",
+            currency: "USD",
         };
 
         // Act && Assert
@@ -170,6 +171,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             endpoint: "http://localhost:3000",
             partyType: "DFSP",
             type: "builtin",
+            currency: "USD",
         };
 
         // Act

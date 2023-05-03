@@ -90,7 +90,7 @@ export class AccountLookupHttpClient {
 
 			return axiosResponse.data;
 		} catch (error: unknown) {
-			const errorMessage = "Account Lookup Client - Unable to Get FspId Bulk ";
+			const errorMessage = "Account Lookup Client - Unable to Get FspId Bulk";
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToGetFspIdBulkError(errorMessage);
 		}

@@ -41,7 +41,7 @@ import { logger, messageProducer, oracleFinder, oracleProviderFactory, participa
 
 let aggregate: AccountLookupAggregate;
 
-describe("Domain - Unit Tests Account LookUp", () => {
+describe("Domain - Unit Tests Account Lookup", () => {
 
     beforeAll(async () => {
         aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
