@@ -44,15 +44,15 @@ optionally within square brackets <email>.
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { check, validationResult} from "express-validator";
-import {RemoteOracle} from "../remote_oracle";
+import {IRemoteOracle, RemoteOracle} from "../remote_oracle";
 
 
 export class RemoteOracleExpressRoutes {
     private readonly _logger: ILogger;
-    private readonly _oracle: RemoteOracle;
+    private readonly _oracle: IRemoteOracle;
     private mainRouter = express.Router();
 
-    constructor(logger: ILogger, oracleAdapter: RemoteOracle) {
+    constructor(logger: ILogger, oracleAdapter: IRemoteOracle) {
         this._logger = logger;
         this._oracle = oracleAdapter;
         // http oracle routes

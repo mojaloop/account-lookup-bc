@@ -40,10 +40,11 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import express, {Express} from "express";
 import { Server } from "net";
-import { RemoteOracle } from "./remote_oracle";
+import process from "process";
+import { RemoteOracle, IRemoteOracle } from "./remote_oracle";
 import { RemoteOracleExpressRoutes } from "./server/remote_oracle_routes";
 import {DefaultLogger} from "@mojaloop/logging-bc-client-lib";
 
@@ -51,50 +52,101 @@ import {DefaultLogger} from "@mojaloop/logging-bc-client-lib";
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "http-oracle-svc";
 const APP_VERSION = process.env.npm_package_version || "0.0.0";
+const LOG_LEVEL: LogLevel = process.env["LOG_LEVEL"] as LogLevel || LogLevel.DEBUG;
 
 const REMOTE_ORACLE_PORT = process.env["REMOTE_ORACLE_PORT"] || 3031;
 const ORACLE_DB_FILE_PATH = process.env["ORACLE_DB_FILE_PATH"] || "/app/data/db.json";
 
-let logger: ILogger;
-let expressApp: Express;
-let remoteOracleServer: Server;
-let remoteOracle: RemoteOracle;
+let globalLogger: ILogger;
 
-export async function start(){
-    try{
-        logger = new DefaultLogger(BC_NAME, APP_NAME, APP_VERSION);
-        remoteOracle = new RemoteOracle(ORACLE_DB_FILE_PATH, logger);
-        await remoteOracle.init();
+export class Service {
+    static logger: ILogger;
+    static app: Express;
+    static expressServer: Server;
+    static remoteOracleAdapter: IRemoteOracle;
 
-        // Start oracle http routes
-        expressApp = express();
-        expressApp.use(express.json()); // for parsing application/json
-        expressApp.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
+    static async start(
+        logger?: ILogger,
+        remoteOracleAdapter?: IRemoteOracle
+    ){
+        if (!logger) {
+            logger = new DefaultLogger(
+                BC_NAME,
+                APP_NAME,
+                APP_VERSION,
+                LOG_LEVEL
+            );
+        }
+        globalLogger = this.logger = logger;
 
-        const routes = new RemoteOracleExpressRoutes(logger, remoteOracle);
+        if(!remoteOracleAdapter){
+            remoteOracleAdapter = new RemoteOracle(ORACLE_DB_FILE_PATH, logger);
+            await remoteOracleAdapter.init();
+        }
+        this.remoteOracleAdapter = remoteOracleAdapter;
 
-        expressApp.use("/", routes.MainRouter);
+        // setup express app
+        this.app = express();
+        this.app.use(express.json()); // for parsing application/json
+        this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-        expressApp.use((req, res) => {
+        const routes = new RemoteOracleExpressRoutes(this.logger, this.remoteOracleAdapter);
+        this.app.use("/", routes.MainRouter);
+
+        this.app.use((req, res) => {
             // catch all
             res.send(404);
         });
 
-        remoteOracleServer = expressApp.listen(REMOTE_ORACLE_PORT, () => {
-            logger.info(`🚀 Server ready at port: ${REMOTE_ORACLE_PORT}`);
-            logger.info(`Remote Oracle Service v: ${APP_VERSION} started`);
+        return new Promise<void>(resolve => {
+            this.expressServer = this.app.listen(REMOTE_ORACLE_PORT, () => {
+                this.logger.info(`🚀 Server ready at port: ${REMOTE_ORACLE_PORT}`);
+                this.logger.info(`Remote Oracle Service v: ${APP_VERSION} started`);
+                resolve();
+            });
         });
+    }
+
+    static async stop(): Promise<void> {
+        this.logger.debug("Tearing down express server");
+        this.expressServer.close();
+        this.logger.debug("Tearing down oracle");
+        await this.remoteOracleAdapter.destroy();
+        this.logger.debug("Tearing down oracle routes");
 
     }
-    catch(err){
-        logger.error(err);
-        await stop();
-    }   
 }
 
-export async function stop(): Promise<void> {
-    logger.debug("Tearing down oracle");
-    await remoteOracle.destroy();
-    logger.debug("Tearing down oracle routes");
-    remoteOracleServer.close();
+
+/**
+ * process termination and cleanup
+ */
+
+async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
+    console.info(`Service - ${signal} received - cleaning up...`);
+    let clean_exit = false;
+    setTimeout(() => {
+        clean_exit || process.exit(99);
+    }, 5000);
+
+    // call graceful stop routine
+    await Service.stop();
+
+    clean_exit = true;
+    process.exit();
 }
+
+//catches ctrl+c event
+process.on("SIGINT", _handle_int_and_term_signals);
+//catches program termination event
+process.on("SIGTERM", _handle_int_and_term_signals);
+
+//do something when app is closing
+process.on("exit", async () => {
+    globalLogger.info("Microservice - exiting...");
+});
+process.on("uncaughtException", (err: Error) => {
+    globalLogger.error(err);
+    console.log("UncaughtException - EXITING...");
+    process.exit(999);
+});

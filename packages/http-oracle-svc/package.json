@@ -15,6 +15,9 @@
     "Rui Rocha <rui.rocha@arg.software>"
   ],
   "private": true,
+  "mojaloop": {
+    "publish_to_dockerhub": false
+  },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
@@ -25,15 +28,15 @@
     "start:dev": "npm run build && npm run start",
     "service": "node dist/index.js",
     "build": "tsc",
+    "clean": "npm run clean:npm; npm run clean:dist",
     "clean:dist": "rm -rf dist",
-    "clean:node-modules": "rm -rf node_modules",
-    "clean:dist-and-node-modules": "rm -rf dist node_modules",
-    "clean": "npm run clean:dist",
+    "clean:npm": "rm -rf node_modules",
     "audit:check": "npm npm audit",
     "dep:check": "ncu -e 2",
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
-    "lint:fix": "eslint ./src --fix"
+    "lint:fix": "eslint ./src --fix",
+    "test:unit": "jest --passWithNoTests --testMatch '**/test/unit/**/*.test.ts'"
   },
   "dependencies": {
     "@mojaloop/logging-bc-public-types-lib": "^0.1.15",
