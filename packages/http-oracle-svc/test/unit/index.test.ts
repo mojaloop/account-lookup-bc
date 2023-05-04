@@ -1,3 +1,4 @@
+/// <reference lib="dom" />
 /*****
  License
  --------------
@@ -29,93 +30,244 @@
  ******/
 
 "use strict";
+import fs from "fs";
 import {randomUUID} from "crypto";
-import axios from "axios";
-
 import {Service} from "../../src/service";
-
+import {before, describe} from "node:test";
 
 const partyType:string = "bank";
 const partyId:string = randomUUID();
 const fspId:string = "12";
 const url:string = `http://localhost:3031/participants/${partyType}/${partyId}?currency=UGX`;
+// jest.setTimeout(600000)
 
-const sleep = (ms:number)=>{
-	return new Promise(resolve => setTimeout(resolve,ms));
-}
+const filePath = process.env["ORACLE_DB_FILE_PATH"];
+const defaultHeaders = new Headers();
+defaultHeaders.append("Content-Type", "application/json");
 
-describe("application X unit tests", () => {
+
+describe("http-oracle-svc unit tests", () => {
 	beforeAll(async () => {
-		await Service.start();
+		if(filePath && fs.existsSync(filePath)){
+			/**  delete the db.json to start the server with no db.json **/
+			// Arrange
+			fs.unlinkSync(filePath);
 
+			// Act
+			const result = Service.start();
+
+			// Assert
+			await expect(result).resolves
+			await Service.stop();
+
+			/**  populate some data in the db.json to start the server with some data in the db.json **/
+
+			// Arrange
+			fs.writeFileSync(
+				filePath,
+				`{"associations": [{"partyId": "0b09ab3a-9a96-4f28-9672-1c9e4516a3fb","partyType": "bank","currency": "EUR","fspId": "12"},{"partyId": "0b09ab3a-9a96-4f28-9672-1c9e4516a3fb","partyType": "bank","currency": "EUR","fspId": "12"}]}`
+			);
+
+			// Act
+			await Service.start();
+
+			/**  populate empty data in the db.json to start the server with no data in the db.json **/
+			fs.writeFileSync(filePath,``);
+			await Service.stop();
+		}
+		await Service.start();
 	});
 
 	afterAll(async () => {
-		await Service.stop();
-
+		// await Service.stop();
 	});
 
 	/* Happy path tests */
-
 	test("create test oracle record", async () => {
-		// Test item goes here
-		// use axios or even better, nod's builtin fetch()
-		await axios.request({
-			method:"post",
-			url:url,
-			headers: {
-				'Content-Type':"application/json"
-			},
-			data:JSON.stringify({"fspId":fspId})
-		}).then((res)=>{
-			console.log(res.data)
-			expect(res.status).toEqual(200)
-		}).catch((err) => {
-			console.log(`Error Encountered in post \n ${err}`);
-		});
+		// Arrange
+		const reqInit: RequestInit = {
+			method: "POST",
+			headers: defaultHeaders,
+			body: JSON.stringify({"fspId":fspId})
+		};
 
+		// Act
+		const response = await fetch(url,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(200);
+	});
+
+	test("create test oracle record with no currency", async () => {
+		// Arrange
+		const reqInit: RequestInit = {
+			method: "POST",
+			headers: defaultHeaders,
+			body: JSON.stringify({"fspId":fspId})
+		};
+
+		// Act
+		const response = await fetch(`http://localhost:3031/participants/${partyType}/${partyId}`,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(200);
+	});
+
+	test("create record that already exists", async () => {
+		// Arrange
+		const reqInit: RequestInit = {
+			method: "POST",
+			headers: defaultHeaders,
+			body: JSON.stringify({"fspId":fspId})
+		};
+
+		// Act
+		const response = await fetch(url,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(500);
 	});
 
 	test("get test oracle record", async () => {
-		// wait for db.json to be updated
-		await sleep(3000);
-		//verify that the record was created
-		await axios.request({
-			method:"get",
-			url:url
-		}).then((res)=>{
-			console.log(res.data);
-			expect(res.data.fspId).toEqual("12")
-		}).catch((err)=>{
-			console.log(`Error Encountered in get\n ${err}`);
-		});
+		// Arrange
+		const reqInit: RequestInit = {
+			method: "GET",
+		};
+
+		//Act
+		const response = await fetch(url,reqInit);
+		const data = await response.json();
+
+		//Assert
+		expect(data).toEqual({'fspId':'12'});
 	});
 
 	test("delete test oracle record", async ()=>{
-		await axios.request({
-			method:"delete",
-			url:url,
-			headers:{
-				"Content-Type":"application/json"
-			},
-			data:JSON.stringify({"fspId":fspId})
-		}).then((res)=>{
-			console.log(res.data)
-			expect(res.status).toEqual(200)
-		}).catch((err)=>{
-			console.log(`Error Encountered in delete\n ${err}`);
-		})
+		// Arrange
+		const reqlInit: RequestInit = {
+			method:"DELETE",
+			headers:defaultHeaders,
+			body: JSON.stringify({"fspId":fspId})
+		};
+
+		//Act
+		const response  = await fetch(url,reqlInit);
+
+		//Assert
+		expect(response.status).toEqual(200)
+	});
+
+	test("delete test oracle that doesn't exist",async ()=>{
+		// Arrange
+		const reqlInit: RequestInit = {
+			method:"DELETE",
+			headers:defaultHeaders,
+			body: JSON.stringify({"fspId":fspId})
+		};
+
+		//Act
+		const response  = await fetch(url,reqlInit);
+
+		//Assert
+		expect(response.status).toEqual(500);
 	});
 
 	test("test get health",async ()=>{
-		await axios.request({
-			method:"get",
-			url:"http://localhost:3031/health"
-		}).then((res)=>{
-			console.log(res.data)
-			expect(res.data).toBeTruthy()
-		})
-	})
-	/* Non-Happy path tests */
+		// Arrange
+		const reqInit: RequestInit = {
+			method:'GET'
+		};
 
+		// Act
+		const response = await fetch("http://localhost:3031/health",reqInit);
+		const data = await response.json();
+
+		// Assert
+		expect(data).toBeTruthy();
+	})
+
+	/* Non-Happy path tests */
+	test("test create oracle with missing fspId",async ()=>{
+		//Arrange
+		const reqInit: RequestInit = {
+			method: "POST",
+			headers: defaultHeaders,
+		};
+
+		//Act
+		const response = await fetch(url,reqInit);
+
+		//Assert
+		expect(response.status).toEqual(422);
+	});
+
+	test("delete test oracle record with missing fspId", async ()=>{
+		// Arrange
+		const reqInit: RequestInit = {
+			method:"DELETE",
+			headers: defaultHeaders
+		};
+
+		// Act
+		const response = await fetch(url,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(422);
+	});
+
+	test("get test oracle record with non existent partyId", async () => {
+		// Arrange
+		const reqInit: RequestInit = {
+			method:"GET"
+		};
+
+		// Act
+		const response = await fetch(`http://localhost:3031/participants/${partyType}/393990034?currency=UGX`,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(404);
+	});
+
+	test("test endpoint that does not exist", async () => {
+		// Arrange
+		const reqInit: RequestInit = {
+			method:"GET"
+		};
+
+		// Act
+		const response = await fetch(`http://localhost:3031/fakeEndpoint`,reqInit);
+
+		// Assert
+		expect(response.status).toEqual(404);
+	});
+
+	test("Stop the server", async ()=>{
+		await Service.stop();
+	});
+
+	test("test start server with no db.json", async () => {
+		// Arrange
+		if(!filePath){
+			throw new Error("ORACLE_DB_FILE_PATH was not set");
+		}
+		fs.unlinkSync(filePath);
+		console.log("File deleted");
+
+		// create same file with wrong structure
+		fs.writeFileSync(filePath, "wrong content");
+
+		// Act
+		const result = Service.start();
+
+		// Assert
+		await expect(result).rejects.toThrowError();
+	});
+
+	test("stop server that is not running", async () => {
+		// Act
+		const result = Service.stop();
+
+		// Assert
+		await expect(result).rejects.toThrowError();
+	});
 });

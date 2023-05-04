@@ -10,7 +10,7 @@ module.exports = {
   passWithNoTests: true,
   collectCoverage: true,
   collectCoverageFrom: ["./src/**/*.ts"],
-  coveragePathIgnorePatterns: ["./src/tmp_files","./src/index.ts"],
+  coveragePathIgnorePatterns: ["./src/tmp_files"],
   coverageReporters: ["text", ["json", {file: `../../../coverage/${packageName}-final.json`}]],
   clearMocks: true,
   coverageThreshold: {
