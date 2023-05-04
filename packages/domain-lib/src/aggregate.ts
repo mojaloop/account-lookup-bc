@@ -329,7 +329,7 @@ export class AccountLookupAggregate  {
 		}
 		catch(error:any){
 			this._logger.error(`Error getting oracle adapter for partyType: ${partyType} and currency: ${currency} - ${error.message}`);
-			return createOracleErrorEvent(error, partyId, partyType, partySubType, currency, ownerFspId);
+			return createOracleErrorEvent(error, partyId, partyType, partySubType, ownerFspId);
 		}
 
 		try{
@@ -375,7 +375,7 @@ export class AccountLookupAggregate  {
 		}
 		catch(error:any){
 			this._logger.error(`Error getting oracle adapter for partyType: ${partyType} and currency: ${currency} - ${error.message}`);
-			return createOracleErrorEvent(error, partyId, partyType, partySubType, currency, ownerFspId);
+			return createOracleErrorEvent(error, partyId, partyType, partySubType, ownerFspId);
 		}
 
 		try{
@@ -533,7 +533,7 @@ export class AccountLookupAggregate  {
 		}
 		catch(error:any){
 			this._logger.error(`Unable to get oracle adapter for partyType: ${partyType} - ${error.message}`);
-			result.errorEvent = createOracleErrorEvent(error, partyId, partyType, partySubType, fspId, currency);
+			result.errorEvent = createOracleErrorEvent(error, partyId, partyType, partySubType, fspId);
 			return result;
 		}
 

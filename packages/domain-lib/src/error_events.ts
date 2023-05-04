@@ -44,7 +44,7 @@
 import { AccountLookupBCInvalidMessageTypeErrorPayload, AccountLookupBCInvalidMessageTypeErrorEvent, AccountLookupBCInvalidMessagePayloadErrorEvent, AccountLookupBCInvalidMessageErrorPayload, AccountLookupBCInvalidParticipantIdErrorPayload, AccountLookupBCInvalidParticipantIdErrorEvent, AccountLookupBCNoSuchParticipantErrorPayload, AccountLookupBCNoSuchParticipantErrorEvent, AccountLookupBCUnableToGetParticipantFspIdErrorPayload, AccountLookupBCUnableToGetParticipantFspIdErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent, AccountLookupBCNoSuchOracleErrorEvent, AccountLookupBCNoSuchOracleAdapterErrorEvent, AccountLookUpUnknownErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload, AccountLookupBCNoSuchOracleErrorPayload, AccountLookupBCNoSuchOracleAdapterErrorPayload, AccountLookupBCUnableToAssociateParticipantErrorEvent, AccountLookupBCUnableToAssociateParticipantErrorPayload, AccountLookupBCUnableToDisassociateParticipantErrorEvent, AccountLookupBCUnableToDisassociateParticipantErrorPayload, AccountLookUpUnknownErrorPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { UnableToGetOracleFromOracleFinderError, NoSuchOracleError, NoSuchOracleAdapterError } from "./errors";
 
-export function createInvalidMessageTypeError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createInvalidMessageTypeError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidMessageTypeErrorEvent {
     const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
         partyId: partyId,
         partySubType: partySubType,
@@ -68,7 +68,7 @@ export function createInvalidMessagePayloadErrorEvent(errorDescription:string, p
     return errorEvent;
 }
 
-export function createInvalidParticipantIdError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createInvalidParticipantIdError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidParticipantIdErrorEvent {
     const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
         partyId,
         partySubType,
@@ -80,7 +80,7 @@ export function createInvalidParticipantIdError(errorDescription:string, partyId
     return errorEvent;
 }
 
-export function createNoSuchParticipantErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createNoSuchParticipantErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCNoSuchParticipantErrorEvent {
     const noSuchParticipantErrorPayload: AccountLookupBCNoSuchParticipantErrorPayload = {
         partyId,
         partySubType,
@@ -92,7 +92,7 @@ export function createNoSuchParticipantErrorEvent(errorDescription:string, party
     return errorEvent;
 }
 
-export function createUnableToGetParticipantFspIdErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null) {
+export function createUnableToGetParticipantFspIdErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToGetParticipantFspIdErrorEvent {
     const unableToGetParticipantFspIdErrorPayload: AccountLookupBCUnableToGetParticipantFspIdErrorPayload = {
         partyId,
         partySubType,
@@ -104,7 +104,7 @@ export function createUnableToGetParticipantFspIdErrorEvent(errorDescription:str
     return errorEvent;
 }
 
-export function createOracleErrorEvent(error:Error, partyId: string, partyType: string| null, partySubType: string| null, currency:string | null, fspId: string| null): AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent | AccountLookupBCNoSuchOracleErrorEvent | AccountLookupBCNoSuchOracleAdapterErrorEvent | AccountLookUpUnknownErrorEvent  {
+export function createOracleErrorEvent(error:Error, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent | AccountLookupBCNoSuchOracleErrorEvent | AccountLookupBCNoSuchOracleAdapterErrorEvent | AccountLookUpUnknownErrorEvent  {
     switch(error.constructor.name){
         case UnableToGetOracleFromOracleFinderError.name:
         {
