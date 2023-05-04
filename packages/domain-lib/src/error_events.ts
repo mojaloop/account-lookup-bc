@@ -44,7 +44,7 @@
 import { AccountLookupBCInvalidMessageTypeErrorPayload, AccountLookupBCInvalidMessageTypeErrorEvent, AccountLookupBCInvalidMessagePayloadErrorEvent, AccountLookupBCInvalidMessageErrorPayload, AccountLookupBCInvalidParticipantIdErrorPayload, AccountLookupBCInvalidParticipantIdErrorEvent, AccountLookupBCNoSuchParticipantErrorPayload, AccountLookupBCNoSuchParticipantErrorEvent, AccountLookupBCUnableToGetParticipantFspIdErrorPayload, AccountLookupBCUnableToGetParticipantFspIdErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent, AccountLookupBCNoSuchOracleErrorEvent, AccountLookupBCNoSuchOracleAdapterErrorEvent, AccountLookUpUnknownErrorEvent, AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload, AccountLookupBCNoSuchOracleErrorPayload, AccountLookupBCNoSuchOracleAdapterErrorPayload, AccountLookupBCUnableToAssociateParticipantErrorEvent, AccountLookupBCUnableToAssociateParticipantErrorPayload, AccountLookupBCUnableToDisassociateParticipantErrorEvent, AccountLookupBCUnableToDisassociateParticipantErrorPayload, AccountLookUpUnknownErrorPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { UnableToGetOracleFromOracleFinderError, NoSuchOracleError, NoSuchOracleAdapterError } from "./errors";
 
-export function createInvalidMessageTypeError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidMessageTypeErrorEvent {
+export function createInvalidMessageTypeErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidMessageTypeErrorEvent {
     const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
         partyId: partyId,
         partySubType: partySubType,
@@ -68,7 +68,7 @@ export function createInvalidMessagePayloadErrorEvent(errorDescription:string, p
     return errorEvent;
 }
 
-export function createInvalidParticipantIdError(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidParticipantIdErrorEvent {
+export function createInvalidParticipantIdErrorEvent(errorDescription:string, partyId: string, partyType: string| null, partySubType: string| null, fspId: string| null): AccountLookupBCInvalidParticipantIdErrorEvent {
     const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
         partyId,
         partySubType,

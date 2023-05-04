@@ -74,7 +74,7 @@ import {
 import { randomUUID } from "crypto";
 import { ParticipantLookup, Oracle, AddOracleDTO, OracleType, Association, AccountLookupErrorEvent } from "./types";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { createInvalidMessageTypeError, createUnknownErrorEvent, createOracleErrorEvent, createUnableToAssociateErrorEvent, createUnableToDisassociateErrorEvent, createInvalidMessagePayloadErrorEvent, createInvalidParticipantIdError, createNoSuchParticipantErrorEvent, createUnableToGetParticipantFspIdErrorEvent } from "./error_events";
+import { createInvalidMessageTypeErrorEvent, createUnknownErrorEvent, createOracleErrorEvent, createUnableToAssociateErrorEvent, createUnableToDisassociateErrorEvent, createInvalidMessagePayloadErrorEvent, createInvalidParticipantIdErrorEvent, createNoSuchParticipantErrorEvent, createUnableToGetParticipantFspIdErrorEvent } from "./error_events";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -166,7 +166,7 @@ export class AccountLookupAggregate  {
 				default: {
 					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
 					this._logger.error(errorMessage);
-					eventToPublish = createInvalidMessageTypeError(errorMessage, partyId, partyType, partySubType, requesterFspId);
+					eventToPublish = createInvalidMessageTypeErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
 				}
 			}
 		}
@@ -419,7 +419,7 @@ export class AccountLookupAggregate  {
 		if(message.msgType !== MessageTypes.DOMAIN_EVENT){
 			const errorMessage = `Message type is invalid ${message.msgType}`;
 			this._logger.error(errorMessage);
-			result.errorEvent = createInvalidMessageTypeError(errorMessage, partyId, partyType, partySubType, requesterFspId);
+			result.errorEvent = createInvalidMessageTypeErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
 		}
 		else{
 			result.valid = true;
@@ -436,7 +436,7 @@ export class AccountLookupAggregate  {
 		if(!participantId){
 			const errorMessage = "Fsp Id is null or undefined";
 			this._logger.error(errorMessage);
-			errorEvent = createInvalidParticipantIdError(errorMessage, partyId,partyType,partySubType,participantId);
+			errorEvent = createInvalidParticipantIdErrorEvent(errorMessage, partyId,partyType,partySubType,participantId);
 			result.errorEvent = errorEvent;
 			return result;
 		}
@@ -458,7 +458,7 @@ export class AccountLookupAggregate  {
 		if(participant.id !== participantId){
 			const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
-			errorEvent = createInvalidParticipantIdError(errorMessage,partyId,partyType,partySubType,participantId);
+			errorEvent = createInvalidParticipantIdErrorEvent(errorMessage,partyId,partyType,partySubType,participantId);
 			result.errorEvent = errorEvent;
 			return result;
 		}
