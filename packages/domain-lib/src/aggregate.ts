@@ -185,14 +185,16 @@ export class AccountLookupAggregate  {
 			eventToPublish = createUnknownErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
 		}
 
-		await this.publishEvent(eventToPublish, fspiopOpaqueState);
+		await this.publishEvent(fspiopOpaqueState, eventToPublish);
 	}
 
-	private async publishEvent(eventToPublish: PartyInfoRequestedEvt | AccountLookupErrorEvent | PartyQueryResponseEvt | ParticipantQueryResponseEvt | ParticipantAssociationCreatedEvt | ParticipantAssociationRemovedEvt | AccountLookupErrorEvent, fspiopOpaqueState: string) {
+	private async publishEvent(fspiopOpaqueState: object, eventToPublish: PartyInfoRequestedEvt | AccountLookupErrorEvent | PartyQueryResponseEvt | ParticipantQueryResponseEvt | ParticipantAssociationCreatedEvt | ParticipantAssociationRemovedEvt | AccountLookupErrorEvent): Promise<void> {
 		eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
 		await this._messageProducer.send(eventToPublish);
 	}
+	//#endregion
 
+	//#region handlePartyQueryReceivedEvt
 	private async handlePartyQueryReceivedEvt(message: PartyQueryReceivedEvt):Promise<PartyInfoRequestedEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got PartyQueryReceivedEvt msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
 		let destinationFspId = message.payload?.destinationFspId;
@@ -238,7 +240,9 @@ export class AccountLookupAggregate  {
 		return event;
 
 	}
+	//#endregion
 
+	//#region handlePartyInfoAvailableEvt
 	private async handlePartyInfoAvailableEvt(message:PartyInfoAvailableEvt):Promise<PartyQueryResponseEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
 		const partyId = message.payload.partyId;
@@ -276,7 +280,9 @@ export class AccountLookupAggregate  {
 
 		return event;
 	}
+	//#endregion
 
+	//#region handleParticipantQueryReceivedEvt
 	private async handleParticipantQueryReceivedEvt(message: ParticipantQueryReceivedEvt):Promise<ParticipantQueryResponseEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got ParticipantQueryReceivedEvt for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} currency: ${message.payload.currency} - requesterFspId: ${message.payload.requesterFspId}`);
 		const requesterFspId = message.payload?.requesterFspId;
@@ -321,7 +327,9 @@ export class AccountLookupAggregate  {
 
 		return event;
 	}
+	//#endregion
 
+	//#region handleParticipantAssociationRequestReceivedEvt
 	private async handleParticipantAssociationRequestReceivedEvt(message: ParticipantAssociationRequestReceivedEvt) :Promise<ParticipantAssociationCreatedEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got ParticipantAssociationRequestReceivedEvt for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
 		const ownerFspId = message.payload?.ownerFspId;
@@ -365,9 +373,10 @@ export class AccountLookupAggregate  {
 		const event = new ParticipantAssociationCreatedEvt(payload);
 
 		return event;
-
 	}
+	//#endregion
 
+	//#region handleParticipantDisassociateRequestReceivedEvt
 	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt) :Promise<ParticipantAssociationRemovedEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
 		const ownerFspId = msg.payload?.ownerFspId;
@@ -428,16 +437,17 @@ export class AccountLookupAggregate  {
 			const errorMessage = "Message payload is null or undefined";
 			this._logger.error(errorMessage);
 			result.errorEvent = createInvalidMessagePayloadErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
+			return result;
 		}
 
 		if(message.msgType !== MessageTypes.DOMAIN_EVENT){
 			const errorMessage = `Message type is invalid ${message.msgType}`;
 			this._logger.error(errorMessage);
 			result.errorEvent = createInvalidMessageTypeErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
+			return result;
 		}
-		else{
-			result.valid = true;
-		}
+
+		result.valid = true;
 
 		return result;
 	}
