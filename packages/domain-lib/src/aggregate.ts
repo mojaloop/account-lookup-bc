@@ -140,12 +140,21 @@ export class AccountLookupAggregate  {
 
 	//#region Event Handlers
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
+		this._logger.debug(`Got message in Account Lookup Handler - msg: ${message}`);
 		let eventToPublish = null;
 		const partyId = message.payload?.partyId;
 		const partyType = message.payload?.partyType;
 		const partySubType = message.payload?.partySubType;
 		const requesterFspId = message.payload?.requesterFspId;
-		eventToPublish = this.validateMessageOrGetErrorEvent(message);
+		const fspiopOpaqueState = message.fspiopOpaqueState;
+		const eventMessage = this.validateMessageOrGetErrorEvent(message);
+
+		if(!eventMessage.valid){
+			const errorEvent = eventMessage.errorEvent as AccountLookupErrorEvent;
+			this.publishEvent(errorEvent ,fspiopOpaqueState);
+			return;
+		}
+
 		try{
 			switch(message.msgName){
 				case PartyQueryReceivedEvt.name:
@@ -175,7 +184,12 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage + `- ${error}`);
 			eventToPublish = createUnknownErrorEvent(errorMessage, partyId, partyType, partySubType, requesterFspId);
 		}
-		eventToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
+
+		await this.publishEvent(eventToPublish, fspiopOpaqueState);
+	}
+
+	private async publishEvent(eventToPublish: PartyInfoRequestedEvt | AccountLookupErrorEvent | PartyQueryResponseEvt | ParticipantQueryResponseEvt | ParticipantAssociationCreatedEvt | ParticipantAssociationRemovedEvt | AccountLookupErrorEvent, fspiopOpaqueState: string) {
+		eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
 		await this._messageProducer.send(eventToPublish);
 	}
 
@@ -211,7 +225,7 @@ export class AccountLookupAggregate  {
 		}
 
 		const payload:PartyInfoRequestedEvtPayload = {
-			requesterFspId: message.payload.requesterFspId ,
+			requesterFspId: message.payload.requesterFspId,
 			destinationFspId: destinationFspId,
 			partyType: message.payload.partyType,
 			partyId: message.payload.partyId,
