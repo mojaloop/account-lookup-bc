@@ -43,7 +43,6 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import fs from "fs";
 import {readFile, writeFile} from "fs/promises";
-import {watch} from "node:fs";
 
 type Association = {
     fspId: string;
