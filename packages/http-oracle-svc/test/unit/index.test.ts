@@ -82,7 +82,7 @@ describe("http-oracle-svc unit tests", () => {
 	});
 
 	/* Happy path tests */
-	test("should return 200 when creating a new oracle record", async () => {
+	test("POST - associateParticipant: should return 200 when creating a new oracle record", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -97,7 +97,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200);
 	});
 
-	test("should return 200 when creating a new oracle record with no currency", async () => {
+	test("POST - associateParticipant: should return 200 when creating a new oracle record with no currency", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -112,7 +112,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200);
 	});
 
-	test("should return 500 when creating an oracle record that already exists", async () => {
+	test("POST - associateParticipant: should return 500 when creating an oracle record that already exists", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -127,7 +127,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(500);
 	});
 
-	test("should return fspId when getting an oracle record that exists", async () => {
+	test("GET - getParticipantFspId: should return fspId when getting an oracle record that exists", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "GET",
@@ -141,7 +141,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(data).toEqual({'fspId':'12'});
 	});
 
-	test("should return 200 when deleting an oracle record", async ()=>{
+	test("DELETE - disassociateParticipant: should return 200 when deleting an oracle record", async ()=>{
 		// Arrange
 		const reqlInit: RequestInit = {
 			method:"DELETE",
@@ -156,7 +156,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200)
 	});
 
-	test("should return 500 when deleting an oracle that doesn't exist",async ()=>{
+	test("DELETE - disassociateParticipant: should return 500 when deleting an oracle that doesn't exist",async ()=>{
 		// Arrange
 		const reqlInit: RequestInit = {
 			method:"DELETE",
@@ -171,7 +171,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(500);
 	});
 
-	test("should return true when getting server health",async ()=>{
+	test("GET - health: should return true when getting server health",async ()=>{
 		// Arrange
 		const reqInit: RequestInit = {
 			method:'GET'
@@ -186,7 +186,7 @@ describe("http-oracle-svc unit tests", () => {
 	})
 
 	/* Non-Happy path tests */
-	test("should return 422 when creating an oracle with a missing fspId",async ()=>{
+	test("POST - associateParticipant: should return 422 when creating an oracle with a missing fspId",async ()=>{
 		//Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -200,7 +200,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(422);
 	});
 
-	test("should return 422 when deleting an oracle record with missing fspId", async ()=>{
+	test("DELETE - disassociateParticipant: should return 422 when deleting an oracle record with missing fspId", async ()=>{
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"DELETE",
@@ -214,7 +214,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(422);
 	});
 
-	test("should return 404 when getting an oracle record with non existent partyId", async () => {
+	test("GET - getParticipantFspId: should return 404 when getting an oracle record with non existent partyId", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"GET"
@@ -227,7 +227,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(404);
 	});
 
-	test("return 404 when requesting an endpoint that does not exist", async () => {
+	test("should return 404 when requesting an endpoint that does not exist", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"GET"
