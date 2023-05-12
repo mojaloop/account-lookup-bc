@@ -108,12 +108,18 @@ export class Service {
     }
 
     static async stop(): Promise<void> {
+        const expressServerCloseProm = new Promise<void>((resolve, reject) => {
+             this.expressServer.close((err)=>{
+                 if(err)
+                    return reject(err);
+                resolve();
+            });
+        });
         this.logger.debug("Tearing down express server");
-        this.expressServer.close();
+        await expressServerCloseProm;
         this.logger.debug("Tearing down oracle");
         await this.remoteOracleAdapter.destroy();
         this.logger.debug("Tearing down oracle routes");
-
     }
 }
 
@@ -122,6 +128,8 @@ export class Service {
  * process termination and cleanup
  */
 
+
+/* istanbul ignore next */
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
     console.info(`Service - ${signal} received - cleaning up...`);
     let clean_exit = false;
@@ -137,14 +145,20 @@ async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<voi
 }
 
 //catches ctrl+c event
+/* istanbul ignore next */
 process.on("SIGINT", _handle_int_and_term_signals);
+
 //catches program termination event
+/* istanbul ignore next */
 process.on("SIGTERM", _handle_int_and_term_signals);
 
 //do something when app is closing
+/* istanbul ignore next */
 process.on("exit", async () => {
     globalLogger.info("Microservice - exiting...");
 });
+
+/* istanbul ignore next */
 process.on("uncaughtException", (err: Error) => {
     globalLogger.error(err);
     console.log("UncaughtException - EXITING...");

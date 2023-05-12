@@ -43,7 +43,6 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import fs from "fs";
 import {readFile, writeFile} from "fs/promises";
-import {watch} from "node:fs";
 
 type Association = {
     fspId: string;
@@ -65,8 +64,7 @@ export class RemoteOracle implements IRemoteOracle {
     private readonly _logger: ILogger;
     private readonly _filePath: string;
     private _associations:Map<string, Association> = new Map<string, Association>();
-    private _fileWatcher: fs.FSWatcher;
-    
+
     constructor(filePath:string, logger:ILogger) {
         this._logger = logger;
         this._filePath = filePath;
@@ -85,23 +83,10 @@ export class RemoteOracle implements IRemoteOracle {
         }
 
         await this._loadFromFile();
-
-        let fsWait: NodeJS.Timeout | undefined; // debounce wait
-
-        this._fileWatcher = watch(this._filePath, async (eventType) => {
-            if (eventType==="change") {
-                if (fsWait) return;
-                fsWait = setTimeout(() => {
-                    fsWait = undefined;
-                }, 100);
-                this._logger.info(`File "${this._filePath}" changed. Reloading associations.`);
-                await this._loadFromFile();
-            }
-        });
     }
 
     async destroy(): Promise<void> {
-        if(this._fileWatcher) this._fileWatcher.close();
+        return Promise.resolve();
     }
 
     private async _loadFromFile(): Promise<void>{
@@ -143,7 +128,8 @@ export class RemoteOracle implements IRemoteOracle {
 
         this._logger.info(`Successfully read file contents - associations: ${this._associations.size}`);
     }
-    
+
+    /* istanbul ignore next */
     private async _saveToFile():Promise<void>{
         try{
             const obj = {
@@ -152,7 +138,7 @@ export class RemoteOracle implements IRemoteOracle {
             const strContents = JSON.stringify(obj, null, 4);
             await writeFile(this._filePath, strContents, "utf8");
         }catch (e) {
-            this._logger.error(`Failed to save associations to file "${this._filePath}"`);
+            this._logger.error(e,`Failed to save associations to file "${this._filePath}"`);
             throw new Error(`Failed to save associations to file "${this._filePath}"`);
         }
     }
@@ -186,7 +172,7 @@ export class RemoteOracle implements IRemoteOracle {
         } else {
             this._associations.set(key, {partyId, partyType, currency, fspId});
             this._logger.info(`Successfully added association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
-            this._saveToFile();
+            await this._saveToFile();
             return null;
         }
     }
@@ -197,7 +183,7 @@ export class RemoteOracle implements IRemoteOracle {
 
         if (association && association.fspId===fspId) {
             this._associations.delete(key);
-            this._saveToFile();
+            await this._saveToFile();
             this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             return null;
         } else {
