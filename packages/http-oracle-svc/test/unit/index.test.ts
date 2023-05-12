@@ -82,7 +82,7 @@ describe("http-oracle-svc unit tests", () => {
 	});
 
 	/* Happy path tests */
-	test("create test oracle record", async () => {
+	test("should return 200 when creating a new oracle record", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -97,7 +97,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200);
 	});
 
-	test("create test oracle record with no currency", async () => {
+	test("should return 200 when creating a new oracle record with no currency", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -112,7 +112,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200);
 	});
 
-	test("create record that already exists", async () => {
+	test("should return 500 when creating an oracle record that already exists", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -127,7 +127,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(500);
 	});
 
-	test("get test oracle record", async () => {
+	test("should return fspId when getting an oracle record that exists", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method: "GET",
@@ -141,7 +141,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(data).toEqual({'fspId':'12'});
 	});
 
-	test("delete test oracle record", async ()=>{
+	test("should return 200 when deleting an oracle record", async ()=>{
 		// Arrange
 		const reqlInit: RequestInit = {
 			method:"DELETE",
@@ -156,7 +156,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(200)
 	});
 
-	test("delete test oracle that doesn't exist",async ()=>{
+	test("should return 500 when deleting an oracle that doesn't exist",async ()=>{
 		// Arrange
 		const reqlInit: RequestInit = {
 			method:"DELETE",
@@ -171,7 +171,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(500);
 	});
 
-	test("test get health",async ()=>{
+	test("should return true when getting server health",async ()=>{
 		// Arrange
 		const reqInit: RequestInit = {
 			method:'GET'
@@ -186,7 +186,7 @@ describe("http-oracle-svc unit tests", () => {
 	})
 
 	/* Non-Happy path tests */
-	test("test create oracle with missing fspId",async ()=>{
+	test("should return 422 when creating an oracle with a missing fspId",async ()=>{
 		//Arrange
 		const reqInit: RequestInit = {
 			method: "POST",
@@ -200,7 +200,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(422);
 	});
 
-	test("delete test oracle record with missing fspId", async ()=>{
+	test("should return 422 when deleting an oracle record with missing fspId", async ()=>{
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"DELETE",
@@ -214,7 +214,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(422);
 	});
 
-	test("get test oracle record with non existent partyId", async () => {
+	test("should return 404 when getting an oracle record with non existent partyId", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"GET"
@@ -227,7 +227,7 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(404);
 	});
 
-	test("test endpoint that does not exist", async () => {
+	test("return 404 when requesting an endpoint that does not exist", async () => {
 		// Arrange
 		const reqInit: RequestInit = {
 			method:"GET"
@@ -240,11 +240,11 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(404);
 	});
 
-	test("Stop the server", async ()=>{
+	test("Stop the server to prepare for the next test that starts the server", async ()=>{
 		await Service.stop();
 	});
 
-	test("test start server with no db.json", async () => {
+	test("should throw an error db.json exists with wrong content when starting the server with a db.json that has a wrong format", async () => {
 		// Arrange
 		if(!filePath){
 			throw new Error("ORACLE_DB_FILE_PATH was not set");
@@ -262,7 +262,7 @@ describe("http-oracle-svc unit tests", () => {
 		await expect(result).rejects.toThrowError();
 	});
 
-	test("stop server that is not running", async () => {
+	test("should throw an error when trying to a stop server that is not running", async () => {
 		// Act
 		const result = Service.stop();
 
