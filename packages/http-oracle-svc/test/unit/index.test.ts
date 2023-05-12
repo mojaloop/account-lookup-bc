@@ -47,10 +47,10 @@ defaultHeaders.append("Content-Type", "application/json");
 
 describe("http-oracle-svc unit tests", () => {
 	beforeAll(async () => {
-		if(filePath && fs.existsSync(filePath)){
+		if(filePath){
 			/**  delete the db.json to start the server with no db.json **/
 			// Arrange
-			fs.unlinkSync(filePath);
+			fs.existsSync(filePath) ? fs.unlinkSync(filePath) : null ;
 
 			// Act
 			const result = Service.start();
