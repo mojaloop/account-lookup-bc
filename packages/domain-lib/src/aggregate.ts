@@ -197,6 +197,7 @@ export class AccountLookupAggregate  {
 	//#region handlePartyQueryReceivedEvt
 	private async handlePartyQueryReceivedEvt(message: PartyQueryReceivedEvt):Promise<PartyInfoRequestedEvt | AccountLookupErrorEvent>{
 		this._logger.debug(`Got PartyQueryReceivedEvt msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
+		
 		let destinationFspId = message.payload?.destinationFspId;
 		const requesterFspId = message.payload?.requesterFspId;
 		const partyType = message.payload?.partyType;
