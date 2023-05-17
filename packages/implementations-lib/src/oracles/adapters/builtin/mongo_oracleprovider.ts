@@ -97,12 +97,16 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	async getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null> {
 		try {
-			const data = await this.parties.findOne({
+			let query = currency ? {
 				partyId: partyId,
 				partyType: partyType,
-				currency: currency,
+				currency: currency
+			} : {
+				partyId: partyId,
+				partyType: partyType,
+			}
 
-			});
+			const data = await this.parties.findOne(query);
 
 			if(!data) {
 				const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
