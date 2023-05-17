@@ -44,7 +44,7 @@ optionally within square brackets <email>.
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { check, validationResult} from "express-validator";
-import {IRemoteOracle, RemoteOracle} from "../remote_oracle";
+import {IRemoteOracle} from "../remote_oracle";
 
 
 export class RemoteOracleExpressRoutes {

@@ -97,14 +97,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	async getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null> {
 		try {
-			let query = currency ? {
+			const query = currency ? {
 				partyId: partyId,
 				partyType: partyType,
 				currency: currency
 			} : {
 				partyId: partyId,
 				partyType: partyType,
-			}
+			};
 
 			const data = await this.parties.findOne(query);
 

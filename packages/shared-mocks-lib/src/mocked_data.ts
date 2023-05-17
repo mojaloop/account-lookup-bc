@@ -224,7 +224,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
     }
 ];
 
-export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, partySubType: string|null): string|null => {
+export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, _partySubType: string|null): string|null => {
     const result = mockedOracleAdapterResults.find((oracleAdapterResult) => {
         return oracleAdapterResult.partyType === partyType;
     });

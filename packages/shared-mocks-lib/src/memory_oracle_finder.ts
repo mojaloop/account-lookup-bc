@@ -86,7 +86,7 @@ export class MemoryOracleFinder implements IOracleFinder {
     getOracleByName(name: string): Promise<Oracle | null> {
         return Promise.resolve(this._oraclesThatBelongToAggregate.find(o => o.name === name) || null);
     }
-    getOracle(partyType: string, currency: string | null): Promise<Oracle | null> {
+    getOracle(partyType: string, _currency: string | null): Promise<Oracle | null> {
         let oracle = this._oraclesThatBelongToAggregate.find(o => o.partyType === partyType);
         if(!oracle) {
             oracle = this._oraclesThatDontBelongToAggregate.find(o => o.partyType === partyType);
