@@ -349,7 +349,8 @@ export class AccountLookupAggregate  {
 		try{
 			oracleAdapter = await this.getOracleAdapter(partyType,currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			this._logger.error(`Error getting oracle adapter for partyType: ${partyType} and currency: ${currency} - ${error.message}`);
 			return createOracleErrorEvent(error, partyId, partyType, partySubType, ownerFspId);
 		}
@@ -357,7 +358,8 @@ export class AccountLookupAggregate  {
 		try{
 			await oracleAdapter.associateParticipant(ownerFspId, partyType, partyId, currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			const errorMessage = `Error associating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage + `- ${error.message}`);
 			return createUnableToAssociateErrorEvent(errorMessage, partyId, partyType, partySubType, ownerFspId);
@@ -396,7 +398,8 @@ export class AccountLookupAggregate  {
 		try{
 			oracleAdapter = await this.getOracleAdapter(partyType, currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			this._logger.error(`Error getting oracle adapter for partyType: ${partyType} and currency: ${currency} - ${error.message}`);
 			return createOracleErrorEvent(error, partyId, partyType, partySubType, ownerFspId);
 		}
@@ -404,7 +407,8 @@ export class AccountLookupAggregate  {
 		try{
 			await oracleAdapter.disassociateParticipant(ownerFspId,partyType,partyId,currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			const errorMessage = `Error disassociating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage + ` - ${error.message}`);
 			return createUnableToDisassociateErrorEvent(errorMessage, partyId, partyType, partySubType, ownerFspId);
@@ -466,9 +470,10 @@ export class AccountLookupAggregate  {
 		}
 
 		participant = await this._participantService.getParticipantInfo(participantId)
-			.catch((error: unknown) => {
-				this._logger.error(`Error getting participant info for participantId: ${participantId} - ${error?.message}`);
-				return null;
+		.catch((err: unknown) => {
+			const error = (err as Error);
+			this._logger.error(`Error getting participant info for participantId: ${participantId} - ${error?.message}`);
+			return null;
 		});
 
 		if(!participant) {
@@ -555,7 +560,8 @@ export class AccountLookupAggregate  {
 		try{
 			oracleAdapter = await this.getOracleAdapter(partyType, currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			this._logger.error(`Unable to get oracle adapter for partyType: ${partyType} - ${error.message}`);
 			result.errorEvent = createOracleErrorEvent(error, partyId, partyType, partySubType, fspId);
 			return result;
@@ -564,7 +570,8 @@ export class AccountLookupAggregate  {
 		try{
 			participantId = await oracleAdapter.getParticipantFspId(partyType,partyId, currency);
 		}
-		catch(error: unknown){
+		catch(err: unknown){
+			const error = (err as Error);
 			const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle`;
 			this._logger.error(errorMessage + error.message);
 			result.errorEvent = createUnableToGetParticipantFspIdErrorEvent(errorMessage, partyId, partyType, partySubType, fspId);
