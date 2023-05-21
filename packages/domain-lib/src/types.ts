@@ -80,9 +80,12 @@ export type Association = {
     currency: string|null;
 }
 
-export type AccountLookupErrorEvent = AccountLookUpUnknownErrorEvent |
-    AccountLookupBCInvalidMessageTypeErrorEvent | AccountLookupBCInvalidParticipantIdErrorEvent |
-    AccountLookupBCNoSuchOracleAdapterErrorEvent | AccountLookupBCNoSuchOracleErrorEvent |
+export type AccountLookupErrorEvent =
+    AccountLookUpUnknownErrorEvent |
+    AccountLookupBCInvalidMessageTypeErrorEvent |
+    AccountLookupBCInvalidParticipantIdErrorEvent |
+    AccountLookupBCNoSuchOracleAdapterErrorEvent |
+    AccountLookupBCNoSuchOracleErrorEvent |
     AccountLookupBCNoSuchParticipantErrorEvent | AccountLookupBCNoSuchParticipantFspIdErrorEvent |
     AccountLookupBCUnableToAssociateParticipantErrorEvent | AccountLookupBCUnableToDisassociateParticipantErrorEvent |
     AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent | AccountLookupBCUnableToGetParticipantFspIdErrorEvent
