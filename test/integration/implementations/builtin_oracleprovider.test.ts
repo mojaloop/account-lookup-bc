@@ -42,7 +42,12 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { MongoOracleProviderRepo, ParticipantAssociationAlreadyExistsError,  UnableToInitOracleProvider } from "../../../packages/implementations-lib/src";
+import { 
+    MongoOracleProviderRepo,
+    ParticipantAssociationAlreadyExistsError,
+    UnableToInitOracleProvider,
+    UnableToGetParticipantError
+} from "../../../packages/implementations-lib/src";
 import { Oracle } from "../../../packages/domain-lib/src";
 import { Collection, MongoClient } from "mongodb";
 
@@ -117,6 +122,17 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
 
     });
 
+    test("should throw error if no participant fspid is found", async () => {
+        // Arrange
+        const partyType = "non-existent-partytype";
+        const partyId = "non-existent-partyid";
+        const currency = "USD";
+
+        // Act & Assert
+        await expect(builtInOracleProvider.getParticipantFspId(partyType, partyId, currency))
+            .rejects.toThrowError(UnableToGetParticipantError);
+    });
+
     test("should be able to associate a participant to an oracle", async () => {
             // Arrange
             const fspId = "fsp1";
@@ -167,13 +183,28 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
 
     });
 
-
     test("should be able to perform health check", async () => {
         // Act
         const result = await builtInOracleProvider.healthCheck();
 
         // Assert
         expect(result).toEqual(true);
+    });
+
+    test("should be able to get all associated participants", async () => {
+        // Arrange
+        const fspId = "fsp1";
+        const partyType = "MSISDN";
+        const partyId = "123456789";
+        const currency = "USD";
+        await builtInOracleProvider.associateParticipant(fspId, partyType, partyId, currency);
+
+        // Act
+        const result = await builtInOracleProvider.getAllAssociations();
+
+        // Assert
+        expect(Array.isArray(result)).toEqual(true);
+        expect(result.length).toBeGreaterThan(0);
     });
 
  });

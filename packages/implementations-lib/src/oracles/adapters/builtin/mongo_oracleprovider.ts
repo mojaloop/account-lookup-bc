@@ -136,7 +136,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch((e: unknown) => {
+		}).catch(/* istanbul ignore next */(e: unknown) => {
 			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToStoreParticipantAssociationError();
 		}
@@ -152,7 +152,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch((e: unknown) => {
+		}).catch(/* istanbul ignore next */(e: unknown) => {
 			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
 			throw new UnableToDeleteParticipantAssociationError();
 		});
@@ -162,7 +162,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async healthCheck(): Promise<boolean> {
-		await this.mongoClient.db().command({ping: 1}).catch((e: unknown) => {
+		await this.mongoClient.db().command({ping: 1}).catch(/* istanbul ignore next */(e: unknown) => {
 			this._logger.debug(`Unable to ping database: ${(e as Error).message}`);
 			return false;
 		});
@@ -170,7 +170,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async getAllAssociations():Promise<Association[]> {
-		const associations = await this.parties.find({}).toArray().catch((e: unknown) => {
+		const associations = await this.parties.find({}).toArray().catch(/* istanbul ignore next */(e: unknown) => {
 			this._logger.error(`Unable to get associations: ${(e as Error).message}`);
 			throw new UnableToGetAssociationError();
 		});

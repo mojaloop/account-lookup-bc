@@ -98,8 +98,7 @@ describe("Account Lookup Routes - Integration", () => {
             .get(`/${partyId}/${partyType}`);
 
         // Assert
-        expect(response.status).toBe(500);
-        //TODO: This should be a 404
+        expect(response.status).toBe(404);
         //expect(response.text).toEqual("Unable to get participant fsp id");
     });
 
