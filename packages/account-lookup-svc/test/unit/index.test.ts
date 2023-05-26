@@ -103,7 +103,7 @@ describe("Account Lookup Service", () => {
         // Arrange
         const spyConsumerSetTopics = jest.spyOn(mockedConsumer, "setTopics");
         const spyConsumerConnect = jest.spyOn(mockedConsumer, "connect");
-        const spyConsumerStart = jest.spyOn(mockedConsumer, "start");
+        const spyConsumerStart = jest.spyOn(mockedConsumer, "startAndWaitForRebalance");
         const spyConsumerCallback = jest.spyOn(mockedConsumer, "setCallbackFn");
         const spyProducerInit = jest.spyOn(mockedProducer, "connect");
         const spyAggregateInit = jest.spyOn(mockedAggregate, "init");

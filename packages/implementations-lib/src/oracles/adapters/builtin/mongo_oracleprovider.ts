@@ -43,7 +43,7 @@ optionally within square brackets <email>.
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {MongoClient, Collection, WithId, Document} from "mongodb";
 import { IOracleProviderAdapter, OracleType, Oracle, Association } from "@mojaloop/account-lookup-bc-domain-lib";
-import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToDeleteParticipantAssociationError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToGetAssociationError, UnableToStoreParticipantAssociationError } from "../../../errors";
+import { NoSuchParticipantError, ParticipantAssociationAlreadyExistsError, UnableToCloseDatabaseConnectionError, UnableToGetParticipantError, UnableToInitOracleProvider, UnableToGetAssociationError, UnableToAssociateParticipantError, UnableToDisassociateParticipantError } from "../../../errors";
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	private readonly _logger: ILogger;
@@ -77,9 +77,10 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			this.mongoClient = new MongoClient(this._connectionString);
 			this.mongoClient.connect();
 			this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
-		} catch (e: unknown) {
-			this._logger.error(`Unable to connect to the database: ${(e as Error).message}`);
-			throw new UnableToInitOracleProvider();
+		} catch (error: unknown) {
+			const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToInitOracleProvider(errorMessage);
 		}
 	}
 
@@ -87,38 +88,43 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		try{
 			await this.mongoClient.close();
 		}
-		catch(e: unknown){
-			this._logger.error(`Unable to close database connection: ${(e as Error).message}`);
-			throw new UnableToCloseDatabaseConnectionError();
+		catch(error: unknown){
+			const errorMessage = `Unable to close database connection: ${(error as Error).message}`;
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToCloseDatabaseConnectionError(errorMessage);
 		}
-
 	}
 
 	async getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null> {
 		try {
-			const data = await this.parties.findOne({
+			const query = currency ? {
 				partyId: partyId,
 				partyType: partyType,
-				currency: currency,
+				currency: currency
+			} : {
+				partyId: partyId,
+				partyType: partyType,
+			};
 
-			});
+			const data = await this.parties.findOne(query);
 
 			if(!data) {
-				this._logger.debug(`Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
-                throw new NoSuchParticipantError();
+				const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
+				this._logger.debug(errorMessage);
+                throw new NoSuchParticipantError(errorMessage);
             }
 
 			return data.fspId as unknown as string;
 
-		} catch (e: unknown) {
-			this._logger.error(`Unable to get participant for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
-			throw new UnableToGetParticipantError();
+		} catch (error: unknown) {
+			const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${(error as Error).message}`;
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToGetParticipantError(errorMessage);
 		}
 	}
 
 
 	async associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
-	{
 		const participant = await this.parties.findOne({
 			partyId: partyId,
 			fspId: fspId,
@@ -127,8 +133,9 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		});
 
 		if(participant) {
-			this._logger.debug(`Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
-			throw new ParticipantAssociationAlreadyExistsError();
+			const errorMessage = `Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
+			this._logger.debug(errorMessage);
+			throw new ParticipantAssociationAlreadyExistsError(errorMessage);
 		}
 
 		await this.parties.insertOne({
@@ -136,14 +143,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch(/* istanbul ignore next */(e: unknown) => {
-			this._logger.error(`Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
-			throw new UnableToStoreParticipantAssociationError();
-		}
-		);
-			this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
-			return null;
-		}
+		}).catch(/* istanbul ignore next */(error: unknown) => {
+			const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToAssociateParticipantError(errorMessage);
+		});
+
+		this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
+		return null;
 	}
 
 	async disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
@@ -152,9 +159,10 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch(/* istanbul ignore next */(e: unknown) => {
-			this._logger.error(`Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(e as Error).message}`);
-			throw new UnableToDeleteParticipantAssociationError();
+		}).catch(/* istanbul ignore next */(error: unknown) => {
+			const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToDisassociateParticipantError(errorMessage);
 		});
 
 		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
@@ -170,9 +178,11 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async getAllAssociations():Promise<Association[]> {
-		const associations = await this.parties.find({}).toArray().catch(/* istanbul ignore next */(e: unknown) => {
-			this._logger.error(`Unable to get associations: ${(e as Error).message}`);
-			throw new UnableToGetAssociationError();
+		const associations = await this.parties.find({}).toArray()
+		.catch(/* istanbul ignore next */(error: unknown) => {
+			const errorMessage = `Unable to get associations: ${(error as Error).message}`;
+			this._logger.error(errorMessage + ` - ${error}`);
+			throw new UnableToGetAssociationError(errorMessage);
 		});
 
 		const mappedAssociations = associations.map((association: WithId<Document>) => {

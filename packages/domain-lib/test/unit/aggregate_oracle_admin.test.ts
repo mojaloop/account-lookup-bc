@@ -46,39 +46,14 @@ import {
     Oracle,
 } from "../../src";
 import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
 
+let aggregate: AccountLookupAggregate;
 
-const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
-
-const oracleFinder: IOracleFinder = new MemoryOracleFinder(
-    logger,
-);
-
-const oracleProviderFactory = new MemoryOracleProviderFactory(logger);
-
-const messageProducer: IMessageProducer = new MemoryMessageProducer(
-    logger,
-);
-
-
-const participantService: IParticipantService = new MemoryParticipantService(
-    logger,
-);
-
-// Domain.
-const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
-    logger,
-    oracleFinder,
-    oracleProviderFactory,
-    messageProducer,
-    participantService
-);
-
-
-describe("Domain - Unit Tests oracle admin routes", () => {
+describe("Domain - Unit Tests Oracle admin routes", () => {
 
     beforeAll(async () => {
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
         await aggregate.init();
     });
 
@@ -149,6 +124,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             id: "not-existing-id",
             partyType: "DFSP",
             type: "builtin",
+            currency: "USD",
         };
 
         // Act && Assert
@@ -195,6 +171,7 @@ describe("Domain - Unit Tests oracle admin routes", () => {
             endpoint: "http://localhost:3000",
             partyType: "DFSP",
             type: "builtin",
+            currency: "USD",
         };
 
         // Act

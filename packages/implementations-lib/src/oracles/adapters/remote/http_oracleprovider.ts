@@ -43,7 +43,7 @@ optionally within square brackets <email>.
 import {IOracleProviderAdapter, Oracle, OracleType, Association} from "@mojaloop/account-lookup-bc-domain-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, {AxiosInstance, AxiosResponse} from "axios";
-import { UnableToInitRemoteOracleProvider } from "../../../errors";
+import { UnableToAssociateParticipantError, UnableToDisassociateParticipantError, UnableToGetParticipantError, UnableToInitRemoteOracleProvider } from "../../../errors";
 
 export class HttpOracleProvider implements IOracleProviderAdapter {
     private readonly _logger: ILogger;
@@ -83,21 +83,24 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
             return response.status === 200;
         }).catch((error: Error) => {
             this._logger.error(`healthCheck: error getting health check - ${error}`);
-            throw new Error('Error checking health');
+            return false;
         });
     }
 
     async getParticipantFspId(partyType:string, partyId: string, currency:string| null ): Promise<string|null> {
         let url = `/participants/${partyType}/${partyId}`;
 
-        if(currency) url+=`?currency=${currency}`;
+        if(currency){
+            url+=`?currency=${currency}`;
+        }
 
         return this.httpClient.get(url).then((
             response: AxiosResponse) => {
             return response.data?.fspId ?? null;
         }).catch((error: Error) => {
-            this._logger.error(`getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} - ${error}`);
-            throw new Error('Error getting participant fspId');
+            const errorMessage = `getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency}`;
+            this._logger.error(errorMessage + ` - ${error}`);
+            throw new UnableToGetParticipantError(errorMessage);
         });
     }
 
@@ -111,15 +114,15 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
                 this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
-                const err= new Error(`associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
-                this._logger.error(err);
-                throw err;
+                const errorMessage = `associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`;
+                this._logger.error(errorMessage + ` - ${error}`);
+                throw new UnableToAssociateParticipantError(errorMessage);
             });
     }
 
     async disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
         let url = `/participants/${partyType}/${partyId}`;
-       
+
         if(currency) url+=`?currency=${currency}`;
 
         return await this.httpClient.delete(url, { data:{
@@ -129,9 +132,10 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
                 this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`);
                 return null;
             }).catch((error: Error) => {
-                this._logger.error(`disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId} - ${error}`);
-                throw new Error('Error disassociating participant');
-            });    
+                const errorMessage = `disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} with fspId: ${fspId}`;
+                this._logger.error(errorMessage + ` - ${error}`);
+                throw new UnableToDisassociateParticipantError(errorMessage);
+            });
     }
 
     async getAllAssociations():Promise<Association[]> {

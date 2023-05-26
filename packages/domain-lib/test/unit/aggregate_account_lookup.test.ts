@@ -28,53 +28,23 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
-
- // Logger.
-import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
     AccountLookupAggregate,
-    IOracleFinder,
-    IParticipantService,
     ParticipantLookup,
 } from "../../src";
-import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
 
+let aggregate: AccountLookupAggregate;
 
-const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
-
-const oracleFinder: IOracleFinder = new MemoryOracleFinder(
-    logger,
-);
-
-const oracleProviderFactory = new MemoryOracleProviderFactory(logger);
-
-const messageProducer: IMessageProducer = new MemoryMessageProducer(
-    logger,
-);
-
-
-const participantService: IParticipantService = new MemoryParticipantService(
-    logger,
-);
-
-// Domain.
-const aggregate: AccountLookupAggregate = new AccountLookupAggregate(
-    logger,
-    oracleFinder,
-    oracleProviderFactory,
-    messageProducer,
-    participantService
-);
-
-describe("Domain - Unit Tests Account LookUp", () => {
+describe("Domain - Unit Tests Account Lookup", () => {
 
     beforeAll(async () => {
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
         await aggregate.init();
     });
 

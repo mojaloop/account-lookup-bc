@@ -44,7 +44,6 @@ import {IMessage, IMessageConsumer} from "@mojaloop/platform-shared-lib-messagin
 
 export class MemoryMessageConsumer implements IMessageConsumer{
 
-
     setCallbackFn(_handlerCallback: (message: IMessage) => Promise<void>): void {
          return;
     }
@@ -71,6 +70,10 @@ export class MemoryMessageConsumer implements IMessageConsumer{
 
     async start() : Promise<void> {
         return;
+    }
+
+    async startAndWaitForRebalance(): Promise<void>{
+          return;
     }
 
     async stop (): Promise<void> {

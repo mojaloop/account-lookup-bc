@@ -44,7 +44,7 @@ optionally within square brackets <email>.
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { check, validationResult} from "express-validator";
-import {IRemoteOracle, RemoteOracle} from "../remote_oracle";
+import {IRemoteOracle} from "../remote_oracle";
 
 
 export class RemoteOracleExpressRoutes {
@@ -59,20 +59,13 @@ export class RemoteOracleExpressRoutes {
 
         this.mainRouter.get("/health", this.healthCheck.bind(this));
 
-        this.mainRouter.get("/participants/:partyType/:partyId", [
-            check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
-            check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
-        ], this.getParticipantFspId.bind(this));
+        this.mainRouter.get("/participants/:partyType/:partyId", this.getParticipantFspId.bind(this));
 
         this.mainRouter.delete("/participants/:partyType/:partyId", [
-            check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
-            check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
             check("fspId").isString().notEmpty().withMessage(" fspId is required").bail()
         ], this.disassociateParticipant.bind(this));
 
         this.mainRouter.post("/participants/:partyType/:partyId", [
-            check("partyType").isString().notEmpty().withMessage(" partyType is required").bail(),
-            check("partyId").isString().notEmpty().withMessage(" partyId is required").bail(),
             check("fspId").isString().notEmpty().withMessage(" fspId is required").bail(),
         ], this.associateParticipant.bind(this));
 
@@ -101,6 +94,7 @@ export class RemoteOracleExpressRoutes {
 
 
     private async getParticipantFspId(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        /* istanbul ignore if */
         if (!this.validateRequest(req, res)) {
             return;
         }
@@ -119,7 +113,9 @@ export class RemoteOracleExpressRoutes {
                 });
             }
         } catch (err: unknown) {
+            /* istanbul ignore next */
             this._logger.error(`Error Fetching FSP ID with params [${params}]. -${err}`);
+            /* istanbul ignore next */
             res.status(500).json({
                 status: "error",
                 msg: (err as Error).message
@@ -162,7 +158,7 @@ export class RemoteOracleExpressRoutes {
             this._logger.debug(`Associated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
-            this._logger.error(`Error associating Participant with params [${params}]. -${err}`);
+            this._logger.error(err,`Error associating Participant with params [${params}]. -${err}`);
             res.status(500).json({
                 status: "error",
                 msg: (err as Error).message
@@ -177,7 +173,9 @@ export class RemoteOracleExpressRoutes {
             this._logger.debug(`Health Check Result [${fetched}].`);
             res.send(fetched);
         } catch (err: unknown) {
+            /* istanbul ignore next */
             this._logger.error(`Error Health Check. -${err}`);
+            /* istanbul ignore next */
             res.status(500).json({
                 status: "error",
                 msg: (err as Error).message

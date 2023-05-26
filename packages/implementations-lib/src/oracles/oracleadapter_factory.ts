@@ -30,14 +30,14 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
  **/
- 
+
 "use strict";
 
 import { IOracleProviderAdapter, IOracleProviderFactory, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
@@ -60,11 +60,17 @@ export class OracleAdapterFactory implements IOracleProviderFactory {
     create(oracle: Oracle): IOracleProviderAdapter {
         switch (oracle.type) {
             case "builtin":
+                this._logger.debug(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
                 return new MongoOracleProviderRepo(oracle, this._logger, this._builtinOracleMongoUrl, this._dbName);
             case "remote-http":
+                this._logger.debug(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
                 return new HttpOracleProvider(oracle, this._logger);
             default:
-                throw new OracleTypeNotSupportedError();
+                {
+                    const errorMessage = `Oracle type ${oracle.type} not supported`;
+                    this._logger.error(errorMessage);
+                    throw new OracleTypeNotSupportedError(errorMessage);
+                }
         }
     }
 }

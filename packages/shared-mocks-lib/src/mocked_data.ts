@@ -57,6 +57,7 @@ export const notIncludedOracleAdapters: Oracle[] = [
         endpoint: null,
         partyType: mockedPartyTypes[3],
         type: "builtin",
+        currency: "USD",
     },
     {
         id: "0.1",
@@ -64,6 +65,7 @@ export const notIncludedOracleAdapters: Oracle[] = [
         endpoint: null,
         partyType: mockedPartyTypes[3],
         type: "builtin",
+        currency: "EUR",
     }
 ];
 
@@ -74,6 +76,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: null,
         partyType: mockedPartyTypes[0],
         type: "builtin",
+        currency: "USD",
     },
     {
         id: "1.1",
@@ -81,6 +84,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: null,
         partyType: mockedPartyTypes[0],
         type: "builtin",
+        currency: "EUR",
     },
     {
         id: "1.2",
@@ -88,6 +92,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: null,
         partyType: mockedPartyTypes[0],
         type: "builtin",
+        currency: "USD",
     },
     {
         id: "2",
@@ -95,6 +100,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: null,
         partyType: mockedPartyTypes[1],
         type: "builtin",
+        currency: "EUR",
     },
     {
         id: "2.2",
@@ -102,6 +108,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: null,
         partyType: mockedPartyTypes[1],
         type: "builtin",
+        currency: "USD",
     },
     {
         id: "3",
@@ -109,6 +116,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: "http://bank-oracle.com",
         partyType: mockedPartyTypes[2],
         type: "remote-http",
+        currency: "USD",
     },
     {
         id: "3.3",
@@ -116,6 +124,7 @@ export const mockedOracleAdapters: Oracle [] = [
         endpoint: "http://bank-oracle.com",
         partyType: mockedPartyTypes[2],
         type: "remote-http",
+        currency: "EUR",
     }
 
 ];
@@ -215,7 +224,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
     }
 ];
 
-export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, partySubType: string|null): string|null => {
+export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, _partySubType: string|null): string|null => {
     const result = mockedOracleAdapterResults.find((oracleAdapterResult) => {
         return oracleAdapterResult.partyType === partyType;
     });

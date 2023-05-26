@@ -55,8 +55,8 @@ const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_TEST_NAME ?? "test";
-//const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
-const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
+const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017";
+//const CONNECTION_STRING = process.env["MONGO_URL"] || "mongodb://127.0.0.1:27017";
 const COLLECTION_NAME = "builtinOracleParties";
 
 let builtInOracleProvider: MongoOracleProviderRepo;
@@ -66,6 +66,7 @@ const oracle: Oracle = {
      name: "test",
      partyType: "MSISDN",
      type: "builtin",
+     currency: "USD",
  };
 
 let mongoClient: MongoClient;

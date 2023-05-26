@@ -23,26 +23,36 @@
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
 
- * Coil
- - Jason Bruwer <jason.bruwer@coil.com>
-
- * Crosslake
- - Pedro Sousa Barreto <pedrob@crosslaketech.com>
-
- * Gonçalo Garcia <goncalogarcia99@gmail.com>
-
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
+
+import { MemoryOracleFinder, MemoryOracleProviderFactory, MemoryMessageProducer, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IOracleFinder, IParticipantService } from "../../src";
+
+const logger: ILogger = new ConsoleLogger();
+logger.setLogLevel(LogLevel.FATAL);
+
+const oracleFinder: IOracleFinder = new MemoryOracleFinder(
+    logger,
+);
+
+const oracleProviderFactory = new MemoryOracleProviderFactory(logger);
+
+const messageProducer: IMessageProducer = new MemoryMessageProducer(
+    logger,
+);
+
+const participantService: IParticipantService = new MemoryParticipantService(
+    logger,
+);
 
 
-export * from "./aggregate";
-export * from "./types";
-export * from "./errors";
-export * from "./interfaces/infrastructure";
-export * from "./interfaces/domain";
+export { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService };

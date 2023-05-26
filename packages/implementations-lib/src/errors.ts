@@ -36,101 +36,105 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
 export class NoSuchOracleError extends Error {
-    constructor(message?: string) {
-        super(message || "No such oracle");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class OracleTypeNotSupportedError extends Error {
-  constructor(message?: string) {
-    super(message || "Oracle type not supported");
+  constructor(message: string) {
+    super(message);
   }
 }
 
 export class NoSuchParticipantError extends Error {
-    constructor(message?: string) {
-        super(message||"No such participant");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class UnableToGetParticipantError extends Error {
-    constructor(message?: string) {
-        super(message||"Unable to get participant");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class UnableToInitOracleProvider extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to initialize the oracle provider");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class UnableToGetOracleError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to get oracle');
+    constructor(message: string) {
+        super(message);
     }
 }
 export class OracleAlreadyRegisteredError extends Error {
-    constructor(message?:string) {
-        super(message || 'Oracle already registered');
+    constructor(message:string) {
+        super(message);
     }
 }
 export class UnableToRegisterOracleError extends Error {
-    constructor(message?:string) {
-        super(message || 'Unable to register oracle');
+    constructor(message:string) {
+        super(message);
     }
 }
 export class UnableToDeleteOracleError extends Error {
-    constructor(message?:string) {
-        super(message || 'Unable to delete oracle');
+    constructor(message:string) {
+        super(message);
     }
-
 }
 export class LocalCacheError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to get local cache');
+    constructor(message: string) {
+        super(message);
     }
 }
 export class UnableToCloseDatabaseConnectionError extends Error{
-    constructor(message?: string) {
-        super(message || 'Unable to close database connection');
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class UnableToInitOracleFinderError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to initialize oracle finder');
+    constructor(message: string) {
+        super(message);
     }
 }
 
-export class UnableToDeleteParticipantAssociationError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to delete participant association');
+export class UnableToAssociateParticipantError extends Error {
+    constructor(message: string) {
+        super(message);
     }
 }
 
-export class UnableToStoreParticipantAssociationError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to store participant association');
+export class UnableToDisassociateParticipantError extends Error {
+    constructor(message: string) {
+        super(message);
     }
 }
+
 export class UnableToGetAssociationError extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to store participant association');
+    constructor(message: string) {
+        super(message);
     }
 }
 export class ParticipantAssociationAlreadyExistsError extends Error {
-    constructor(message?: string) {
-        super(message || 'Participant association already exists');
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class UnableToInitRemoteOracleProvider extends Error {
-    constructor(message?: string) {
-        super(message || 'Unable to initialize remote oracle provider');
+    constructor(message: string) {
+        super(message);
     }
 }
+
+
+
+
 

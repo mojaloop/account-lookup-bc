@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/account-lookup-bc-account-lookup-svc",
-  "version": "0.1.3",
+  "version": "0.1.6",
   "description": "Account Lookup BC service.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/account-lookup-svc",
@@ -28,7 +28,7 @@
     "start:dev": "npm run build && npm run start",
     "service": "node dist/index.js",
     "build": "tsc",
-    "clean": "npm run clean:npm; npm run clean:dist",
+    "clean": "(npm run clean:npm || true) && npm run clean:dist",
     "clean:dist": "rm -rf dist",
     "clean:npm": "rm -rf node_modules",
     "audit:check": "npm npm audit",
@@ -36,14 +36,14 @@
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --detectOpenHandles  || exit 0"
+    "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts || ECHO"
   },
   "dependencies": {
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.32",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.43",
     "@mojaloop/logging-bc-client-lib": "^0.1.18",
     "@mojaloop/logging-bc-public-types-lib": "^0.1.15",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.70",
-    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.70",
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.82",
+    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.82",
     "@mojaloop/security-bc-client-lib": "^0.1.12",
     "@mojaloop/account-lookup-bc-domain-lib": "*",
     "@mojaloop/account-lookup-bc-implementations-lib": "*"

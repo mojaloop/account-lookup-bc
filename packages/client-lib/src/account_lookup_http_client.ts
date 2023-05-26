@@ -41,9 +41,7 @@ import {
 const DEFAULT_TIMEOUT_MS = 5000;
 
 export class AccountLookupHttpClient {
-	// Properties received through the constructor.
 	private readonly _logger: ILogger;
-	// Other properties.
 	private readonly _httpClient: AxiosInstance;
 	private readonly CLIENT_URL = "/account-lookup";
 
@@ -73,13 +71,10 @@ export class AccountLookupHttpClient {
 			);
 
 			return axiosResponse.data;
-		} catch (e: unknown) {
-			this._logger.error("account lookup client - participantLookUp - error " + e);
-			if (e instanceof Error){
-				throw e;
-			}
-
-			throw new UnableToGetFspIdError();
+		} catch (error: unknown) {
+			const errorMessage = "Account Lookup Client - Unable to Get FspId ";
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToGetFspIdError(errorMessage);
 		}
 	}
 
@@ -94,12 +89,10 @@ export class AccountLookupHttpClient {
 			);
 
 			return axiosResponse.data;
-		} catch (e: unknown) {
-			this._logger.error("account lookup client - participantBulkLookUp - error " + e);
-			if (e instanceof Error){
-				throw e;
-			}
-			throw new UnableToGetFspIdBulkError();
+		} catch (error: unknown) {
+			const errorMessage = "Account Lookup Client - Unable to Get FspId Bulk";
+			this._logger.error(errorMessage + `  - ${error}`);
+			throw new UnableToGetFspIdBulkError(errorMessage);
 		}
 	}
 

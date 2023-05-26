@@ -40,40 +40,17 @@
 
 "use strict";
 
-import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { Oracle, OracleType, Association } from "./../types";
-
-
-export interface IOracleFinder{
-	init(): Promise<void>;
-	destroy(): Promise<void>;
-    addOracle(oracle: Oracle):Promise<void>;
-    removeOracle(id: string):Promise<void>;
-    getAllOracles():Promise<Oracle[]>;
-    getOracleById(id:string):Promise<Oracle|null>;
-    getOracleByName(name:string):Promise<Oracle|null>;
-    getOracle(partyType:string, currency:string|null):Promise<Oracle | null>;
+export interface IParty {
+    id: string;
+    type: string;
+    currency: string | null;
+    subId: string | null;
 }
 
-export interface IOracleProviderAdapter{
-    oracleId: string;
-    type:  OracleType;
-    init(): Promise<void>;
-    destroy(): Promise<void>;
-    healthCheck(): Promise<boolean>;
-    getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
-    getAllAssociations():Promise<Association[]>;
-}
-
-export interface IOracleProviderFactory {
-    create(oracle: Oracle): IOracleProviderAdapter;
-}
-
-export interface IParticipantService {
-    getParticipantInfo(fspId: string): Promise<IParticipant| null>;
-    getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]|null>;
+export interface IPartyAccount {
+	fspId: string;
+	currency: string[];
+	extensionList: string[];
 }
 
 

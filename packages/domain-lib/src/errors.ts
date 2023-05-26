@@ -42,106 +42,89 @@
 
 // Party
 export class InvalidPartyIdError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid party id");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class InvalidPartyTypeError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid party type");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 // Participant
 export class InvalidParticipantIdError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid participant id");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class NoSuchParticipantError extends Error {
-    constructor(message?: string) {
-        super(message || "No such participant");
-    }
-}
-export class NoSuchParticipantFspIdError extends Error {
-    constructor(message?: string) {
-        super(message || "No such participant fsp id");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class RequiredParticipantIsNotActive extends Error {
-    constructor(message?: string) {
-        super(message || "Required participant is not active");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 export class UnableToGetParticipantFspIdError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to get participant fsp id");
-    }
-}
-
-// Participant Association
-export class UnableToAssociateParticipantError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to associate participant");
-    }
-}
-
-// Participant Dissociation
-export class UnableToDisassociateParticipantError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to disassociate participant");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 // Oracle
 export class UnableToGetOracleFromOracleFinderError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to get oracle from oracle finder");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class DuplicateOracleError extends Error{
-    constructor(message?: string) {
-        super(message || "Duplicate oracle");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class NoSuchOracleAdapterError extends Error {
-    constructor(message?: string) {
-        super(message || "No such oracle adapter");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class UnableToAddOracleError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to add oracle");
+    constructor(message: string) {
+        super(message);
     }
 }
+
+export class UnableToRemoveOracleError  extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
 export class NoSuchOracleError extends Error {
-    constructor(message?: string) {
-        super(message || "No such oracle");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class UnableToGetOracleAssociationsError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to get associations from oracle adapter");
+    constructor(message: string) {
+        super(message);
     }
 }
 
 // Message Producer
 export class InvalidMessagePayloadError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid message payload");
+    constructor(message: string) {
+        super(message);
     }
 }
 export class InvalidMessageTypeError extends Error {
-    constructor(message?: string) {
-        super(message || "Invalid message type");
-    }
-}
-export class UnableToProcessMessageError extends Error {
-    constructor(message?: string) {
-        super(message || "Unable to process message");
+    constructor(message: string) {
+        super(message);
     }
 }
 
