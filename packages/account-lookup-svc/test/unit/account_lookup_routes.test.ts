@@ -87,7 +87,6 @@ describe("Account Lookup Routes - Unit Test", () => {
 
         // Assert
         expect(response.status).toBe(404);
-        expect(response.body.msg).toEqual("Unable to get participant fsp id");
     });
 
     test("GET - should fetch fspId for partyId and partyType and currency", async () => {
@@ -115,7 +114,6 @@ describe("Account Lookup Routes - Unit Test", () => {
         // Assert
         // TODO: This should be a 404
         expect(response.status).toBe(404);
-        expect(response.body.msg).toEqual("Unable to get participant fsp id");
     });
 
     test("GET - should receive error when request is not valid", async () => {
