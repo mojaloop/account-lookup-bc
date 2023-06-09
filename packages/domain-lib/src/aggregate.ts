@@ -321,7 +321,7 @@ export class AccountLookupAggregate  {
 	//#endregion
 
 	//#region handleParticipantQueryReceivedEvt
-	private async handleParticipantQueryReceivedEvt(message: ParticipantQueryReceivedEvt):Promise<ParticipantQueryResponseEvt | AccountLookupErrorEvent>{
+	private async handleParticipantQueryReceivedEvt(message: ParticipantQueryReceivedEvt):Promise<DomainEventMsg>{
 		this._logger.debug(`Got ParticipantQueryReceivedEvt for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} currency: ${message.payload.currency} - requesterFspId: ${message.payload.requesterFspId}`);
 		const requesterFspId = message.payload.requesterFspId;
 		const partyType = message.payload.partyType;
@@ -380,7 +380,7 @@ export class AccountLookupAggregate  {
 	//#endregion
 
 	//#region handleParticipantAssociationRequestReceivedEvt
-	private async handleParticipantAssociationRequestReceivedEvt(message: ParticipantAssociationRequestReceivedEvt) :Promise<ParticipantAssociationCreatedEvt | AccountLookupErrorEvent>{
+	private async handleParticipantAssociationRequestReceivedEvt(message: ParticipantAssociationRequestReceivedEvt) :Promise<DomainEventMsg>{
 		this._logger.debug(`Got ParticipantAssociationRequestReceivedEvt for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
 		const ownerFspId = message.payload.ownerFspId;
 		const partyId = message.payload.partyId;
@@ -444,7 +444,7 @@ export class AccountLookupAggregate  {
 	//#endregion
 
 	//#region handleParticipantDisassociateRequestReceivedEvt
-	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt) :Promise<ParticipantAssociationRemovedEvt | AccountLookupErrorEvent>{
+	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt) :Promise<DomainEventMsg>{
 		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
 		const ownerFspId = msg.payload?.ownerFspId;
 		const partyType = msg.payload?.partyType;
