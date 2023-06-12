@@ -156,10 +156,10 @@ export class AccountLookupAggregate  {
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
 		this._logger.debug(`Got message in Account Lookup Handler - msg: ${message}`);
 		let eventToPublish = null;
-		const partyId = message.payload?.partyId;
-		const partyType = message.payload?.partyType;
-		const partySubType = message.payload?.partySubType;
-		const requesterFspId = message.payload?.requesterFspId;
+		const partyId = message.payload?.partyId ?? null;
+		const partyType = message.payload?.partyType ?? null;
+		const partySubType = message.payload?.partySubType ?? null;
+		const requesterFspId = message.payload?.requesterFspId ?? null;
 		const fspiopOpaqueState = message.fspiopOpaqueState;
 		const errorMessage = this.validateMessageOrGetErrorEvent(message);
 
@@ -205,9 +205,9 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage + `- ${error}`);
 			const errorPayload: AccountLookUpUnknownErrorPayload = {
 				partyId,
-				partySubType,
 				partyType,
-				fspId: requesterFspId,
+				currency,
+				requesterFspId: requesterFspId,
 				errorDescription: errorMessage
 			};
 			eventToPublish = new AccountLookUpUnknownErrorEvent(errorPayload);
@@ -223,14 +223,14 @@ export class AccountLookupAggregate  {
 	private async handlePartyQueryReceivedEvt(message: PartyQueryReceivedEvt):Promise<DomainEventMsg>{
 		this._logger.debug(`Got PartyQueryReceivedEvt msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
 
-		let destinationFspId = message.payload?.destinationFspId;
-		const requesterFspId = message.payload?.requesterFspId;
-		const partyType = message.payload?.partyType;
-		const partySubType = message.payload?.partySubType;
-		const partyId = message.payload?.partyId;
+		let destinationFspId = message.payload?.destinationFspId ?? null;
+		const requesterFspId = message.payload?.requesterFspId ?? null;
+		const partyType = message.payload?.partyType ?? null;
+		const partySubType = message.payload?.partySubType ?? null;
+		const partyId = message.payload?.partyId ?? null;
 		const currency = message.payload?.currency ?? null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
 
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
@@ -246,19 +246,18 @@ export class AccountLookupAggregate  {
 				//TODO: Create error event for this
 				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				this._logger.error(errorMessage + `- ${error.message}`);
-				const errorPayload: AccountLookUpUnknownErrorPayload = {
+				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 					partyId,
-					partySubType,
 					partyType,
-					fspId: requesterFspId,
+					currency,
 					errorDescription: errorMessage
 				};
-				const errorEvent = new AccountLookUpUnknownErrorEvent(errorPayload);
+				const errorEvent = new AccountLookUpUnableToGetParticipantFromOracleErrorEvent(errorPayload);
 				return errorEvent;
 			}
 		}
 
-		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, destinationFspId);
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			return destinationParticipantError;
@@ -283,20 +282,20 @@ export class AccountLookupAggregate  {
 	//#region handlePartyInfoAvailableEvt
 	private async handlePartyInfoAvailableEvt(message:PartyInfoAvailableEvt):Promise<DomainEventMsg>{
 		this._logger.debug(`Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
-		const partyId = message.payload.partyId;
-		const partyType = message.payload.partyType;
-		const partySubType = message.payload.partySubType;
+		const partyId = message.payload.partyId ?? null;
+		const partyType = message.payload.partyType ?? null;
+		const partySubType = message.payload.partySubType ?? null;
 
-		const requesterFspId = message.payload.requesterFspId;
-		const destinationFspId = message.payload.destinationFspId;
+		const requesterFspId = message.payload.requesterFspId ?? null;
+		const destinationFspId = message.payload.destinationFspId ?? null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
 			return requesterParticipantError;
 		}
 
-		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, destinationFspId);
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			return destinationParticipantError;
@@ -330,7 +329,7 @@ export class AccountLookupAggregate  {
 		const currency = message.payload.currency;
 		let ownerFspId = null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
 
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
@@ -346,18 +345,17 @@ export class AccountLookupAggregate  {
 			const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 			this._logger.error(errorMessage + `- ${error}`);
 			//TODO: Create a new error event for this
-			const errorPayload: AccountLookUpUnknownErrorPayload = {
+			const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 				partyId,
-				partySubType,
 				partyType,
-				fspId: requesterFspId,
+				currency,
 				errorDescription: errorMessage
 			};
-			const errorEvent = new AccountLookUpUnknownErrorEvent(errorPayload);
+			const errorEvent = new AccountLookUpUnableToGetParticipantFromOracleErrorEvent(errorPayload);
 			return errorEvent;
 		}
 
-		const validateDestinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, ownerFspId);
+		const validateDestinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, ownerFspId);
 
 		if(validateDestinationParticipantError){
 			this._logger.error(`Invalid participant info for participantId: ${ownerFspId}`);
@@ -404,9 +402,8 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage + ":" + error.message);
 			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload = {
                 partyId,
-                partySubType,
                 partyType,
-                fspId: ownerFspId,
+				currency,
                 errorDescription: errorMessage
             };
             const errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
@@ -420,10 +417,10 @@ export class AccountLookupAggregate  {
 			const errorMessage = `Error associating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage + `- ${error.message}`);
 			const errorPayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
-				fspId: ownerFspId,
+				fspIdToAssociate: ownerFspId,
 				partyType,
 				partyId,
-				partySubType,
+				currency,
 				errorDescription: errorMessage
 			};
 			const errorEvent = new AccountLookupBCUnableToAssociateParticipantErrorEvent(errorPayload);
@@ -446,14 +443,14 @@ export class AccountLookupAggregate  {
 	//#region handleParticipantDisassociateRequestReceivedEvt
 	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt) :Promise<DomainEventMsg>{
 		this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
-		const ownerFspId = msg.payload?.ownerFspId;
-		const partyType = msg.payload?.partyType;
-		const partySubType = msg.payload?.partySubType;
-		const partyId = msg.payload?.partyId;
-		const currency = msg.payload?.currency;
+		const ownerFspId = msg.payload?.ownerFspId ?? null;
+		const partyId = msg.payload?.partyId ?? null;
+		const partyType = msg.payload?.partyType ?? null;
+		const currency = msg.payload?.currency ?? null;
+		const partySubType = msg.payload?.partySubType ?? null;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
-		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType,partySubType, ownerFspId);
+		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, ownerFspId);
 
 		if(ownerParticipantError){
 			this._logger.error(`Invalid participant info for ownerFspId: ${ownerFspId}`);
@@ -468,9 +465,8 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage + ":" + error.message);
 			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload = {
                 partyId,
-                partySubType,
                 partyType,
-                fspId: ownerFspId,
+				currency,
                 errorDescription: errorMessage
             };
             const errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
@@ -485,10 +481,10 @@ export class AccountLookupAggregate  {
 			const errorMessage = `Error disassociating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage + ` - ${error.message}`);
 			const errorPayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
-				fspId: ownerFspId,
-				partyType,
+				fspIdToDisassociate: ownerFspId,
 				partyId,
-				partySubType,
+				partyType,
+				currency,
 				errorDescription: errorMessage
 			};
 			const errorEvent = new AccountLookupBCUnableToDisassociateParticipantErrorEvent(errorPayload);
@@ -520,10 +516,7 @@ export class AccountLookupAggregate  {
 			const errorMessage = "Message payload is null or undefined";
 			this._logger.error(errorMessage);
 			const invalidMessageErrorPayload: AccountLookupBCInvalidMessageErrorPayload = {
-				partyId,
-				partySubType,
-				partyType,
-				fspId: requesterFspId,
+				requesterFspId: requesterFspId,
 				errorDescription: errorMessage
 			};
 			const errorEvent = new AccountLookupBCInvalidMessagePayloadErrorEvent(invalidMessageErrorPayload);
@@ -534,10 +527,7 @@ export class AccountLookupAggregate  {
 			const errorMessage = `Message type is invalid ${message.msgType}`;
 			this._logger.error(errorMessage);
 			const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
-				partyId,
-				partySubType,
-				partyType,
-				fspId: requesterFspId,
+				requesterFspId: requesterFspId,
 				errorDescription: errorMessage,
 			};
 			const errorEvent = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
@@ -548,20 +538,18 @@ export class AccountLookupAggregate  {
 
 	//TODO: Create error events for each validation, requester and destination
 
-	private async validateDestinationParticipantInfoOrGetErrorEvent(partyId:string, partyType:string, partySubType:string|null, participantId: string | null):Promise<DomainEventMsg | null>{
+	private async validateDestinationParticipantInfoOrGetErrorEvent(partyId:string, participantId: string | null):Promise<DomainEventMsg | null>{
 		let participant: IParticipant | null = null;
 
 		if(!participantId){
 			const errorMessage = "Fsp Id is null or undefined";
 			this._logger.error(errorMessage);
-			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
+			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId,
-				partySubType,
-				partyType,
-				fspId:participantId,
+				destinationFspId:participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
+			const errorEvent = new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 			return errorEvent;
 		}
 
@@ -575,28 +563,24 @@ export class AccountLookupAggregate  {
 		if(!participant) {
 			const errorMessage = `No participant found for fspId: ${participantId}`;
 			this._logger.error(errorMessage);
-			const noSuchParticipantErrorPayload: AccountLookupBCNoSuchParticipantErrorPayload = {
+			const noSuchParticipantErrorPayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
 				partyId,
-				partySubType,
-				partyType,
-				fspId: participantId,
+				destinationFspId: participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent = new AccountLookupBCNoSuchParticipantErrorEvent(noSuchParticipantErrorPayload);
+			const errorEvent = new AccountLookupBCDestinationParticipantNotFoundErrorEvent(noSuchParticipantErrorPayload);
 			return errorEvent;
 		}
 
 		if(participant.id !== participantId){
 			const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
-			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
+			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId,
-				partySubType,
-				partyType,
-				fspId: participantId,
+				destinationFspId: participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent  = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
+			const errorEvent  = new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 			return errorEvent;
 		}
 
@@ -608,17 +592,15 @@ export class AccountLookupAggregate  {
 		return null;
 	}
 
-	private async validateRequesterParticipantInfoOrGetErrorEvent(partyId:string, partyType:string, partySubType:string|null, participantId: string | null):Promise<DomainEventMsg | null>{
+	private async validateRequesterParticipantInfoOrGetErrorEvent(partyId:string, participantId: string | null):Promise<DomainEventMsg | null>{
 		let participant: IParticipant | null = null;
 
 		if(!participantId){
 			const errorMessage = "Fsp Id is null or undefined";
 			this._logger.error(errorMessage);
-			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
+			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
 				partyId,
-				partySubType,
-				partyType,
-				fspId:participantId,
+				requesterFspId:participantId,
 				errorDescription: errorMessage
 			};
 			const errorEvent = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
@@ -635,28 +617,24 @@ export class AccountLookupAggregate  {
 		if(!participant) {
 			const errorMessage = `No participant found for fspId: ${participantId}`;
 			this._logger.error(errorMessage);
-			const noSuchParticipantErrorPayload: AccountLookupBCNoSuchParticipantErrorPayload = {
+			const noSuchParticipantErrorPayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+				requesterFspId: participantId,
 				partyId,
-				partySubType,
-				partyType,
-				fspId: participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent = new AccountLookupBCNoSuchParticipantErrorEvent(noSuchParticipantErrorPayload);
+			const errorEvent = new AccountLookupBCRequesterParticipantNotFoundErrorEvent(noSuchParticipantErrorPayload);
 			return errorEvent;
 		}
 
 		if(participant.id !== participantId){
 			const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
-			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidParticipantIdErrorPayload = {
+			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
 				partyId,
-				partySubType,
-				partyType,
-				fspId: participantId,
+				requesterFspId: participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent  = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
+			const errorEvent  = new AccountLookupBCInvalidRequesterParticipantErrorEvent(invalidParticipantIdErrorPayload);
 			return errorEvent;
 		}
 
