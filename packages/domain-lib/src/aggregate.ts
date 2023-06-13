@@ -42,16 +42,7 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { DomainEventMsg, IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {
-	DuplicateOracleError,
-	NoSuchOracleAdapterError,
-	NoSuchOracleError,
-	NoSuchParticipantError,
-	UnableToGetOracleAssociationsError,
-	UnableToGetOracleFromOracleFinderError,
-	UnableToGetParticipantFspIdError,
-	UnableToRemoveOracleError
-} from "./errors";
+import { DuplicateOracleError, NoSuchOracleAdapterError, OracleNotFoundError, ParticipantNotFoundError, UnableToGetOracleAssociationsError, UnableToGetOracleFromOracleFinderError, UnableToGetParticipantFspIdError, UnableToRemoveOracleError } from "./errors";
 import { IOracleFinder, IOracleProviderAdapter, IOracleProviderFactory, IParticipantService} from "./interfaces/infrastructure";
 import {
 	ParticipantAssociationRemovedEvt,
@@ -69,22 +60,28 @@ import {
 	PartyQueryResponseEvt,
 	PartyQueryResponseEvtPayload,
 	ParticipantQueryResponseEvt,
-	AccountLookupBCInvalidParticipantIdErrorPayload,
-	AccountLookupBCInvalidParticipantIdErrorEvent,
-	AccountLookupBCNoSuchParticipantErrorPayload,
-	AccountLookupBCNoSuchParticipantErrorEvent,
 	AccountLookupBCInvalidMessageTypeErrorPayload,
 	AccountLookupBCInvalidMessageTypeErrorEvent,
 	AccountLookupBCInvalidMessageErrorPayload,
 	AccountLookupBCInvalidMessagePayloadErrorEvent,
 	AccountLookupBCUnableToDisassociateParticipantErrorPayload,
 	AccountLookupBCUnableToDisassociateParticipantErrorEvent,
-	AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload,
-	AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent,
 	AccountLookupBCUnableToAssociateParticipantErrorPayload,
 	AccountLookupBCUnableToAssociateParticipantErrorEvent,
 	AccountLookUpUnknownErrorEvent,
-	AccountLookUpUnknownErrorPayload
+	AccountLookUpUnknownErrorPayload,
+	AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+	AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
+	AccountLookupBCUnableToGetOracleAdapterErrorPayload,
+	AccountLookupBCInvalidDestinationParticipantErrorPayload,
+	AccountLookupBCInvalidDestinationParticipantErrorEvent,
+	AccountLookupBCDestinationParticipantNotFoundErrorPayload,
+	AccountLookupBCDestinationParticipantNotFoundErrorEvent,
+	AccountLookupBCInvalidRequesterParticipantErrorPayload,
+	AccountLookupBCInvalidRequesterParticipantErrorEvent,
+	AccountLookupBCRequesterParticipantNotFoundErrorPayload,
+	AccountLookupBCRequesterParticipantNotFoundErrorEvent,
+	AccountLookupBCUnableToGetOracleAdapterErrorEvent
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { randomUUID } from "crypto";
 import { ParticipantLookup, Oracle, AddOracleDTO, OracleType, Association } from "./types";
@@ -158,7 +155,7 @@ export class AccountLookupAggregate  {
 		let eventToPublish = null;
 		const partyId = message.payload?.partyId ?? null;
 		const partyType = message.payload?.partyType ?? null;
-		const partySubType = message.payload?.partySubType ?? null;
+		const currency = message.payload?.currency ?? null;
 		const requesterFspId = message.payload?.requesterFspId ?? null;
 		const fspiopOpaqueState = message.fspiopOpaqueState;
 		const errorMessage = this.validateMessageOrGetErrorEvent(message);
@@ -191,9 +188,7 @@ export class AccountLookupAggregate  {
 					this._logger.error(errorMessage);
 					const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 						partyId: partyId,
-						partySubType: partySubType,
-						partyType: partyType,
-						fspId: requesterFspId,
+						requesterFspId: requesterFspId,
 						errorDescription: errorMessage,
 					};
 					eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
@@ -207,7 +202,8 @@ export class AccountLookupAggregate  {
 				partyId,
 				partyType,
 				currency,
-				requesterFspId: requesterFspId,
+				//TODO: correct this
+				fspId: requesterFspId,
 				errorDescription: errorMessage
 			};
 			eventToPublish = new AccountLookUpUnknownErrorEvent(errorPayload);
@@ -226,7 +222,6 @@ export class AccountLookupAggregate  {
 		let destinationFspId = message.payload?.destinationFspId ?? null;
 		const requesterFspId = message.payload?.requesterFspId ?? null;
 		const partyType = message.payload?.partyType ?? null;
-		const partySubType = message.payload?.partySubType ?? null;
 		const partyId = message.payload?.partyId ?? null;
 		const currency = message.payload?.currency ?? null;
 
@@ -244,7 +239,7 @@ export class AccountLookupAggregate  {
 			}
 			catch(error:any){
 				//TODO: Create error event for this
-				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
+				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				this._logger.error(errorMessage + `- ${error.message}`);
 				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 					partyId,
@@ -387,7 +382,7 @@ export class AccountLookupAggregate  {
 		const currency = message.payload.currency;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
-		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId,partyType,partySubType,ownerFspId);
+		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId,ownerFspId);
 
 		if(ownerParticipantError){
 			this._logger.error(`Invalid participant info for requester fsp id: ${ownerFspId}`);
@@ -400,13 +395,13 @@ export class AccountLookupAggregate  {
 		catch(error: any){
 			const errorMessage = `Error getting oracle adapter for partyType: ${partyType} and currency: ${currency}`;
 			this._logger.error(errorMessage + ":" + error.message);
-			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload = {
+			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
                 partyId,
                 partyType,
 				currency,
                 errorDescription: errorMessage
             };
-            const errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
+            const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
             return errorEvent;
 		}
 
@@ -463,13 +458,13 @@ export class AccountLookupAggregate  {
 		catch(error: any){
 			const errorMessage = `Error getting oracle adapter for partyType: ${partyType} and currency: ${currency}`;
 			this._logger.error(errorMessage + ":" + error.message);
-			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleFromOracleFinderErrorPayload = {
+			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
                 partyId,
                 partyType,
 				currency,
                 errorDescription: errorMessage
             };
-            const errorEvent = new AccountLookupBCUnableToGetOracleFromOracleFinderErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
+            const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(unableToGetOracleFromOracleFinderErrorPayload);
             return errorEvent;
 		}
 
@@ -508,8 +503,6 @@ export class AccountLookupAggregate  {
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {
 		const partyId = message.payload?.partyId;
-		const partyType = message.payload?.partyType;
-		const partySubType = message.payload?.partySubType;
 		const requesterFspId = message.payload?.requesterFspId;
 
 		if(!message.payload){
@@ -517,6 +510,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			const invalidMessageErrorPayload: AccountLookupBCInvalidMessageErrorPayload = {
 				requesterFspId: requesterFspId,
+				partyId: partyId,
 				errorDescription: errorMessage
 			};
 			const errorEvent = new AccountLookupBCInvalidMessagePayloadErrorEvent(invalidMessageErrorPayload);
@@ -528,6 +522,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 				requesterFspId: requesterFspId,
+				partyId: partyId,
 				errorDescription: errorMessage,
 			};
 			const errorEvent = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
@@ -603,7 +598,7 @@ export class AccountLookupAggregate  {
 				requesterFspId:participantId,
 				errorDescription: errorMessage
 			};
-			const errorEvent = new AccountLookupBCInvalidParticipantIdErrorEvent(invalidParticipantIdErrorPayload);
+			const errorEvent = new AccountLookupBCInvalidRequesterParticipantErrorEvent(invalidParticipantIdErrorPayload);
 			return errorEvent;
 		}
 
@@ -660,7 +655,7 @@ export class AccountLookupAggregate  {
 		if(!oracle) {
 			const errorMessage = `Oracle for ${partyType} not found`;
 			this._logger.debug(errorMessage);
-			throw new NoSuchOracleError(errorMessage);
+			throw new OracleNotFoundError(errorMessage);
 		}
 
 		const oracleAdapter = this._oracleProvidersAdapters.find(provider=>provider.oracleId === oracle?.id);
@@ -688,7 +683,7 @@ export class AccountLookupAggregate  {
 		if(!(fspId)) {
 			const errorMessage = `partyId:${partyId} has no existing fspId owner in oracle`;
 			this._logger.debug(errorMessage);
-			throw new NoSuchParticipantError(errorMessage);
+			throw new ParticipantNotFoundError(errorMessage);
 		}
 
 		return fspId;
@@ -733,7 +728,7 @@ export class AccountLookupAggregate  {
 		if(!oracle) {
 			const errorMessage = `Oracle does not exist for given id ${id}`;
 			this._logger.error(errorMessage);
-			throw new NoSuchOracleError(errorMessage);
+			throw new OracleNotFoundError(errorMessage);
 		}
 
 		await this._oracleFinder.removeOracle(id).catch(error=>{
@@ -756,7 +751,7 @@ export class AccountLookupAggregate  {
 			const oracleProvider = await this.getOracleAdapter(oracle.partyType, null).catch(error=>{
 				const errorMessage = `Unable to get oracle provider for oracle: ${oracle.id} ` + error?.message;
 				this._logger.error(errorMessage);
-				throw new NoSuchOracleError(errorMessage);
+				throw new OracleNotFoundError(errorMessage);
 			});
 
 			associations = await oracleProvider.getAllAssociations().catch(error=>{
@@ -784,7 +779,7 @@ export class AccountLookupAggregate  {
 		if(!oracleFound) {
 			const errorMessage = `Oracle does not exist for given id ${id}`;
 			this._logger.error(errorMessage);
-			throw new NoSuchOracleError(errorMessage);
+			throw new OracleNotFoundError(errorMessage);
 		}
 		return await oracleFound.healthCheck();
 	}

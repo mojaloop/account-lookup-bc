@@ -40,9 +40,7 @@ import {
     AccountLookupAggregate,
     AddOracleDTO,
     DuplicateOracleError,
-    IOracleFinder,
-    IParticipantService,
-    NoSuchOracleError,
+    OracleNotFoundError,
     Oracle,
 } from "../../src";
 import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
@@ -104,7 +102,7 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
         const id = "non-existing-oracle";
 
         // Act && Assert
-        await expect(aggregate.healthCheck(id)).rejects.toThrowError(NoSuchOracleError);
+        await expect(aggregate.healthCheck(id)).rejects.toThrowError(OracleNotFoundError);
     });
 
 
@@ -188,7 +186,7 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
         const oracleId = "not-existing-id";
 
         // Act && Assert
-        await expect(aggregate.removeOracle(oracleId)).rejects.toThrow(NoSuchOracleError);
+        await expect(aggregate.removeOracle(oracleId)).rejects.toThrow(OracleNotFoundError);
     });
 
     test("shouldnt be able to remove oracle if oracle finder cant remove it", async () => {

@@ -42,7 +42,7 @@
 
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {AccountLookupAggregate, NoSuchOracleError} from "@mojaloop/account-lookup-bc-domain-lib";
+import {AccountLookupAggregate, OracleNotFoundError} from "@mojaloop/account-lookup-bc-domain-lib";
 import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
@@ -151,7 +151,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
              const fetched = await this.accountLookupAggregate.removeOracle(id);
              res.send(fetched);
          } catch (err: unknown) {
-             if(err instanceof NoSuchOracleError){
+             if(err instanceof OracleNotFoundError){
                  res.status(404).json({
                      status: "error",
                      msg: (err as Error).message
@@ -200,7 +200,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             const fetched = await this.accountLookupAggregate.healthCheck(id);
             res.send(fetched);
         } catch (err: unknown) {
-            if(err instanceof NoSuchOracleError){
+            if(err instanceof OracleNotFoundError){
                 res.status(404).json({
                     status: "error",
                     msg: (err as Error).message

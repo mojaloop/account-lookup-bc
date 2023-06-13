@@ -59,7 +59,7 @@ export class InvalidParticipantIdError extends Error {
     }
 }
 
-export class NoSuchParticipantError extends Error {
+export class ParticipantNotFoundError extends Error {
     constructor(message: string) {
         super(message);
     }
@@ -105,7 +105,7 @@ export class UnableToRemoveOracleError  extends Error {
     }
 }
 
-export class NoSuchOracleError extends Error {
+export class OracleNotFoundError extends Error {
     constructor(message: string) {
         super(message);
     }
@@ -116,16 +116,5 @@ export class UnableToGetOracleAssociationsError extends Error {
     }
 }
 
-// Message Producer
-export class InvalidMessagePayloadError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class InvalidMessageTypeError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
 
 
