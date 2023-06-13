@@ -36,7 +36,6 @@
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "(export ORACLE_DB_FILE_PATH=./dist/db.json || set ORACLE_DB_FILE_PATH=./dist/db.json) & jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts || ECHO."
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.18",
