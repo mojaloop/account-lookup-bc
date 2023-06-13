@@ -278,8 +278,6 @@ export class AccountLookupAggregate  {
 	private async handlePartyInfoAvailableEvt(message:PartyInfoAvailableEvt):Promise<DomainEventMsg>{
 		this._logger.debug(`Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
 		const partyId = message.payload.partyId ?? null;
-		const partyType = message.payload.partyType ?? null;
-		const partySubType = message.payload.partySubType ?? null;
 
 		const requesterFspId = message.payload.requesterFspId ?? null;
 		const destinationFspId = message.payload.destinationFspId ?? null;
@@ -378,7 +376,6 @@ export class AccountLookupAggregate  {
 		const ownerFspId = message.payload.ownerFspId;
 		const partyId = message.payload.partyId;
 		const partyType = message.payload.partyType;
-		const partySubType = message.payload.partySubType;
 		const currency = message.payload.currency;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
@@ -442,7 +439,6 @@ export class AccountLookupAggregate  {
 		const partyId = msg.payload?.partyId ?? null;
 		const partyType = msg.payload?.partyType ?? null;
 		const currency = msg.payload?.currency ?? null;
-		const partySubType = msg.payload?.partySubType ?? null;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
 		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, ownerFspId);
