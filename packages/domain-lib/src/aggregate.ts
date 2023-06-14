@@ -202,8 +202,7 @@ export class AccountLookupAggregate  {
 				partyId,
 				partyType,
 				currency,
-				//TODO: correct this
-				fspId: requesterFspId,
+				requesterFspId,
 				errorDescription: errorMessage
 			};
 			eventToPublish = new AccountLookUpUnknownErrorEvent(errorPayload);
