@@ -275,6 +275,7 @@ export class Service {
  * process termination and cleanup
  */
 
+/* istanbul ignore next */
 async function _handle_int_and_term_signals(signal: NodeJS.Signals): Promise<void> {
 	console.info(`Service - ${signal} received - cleaning up...`);
 	let clean_exit = false;
@@ -295,10 +296,10 @@ process.on("SIGINT", _handle_int_and_term_signals.bind(this));
 process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
-process.on("exit", async () => {
+process.on("exit", /* istanbul ignore next */async () => {
 	globalLogger.info("Microservice - exiting...");
 });
-process.on("uncaughtException", (err: Error) => {
+process.on("uncaughtException", /* istanbul ignore next */(err: Error) => {
 	globalLogger.error(err);
 	console.log("UncaughtException - EXITING...");
 	process.exit(999);

@@ -33,7 +33,7 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup } from "@mojaloop/account-lookup-bc-domain-lib";
+import { AccountLookupAggregate, ParticipantLookup, UnableToGetParticipantFspIdError } from "@mojaloop/account-lookup-bc-domain-lib";
 import { body, check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
@@ -77,12 +77,20 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
             res.send(result);
         } catch (err: unknown) {
-
             this.logger.error(err);
-            res.status(500).json({
-                status: "error",
-                msg: (err as Error).message
-            });
+
+            if (err instanceof UnableToGetParticipantFspIdError) {
+                res.status(404).json({
+                    status: "not found",
+                    msg: (err as Error).message
+                });
+
+            } else {
+                res.status(500).json({
+                    status: "error",
+                    msg: (err as Error).message
+                });
+            }
         }
     }
 
@@ -98,8 +106,8 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const result = await this.accountLookupAggregate.getBulkAccountLookup(identifiersList);
             res.send(result);
         } catch (err: unknown) {
-
             this.logger.error(err);
+
             res.status(500).json({
                 status: "error",
                 msg: (err as Error).message

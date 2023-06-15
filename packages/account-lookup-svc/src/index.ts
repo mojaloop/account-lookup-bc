@@ -40,6 +40,7 @@
 
 "use strict";
 
+/* istanbul ignore file */
 import { Service } from "./service";
 
 if(process.env.JEST_WORKER_ID === undefined) {

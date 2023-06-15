@@ -143,7 +143,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch((error: unknown) => {
+		}).catch(/* istanbul ignore next */(error: unknown) => {
 			const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToAssociateParticipantError(errorMessage);
@@ -153,14 +153,13 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		return null;
 	}
 
-
 	async disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null> {
 		await this.parties.deleteOne({
 			partyId: partyId,
 			fspId: fspId,
 			partyType: partyType,
 			currency: currency,
-		}).catch((error: unknown) => {
+		}).catch(/* istanbul ignore next */(error: unknown) => {
 			const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToDisassociateParticipantError(errorMessage);
@@ -171,7 +170,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 	}
 
 	async healthCheck(): Promise<boolean> {
-		await this.mongoClient.db().command({ping: 1}).catch((e: unknown) => {
+		await this.mongoClient.db().command({ping: 1}).catch(/* istanbul ignore next */(e: unknown) => {
 			this._logger.debug(`Unable to ping database: ${(e as Error).message}`);
 			return false;
 		});
@@ -180,7 +179,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 
 	async getAllAssociations():Promise<Association[]> {
 		const associations = await this.parties.find({}).toArray()
-		.catch((error: unknown) => {
+		.catch(/* istanbul ignore next */(error: unknown) => {
 			const errorMessage = `Unable to get associations: ${(error as Error).message}`;
 			this._logger.error(errorMessage + ` - ${error}`);
 			throw new UnableToGetAssociationError(errorMessage);
