@@ -71,7 +71,7 @@ export interface IOracleProviderFactory {
     create(oracle: Oracle): IOracleProviderAdapter;
 }
 
-export interface IParticipantService {
+export interface IParticipantServiceAdapter {
     getParticipantInfo(fspId: string): Promise<IParticipant| null>;
     getParticipantsInfo(fspIds: string[]): Promise<IParticipant[]|null>;
 }

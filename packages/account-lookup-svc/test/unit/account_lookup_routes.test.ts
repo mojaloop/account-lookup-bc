@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import request from "supertest";
 import { 
     MemoryOracleFinder,
@@ -15,13 +17,13 @@ import {
     AccountLookupAggregate, 
     IOracleFinder, 
     IOracleProviderFactory, 
-    IParticipantService,
+    IParticipantServiceAdapter,
     ParticipantLookup
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import { Service } from "../../src/service";
-
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -30,7 +32,7 @@ const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
 const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
-const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
+const mockedParticipantService:IParticipantServiceAdapter = new MemoryParticipantService(logger);
 
 const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 
@@ -38,15 +40,9 @@ const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProv
 
 const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
 
-const mockedAggregate: AccountLookupAggregate = new AccountLookupAggregate(
-    logger,
-    mockedOracleFinder,
-    mockedOracleProviderFactory,
-    mockedProducer,
-    mockedParticipantService,
-);
+const mockedMetrics :IMetrics = new MetricsMock();
 
-const server = (process.env["ACCOUNT_LOOKUP_URL"] || "http://localhost:3030") + "/account-lookup";
+const serverBaseUrl = (process.env["ACCOUNT_LOOKUP_URL"] || "http://localhost:3030") + "/account-lookup";
 
 const CURRENCY = {
     USD: "USD",
@@ -57,7 +53,7 @@ const CURRENCY = {
 describe("Account Lookup Routes - Unit Test", () => {
     beforeAll(async () => {
         await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
-            mockedAuthRequester, mockedParticipantService);
+            mockedAuthRequester, mockedParticipantService, mockedMetrics);
     });
 
     afterAll(async () => {
@@ -70,7 +66,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(server).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -83,7 +79,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = "non-existent-party-type";
 
         // Act
-        const response = await request(server).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -96,7 +92,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const currency = CURRENCY.USD;
 
         // Act
-        const response = await request(server).get(`/${partyId}/${partyType}?currency=${currency}`);
+        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}?currency=${currency}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -109,7 +105,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[0];
 
         // Act
-        const response = await request(server).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
 
         // Assert
         // TODO: This should be a 404
@@ -122,7 +118,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(server).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -142,7 +138,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         }
 
         // Act
-        const response = await request(server).post("").send({
+        const response = await request(serverBaseUrl).post("").send({
             request1,
             request2
         });
@@ -169,7 +165,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         }
 
         // Act
-        const response = await request(server).post("").send({
+        const response = await request(serverBaseUrl).post("").send({
             request1,
             request2
         });
@@ -196,7 +192,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         }
 
         // Act
-        const response = await request(server).post("").send({
+        const response = await request(serverBaseUrl).post("").send({
             request1,
             request2
         });

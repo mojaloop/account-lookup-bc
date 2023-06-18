@@ -38,10 +38,11 @@
  --------------
 **/
 "use strict";
-
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import request from "supertest";
-import { IOracleFinder, IOracleProviderFactory, IParticipantService, ParticipantLookup} from "../../../packages/domain-lib/src";
-import { Service } from "../../../packages/account-lookup-svc/src";
+import { IOracleFinder, IOracleProviderFactory, IParticipantServiceAdapter, ParticipantLookup} from "../../../packages/domain-lib/src";
+import { Service } from "../../../packages/account-lookup-svc/src/service";
 import { MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryMessageConsumer, MemoryParticipantService, mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds, mockedPartySubTypes, MemoryAuthenticatedHttpRequesterMock } from "../../../packages/shared-mocks-lib/src";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
@@ -54,7 +55,7 @@ const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
 const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
-const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
+const mockedParticipantService:IParticipantServiceAdapter = new MemoryParticipantService(logger);
 
 const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 

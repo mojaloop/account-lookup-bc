@@ -41,21 +41,44 @@
 "use strict";
 
 
- // Logger.
-import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessage, IMessageProducer, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {Party} from "../../src/entities/party";
+// Logger.
+import {IMessage, MessageTypes} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {AccountLookupAggregate, Oracle,} from "../../src";
 import {
-     AccountLookupAggregate,
-     InvalidPartyIdError,
-     InvalidPartyTypeError,
-     Oracle,
- } from "../../src";
-import {  MemoryOracleProviderAdapter } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
-import { getParticipantFspIdForOracleTypeAndSubType as getParticipantFspIdForOracleTypeAndSubType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
-import { ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvt, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
+    getParticipantFspIdForOracleTypeAndSubType,
+    MemoryOracleProviderAdapter,
+    mockedOracleAdapters,
+    mockedParticipantIds,
+    mockedPartyIds,
+    mockedPartySubTypes,
+    mockedPartyTypes
+} from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import {
+    ParticipantAssociationCreatedEvtPayload,
+    ParticipantAssociationRemovedEvtPayload,
+    ParticipantAssociationRequestReceivedEvt,
+    ParticipantAssociationRequestReceivedEvtPayload,
+    ParticipantDisassociateRequestReceivedEvt,
+    ParticipantDisassociateRequestReceivedEvtPayload,
+    ParticipantQueryReceivedEvt,
+    ParticipantQueryReceivedEvtPayload,
+    ParticipantQueryResponseEvtPayload,
+    PartyInfoAvailableEvt,
+    PartyInfoAvailableEvtPayload,
+    PartyInfoRequestedEvtPayload,
+    PartyQueryReceivedEvt,
+    PartyQueryReceivedEvtPayload,
+    PartyQueryResponseEvtPayload
+} from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
+import {
+    logger,
+    messageProducer,
+    oracleFinder,
+    oracleProviderFactory,
+    participantService
+} from "../utils/mocked_variables";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 let aggregate: AccountLookupAggregate;
 
@@ -64,7 +87,8 @@ let aggregate: AccountLookupAggregate;
 describe("Domain - Unit Tests for aggregate events", () => {
 
     beforeAll(async () => {
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
+        const metricsMock :IMetrics = new MetricsMock();
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
     });
 
     afterEach(async () => {
@@ -75,62 +99,7 @@ describe("Domain - Unit Tests for aggregate events", () => {
         jest.clearAllMocks();
     });
 
-    //#region Party entity
-    test("should create a new party entity", async()=>{
-        // Arrange
-        const id="fakeId";
-	    const type="fake type";
-        const currency= "fake currency";
-	    const subId="fake sub id";
 
-        // Act
-        const party = new Party(id, type, currency, subId);
-
-        // Assert
-        expect(party.id).toBe(id);
-        expect(party.type).toBe(type);
-        expect(party.currency).toBe(currency);
-        expect(party.subId).toBe(subId);
-
-    });
-
-    test("should throw error if party id is not valid", async()=>{
-        // Arrange
-        const id="";
-	    const type="fake type";
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const party = new Party(id, type, currency, subId);
-
-
-        // Assert
-        expect(() => {
-            Party.validateParty(party);
-        }).toThrowError(InvalidPartyIdError);
-
-    });
-
-
-    test("should throw error if party type is not valid", async()=>{
-        // Arrange
-        const id="fake id";
-	    const type="";
-        const currency= "fake currency";
-	    const subId="fake sub id";
-
-        // Act
-        const party = new Party(id, type, currency, subId);
-
-
-        // Assert
-
-        expect(() => {
-            Party.validateParty(party);
-        }).toThrowError(InvalidPartyTypeError);
-
-    });
     //#endregion
 
 

@@ -45,13 +45,15 @@ import {
 } from "../../src";
 import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 let aggregate: AccountLookupAggregate;
 
 describe("Domain - Unit Tests Oracle admin routes", () => {
 
     beforeAll(async () => {
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
+        const metricsMock :IMetrics = new MetricsMock();
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
         await aggregate.init();
     });
 

@@ -31,7 +31,7 @@
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts",
-    "test:debug": "SET DEBUG=nock.* && jest --runInBand --forceExit --detectOpenHandles --verbose --inspect-brk || ECHO.",
+    "test:debug": "SET DEBUG=nock.* && jest --runInBand --forceExit --detectOpenHandles --verbose --inspect-brk",
     "npm_publish": "npm version patch && npm publish --tag=latest --access public"
   },
   "dependencies": {

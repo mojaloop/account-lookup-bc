@@ -31,7 +31,7 @@
     "test:integration": "jest --runInBand --forceExit --detectOpenHandles",
     "posttest": "npm run coverage:merge && npm run coverage:gen-report",
     "coverage:merge": "nyc merge ./coverage/ ./coverage/coverage.json",
-    "coverage:gen-report": "nyc report --reporter=lcov --temp-dir=./coverage",
+    "coverage:gen-report": "nyc report --reporter=lcov --reporter=text --temp-dir=./coverage",
     "audit:check": "npm run audit:check -ws --parallel -v",
     "dep:check": "(ncu -e 2 || true) && npm -ws run dep:check",
     "dep:update": "(ncu -e 2 -u || true) && npm -ws run dep:update",

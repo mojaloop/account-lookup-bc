@@ -41,80 +41,28 @@
 "use strict";
 
 // Party
-export class InvalidPartyIdError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class InvalidPartyTypeError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class InvalidPartyIdError extends Error {}
+export class InvalidPartyTypeError extends Error {}
 
 // Participant
-export class InvalidParticipantIdError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class InvalidParticipantIdError extends Error {}
 
-export class ParticipantNotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class ParticipantNotFoundError extends Error {}
 
-export class RequiredParticipantIsNotActive extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class RequiredParticipantIsNotActive extends Error {}
 
-export class UnableToGetParticipantFspIdError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class UnableToGetParticipantFspIdError extends Error {}
 
 // Oracle
-export class UnableToGetOracleFromOracleFinderError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class DuplicateOracleError extends Error{
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class NoSuchOracleAdapterError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class UnableToAddOracleError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class UnableToGetOracleFromOracleFinderError extends Error {}
+export class DuplicateOracleError extends Error{}
+export class NoSuchOracleAdapterError extends Error {}
+export class UnableToAddOracleError extends Error {}
 
-export class UnableToRemoveOracleError  extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class UnableToRemoveOracleError  extends Error {}
 
-export class OracleNotFoundError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
-export class UnableToGetOracleAssociationsError extends Error {
-    constructor(message: string) {
-        super(message);
-    }
-}
+export class OracleNotFoundError extends Error {}
+export class UnableToGetOracleAssociationsError extends Error {}
 
 
 

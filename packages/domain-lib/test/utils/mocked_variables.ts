@@ -35,10 +35,10 @@
 import { MemoryOracleFinder, MemoryOracleProviderFactory, MemoryMessageProducer, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { IOracleFinder, IParticipantService } from "../../src";
+import { IOracleFinder, IParticipantServiceAdapter } from "../../src";
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.FATAL);
+logger.setLogLevel(LogLevel.TRACE);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
@@ -50,7 +50,7 @@ const messageProducer: IMessageProducer = new MemoryMessageProducer(
     logger,
 );
 
-const participantService: IParticipantService = new MemoryParticipantService(
+const participantService: IParticipantServiceAdapter = new MemoryParticipantService(
     logger,
 );
 

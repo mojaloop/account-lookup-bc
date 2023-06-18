@@ -45,8 +45,7 @@
 import {
 	AccountLookupAggregate,
 	IOracleFinder,
-	IOracleProviderFactory,
-	IParticipantService
+	IOracleProviderFactory, IParticipantServiceAdapter
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
@@ -59,8 +58,7 @@ import {
 import {KafkaLogger} from "@mojaloop/logging-bc-client-lib";
 import {
 	MongoOracleFinderRepo,
-	OracleAdapterFactory,
-	ParticipantAdapter
+	OracleAdapterFactory
 } from "@mojaloop/account-lookup-bc-implementations-lib";
 import {AccountLookupBCTopics, ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME} from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {
@@ -72,6 +70,11 @@ import {Server} from "net";
 import process from "process";
 import {OracleAdminExpressRoutes} from "./routes/oracle_admin_routes";
 import {AccountLookupExpressRoutes} from "./routes/account_lookup_routes";
+import {IMetrics} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import {PrometheusMetrics} from "@mojaloop/platform-shared-lib-observability-client-lib";
+import {
+	ParticipantAdapter
+} from "@mojaloop/account-lookup-bc-implementations-lib/dist/external_adapters/participant_adapter";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";
@@ -93,7 +96,7 @@ const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
 const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
 
 const PARTICIPANTS_SVC_URL = process.env["PARTICIPANTS_SVC_URL"] || "http://localhost:3010";
-const HTTP_CLIENT_TIMEOUT_MS = 10_000;
+const PARTICIPANTS_CACHE_TIMEOUT_MS = (process.env["PARTICIPANTS_CACHE_TIMEOUT_MS"] && parseInt(process.env["PARTICIPANTS_CACHE_TIMEOUT_MS"])) || 5*60*1000;
 
 // Express Server
 const SVC_DEFAULT_HTTP_PORT = process.env["SVC_DEFAULT_HTTP_PORT"] || 3030;
@@ -119,12 +122,6 @@ const producerOptions: MLKafkaJsonProducerOptions = {
 };
 
 // kafka logger
-const kafkaProducerOptions = {
-	kafkaBrokerList: KAFKA_URL
-};
-
-let globalLogger: ILogger;
-
 export class Service {
 	static logger: ILogger;
 	static app: Express;
@@ -133,10 +130,10 @@ export class Service {
 	static oracleFinder: IOracleFinder;
 	static oracleProviderFactory: IOracleProviderFactory;
 	static authRequester: IAuthenticatedHttpRequester;
-	static participantsServiceAdapter: IParticipantService;
+	static participantsServiceAdapter: IParticipantServiceAdapter;
 	static aggregate: AccountLookupAggregate;
 	static expressServer: Server;
-
+	static metrics:IMetrics;
 
 	static async start(
 		logger?: ILogger,
@@ -145,8 +142,8 @@ export class Service {
 		oracleFinder?: IOracleFinder,
 		oracleProviderFactory?: IOracleProviderFactory,
 		authRequester?: IAuthenticatedHttpRequester,
-		participantsServiceAdapter?: IParticipantService,
-		aggregateParam?: AccountLookupAggregate
+		participantsServiceAdapter?: IParticipantServiceAdapter,
+		metrics?:IMetrics
 	): Promise<void> {
 		console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -174,7 +171,9 @@ export class Service {
 		this.oracleProviderFactory = oracleProviderFactory;
 
 		if (!messageProducer) {
-			messageProducer = new MLKafkaJsonProducer(producerOptions, logger);
+			const producerLogger = logger.createChild("producerLogger");
+			producerLogger.setLogLevel(LogLevel.INFO);
+			messageProducer = new MLKafkaJsonProducer(producerOptions, producerLogger);
 		}
 		this.messageProducer = messageProducer;
 
@@ -191,11 +190,22 @@ export class Service {
 
 
 		if (!participantsServiceAdapter) {
-			const participantLogger = logger.createChild("participantLogger");
-			participantLogger.setLogLevel(LogLevel.INFO);
-			participantsServiceAdapter = new ParticipantAdapter(participantLogger, PARTICIPANTS_SVC_URL, authRequester, HTTP_CLIENT_TIMEOUT_MS);
+			const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
+			authRequester.setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
+			participantsServiceAdapter = new ParticipantAdapter(this.logger, PARTICIPANTS_SVC_URL, authRequester, PARTICIPANTS_CACHE_TIMEOUT_MS);
 		}
 		this.participantsServiceAdapter = participantsServiceAdapter;
+
+		if(!metrics){
+			const labels: Map<string, string> = new Map<string, string>();
+			labels.set("bc", BC_NAME);
+			labels.set("app", APP_NAME);
+			labels.set("version", APP_VERSION);
+			PrometheusMetrics.Setup({prefix:"", defaultLabels: labels}, this.logger);
+			metrics = PrometheusMetrics.getInstance();
+		}
+		this.metrics = metrics;
+
 
 		// all inits done
 
@@ -208,51 +218,56 @@ export class Service {
 
 		this.logger.info("Kafka Producer Initialized");
 
-		if (!aggregateParam) {
-			aggregateParam = new AccountLookupAggregate(
-				this.logger,
-				this.oracleFinder,
-				this.oracleProviderFactory,
-				this.messageProducer,
-				this.participantsServiceAdapter
-			);
-		}
-		this.aggregate = aggregateParam;
+
+		this.aggregate = new AccountLookupAggregate(
+			this.logger,
+			this.oracleFinder,
+			this.oracleProviderFactory,
+			this.messageProducer,
+			this.participantsServiceAdapter,
+			this.metrics
+		);
 
 		await this.aggregate.init();
+
+		await this.setupAndStartExpress();
+
+		this.messageConsumer.setCallbackFn(this.aggregate.handleAccountLookUpEvent.bind(this.aggregate));
 		this.logger.info("Aggregate Initialized");
-
-
-		const callbackFunction = async (message: IMessage): Promise<void> => {
-			this.logger.debug(`Got message in handler: ${JSON.stringify(message, null, 2)}`);
-			await this.aggregate.handleAccountLookUpEvent(message);
-		};
-
-		this.messageConsumer.setCallbackFn(callbackFunction);
-
-		this.setupAndStartExpress();
 	}
 
-	static setupAndStartExpress(): void {
-		// Start express server
-		this.app = express();
-		this.app.use(express.json()); // for parsing application/json
-		this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-		// Add admin and client http routes
-		const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger);
-		const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger);
-		this.app.use("/admin", oracleAdminRoutes.mainRouter);
-		this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
+	static async setupAndStartExpress(): Promise<void> {
+		return new Promise<void>(resolve => {
+			// Start express server
+			this.app = express();
+			this.app.use(express.json()); // for parsing application/json
+			this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-		this.app.use((req, res) => {
-			// catch all
-			res.send(404);
-		});
+			// Add admin and client http routes
+			const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger);
+			const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger);
+			this.app.use("/admin", oracleAdminRoutes.mainRouter);
+			this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
 
-		this.expressServer = this.app.listen(SVC_DEFAULT_HTTP_PORT, () => {
-			this.logger.info(`🚀 Server ready on port ${SVC_DEFAULT_HTTP_PORT}`);
-			this.logger.info(`Oracle Admin and Account Lookup server v: ${APP_VERSION} started`);
+			// Add health and metrics http routes
+			this.app.get("/health", (req: express.Request, res: express.Response) => {return res.send({ status: "OK" }); });
+			this.app.get("/metrics", async (req: express.Request, res: express.Response) => {
+				const strMetrics = await (this.metrics as PrometheusMetrics).getMetricsForPrometheusScrapper();
+				return res.send(strMetrics);
+			});
+
+			this.app.use((req, res) => {
+				// catch all
+				res.send(404);
+			});
+
+			this.expressServer = this.app.listen(SVC_DEFAULT_HTTP_PORT, () => {
+				this.logger.info(`🚀 Server ready on port ${SVC_DEFAULT_HTTP_PORT}`);
+				this.logger.info(`Oracle Admin and Account Lookup server v: ${APP_VERSION} started`);
+
+				resolve();
+			});
 		});
 	}
 
@@ -270,6 +285,12 @@ export class Service {
 	}
 
 }
+
+const kafkaProducerOptions = {
+	kafkaBrokerList: KAFKA_URL
+};
+
+let globalLogger: ILogger;
 
 /**
  * process termination and cleanup

@@ -1,9 +1,11 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import request from "supertest";
 import { 
     Association, 
     IOracleFinder, 
-    IOracleProviderFactory, 
-    IParticipantService
+    IOracleProviderFactory,
+    IParticipantServiceAdapter
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { Service } from "../../src/service";
 import { 
@@ -19,6 +21,7 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { randomUUID } from "crypto";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 
 const logger: ILogger = new ConsoleLogger();
@@ -28,7 +31,7 @@ const mockedProducer: IMessageProducer = new MemoryMessageProducer(logger);
 
 const mockedConsumer : IMessageConsumer = new MemoryMessageConsumer();
 
-const mockedParticipantService:IParticipantService = new MemoryParticipantService(logger);
+const mockedParticipantService:IParticipantServiceAdapter = new MemoryParticipantService(logger);
 
 const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger, true);
 
@@ -36,13 +39,15 @@ const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProv
 
 const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
 
-const server = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
+const mockedMetrics :IMetrics = new MetricsMock();
+
+const serverBaseUrl = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 
 
 describe("Oracle Admin Routes - Unit Test", () => {
     beforeAll(async () => {
         await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
-            mockedAuthRequester, mockedParticipantService);
+            mockedAuthRequester, mockedParticipantService, mockedMetrics);
     });
 
     afterAll(async () => {
@@ -51,7 +56,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("GET - should fetch an array of oracles", async () => {
         // Act
-        const response = await request(server).get("/oracles");
+        const response = await request(serverBaseUrl).get("/oracles");
 
         // Assert
         expect(response.status).toBe(200);
@@ -64,7 +69,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const expectedAssociations = mockedOracleAdapterResults[0];
 
         // Act
-        const response = await request(server).get("/oracles/builtin-associations");
+        const response = await request(serverBaseUrl).get("/oracles/builtin-associations");
 
         // Assert
         expect(response.status).toBe(200);
@@ -77,7 +82,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("POST - should return an error when an invalid payload is passed", async () => {
         // Act
-        const response = await request(server).post("/oracles").send({
+        const response = await request(serverBaseUrl).post("/oracles").send({
             type: "invalid-type",
             name: "oracle msisdn",
             partyType: "MSISDN"
@@ -89,7 +94,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("POST - should add a new oracle", async () => {
         // Act
-        const response = await request(server).post("/oracles").send({
+        const response = await request(serverBaseUrl).post("/oracles").send({
             type: "builtin",
             name: "oracle msisdn",
             partyType: "MSISDN"
@@ -102,12 +107,12 @@ describe("Oracle Admin Routes - Unit Test", () => {
     
     test("GET - should fetch the recently added oracle by id", async () => {
         // Arrange
-        const oracles = await request(server).get("/oracles");
+        const oracles = await request(serverBaseUrl).get("/oracles");
 
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(server).get(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -121,7 +126,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(server).get(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -129,12 +134,12 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("GET - should return health condition of the specified oracle", async () => {
         // Arrange
-        const oracles = await request(server).get("/oracles");
+        const oracles = await request(serverBaseUrl).get("/oracles");
 
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(server).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -146,7 +151,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(server).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -157,7 +162,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "";
 
         // Act
-        const response = await request(server).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -165,12 +170,12 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("DELETE - should delete the specified oracle", async () => {
         // Arrange
-        const oracles = await request(server).get("/oracles");
+        const oracles = await request(serverBaseUrl).get("/oracles");
 
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(server).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -181,7 +186,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(server).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -192,7 +197,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "";
 
         // Act
-        const response = await request(server).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
 
         // Assert
         expect(response.status).toBe(404);
