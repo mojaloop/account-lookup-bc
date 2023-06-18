@@ -39,11 +39,11 @@ import {
 } from "./errors";
 
 const DEFAULT_TIMEOUT_MS = 5000;
+const SERVICE_BASE_PATH = "/account-lookup";
 
 export class AccountLookupHttpClient {
 	private readonly _logger: ILogger;
 	private readonly _httpClient: AxiosInstance;
-	private readonly CLIENT_URL = "/account-lookup";
 
 	constructor(
 		logger: ILogger,
@@ -59,7 +59,10 @@ export class AccountLookupHttpClient {
 	}
 
 	async participantLookUp(partyId:string, partyType:string, currency:string | null): Promise<string | null> {
-		const url = this.composeGetLookUpUrl(partyType, partyId, currency);
+		let url = SERVICE_BASE_PATH + `/${partyId}/${partyType}`;
+		if (currency) {
+			url += `?currency=${currency}`;
+		}
 
 		try {
 			const axiosResponse: AxiosResponse = await this._httpClient.get(url,
@@ -80,7 +83,7 @@ export class AccountLookupHttpClient {
 
 	async participantBulkLookUp(partyIdentifiers :{[key:string]: { partyType: string, partyId: string, currency: string | null}}): Promise<{[key: string]: string | null}| null> {
 		try {
-			const axiosResponse: AxiosResponse = await this._httpClient.post(this.CLIENT_URL, partyIdentifiers,
+			const axiosResponse: AxiosResponse = await this._httpClient.post(SERVICE_BASE_PATH, partyIdentifiers,
 				{
 					validateStatus: (statusCode: number) => {
 						return statusCode === 200 || statusCode === 404;
@@ -94,14 +97,5 @@ export class AccountLookupHttpClient {
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToGetFspIdBulkError(errorMessage);
 		}
-	}
-
-	private composeGetLookUpUrl(partyType: string, partyId: string, currency: string | null) {
-		let url = this.CLIENT_URL + `/${partyId}/${partyType}`;
-
-		if (currency) {
-			url += `?currency=${currency}`;
-		}
-		return url;
 	}
 }
