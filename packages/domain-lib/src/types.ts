@@ -40,11 +40,6 @@
 
 "use strict";
 
-export enum CurrencyType {
-	DOLLAR = "dollar",
-	EURO = "euro",
-}
-
 export type ParticipantLookup = {
 	partyId: string;
 	partyType: string;

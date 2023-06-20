@@ -41,9 +41,9 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { IParticipantService } from "@mojaloop/account-lookup-bc-domain-lib";
+import { IParticipantServiceAdapter } from "@mojaloop/account-lookup-bc-domain-lib";
 
-export class MemoryParticipantService implements IParticipantService {
+export class MemoryParticipantService implements IParticipantServiceAdapter {
 	private readonly logger: ILogger;
 
 	constructor(

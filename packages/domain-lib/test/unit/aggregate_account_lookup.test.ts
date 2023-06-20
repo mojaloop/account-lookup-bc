@@ -38,13 +38,15 @@ import {
 } from "../../src";
 import { mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 let aggregate: AccountLookupAggregate;
 
 describe("Domain - Unit Tests Account Lookup", () => {
 
     beforeAll(async () => {
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService);
+        const metricsMock :IMetrics = new MetricsMock();
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
         await aggregate.init();
     });
 
