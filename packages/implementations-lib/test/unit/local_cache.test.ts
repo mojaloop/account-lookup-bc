@@ -117,6 +117,30 @@ describe("Implementations - Local Cache Unit Tests", () => {
 
     });
 
+    test("should create an entry for cache when receiving multiple parameters even if one parameter passed has null value", async()=>{
+
+        //Arrange
+        localCache = new LocalCache(logger);
+
+        //Act
+        localCache.set(1,null,"key");
+
+        //Assert
+        expect(localCache.get("key")).toBe(1);
+
+    });
+
+    test("should create an entry for cache when receiving multiple parameters even if one parameter passed has undefined value", async()=>{
+        //Arrange
+        localCache = new LocalCache(logger);
+
+        //Act
+        localCache.set(1,undefined,"key");
+
+        //Assert
+        expect(localCache.get("key")).toBe(1);
+    });
+
     test("should clear cache", async()=>{
 
         //Arrange

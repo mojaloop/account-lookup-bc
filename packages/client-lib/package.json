@@ -31,12 +31,13 @@
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts",
-    "test:debug": "SET DEBUG=nock.* && jest --runInBand --forceExit --detectOpenHandles --verbose --inspect-brk || ECHO.",
+    "test:debug": "SET DEBUG=nock.* && jest --runInBand --forceExit --detectOpenHandles --verbose || ECHO.",
     "npm_publish": "npm version patch && npm publish --tag=latest --access public"
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.24",
-    "axios": "^1.4.0"
+    "@mojaloop/security-bc-client-lib": "0.1.31",
+    "@mojaloop/account-lookup-bc-implementations-lib": "*"
   },
   "devDependencies": {
     "nock": "^13.3.1"
