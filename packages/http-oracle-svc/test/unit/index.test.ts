@@ -38,12 +38,12 @@ const partyType:string = "bank";
 const partyId:string = randomUUID();
 const fspId:string = "12";
 const url:string = `http://localhost:3031/participants/${partyType}/${partyId}?currency=UGX`;
-// jest.setTimeout(600000)
 
 const filePath = process.env["ORACLE_DB_FILE_PATH"];
 const defaultHeaders = new Headers();
 defaultHeaders.append("Content-Type", "application/json");
 
+// TODO: Pass this to integration tests
 
 describe("http-oracle-svc unit tests", () => {
 	beforeAll(async () => {
@@ -240,12 +240,9 @@ describe("http-oracle-svc unit tests", () => {
 		expect(response.status).toEqual(404);
 	});
 
-	test("Stop the server to prepare for the next test that starts the server", async ()=>{
-		await Service.stop();
-	});
-
 	test("should throw an error db.json exists with wrong content when starting the server with a db.json that has a wrong format", async () => {
 		// Arrange
+		await Service.stop();
 		if(!filePath){
 			throw new Error("ORACLE_DB_FILE_PATH was not set");
 		}

@@ -30,7 +30,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -42,6 +42,7 @@
 
 export * from "./oracles/mongo_oraclefinder";
 export * from "./oracles/oracleadapter_factory";
+export * from "./local_cache";
 export * from "./oracles/adapters/builtin/mongo_oracleprovider";
 export * from "./oracles/adapters/remote/http_oracleprovider";
 export * from "./errors";

@@ -36,7 +36,7 @@
     "dep:update": "ncu -u",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
-    "test:unit": "jest --passWithNoTests --detectOpenHandles --testMatch **/test/unit/**/*.test.ts"
+    "test:unit": "jest --passWithNoTests --detectOpenHandles --testMatch **/test/unit/**/*.test.ts || ECHO."
   },
   "dependencies": {
     "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.65",

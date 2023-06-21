@@ -33,8 +33,8 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup, UnableToGetParticipantFspIdError } from "@mojaloop/account-lookup-bc-domain-lib";
-import { body, check } from "express-validator";
+import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError } from "@mojaloop/account-lookup-bc-domain-lib";
+import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 
 export class AccountLookupExpressRoutes extends BaseRoutes {
@@ -42,17 +42,11 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
     constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
         super(logger, accountLookupAgg);
         logger.createChild("AccountLookupExpressRoutes");
-        
-        this.mainRouter.get("/:partyId/:type",[
-            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
-            check("type").isString().notEmpty().withMessage("type must be a non empty string").bail(),
-         ], this.getAccountLookUp.bind(this));
 
-         this.mainRouter.post("",[
-            body().isObject().withMessage("body must be an object").bail(),
-            body("*.partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
-            body("*.partyType").isString().notEmpty().withMessage("partyType must be a non empty string"),
-        ], this.getBulkAccountLookUp.bind(this));
+        this.mainRouter.get("/:partyType/:partyId",[
+            check("partyId").isString().notEmpty().withMessage("partyId must be a non empty string").bail(),
+            check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
+         ], this.getAccountLookUp.bind(this));
 
     }
 
@@ -60,32 +54,33 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         if (!this.validateRequest(req, res)) {
             return;
         }
-    
+
         const partyId = req.params["partyId"];
-        const partyType = req.params["type"];
-        const partySubType = req.params["subType"] ?? null;
+        const partyType = req.params["partyType"];
         const currency = req.query.currency?.toString() ?? null;
 
-        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
+        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency}`);
 
         try {
             const payload: ParticipantLookup = {
                currency,
                partyId,
-               partyType 
+               partyType
             };
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
+            this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency} - result: ${JSON.stringify(result)}`);
             res.send(result);
         } catch (err: unknown) {
             this.logger.error(err);
-
-            if (err instanceof UnableToGetParticipantFspIdError) {
+            if (err instanceof ParticipantNotFoundError) {
+                this.logger.debug(`AccountLookupExpressRoutes::getAccountLookUp - ParticipantNotFound`);
                 res.status(404).json({
-                    status: "not found",
+                    status: "error",
                     msg: (err as Error).message
                 });
 
             } else {
+                this.logger.error(`AccountLookupExpressRoutes::getAccountLookUp - Error: ${(err as Error).message}`);
                 res.status(500).json({
                     status: "error",
                     msg: (err as Error).message
@@ -93,27 +88,5 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             }
         }
     }
-
-    private async getBulkAccountLookUp(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-    
-        const identifiersList = req.body;
-        this.logger.info(`AccountLookupExpressRoutes::getBulkAccountLookUp - ${identifiersList}`);
-
-        try {
-            const result = await this.accountLookupAggregate.getBulkAccountLookup(identifiersList);
-            res.send(result);
-        } catch (err: unknown) {
-            this.logger.error(err);
-
-            res.status(500).json({
-                status: "error",
-                msg: (err as Error).message
-            });
-        }
-    }
-
 
 }

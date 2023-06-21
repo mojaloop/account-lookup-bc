@@ -62,6 +62,7 @@ const PASSWORD = "superPass";
 const CLIENT_ID = "security-bc-ui";
 const CLIENT_SECRET = "client_secret";
 
+//TODO: need to replace nock, since it is not working with fetch
 describe("Client - Account Lookup Client Unit tests", () => {
     beforeAll(async () => {
         authRequester = new AuthenticatedHttpRequester(logger, TOKEN_URL);
@@ -70,10 +71,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
         // accountLookupServiceMock = new HttpAccountLookupServiceMock(BASE_URL, TOKEN_URL);
         // accountLookupServiceMock.setUp();
         accountLookupClient = new AccountLookupHttpClient(logger, BASE_URL, authRequester, 1000, 200000000);
-    });
-
-    beforeEach(async () => {
-        jest.setTimeout(600000000);
     });
 
     afterAll(async () => {

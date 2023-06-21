@@ -1,25 +1,24 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import request from "supertest";
-import { 
-    Association, 
-    IOracleFinder, 
+import {
+    Association,
+    IOracleFinder,
     IOracleProviderFactory,
     IParticipantServiceAdapter
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { Service } from "../../src/service";
-import { 
+import {
     MemoryOracleFinder,
     MemoryMessageProducer,
-    MemoryOracleProviderFactory, 
-    MemoryMessageConsumer, 
-    MemoryParticipantService, 
-    MemoryAuthenticatedHttpRequesterMock, 
-    mockedOracleAdapterResults 
+    MemoryOracleProviderFactory,
+    MemoryMessageConsumer,
+    MemoryParticipantService,
+    MemoryAuthenticatedHttpRequesterMock,
+    mockedOracleAdapterResults
 } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { randomUUID } from "crypto";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 
@@ -46,7 +45,7 @@ const serverBaseUrl = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/
 
 describe("Oracle Admin Routes - Unit Test", () => {
     beforeAll(async () => {
-        await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
+        await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,
             mockedAuthRequester, mockedParticipantService, mockedMetrics);
     });
 
@@ -104,7 +103,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
         expect(response.status).toBe(200);
         expect(checkIfValidUUID(response.body.id)).toBe(true);
     });
-    
+
     test("GET - should fetch the recently added oracle by id", async () => {
         // Arrange
         const oracles = await request(serverBaseUrl).get("/oracles");

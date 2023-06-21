@@ -33,14 +33,14 @@
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
-	UnableToGetFspIdBulkError,
 	UnableToGetFspIdError,
 } from "./errors";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations-lib";
 import {IAuthenticatedHttpRequester,} from "@mojaloop/security-bc-client-lib";
 
 
-const DEFAULT_REQUEST_TIMEOUT_MS = 100000;
+const SERVICE_BASE_PATH = "/account-lookup";
+const DEFAULT_REQUEST_TIMEOUT_MS = 5000;
 const DEFAULT_CACHE_TIMEOUT_MS = 1*60*1000;
 export class AccountLookupHttpClient {
 	private readonly _logger: ILogger;
@@ -65,8 +65,12 @@ export class AccountLookupHttpClient {
 		this._cache = new LocalCache(this._logger, this._cacheTimeoutMs);
 	}
 
-	async participantLookUp(partyId:string, partyType:string, currency:string | null): Promise<string | null> {
-			let urlBuilder = `/account-lookup/${partyId}/${partyType}`;
+	async participantLookUp(partyType:string, partyId:string, currency:string | null): Promise<string | null> {
+			if(!partyType || !partyId){
+				throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - partyType or partyId is null`);
+			}
+
+			let urlBuilder = `${SERVICE_BASE_PATH}/${partyType}/${partyId}`;
 
 			if (currency) {
 				urlBuilder += `?currency=${currency}`;
@@ -79,7 +83,7 @@ export class AccountLookupHttpClient {
 
 			const url = new URL(urlBuilder, this._baseUrlHttpService).toString();
 
-			const resp = await fetch(url)
+			const resp = await this._authRequester.fetch(url, DEFAULT_REQUEST_TIMEOUT_MS)
 				.catch((err) => {
 					console.log(err);
 					this._logger.error(`Account Lookup Client - Unable to Get FspId - ${err}`);
@@ -87,7 +91,10 @@ export class AccountLookupHttpClient {
 				});
 
 			if(resp.status === 200){
-                const data = await resp.json();
+                const data = await resp.text().catch((err) => {
+					this._logger.error(err.message);
+					throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
+				});
                 this._cache.set(data, partyId, partyType, currency);
                 return data;
             }
@@ -99,29 +106,4 @@ export class AccountLookupHttpClient {
 			throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${resp.status}`);
 	}
 
-	async participantBulkLookUp(partyIdentifiers :Map<string,{partyType: string, partyId: string, currency: string | null}>): Promise<Map<string, string | null> | null> {
-		const url = new URL("/account-lookup",this._baseUrlHttpService).toString();
-		const request = new Request(url, {
-			method: "POST",
-			body: JSON.stringify(partyIdentifiers),
-		});
-
-		const resp = await this._authRequester.fetch(request,this._requestTimeoutMs)
-			.catch((err) => {
-				this._logger.error(`Account Lookup Client - Unable to Get FspId Bulk - ${err}`);
-				throw new UnableToGetFspIdBulkError(`Account Lookup Client - Unable to Get FspId Bulk - ${err}`);
-			});
-
-		if(resp.status === 200){
-			const data = await resp.json();
-			return data;
-		}
-
-		if(resp.status === 404){
-			return null;
-		}
-
-		throw new UnableToGetFspIdBulkError(`Account Lookup Client - Unable to Get FspId Bulk - ${resp.status}`);
-
-	}
 }

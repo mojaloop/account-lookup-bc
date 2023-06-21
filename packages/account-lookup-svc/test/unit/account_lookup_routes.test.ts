@@ -1,24 +1,22 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import request from "supertest";
-import { 
+import {
     MemoryOracleFinder,
     MemoryMessageProducer,
-    MemoryOracleProviderFactory, 
-    MemoryMessageConsumer, 
-    MemoryParticipantService, 
+    MemoryOracleProviderFactory,
+    MemoryMessageConsumer,
+    MemoryParticipantService,
     MemoryAuthenticatedHttpRequesterMock,
     mockedPartyIds,
     mockedPartyTypes,
     mockedParticipantFspIds,
 } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { 
-    AccountLookupAggregate, 
-    IOracleFinder, 
-    IOracleProviderFactory, 
+import {
+    IOracleFinder,
+    IOracleProviderFactory,
     IParticipantServiceAdapter,
-    ParticipantLookup
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
@@ -49,10 +47,9 @@ const CURRENCY = {
     EUR: "EUR"
 };
 
-
 describe("Account Lookup Routes - Unit Test", () => {
     beforeAll(async () => {
-        await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory, 
+        await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,
             mockedAuthRequester, mockedParticipantService, mockedMetrics);
     });
 
@@ -66,20 +63,20 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
 
         // Assert
         expect(response.status).toBe(200);
         expect(response.text).toEqual(mockedParticipantFspIds[2]);
     });
 
-    test("GET - should receive error when no match", async () => {
+    test("GET - should receive 404 when fsp id not found", async () => {
         // Arrange
         const partyId = "non-existent-party-id";
-        const partyType = "non-existent-party-type";
+        const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -92,7 +89,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const currency = CURRENCY.USD;
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}?currency=${currency}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}?currency=${currency}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -105,7 +102,7 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[0];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
 
         // Assert
         // TODO: This should be a 404
@@ -118,86 +115,10 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyId}/${partyType}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
 
         // Assert
         expect(response.status).toBe(404);
     });
 
-    test("POST - fetch all fspIds for the given requests", async () => {
-        // Arrange
-        const request1: ParticipantLookup = {
-            partyId: mockedPartyIds[0],
-            partyType: mockedPartyTypes[0],
-            currency: "USD"
-        }
-        const request2: ParticipantLookup = {
-            partyId: mockedPartyIds[1],
-            partyType: mockedPartyTypes[1],
-            currency: "EUR"
-        }
-
-        // Act
-        const response = await request(serverBaseUrl).post("").send({
-            request1,
-            request2
-        });
-
-        // Assert
-        expect(response.status).toBe(200);
-        expect(response.body).toEqual({
-            request1: mockedParticipantFspIds[0],
-            request2: mockedParticipantFspIds[1]
-        });
-    });
-
-    test("POST - if no fspId for the respective request, return null", async () => {
-        // Arrange
-        const request1: ParticipantLookup = {
-            partyId: "non-existent-party-id",
-            partyType: "non-existent-party-type",
-            currency: "EUR"
-        }
-        const request2: ParticipantLookup = {
-            partyId: "non-existent-party-id",
-            partyType: "non-existent-party-type",
-            currency: "EUR"
-        }
-
-        // Act
-        const response = await request(serverBaseUrl).post("").send({
-            request1,
-            request2
-        });
-
-        // Assert
-        expect(response.status).toBe(200);
-        expect(response.body).toEqual({
-            request1: null,
-            request2: null
-        });
-    });
-
-    test("POST - should return bad request when request is not valid", async () => {
-        // Arrange
-        const request1: ParticipantLookup = {
-            partyId: "",
-            partyType: mockedPartyTypes[0],
-            currency: "USD"
-        }
-        const request2: ParticipantLookup = {
-            partyId: mockedPartyIds[1],
-            partyType: mockedPartyTypes[1],
-            currency: "EUR"
-        }
-
-        // Act
-        const response = await request(serverBaseUrl).post("").send({
-            request1,
-            request2
-        });
-
-        // Assert
-        expect(response.status).toBe(422);
-    });
 });

@@ -145,7 +145,7 @@ export class AccountLookupAggregate  {
 			await this._oracleFinder.init();
 			const oracles = await this._oracleFinder.getAllOracles();
 			this._logger.debug("Oracle finder initialized");
-			for (const oracle of oracles) {
+			for await (const oracle of oracles) {
 				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
 				await oracleAdapter.init();
 				this._oracleProvidersAdapters.push(oracleAdapter);
@@ -823,23 +823,13 @@ export class AccountLookupAggregate  {
 		return await this.getParticipantIdFromOracle(partyId, partyType, currency).catch(error=>{
 			const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error?.message;
 			this._logger.error(errorMessage);
+
+			if(error instanceof ParticipantNotFoundError){
+				throw error;
+			}
+
 			throw new UnableToGetParticipantFspIdError(errorMessage);
 		});
-	}
-
-	public async getBulkAccountLookup(identifiersList: { [id:string] : ParticipantLookup}): Promise<{[x: string]: string | null}> {
-		const participantsList:{[x: string]: string | null} = {};
-
-		for (const [key, value] of Object.entries(identifiersList)) {
-			const {partyId, partyType, currency} = value;
-
-			participantsList[key] = await this.getParticipantIdFromOracle(partyId, partyType, currency).catch(error=>{
-				this._logger.error(`getBulkAccountLookup - Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error);
-				return null;
-			});
-		}
-
-		return participantsList;
 	}
 
 	//#endregion

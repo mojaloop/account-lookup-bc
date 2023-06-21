@@ -42,7 +42,7 @@
 "use strict";
 
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { 
+import {
     MongoOracleProviderRepo,
     ParticipantAssociationAlreadyExistsError,
     UnableToInitOracleProvider,
@@ -123,15 +123,17 @@ describe("Implementations - Builtin Oracle Provider Integration tests", () => {
 
     });
 
-    test("should throw error if no participant fspid is found", async () => {
+    test("should return null if no participant fspid is found", async () => {
         // Arrange
         const partyType = "non-existent-partytype";
         const partyId = "non-existent-partyid";
         const currency = "USD";
 
-        // Act & Assert
-        await expect(builtInOracleProvider.getParticipantFspId(partyType, partyId, currency))
-            .rejects.toThrowError(UnableToGetParticipantError);
+        // Act
+        const result = await builtInOracleProvider.getParticipantFspId(partyType, partyId, currency);
+
+        //Assert
+        expect(result).toBeNull();
     });
 
     test("should be able to associate a participant to an oracle", async () => {
