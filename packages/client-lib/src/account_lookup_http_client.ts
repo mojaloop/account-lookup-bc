@@ -36,7 +36,7 @@ import {
 	UnableToGetFspIdError,
 } from "./errors";
 import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations-lib";
-import {IAuthenticatedHttpRequester,} from "@mojaloop/security-bc-client-lib";
+import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
 
 
 const SERVICE_BASE_PATH = "/account-lookup";
