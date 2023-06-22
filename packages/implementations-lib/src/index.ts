@@ -42,7 +42,6 @@
 
 export * from "./oracles/mongo_oraclefinder";
 export * from "./oracles/oracleadapter_factory";
-export * from "./local_cache";
 export * from "./oracles/adapters/builtin/mongo_oracleprovider";
 export * from "./oracles/adapters/remote/http_oracleprovider";
 export * from "./errors";

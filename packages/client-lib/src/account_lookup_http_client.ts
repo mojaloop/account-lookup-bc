@@ -35,34 +35,27 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
 	UnableToGetFspIdError,
 } from "./errors";
-import { ILocalCache, LocalCache } from "@mojaloop/account-lookup-bc-implementations-lib";
 import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
 
 
 const SERVICE_BASE_PATH = "/account-lookup";
 const DEFAULT_REQUEST_TIMEOUT_MS = 5000;
-const DEFAULT_CACHE_TIMEOUT_MS = 1*60*1000;
 export class AccountLookupHttpClient {
 	private readonly _logger: ILogger;
 	private readonly _authRequester: IAuthenticatedHttpRequester;
 	private readonly _baseUrlHttpService :string;
-	private readonly _cache: ILocalCache;
-	private readonly _cacheTimeoutMs: number;
 	private readonly _requestTimeoutMs: number;
 
 	constructor(
 		logger: ILogger,
 		baseUrlHttpService: string,
 		authRequester: IAuthenticatedHttpRequester,
-        cacheTimeoutMs: number = DEFAULT_CACHE_TIMEOUT_MS,
 		requestTimeoutMs: number = DEFAULT_REQUEST_TIMEOUT_MS
 	) {
 		this._logger = logger;
         this._baseUrlHttpService = baseUrlHttpService;
         this._authRequester = authRequester;
-        this._cacheTimeoutMs = cacheTimeoutMs;
 		this._requestTimeoutMs = requestTimeoutMs;
-		this._cache = new LocalCache(this._logger, this._cacheTimeoutMs);
 	}
 
 	async participantLookUp(partyType:string, partyId:string, currency:string | null): Promise<string | null> {
@@ -76,14 +69,9 @@ export class AccountLookupHttpClient {
 				urlBuilder += `?currency=${currency}`;
 			}
 
-			const cached = this._cache.get(partyId, partyType, currency);
-			if (cached) {
-				return cached.toString();
-			}
-
 			const url = new URL(urlBuilder, this._baseUrlHttpService).toString();
 
-			const resp = await this._authRequester.fetch(url, DEFAULT_REQUEST_TIMEOUT_MS)
+			const resp = await this._authRequester.fetch(url, this._requestTimeoutMs)
 				.catch((err) => {
 					console.log(err);
 					this._logger.error(`Account Lookup Client - Unable to Get FspId - ${err}`);
@@ -95,7 +83,6 @@ export class AccountLookupHttpClient {
 					this._logger.error(err.message);
 					throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
 				});
-                this._cache.set(data, partyId, partyType, currency);
                 return data;
             }
 

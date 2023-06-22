@@ -43,16 +43,12 @@
 import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
 import {
     MongoOracleProviderRepo,
-    ParticipantAssociationAlreadyExistsError,
-    UnableToInitOracleProvider,
-    UnableToGetParticipantError
 } from "../../../packages/implementations-lib/src";
 import { Oracle } from "../../../packages/domain-lib/src";
 import { Collection, MongoClient } from "mongodb";
 import { AccountLookupHttpClient } from './../../../packages/client-lib/src/account_lookup_http_client';
 import { IAuthenticatedHttpRequester, AuthenticatedHttpRequester } from '@mojaloop/security-bc-client-lib';
 import { Service } from './../../../packages/account-lookup-svc/src/service';
-import { IOracleFinder } from "@mojaloop/account-lookup-bc-domain-lib";
 import { MongoOracleFinderRepo } from "@mojaloop/account-lookup-bc-implementations-lib";
 
 const logger: ILogger = new ConsoleLogger();
