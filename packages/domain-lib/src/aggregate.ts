@@ -98,7 +98,10 @@ import {
 	PartyInfoRequestedEvtPayload,
 	PartyQueryReceivedEvt,
 	PartyQueryResponseEvt,
-	PartyQueryResponseEvtPayload
+	PartyQueryResponseEvtPayload,
+	GetPartyQueryRejectedEvt,
+	GetPartyQueryRejectedResponseEvt,
+	GetPartyQueryRejectedResponseEvtPayload
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import {randomUUID} from "crypto";
 import {AddOracleDTO, Association, Oracle, OracleType, ParticipantLookup} from "./types";
@@ -206,6 +209,9 @@ export class AccountLookupAggregate  {
 					break;
 				case ParticipantDisassociateRequestReceivedEvt.name:
 					eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
+					break;
+				case GetPartyQueryRejectedEvt.name:
+					eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
 					break;
 				default: {
 					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
@@ -541,6 +547,41 @@ export class AccountLookupAggregate  {
 
 	//#endregion
 
+	//#region GetPartyQueryRejectedEvt
+	private async getPartyQueryRejected(message: GetPartyQueryRejectedEvt):Promise<DomainEventMsg> {
+		this._logger.debug(`Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
+
+		const partyId = message.payload.partyId ?? null;
+
+		const requesterFspId = message.payload.requesterFspId ?? null;
+		const destinationFspId = message.payload.destinationFspId ?? null;
+
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
+		if(requesterParticipantError){
+			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
+			return requesterParticipantError;
+		}
+
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, destinationFspId);
+		if(destinationParticipantError){
+			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
+			return destinationParticipantError;
+		}
+
+		const payload:GetPartyQueryRejectedResponseEvtPayload = {
+			partyId: message.payload.partyId,
+			partyType: message.payload.partyType,
+			partySubType: message.payload.partySubType,
+			currency: message.payload.currency,
+			errorInformation: message.payload.errorInformation
+		};
+
+		const event = new GetPartyQueryRejectedResponseEvt(payload);
+
+		return event;
+	}
+	//#endregion
+	
 	//#region Validations
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {
