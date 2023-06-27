@@ -345,7 +345,11 @@ describe("Domain - Unit Tests for aggregate events", () => {
                 partySubType: null,
                 ownerFspId: "ownerId",
                 partyDoB,
-                partyName:"name",
+                merchantClassificationCode:"18",
+                name:"name",
+                firstName: "Maria",
+                middleName: "P",
+                lastName: "Lee"
             };
 
             jest.spyOn(participantService, "getParticipantInfo")
@@ -363,7 +367,11 @@ describe("Domain - Unit Tests for aggregate events", () => {
                 currency: null,
                 ownerFspId: "ownerId",
                 partyDoB,
-                partyName:"name",
+                merchantClassificationCode:"18",
+                name:"name",
+                firstName: "Maria",
+                middleName: "P",
+                lastName: "Lee"
             };
 
             // Act
