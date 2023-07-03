@@ -65,7 +65,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
          this.mainRouter.post("/oracles",[
             check("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
-            check("type").isString().isIn(['builtin','http-remote']).withMessage("type must be valid").bail(),
+            check("type").isString().isIn(['builtin','remote-http']).withMessage("type must be valid").bail(),
             check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
             check("currency").optional(),
          ], this.createOracle.bind(this));
