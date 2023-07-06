@@ -1,27 +1,32 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import request from "supertest";
-import {
-    MemoryOracleFinder,
-    MemoryMessageProducer,
-    MemoryOracleProviderFactory,
-    MemoryMessageConsumer,
-    MemoryParticipantService,
-    MemoryAuthenticatedHttpRequesterMock,
-    mockedPartyIds,
-    mockedPartyTypes,
-    mockedParticipantFspIds,
-} from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
     IOracleFinder,
     IOracleProviderFactory,
     IParticipantServiceAdapter,
 } from "@mojaloop/account-lookup-bc-domain-lib";
-import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {
+    MemoryAuthenticatedHttpRequester,
+    MemoryMessageConsumer,
+    MemoryMessageProducer,
+    MemoryOracleFinder,
+    MemoryOracleProviderFactory,
+    MemoryParticipantService,
+    mockedParticipantFspIds,
+    mockedPartyIds,
+    mockedPartyTypes,
+} from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+
+import { IAuditClient } from '@mojaloop/auditing-bc-public-types-lib';
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
+import { MemoryAuditClient } from './../../../shared-mocks-lib/src/memory_audit_client';
+import { MemoryAuthorizationClient } from './../../../shared-mocks-lib/src/memory_authorization_client';
 import { Service } from "../../src/service";
-import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import request from "supertest";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
@@ -36,7 +41,11 @@ const mockedOracleFinder: IOracleFinder = new MemoryOracleFinder(logger);
 
 const mockedOracleProviderFactory: IOracleProviderFactory = new MemoryOracleProviderFactory(logger);
 
-const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequesterMock(logger,"fake token");
+const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticatedHttpRequester(logger,"fake token");
+
+const mockedAuthorizationClient: IAuthorizationClient = new MemoryAuthorizationClient(logger);
+
+const mockedAuditClient: IAuditClient = new MemoryAuditClient(logger);
 
 const mockedMetrics :IMetrics = new MetricsMock();
 
@@ -49,8 +58,8 @@ const CURRENCY = {
 
 describe("Account Lookup Routes - Unit Test", () => {
     beforeAll(async () => {
-        await Service.start(logger, mockedConsumer, mockedProducer, mockedOracleFinder, mockedOracleProviderFactory,
-            mockedAuthRequester, mockedParticipantService, mockedMetrics);
+        await Service.start(mockedAuditClient, mockedAuthorizationClient, mockedAuthRequester, logger, mockedConsumer,
+            mockedProducer, mockedMetrics, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
     });
 
     afterAll(async () => {

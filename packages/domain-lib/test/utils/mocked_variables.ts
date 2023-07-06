@@ -32,13 +32,20 @@
 
 "use strict";
 
-import { MemoryOracleFinder, MemoryOracleProviderFactory, MemoryMessageProducer, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IOracleFinder, IParticipantServiceAdapter } from "../../src";
+import { MemoryAuditClient, MemoryAuthorizationClient, MemoryMessageProducer, MemoryOracleFinder, MemoryOracleProviderFactory, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+
+import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
+import { IAuthorizationClient } from '@mojaloop/security-bc-public-types-lib';
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.TRACE);
+
+const auditClient: IAuditClient = new MemoryAuditClient(logger);
+
+const authorizationClient : IAuthorizationClient = new MemoryAuthorizationClient(logger);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
@@ -55,4 +62,4 @@ const participantService: IParticipantServiceAdapter = new MemoryParticipantServ
 );
 
 
-export { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService };
+export { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService, auditClient, authorizationClient };

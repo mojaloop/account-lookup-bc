@@ -40,30 +40,11 @@
 
 "use strict";
 
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
-	DomainEventMsg,
-	IMessage,
-	IMessageProducer,
-	MessageTypes
-} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {
-	DuplicateOracleError,
-	NoSuchOracleAdapterError,
-	OracleNotFoundError,
-	ParticipantNotFoundError,
-	UnableToGetOracleAssociationsError,
-	UnableToGetOracleFromOracleFinderError,
-	UnableToGetParticipantFspIdError,
-	UnableToRemoveOracleError
-} from "./errors";
-import {
-	IOracleFinder,
-	IOracleProviderAdapter,
-	IOracleProviderFactory,
-	IParticipantServiceAdapter
-} from "./interfaces/infrastructure";
-import {
+	AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
+	AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+	AccountLookUpUnknownErrorEvent,
+	AccountLookUpUnknownErrorPayload,
 	AccountLookupBCDestinationParticipantNotFoundErrorEvent,
 	AccountLookupBCDestinationParticipantNotFoundErrorPayload,
 	AccountLookupBCInvalidDestinationParticipantErrorEvent,
@@ -80,10 +61,9 @@ import {
 	AccountLookupBCUnableToDisassociateParticipantErrorPayload,
 	AccountLookupBCUnableToGetOracleAdapterErrorEvent,
 	AccountLookupBCUnableToGetOracleAdapterErrorPayload,
-	AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
-	AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
-	AccountLookUpUnknownErrorEvent,
-	AccountLookUpUnknownErrorPayload,
+	GetPartyQueryRejectedEvt,
+	GetPartyQueryRejectedResponseEvt,
+	GetPartyQueryRejectedResponseEvtPayload,
 	ParticipantAssociationCreatedEvt,
 	ParticipantAssociationCreatedEvtPayload,
 	ParticipantAssociationRemovedEvt,
@@ -98,42 +78,71 @@ import {
 	PartyInfoRequestedEvtPayload,
 	PartyQueryReceivedEvt,
 	PartyQueryResponseEvt,
-	PartyQueryResponseEvtPayload,
-	GetPartyQueryRejectedEvt,
-	GetPartyQueryRejectedResponseEvt,
-	GetPartyQueryRejectedResponseEvtPayload
+	PartyQueryResponseEvtPayload
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import {randomUUID} from "crypto";
 import {AddOracleDTO, Association, Oracle, OracleType, ParticipantLookup} from "./types";
-import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
+import {
+	DomainEventMsg,
+	IMessage,
+	IMessageProducer,
+	MessageTypes
+} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {
+	DuplicateOracleError,
+	NoSuchOracleAdapterError,
+	OracleNotFoundError,
+	ParticipantNotFoundError,
+	UnableToGetOracleAssociationsError,
+	UnableToGetOracleFromOracleFinderError,
+	UnableToGetParticipantFspIdError,
+	UnableToRemoveOracleError
+} from "./errors";
 import {IHistogram, IMetrics} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import {
+	IOracleFinder,
+	IOracleProviderAdapter,
+	IOracleProviderFactory,
+	IParticipantServiceAdapter
+} from "./interfaces/infrastructure";
+
+import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
+import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
+import {randomUUID} from "crypto";
 
 export class AccountLookupAggregate  {
+	private readonly _auditClient: IAuditClient;
+	private readonly _authorizationClient: IAuthorizationClient;
+	private _oracleProvidersAdapters: IOracleProviderAdapter[];
+	private readonly _histo: IHistogram;
 	private readonly _logger: ILogger;
+	private readonly _messageProducer: IMessageProducer;
+	private readonly _metrics:IMetrics;
 	private readonly _oracleFinder: IOracleFinder;
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
-	private readonly _messageProducer: IMessageProducer;
 	private readonly _participantService: IParticipantServiceAdapter;
-	private _oracleProvidersAdapters: IOracleProviderAdapter[];
-	private readonly _metrics:IMetrics;
-	private readonly _histo: IHistogram;
 
 	//#region Initialization
 	constructor(
+		auditClient: IAuditClient,
+		authorizationClient: IAuthorizationClient,
 		logger: ILogger,
+		messageProducer:IMessageProducer,
+		metrics:IMetrics,
 		oracleFinder:IOracleFinder,
 		oracleProvidersFactory:IOracleProviderFactory,
-		messageProducer:IMessageProducer,
 		participantService: IParticipantServiceAdapter,
-		metrics:IMetrics
 	) {
+		this._auditClient = auditClient;
+		this._authorizationClient = authorizationClient;
 		this._logger = logger.createChild(this.constructor.name);
-		this._oracleFinder = oracleFinder;
-		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._messageProducer = messageProducer;
-		this._participantService = participantService;
-		this._oracleProvidersAdapters = [];
 		this._metrics = metrics;
+		this._oracleFinder = oracleFinder;
+		this._oracleProvidersAdapters = [];
+		this._oracleProvidersFactory = oracleProvidersFactory;
+		this._participantService = participantService;
 
 		this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"]);
 		// this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"], [0.01, 0.05, 0.1, 0.5, 0.75, 1, 1.5, 2]);
@@ -268,7 +277,6 @@ export class AccountLookupAggregate  {
 			try{
 				destinationFspId = await this.getParticipantIdFromOracle(partyId, partyType,currency);
 			} catch(error:any){
-				//TODO: Create error event for this
 				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				this._logger.error(errorMessage + `- ${error.message}`);
 				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
@@ -379,10 +387,8 @@ export class AccountLookupAggregate  {
 		try{
 			ownerFspId = await this.getParticipantIdFromOracle(partyId,partyType, currency);
 		}catch(error){
-			//TODO: Create event for Unable to get requester Participant from oracle error
 			const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 			this._logger.error(errorMessage + `- ${error}`);
-			//TODO: Create a new error event for this
 			const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 				partyId,
 				partyType,
@@ -585,7 +591,7 @@ export class AccountLookupAggregate  {
 		return event;
 	}
 	//#endregion
-	
+
 	//#region Validations
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {

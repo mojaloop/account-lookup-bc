@@ -36,9 +36,9 @@ import {
     AccountLookupAggregate,
     ParticipantLookup,
 } from "../../src";
-import { mockedPartyIds, mockedPartyTypes, mockedParticipantFspIds } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
-import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import { auditClient, authorizationClient, logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
+import { mockedParticipantFspIds, mockedPartyIds, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 let aggregate: AccountLookupAggregate;
 
@@ -46,7 +46,7 @@ describe("Domain - Unit Tests Account Lookup", () => {
 
     beforeAll(async () => {
         const metricsMock :IMetrics = new MetricsMock();
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
+        aggregate = new AccountLookupAggregate(auditClient, authorizationClient, logger, messageProducer, metricsMock, oracleFinder, oracleProviderFactory, participantService);
         await aggregate.init();
     });
 

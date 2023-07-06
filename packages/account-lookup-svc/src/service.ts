@@ -212,7 +212,9 @@ export class Service {
 		// start auditClient
         if (!auditingClient) {
             if (!existsSync(AUDIT_KEY_FILE_PATH)) {
-                if (PRODUCTION_MODE) process.exit(9);
+                if (PRODUCTION_MODE){
+					process.exit(9);
+				}
                 // create e tmp file
                 LocalAuditClientCryptoProvider.createRsaPrivateKeyFileSync(AUDIT_KEY_FILE_PATH, 2048);
             }
@@ -220,7 +222,8 @@ export class Service {
             auditLogger.setLogLevel(LogLevel.INFO);
             const cryptoProvider = new LocalAuditClientCryptoProvider(AUDIT_KEY_FILE_PATH);
             const auditDispatcher = new KafkaAuditClientDispatcher(kafkaProducerOptions, KAFKA_AUDITS_TOPIC, auditLogger);
-            // NOTE: to pass the same kafka logger to the audit client, make sure the logger is started/initialised already
+
+            // NOTE: to pass the same kafka logger to the audit client, make sure the logger is started/initialized already
             auditingClient = new AuditClient(BC_NAME, APP_NAME, APP_VERSION, cryptoProvider, auditDispatcher);
             await auditingClient.init();
         }
@@ -267,12 +270,14 @@ export class Service {
 
 
 		this.aggregate = new AccountLookupAggregate(
+			this.auditingClient,
+			this.authorizationClient,
 			this.logger,
+			this.messageProducer,
+			this.metrics,
 			this.oracleFinder,
 			this.oracleProviderFactory,
-			this.messageProducer,
-			this.participantsServiceAdapter,
-			this.metrics
+			this.participantsServiceAdapter
 		);
 
 		await this.aggregate.init();

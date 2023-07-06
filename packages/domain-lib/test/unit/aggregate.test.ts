@@ -40,13 +40,13 @@
 
 "use strict";
 
-
+import {AccountLookupAggregate, Oracle,} from "../../src";
 // Logger.
 import {IMessage, MessageTypes} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {AccountLookupAggregate, Oracle,} from "../../src";
+import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
-    getParticipantFspIdForOracleTypeAndSubType,
     MemoryOracleProviderAdapter,
+    getParticipantFspIdForOracleTypeAndSubType,
     mockedOracleAdapters,
     mockedParticipantIds,
     mockedPartyIds,
@@ -70,15 +70,17 @@ import {
     PartyQueryReceivedEvtPayload,
     PartyQueryResponseEvtPayload
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 import {
+    auditClient,
+    authorizationClient,
     logger,
     messageProducer,
     oracleFinder,
     oracleProviderFactory,
     participantService
 } from "../utils/mocked_variables";
-import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
+
+import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 
 let aggregate: AccountLookupAggregate;
 
@@ -88,7 +90,7 @@ describe("Domain - Unit Tests for aggregate events", () => {
 
     beforeAll(async () => {
         const metricsMock :IMetrics = new MetricsMock();
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
+        aggregate = new AccountLookupAggregate(auditClient, authorizationClient, logger, messageProducer, metricsMock, oracleFinder, oracleProviderFactory, participantService);
     });
 
     afterEach(async () => {

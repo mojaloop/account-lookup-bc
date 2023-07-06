@@ -39,12 +39,15 @@
 
 "use strict";
 
-export * from "./memory_message_producer";
+export * from "./memory_audit_client";
+export * from "./memory_auth_requester";
+export * from "./memory_authorization_client";
 export * from "./memory_message_consumer";
+export * from "./memory_message_producer";
 export * from "./memory_oracle_finder";
 export * from "./memory_oracle_provider_adapter";
 export * from "./memory_oracle_provider_factory";
 export * from "./memory_participant_service";
-export * from "./memory_auth_requester";
 export * from "./mocked_data";
+
 

@@ -29,11 +29,11 @@
 "use strict";
 
 import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
 
-import { IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
-import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
+import { MemoryAuthenticatedHttpRequester } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { ParticipantAdapter } from "../../src/external_adapters/participant_adapter";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
 const AUTH_TOKEN_ENPOINT = "http://localhost:3101/authTokenEndpoint";
@@ -62,7 +62,7 @@ let participantAdapter: ParticipantAdapter;
 
 describe("Implementations - IParticipant Adapter Unit Tests", () => {
     beforeAll(async () => {
-        authenticatedHttpRequesterMock = new MemoryAuthenticatedHttpRequesterMock(logger, AUTH_TOKEN_ENPOINT)
+        authenticatedHttpRequesterMock = new MemoryAuthenticatedHttpRequester(logger, AUTH_TOKEN_ENPOINT)
         participantAdapter = new ParticipantAdapter(
            logger,
            BASE_URL_PARTICIPANT_CLIENT,

@@ -26,49 +26,29 @@
  --------------
  ******/
 
-"use strict";
+import { AuditEntryLabel, AuditSecurityContext } from "@mojaloop/auditing-bc-public-types-lib/dist/audit_types";
 
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
+import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
+import { ILogger } from '@mojaloop/logging-bc-public-types-lib';
 
-export class MemoryAuthenticatedHttpRequester implements IAuthenticatedHttpRequester {
-    private readonly logger: ILogger;
-    private readonly authTokenUrl: string;
+export class MemoryAuditClient implements IAuditClient {
 
-    private client_id: string | null = null;
-    private client_secret: string | null = null;
-	private username: string | null = null;
-	private password: string | null = null;
+    private readonly _logger: ILogger;
 
-	constructor(
-		logger: ILogger,
-		authTokenUrl: string,
-	) {
-		this.logger = logger;
-		this.authTokenUrl = authTokenUrl;
-	}
-
-    initialised: boolean;
-
-    setUserCredentials(client_id: string, username: string, password: string): void {
-		this.client_id = client_id;
-		this.username = username;
-		this.password = password;
+    constructor(logger:ILogger){
+        this._logger = logger;
     }
 
-    setAppCredentials(client_id: string, client_secret: string): void {
-		this.client_id = client_id;
-		this.client_secret = client_secret;
+    init(): Promise<void> {
+        return Promise.resolve();
     }
 
-    fetch(_requestInfo: RequestInfo, _timeoutMs?: number | undefined): Promise<Response> {
-        return new Promise<Response>((_resolve, _reject) => {
-			const mockResponse = <Response>{
-                body: {}
-            };
-
-            return Promise.resolve(mockResponse);
-		});
+    destroy(): Promise<void> {
+        return Promise.resolve();
     }
 
-}
+    audit(actionType: string, actionSuccessful: boolean, securityContext?: AuditSecurityContext | undefined, labels?: AuditEntryLabel[] | undefined): Promise<void> {
+        return Promise.resolve();
+    }
+
+ }
