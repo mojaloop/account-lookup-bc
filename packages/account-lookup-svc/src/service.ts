@@ -40,46 +40,54 @@
 
 "use strict";
 
+import { ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME, AccountLookupBCTopics } from "@mojaloop/platform-shared-lib-public-messages-lib";
 //TODO re-enable configs
 //import appConfigs from "./config";
 import {
 	AccountLookupAggregate,
 	IOracleFinder,
-	IOracleProviderFactory, IParticipantServiceAdapter
+	IOracleProviderFactory,
+	IParticipantServiceAdapter
 } from "@mojaloop/account-lookup-bc-domain-lib";
-import {IMessage, IMessageProducer, IMessageConsumer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import { AuditClient, KafkaAuditClientDispatcher, LocalAuditClientCryptoProvider } from "@mojaloop/auditing-bc-client-lib";
+import {
+	AuthenticatedHttpRequester,
+	AuthorizationClient,
+	IAuthenticatedHttpRequester
+} from "@mojaloop/security-bc-client-lib";
+import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
 	MLKafkaJsonConsumer,
-	MLKafkaJsonProducer,
 	MLKafkaJsonConsumerOptions,
+	MLKafkaJsonProducer,
 	MLKafkaJsonProducerOptions
 } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
-import {KafkaLogger} from "@mojaloop/logging-bc-client-lib";
 import {
 	MongoOracleFinderRepo,
 	OracleAdapterFactory
 } from "@mojaloop/account-lookup-bc-implementations-lib";
-import {AccountLookupBCTopics, ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME} from "@mojaloop/platform-shared-lib-public-messages-lib";
-import {
-	AuthenticatedHttpRequester,
-	IAuthenticatedHttpRequester
-} from "@mojaloop/security-bc-client-lib";
-import express, {Express} from "express";
-import {Server} from "net";
-import process from "process";
-import {OracleAdminExpressRoutes} from "./routes/oracle_admin_routes";
-import {AccountLookupExpressRoutes} from "./routes/account_lookup_routes";
-import {IMetrics} from "@mojaloop/platform-shared-lib-observability-types-lib";
-import {PrometheusMetrics} from "@mojaloop/platform-shared-lib-observability-client-lib";
+import express, { Express } from "express";
+
+import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
+import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
+import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
+import { IMetrics } from "@mojaloop/platform-shared-lib-observability-types-lib";
+import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
+import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import {
 	ParticipantAdapter
 } from "@mojaloop/account-lookup-bc-implementations-lib/dist/external_adapters/participant_adapter";
+import { PrometheusMetrics } from "@mojaloop/platform-shared-lib-observability-client-lib";
+import { Server } from "net";
+import { existsSync } from "fs";
+import process from "process";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
 const APP_VERSION = process.env.npm_package_version || "0.0.0";
+const PRODUCTION_MODE = process.env["PRODUCTION_MODE"] || false;
 
 // Logger
 // service constants
@@ -102,14 +110,23 @@ const PARTICIPANTS_CACHE_TIMEOUT_MS = (process.env["PARTICIPANTS_CACHE_TIMEOUT_M
 const SVC_DEFAULT_HTTP_PORT = process.env["SVC_DEFAULT_HTTP_PORT"] || 3030;
 
 // Auth Requester
-// let authRequester: IAuthenticatedHttpRequester;
 const SVC_CLIENT_ID = process.env["SVC_CLIENT_ID"] || "account-lookup-bc-account-lookup-svc";
 const SVC_CLIENT_SECRET = process.env["SVC_CLIENT_ID"] || "superServiceSecret";
 
 const AUTH_N_SVC_BASEURL = process.env["AUTH_N_SVC_BASEURL"] || "http://localhost:3201";
 const AUTH_N_SVC_TOKEN_URL = AUTH_N_SVC_BASEURL + "/token"; // TODO this should not be known here, libs that use the base should add the suffix
+
 // const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
 // const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
+
+
+// Audit
+const AUDIT_KEY_FILE_PATH = process.env["AUDIT_KEY_FILE_PATH"] || "/app/data/audit_private_key.pem";
+const KAFKA_AUDITS_TOPIC = process.env["KAFKA_AUDITS_TOPIC"] || "audits";
+
+//Authorization
+const AUTH_Z_SVC_BASEURL = process.env.AUTH_Z_SVC_BASEURL || "http://localhost:3202";
+
 
 const consumerOptions: MLKafkaJsonConsumerOptions = {
 	kafkaBrokerList: KAFKA_URL,
@@ -123,27 +140,31 @@ const producerOptions: MLKafkaJsonProducerOptions = {
 
 // kafka logger
 export class Service {
-	static logger: ILogger;
+	static aggregate: AccountLookupAggregate;
 	static app: Express;
+	static authorizationClient: IAuthorizationClient;
+	static auditingClient: IAuditClient;
+	static authRequester: IAuthenticatedHttpRequester;
+	static expressServer: Server;
+	static logger: ILogger;
 	static messageConsumer: IMessageConsumer;
 	static messageProducer: IMessageProducer;
+	static metrics:IMetrics;
 	static oracleFinder: IOracleFinder;
 	static oracleProviderFactory: IOracleProviderFactory;
-	static authRequester: IAuthenticatedHttpRequester;
 	static participantsServiceAdapter: IParticipantServiceAdapter;
-	static aggregate: AccountLookupAggregate;
-	static expressServer: Server;
-	static metrics:IMetrics;
 
 	static async start(
+		auditingClient?: IAuditClient,
+		authorizationClient?: IAuthorizationClient,
+		authRequester?: IAuthenticatedHttpRequester,
 		logger?: ILogger,
 		messageConsumer?: IMessageConsumer,
 		messageProducer?: IMessageProducer,
+		metrics?:IMetrics,
 		oracleFinder?: IOracleFinder,
 		oracleProviderFactory?: IOracleProviderFactory,
-		authRequester?: IAuthenticatedHttpRequester,
 		participantsServiceAdapter?: IParticipantServiceAdapter,
-		metrics?:IMetrics
 	): Promise<void> {
 		console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -187,6 +208,32 @@ export class Service {
 			authRequester.setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
 		}
 		this.authRequester = authRequester;
+
+		// start auditClient
+        if (!auditingClient) {
+            if (!existsSync(AUDIT_KEY_FILE_PATH)) {
+                if (PRODUCTION_MODE) process.exit(9);
+                // create e tmp file
+                LocalAuditClientCryptoProvider.createRsaPrivateKeyFileSync(AUDIT_KEY_FILE_PATH, 2048);
+            }
+            const auditLogger = logger.createChild("AuditLogger");
+            auditLogger.setLogLevel(LogLevel.INFO);
+            const cryptoProvider = new LocalAuditClientCryptoProvider(AUDIT_KEY_FILE_PATH);
+            const auditDispatcher = new KafkaAuditClientDispatcher(kafkaProducerOptions, KAFKA_AUDITS_TOPIC, auditLogger);
+            // NOTE: to pass the same kafka logger to the audit client, make sure the logger is started/initialised already
+            auditingClient = new AuditClient(BC_NAME, APP_NAME, APP_VERSION, cryptoProvider, auditDispatcher);
+            await auditingClient.init();
+        }
+        this.auditingClient = auditingClient;
+
+		if (!authorizationClient) {
+            authorizationClient = new AuthorizationClient(BC_NAME, APP_NAME, APP_VERSION, AUTH_Z_SVC_BASEURL, logger.createChild("AuthorizationClient"));
+            //TODO: need to define the privileges for lookup
+			//authorizationClient.addPrivilegesArray(ChartOfAccountsPrivilegesDefinition);
+            await (authorizationClient as AuthorizationClient).bootstrap(true);
+            await (authorizationClient as AuthorizationClient).fetch();
+        }
+        this.authorizationClient = authorizationClient;
 
 
 		if (!participantsServiceAdapter) {
