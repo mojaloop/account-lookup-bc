@@ -47,14 +47,17 @@ import {
 	AccountLookupAggregate,
 	IOracleFinder,
 	IOracleProviderFactory,
-	IParticipantServiceAdapter
+	IParticipantServiceAdapter,
+	Privileges
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { AuditClient, KafkaAuditClientDispatcher, LocalAuditClientCryptoProvider } from "@mojaloop/auditing-bc-client-lib";
 import {
 	AuthenticatedHttpRequester,
 	AuthorizationClient,
-	IAuthenticatedHttpRequester
+	IAuthenticatedHttpRequester,
+	LoginHelper
 } from "@mojaloop/security-bc-client-lib";
+import {IAuthorizationClient, ILoginHelper} from "@mojaloop/security-bc-public-types-lib";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {
@@ -71,7 +74,6 @@ import express, { Express } from "express";
 
 import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
-import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
 import { IMetrics } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
 import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
@@ -125,7 +127,7 @@ const AUDIT_KEY_FILE_PATH = process.env["AUDIT_KEY_FILE_PATH"] || "/app/data/aud
 const KAFKA_AUDITS_TOPIC = process.env["KAFKA_AUDITS_TOPIC"] || "audits";
 
 //Authorization
-const AUTH_Z_SVC_BASEURL = process.env.AUTH_Z_SVC_BASEURL || "http://localhost:3202";
+const AUTH_Z_SVC_BASEURL = process.env["AUTH_Z_SVC_BASEURL"] || "http://localhost:3202";
 
 
 const consumerOptions: MLKafkaJsonConsumerOptions = {
@@ -153,10 +155,10 @@ export class Service {
 	static oracleFinder: IOracleFinder;
 	static oracleProviderFactory: IOracleProviderFactory;
 	static participantsServiceAdapter: IParticipantServiceAdapter;
+	static loginHelper: ILoginHelper;
 
 	static async start(
 		auditingClient?: IAuditClient,
-		authorizationClient?: IAuthorizationClient,
 		authRequester?: IAuthenticatedHttpRequester,
 		logger?: ILogger,
 		messageConsumer?: IMessageConsumer,
@@ -165,6 +167,8 @@ export class Service {
 		oracleFinder?: IOracleFinder,
 		oracleProviderFactory?: IOracleProviderFactory,
 		participantsServiceAdapter?: IParticipantServiceAdapter,
+		authorizationClient?: IAuthorizationClient,
+		loginHelper?: ILoginHelper,
 	): Promise<void> {
 		console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -229,15 +233,19 @@ export class Service {
         }
         this.auditingClient = auditingClient;
 
+		// authorization client
 		if (!authorizationClient) {
-            authorizationClient = new AuthorizationClient(BC_NAME, APP_NAME, APP_VERSION, AUTH_Z_SVC_BASEURL, logger.createChild("AuthorizationClient"));
-            //TODO: need to define the privileges for lookup
-			//authorizationClient.addPrivilegesArray(ChartOfAccountsPrivilegesDefinition);
-            await (authorizationClient as AuthorizationClient).bootstrap(true);
-            await (authorizationClient as AuthorizationClient).fetch();
-        }
-        this.authorizationClient = authorizationClient;
+			// setup privileges - bootstrap app privs and get priv/role associations
+			authorizationClient = new AuthorizationClient(
+				BC_NAME, APP_NAME, APP_VERSION, AUTH_Z_SVC_BASEURL, this.logger.createChild("AuthorizationClient")
+			);
+			addPrivileges(authorizationClient as AuthorizationClient);
+			await (authorizationClient as AuthorizationClient).bootstrap(true);
+			await (authorizationClient as AuthorizationClient).fetch();
 
+		}
+		this.authorizationClient = authorizationClient;
+		
 
 		if (!participantsServiceAdapter) {
 			const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
@@ -268,6 +276,11 @@ export class Service {
 
 		this.logger.info("Kafka Producer Initialized");
 
+		if(!loginHelper){
+			loginHelper = new LoginHelper(AUTH_N_SVC_TOKEN_URL, this.logger);
+			(loginHelper as LoginHelper).setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
+		}
+		this.loginHelper = loginHelper;
 
 		this.aggregate = new AccountLookupAggregate(
 			this.auditingClient,
@@ -277,7 +290,8 @@ export class Service {
 			this.metrics,
 			this.oracleFinder,
 			this.oracleProviderFactory,
-			this.participantsServiceAdapter
+			this.participantsServiceAdapter,
+			this.loginHelper
 		);
 
 		await this.aggregate.init();
@@ -338,6 +352,14 @@ export class Service {
 
 }
 
+function addPrivileges(authorizationClient: AuthorizationClient): void {
+	authorizationClient.addPrivilege(
+		Privileges.VIEW_PARTICIPANT.id,
+		Privileges.VIEW_PARTICIPANT.labelName,
+		Privileges.VIEW_PARTICIPANT.description
+	);
+}
+
 const kafkaProducerOptions = {
 	kafkaBrokerList: KAFKA_URL
 };
@@ -377,3 +399,4 @@ process.on("uncaughtException", /* istanbul ignore next */(err: Error) => {
 	console.log("UncaughtException - EXITING...");
 	process.exit(999);
 });
+

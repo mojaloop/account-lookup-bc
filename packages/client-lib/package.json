@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@mojaloop/logging-bc-client-lib": "^0.1.24",
-    "@mojaloop/security-bc-client-lib": "0.1.31"
+    "@mojaloop/security-bc-client-lib": "~0.2.3"
   },
   "devDependencies": {
     "nock": "^13.3.1"

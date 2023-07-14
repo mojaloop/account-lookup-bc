@@ -104,12 +104,13 @@ import {
 	IOracleProviderFactory,
 	IParticipantServiceAdapter
 } from "./interfaces/infrastructure";
-
 import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
-import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
+import { IAuthorizationClient, CallSecurityContext } from "@mojaloop/security-bc-public-types-lib";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
 import {randomUUID} from "crypto";
+import {ILoginHelper, UnauthorizedError} from "@mojaloop/security-bc-public-types-lib";
+import {Privileges} from "./privileges";
 
 export class AccountLookupAggregate  {
 	private readonly _auditClient: IAuditClient;
@@ -122,6 +123,7 @@ export class AccountLookupAggregate  {
 	private readonly _oracleFinder: IOracleFinder;
 	private readonly _oracleProvidersFactory: IOracleProviderFactory;
 	private readonly _participantService: IParticipantServiceAdapter;
+	private _loginHelper: ILoginHelper;
 
 	//#region Initialization
 	constructor(
@@ -133,6 +135,7 @@ export class AccountLookupAggregate  {
 		oracleFinder:IOracleFinder,
 		oracleProvidersFactory:IOracleProviderFactory,
 		participantService: IParticipantServiceAdapter,
+		loginHelper:ILoginHelper
 	) {
 		this._auditClient = auditClient;
 		this._authorizationClient = authorizationClient;
@@ -143,13 +146,41 @@ export class AccountLookupAggregate  {
 		this._oracleProvidersAdapters = [];
 		this._oracleProvidersFactory = oracleProvidersFactory;
 		this._participantService = participantService;
+		this._loginHelper = loginHelper;
 
 		this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"]);
 		// this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"], [0.01, 0.05, 0.1, 0.5, 0.75, 1, 1.5, 2]);
 	}
 
+	// TODO: Add this in all aggregate methods that require role permissions
+	private _enforcePrivilege(secCtx: CallSecurityContext, privName: string): void {
+		this._enforcePrivilege(secCtx, Privileges.VIEW_PARTICIPANT.id)
+
+		for (const roleId of secCtx.rolesIds) {
+			if (this._authorizationClient.roleHasPrivilege(roleId, privName)) return;
+		}
+		throw new Error(`Required privilege "${privName}" not held by caller`);
+	}
+
 	public get oracleProvidersAdapters(): IOracleProviderAdapter[] {
 		return this._oracleProvidersAdapters.map(a => {return {...a};});
+	}
+
+	private async _getServiceSecContext():Promise<CallSecurityContext>{
+		// this will only fetch a new token when the current one is expired or null
+		const token = await this._loginHelper.getToken();
+		if(!token){
+			throw new UnauthorizedError("Could not get a token for AccountLookupAggregate");
+		}
+
+		// TODO producing a CallSecurityContext from a token should be from the security client lib, not here
+		const secCts: CallSecurityContext = {
+			clientId: token.payload.azp,
+			accessToken: token.accessToken,
+			rolesIds:token.payload.roles,
+			username: null
+		};
+		return secCts;
 	}
 
 	async init(): Promise<void> {
@@ -673,6 +704,9 @@ export class AccountLookupAggregate  {
 	}
 
 	private async validateRequesterParticipantInfoOrGetErrorEvent(partyId:string, participantId: string | null):Promise<DomainEventMsg | null>{
+		const sectCtx = await this._getServiceSecContext(); // TODO: should move this to the handleAccountLookUpEvent use case switch?
+		this._enforcePrivilege(sectCtx, Privileges.VIEW_PARTICIPANT.id);
+
 		let participant: IParticipant | null = null;
 
 		if(!participantId){
