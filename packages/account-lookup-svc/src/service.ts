@@ -55,7 +55,8 @@ import {
 	AuthenticatedHttpRequester,
 	AuthorizationClient,
 	IAuthenticatedHttpRequester,
-	LoginHelper
+	LoginHelper,
+	TokenHelper
 } from "@mojaloop/security-bc-client-lib";
 import {IAuthorizationClient, ILoginHelper} from "@mojaloop/security-bc-public-types-lib";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
@@ -118,8 +119,10 @@ const SVC_CLIENT_SECRET = process.env["SVC_CLIENT_ID"] || "superServiceSecret";
 const AUTH_N_SVC_BASEURL = process.env["AUTH_N_SVC_BASEURL"] || "http://localhost:3201";
 const AUTH_N_SVC_TOKEN_URL = AUTH_N_SVC_BASEURL + "/token"; // TODO this should not be known here, libs that use the base should add the suffix
 
-// const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
-// const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
+// Token
+const AUTH_N_SVC_JWKS_URL = process.env["AUTH_N_SVC_JWKS_URL"] || `${AUTH_N_SVC_BASEURL}/.well-known/jwks.json`;
+const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
+const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
 
 
 // Audit
@@ -144,31 +147,32 @@ const producerOptions: MLKafkaJsonProducerOptions = {
 export class Service {
 	static aggregate: AccountLookupAggregate;
 	static app: Express;
-	static authorizationClient: IAuthorizationClient;
 	static auditingClient: IAuditClient;
+	static authorizationClient: IAuthorizationClient;
 	static authRequester: IAuthenticatedHttpRequester;
 	static expressServer: Server;
 	static logger: ILogger;
+	static loginHelper: ILoginHelper;
 	static messageConsumer: IMessageConsumer;
 	static messageProducer: IMessageProducer;
 	static metrics:IMetrics;
 	static oracleFinder: IOracleFinder;
 	static oracleProviderFactory: IOracleProviderFactory;
 	static participantsServiceAdapter: IParticipantServiceAdapter;
-	static loginHelper: ILoginHelper;
+	static tokenHelper: TokenHelper;
 
 	static async start(
 		auditingClient?: IAuditClient,
+		authorizationClient?: IAuthorizationClient,
 		authRequester?: IAuthenticatedHttpRequester,
 		logger?: ILogger,
+		loginHelper?: ILoginHelper,
 		messageConsumer?: IMessageConsumer,
 		messageProducer?: IMessageProducer,
 		metrics?:IMetrics,
 		oracleFinder?: IOracleFinder,
 		oracleProviderFactory?: IOracleProviderFactory,
 		participantsServiceAdapter?: IParticipantServiceAdapter,
-		authorizationClient?: IAuthorizationClient,
-		loginHelper?: ILoginHelper,
 	): Promise<void> {
 		console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -245,7 +249,7 @@ export class Service {
 
 		}
 		this.authorizationClient = authorizationClient;
-		
+
 
 		if (!participantsServiceAdapter) {
 			const authRequester:IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
@@ -282,16 +286,20 @@ export class Service {
 		}
 		this.loginHelper = loginHelper;
 
+		// token helper
+		this.tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+		await this.tokenHelper.init();
+
 		this.aggregate = new AccountLookupAggregate(
 			this.auditingClient,
 			this.authorizationClient,
-			this.logger,
+            this.logger,
+			this.loginHelper,
 			this.messageProducer,
 			this.metrics,
 			this.oracleFinder,
 			this.oracleProviderFactory,
 			this.participantsServiceAdapter,
-			this.loginHelper
 		);
 
 		await this.aggregate.init();
@@ -311,8 +319,8 @@ export class Service {
 			this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
 			// Add admin and client http routes
-			const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger);
-			const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger);
+			const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.authorizationClient, this.logger, this.tokenHelper);
+			const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.authorizationClient, this.logger, this.tokenHelper);
 			this.app.use("/admin", oracleAdminRoutes.mainRouter);
 			this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
 

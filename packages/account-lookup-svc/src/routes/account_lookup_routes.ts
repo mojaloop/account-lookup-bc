@@ -1,3 +1,12 @@
+import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError } from "@mojaloop/account-lookup-bc-domain-lib";
+
+import { BaseRoutes } from "./base/base_routes";
+import { IAuthorizationClient } from '@mojaloop/security-bc-public-types-lib';
+import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
+import { TokenHelper } from '@mojaloop/security-bc-client-lib';
+import { check } from "express-validator";
+import express from "express";
+
 /*****
  License
  --------------
@@ -31,16 +40,11 @@
 
 "use strict";
 
-import express from "express";
-import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError } from "@mojaloop/account-lookup-bc-domain-lib";
-import { check } from "express-validator";
-import { BaseRoutes } from "./base/base_routes";
 
 export class AccountLookupExpressRoutes extends BaseRoutes {
 
-    constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
-        super(logger, accountLookupAgg);
+    constructor(accountLookupAgg: AccountLookupAggregate, authorizationClient: IAuthorizationClient, logger: ILogger, tokenHelper: TokenHelper) {
+        super(accountLookupAgg, authorizationClient, logger, tokenHelper);
         logger.createChild("AccountLookupExpressRoutes");
 
         this.mainRouter.get("/:partyType/:partyId",[

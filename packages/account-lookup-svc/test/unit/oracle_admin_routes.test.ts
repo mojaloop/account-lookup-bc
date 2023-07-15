@@ -5,10 +5,12 @@ import {
     IParticipantServiceAdapter
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IAuthorizationClient, ILoginHelper } from "@mojaloop/security-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
     MemoryAuthenticatedHttpRequester,
+    MemoryLoginHelper,
     MemoryMessageConsumer,
     MemoryMessageProducer,
     MemoryOracleFinder,
@@ -19,7 +21,6 @@ import {
 
 import { IAuditClient } from "@mojaloop/auditing-bc-public-types-lib";
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
-import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
 import { MemoryAuditClient } from "@mojaloop/account-lookup-bc-shared-mocks-lib/src/memory_audit_client";
 import { MemoryAuthorizationClient } from "@mojaloop/account-lookup-bc-shared-mocks-lib/src/memory_authorization_client";
 import { Service } from "../../src/service";
@@ -48,12 +49,40 @@ const mockedAuditClient: IAuditClient = new MemoryAuditClient(logger);
 
 const mockedMetrics :IMetrics = new MetricsMock();
 
+const mockedLoginHelper: ILoginHelper = new MemoryLoginHelper(logger);
+
 const serverBaseUrl = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 
 
+const initTokenHelperSpy = jest.fn();
+
+jest.mock("@mojaloop/security-bc-client-lib", () => {
+    return {
+        TokenHelper: jest.fn().mockImplementation(() => {
+            return {
+                init: initTokenHelperSpy,
+                verifyToken: jest.fn().mockImplementation(() => {
+                    return Promise.resolve(true);
+                }),
+                decodeToken: jest.fn().mockImplementation(() => {
+                    //TODO: return decoded token
+                    return "decoded-token"
+                })
+            }
+        }),
+        LoginHelper: jest.requireActual('@mojaloop/security-bc-client-lib').LoginHelper,
+        AuthorizationClient: jest.requireActual('@mojaloop/security-bc-client-lib').AuthorizationClient,
+        AuthenticatedHttpRequester: jest.requireActual('@mojaloop/security-bc-client-lib').AuthenticatedHttpRequester,
+        IAuthenticatedHttpRequester: jest.requireActual('@mojaloop/security-bc-client-lib').IAuthenticatedHttpRequester,
+    }
+});
+
+//TODO: Add valid token
+const TOKEN = "token";
+
 describe("Oracle Admin Routes - Unit Test", () => {
     beforeAll(async () => {
-        await Service.start(mockedAuditClient, mockedAuthorizationClient, mockedAuthRequester, logger, mockedConsumer, mockedProducer, mockedMetrics, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
+        await Service.start(mockedAuditClient, mockedAuthorizationClient, mockedAuthRequester, logger, mockedLoginHelper, mockedConsumer, mockedProducer, mockedMetrics, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
     });
 
     afterAll(async () => {
@@ -62,7 +91,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("GET - should fetch an array of oracles", async () => {
         // Act
-        const response = await request(serverBaseUrl).get("/oracles");
+        const response = await request(serverBaseUrl).get("/oracles")
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -75,7 +105,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const expectedAssociations = mockedOracleAdapterResults[0];
 
         // Act
-        const response = await request(serverBaseUrl).get("/oracles/builtin-associations");
+        const response = await request(serverBaseUrl).get("/oracles/builtin-associations")
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -92,7 +123,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
             type: "invalid-type",
             name: "oracle msisdn",
             partyType: "MSISDN"
-        });
+        })
+        .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(422);
@@ -104,7 +136,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
             type: "builtin",
             name: "oracle msisdn",
             partyType: "MSISDN"
-        });
+        })
+        .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -113,12 +146,14 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("GET - should fetch the recently added oracle by id", async () => {
         // Arrange
-        const oracles = await request(serverBaseUrl).get("/oracles");
+        const oracles = await request(serverBaseUrl).get("/oracles")
+            .set("authorization", `Bearer ${TOKEN}`);
 
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -132,7 +167,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -145,7 +181,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -157,7 +194,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -168,7 +206,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "";
 
         // Act
-        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+        const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -176,12 +215,14 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
     test("DELETE - should delete the specified oracle", async () => {
         // Arrange
-        const oracles = await request(serverBaseUrl).get("/oracles");
+        const oracles = await request(serverBaseUrl).get("/oracles")
+            .set("authorization", `Bearer ${TOKEN}`);
 
         const oracleId = oracles.body[0].id;
 
         // Act
-        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -192,7 +233,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "non-existent-id";
 
         // Act
-        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -203,7 +245,8 @@ describe("Oracle Admin Routes - Unit Test", () => {
         const oracleId = "";
 
         // Act
-        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+        const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);

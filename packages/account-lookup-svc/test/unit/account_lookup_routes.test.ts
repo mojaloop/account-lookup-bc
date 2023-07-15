@@ -1,4 +1,5 @@
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
+import { IAuthorizationClient, ILoginHelper } from "@mojaloop/security-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import {
     MemoryAuthenticatedHttpRequester,
+    MemoryLoginHelper,
     MemoryMessageConsumer,
     MemoryMessageProducer,
     MemoryOracleFinder,
@@ -20,7 +22,6 @@ import {
 
 import { IAuditClient } from '@mojaloop/auditing-bc-public-types-lib';
 import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
-import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
 import { MemoryAuditClient } from './../../../shared-mocks-lib/src/memory_audit_client';
 import { MemoryAuthorizationClient } from './../../../shared-mocks-lib/src/memory_authorization_client';
 import { Service } from "../../src/service";
@@ -47,6 +48,8 @@ const mockedAuthorizationClient: IAuthorizationClient = new MemoryAuthorizationC
 
 const mockedAuditClient: IAuditClient = new MemoryAuditClient(logger);
 
+const mockedLoginHelper: ILoginHelper = new MemoryLoginHelper(logger);
+
 const mockedMetrics :IMetrics = new MetricsMock();
 
 const serverBaseUrl = (process.env["ACCOUNT_LOOKUP_URL"] || "http://localhost:3030") + "/account-lookup";
@@ -56,9 +59,35 @@ const CURRENCY = {
     EUR: "EUR"
 };
 
+const initTokenHelperSpy = jest.fn();
+
+jest.mock("@mojaloop/security-bc-client-lib", () => {
+    return {
+        TokenHelper: jest.fn().mockImplementation(() => {
+            return {
+                init: initTokenHelperSpy,
+                verifyToken: jest.fn().mockImplementation(() => {
+                    return Promise.resolve(true);
+                }),
+                decodeToken: jest.fn().mockImplementation(() => {
+                    //TODO: return decoded token
+                    return "decoded-token"
+                })
+            }
+        }),
+        LoginHelper: jest.requireActual('@mojaloop/security-bc-client-lib').LoginHelper,
+        AuthorizationClient: jest.requireActual('@mojaloop/security-bc-client-lib').AuthorizationClient,
+        AuthenticatedHttpRequester: jest.requireActual('@mojaloop/security-bc-client-lib').AuthenticatedHttpRequester,
+        IAuthenticatedHttpRequester: jest.requireActual('@mojaloop/security-bc-client-lib').IAuthenticatedHttpRequester,
+    }
+});
+
+//TODO: Add valid token
+const TOKEN = "token";
+
 describe("Account Lookup Routes - Unit Test", () => {
     beforeAll(async () => {
-        await Service.start(mockedAuditClient, mockedAuthorizationClient, mockedAuthRequester, logger, mockedConsumer,
+        await Service.start(mockedAuditClient, mockedAuthorizationClient, mockedAuthRequester, logger, mockedLoginHelper, mockedConsumer,
             mockedProducer, mockedMetrics, mockedOracleFinder, mockedOracleProviderFactory, mockedParticipantService);
     });
 
@@ -72,7 +101,8 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -85,7 +115,8 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);
@@ -98,7 +129,8 @@ describe("Account Lookup Routes - Unit Test", () => {
         const currency = CURRENCY.USD;
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}?currency=${currency}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}?currency=${currency}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(200);
@@ -111,7 +143,8 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[0];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         // TODO: This should be a 404
@@ -124,7 +157,8 @@ describe("Account Lookup Routes - Unit Test", () => {
         const partyType = mockedPartyTypes[2];
 
         // Act
-        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+        const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`)
+            .set("authorization", `Bearer ${TOKEN}`);
 
         // Assert
         expect(response.status).toBe(404);

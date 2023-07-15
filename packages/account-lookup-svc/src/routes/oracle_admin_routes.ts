@@ -40,15 +40,18 @@
 
 "use strict";
 
-import express from "express";
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {AccountLookupAggregate, OracleNotFoundError} from "@mojaloop/account-lookup-bc-domain-lib";
-import { check } from "express-validator";
+
 import { BaseRoutes } from "./base/base_routes";
+import { IAuthorizationClient } from "@mojaloop/security-bc-public-types-lib";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { TokenHelper } from "@mojaloop/security-bc-client-lib";
+import { check } from "express-validator";
+import express from "express";
 
 export class OracleAdminExpressRoutes extends BaseRoutes {
-     constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
-         super(logger, accountLookupAggregate);
+    constructor(accountLookupAgg: AccountLookupAggregate, authorizationClient: IAuthorizationClient, logger: ILogger, tokenHelper: TokenHelper) {
+        super(accountLookupAgg, authorizationClient, logger, tokenHelper);
          this.logger.createChild(this.constructor.name);
 
          this.mainRouter.get("/oracles",this.getAllOracles.bind(this));

@@ -1,4 +1,4 @@
-/**
+/*****
  License
  --------------
  Copyright © 2017 Bill & Melinda Gates Foundation
@@ -12,43 +12,52 @@
  --------------
  This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '' in the first column. People who have
+ should be listed with a '*' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
  Gates Foundation organization for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
-
- * Coil
- - Jason Bruwer <jason.bruwer@coil.com>
-
- * Crosslake
- - Pedro Sousa Barreto <pedrob@crosslaketech.com>
-
- * Gonçalo Garcia <goncalogarcia99@gmail.com>
-
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+ ******/
 
 "use strict";
 
-export * from "./memory_audit_client";
-export * from "./memory_auth_requester";
-export * from "./memory_authorization_client";
-export * from "./memory_message_consumer";
-export * from "./memory_message_producer";
-export * from "./memory_oracle_finder";
-export * from "./memory_oracle_provider_adapter";
-export * from "./memory_oracle_provider_factory";
-export * from "./memory_participant_service";
-export * from "./memory_login_helper";
-export * from "./mocked_data";
+import { AuthToken, ILoginHelper } from "@mojaloop/security-bc-public-types-lib";
+
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+
+export class MemoryLoginHelper implements ILoginHelper {
+    private readonly logger: ILogger;
+
+	constructor(
+		logger: ILogger,
+	) {
+		this.logger = logger;
+	}
+
+	setUserCredentials(client_id: string, username: string, password: string){
+		return;
+
+	};
+
+    setAppCredentials(client_id: string, client_secret: string){
+		return;
+	}
+
+	setToken(accessToken: string): void {
+		return;
+	}
+
+	//TODO: Add a real token type
+    async getToken(): Promise<AuthToken>{
+		return {} as any;
+	}
 
 
+}
