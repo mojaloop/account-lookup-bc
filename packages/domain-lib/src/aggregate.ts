@@ -226,7 +226,7 @@ export class AccountLookupAggregate  {
 					eventToPublish = await this._handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
 					break;
 				case GetPartyQueryRejectedEvt.name:
-					eventToPublish = await this._getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
+					eventToPublish = await this._handleGetPartyQueryRejectedEvt(message as GetPartyQueryRejectedEvt);
 					break;
 				default: {
 					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
@@ -258,6 +258,43 @@ export class AccountLookupAggregate  {
 	}
 
 	//#endregion
+
+
+	//#region handleGetPartyQueryRejectedEvt
+	private async _handleGetPartyQueryRejectedEvt(message: GetPartyQueryRejectedEvt):Promise<DomainEventMsg> {
+		this._logger.debug(`Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
+
+		const partyId = message.payload.partyId ?? null;
+
+		const requesterFspId = message.payload.requesterFspId ?? null;
+		const destinationFspId = message.payload.destinationFspId ?? null;
+
+		const requesterParticipantError = await this._validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
+		if(requesterParticipantError){
+			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
+			return requesterParticipantError;
+		}
+
+		const destinationParticipantError = await this._validateDestinationParticipantInfoOrGetErrorEvent(partyId, destinationFspId);
+		if(destinationParticipantError){
+			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
+			return destinationParticipantError;
+		}
+
+		const payload:GetPartyQueryRejectedResponseEvtPayload = {
+			partyId: message.payload.partyId,
+			partyType: message.payload.partyType,
+			partySubType: message.payload.partySubType,
+			currency: message.payload.currency,
+			errorInformation: message.payload.errorInformation
+		};
+
+		const event = new GetPartyQueryRejectedResponseEvt(payload);
+
+		return event;
+	}
+	//#endregion
+
 
 	//#region handlePartyQueryReceivedEvt
 	private async _handlePartyQueryReceivedEvt(message: PartyQueryReceivedEvt):Promise<DomainEventMsg>{
@@ -561,41 +598,6 @@ export class AccountLookupAggregate  {
 		return event;
 	}
 
-	//#endregion
-
-	//#region GetPartyQueryRejectedEvt
-	private async _getPartyQueryRejected(message: GetPartyQueryRejectedEvt):Promise<DomainEventMsg> {
-		this._logger.debug(`Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
-
-		const partyId = message.payload.partyId ?? null;
-
-		const requesterFspId = message.payload.requesterFspId ?? null;
-		const destinationFspId = message.payload.destinationFspId ?? null;
-
-		const requesterParticipantError = await this._validateRequesterParticipantInfoOrGetErrorEvent(partyId, requesterFspId);
-		if(requesterParticipantError){
-			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
-			return requesterParticipantError;
-		}
-
-		const destinationParticipantError = await this._validateDestinationParticipantInfoOrGetErrorEvent(partyId, destinationFspId);
-		if(destinationParticipantError){
-			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
-			return destinationParticipantError;
-		}
-
-		const payload:GetPartyQueryRejectedResponseEvtPayload = {
-			partyId: message.payload.partyId,
-			partyType: message.payload.partyType,
-			partySubType: message.payload.partySubType,
-			currency: message.payload.currency,
-			errorInformation: message.payload.errorInformation
-		};
-
-		const event = new GetPartyQueryRejectedResponseEvt(payload);
-
-		return event;
-	}
 	//#endregion
 
 	//#region Validations
