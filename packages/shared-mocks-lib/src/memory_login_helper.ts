@@ -44,7 +44,7 @@ export class MemoryLoginHelper implements ILoginHelper {
 	setUserCredentials(client_id: string, username: string, password: string){
 		return;
 
-	};
+	}
 
     setAppCredentials(client_id: string, client_secret: string){
 		return;
