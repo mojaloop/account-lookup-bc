@@ -138,6 +138,7 @@ export type OracleAdapterResults = {
     fspId: string | null;
     association: boolean;
     disassociation: boolean;
+    partySubType: string | null;
     currency: string | null;
 }
 
@@ -148,6 +149,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyId: mockedPartyIds[0],
         association: true,
         disassociation: true,
+        partySubType: null,
         currency: "USD"
     },
     {
@@ -156,6 +158,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyId: mockedPartyIds[1],
         association: false,
         disassociation: true,
+        partySubType: null,
         currency: "EUR"
     },
     {
@@ -164,6 +167,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: mockedParticipantFspIds[1],
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: "EUR"
     },
     {
@@ -172,6 +176,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyId: mockedPartyIds[2],
         association: true,
         disassociation: true,
+        partySubType: null,
         currency: "USD"
     },
     {
@@ -180,6 +185,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: mockedParticipantFspIds[2],
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: "USD"
     },
     {
@@ -188,6 +194,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         partyId: mockedPartyIds[2],
         association: true,
         disassociation: true,
+        partySubType: null,
         currency: null
     },
     {
@@ -196,6 +203,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: null,
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: null
     },
     {
@@ -204,6 +212,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: mockedParticipantFspIds[3],
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: null
     },
     {
@@ -212,6 +221,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: mockedParticipantFspIds[3],
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: null
     },
     {
@@ -220,6 +230,7 @@ export const mockedOracleAdapterResults:OracleAdapterResults[] = [
         fspId: mockedParticipantFspIds[0],
         association: false,
         disassociation: false,
+        partySubType: null,
         currency: "USD"
     }
 ];

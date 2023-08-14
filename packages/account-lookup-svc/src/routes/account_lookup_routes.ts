@@ -57,6 +57,7 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
 
         const partyId = req.params["partyId"];
         const partyType = req.params["partyType"];
+        const partySubType = req.query.partySubType?.toString() ?? null;
         const currency = req.query.currency?.toString() ?? null;
 
         this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency}`);
@@ -65,7 +66,8 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const payload: ParticipantLookup = {
                currency,
                partyId,
-               partyType
+               partyType,
+               partySubType
             };
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
             this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency} - result: ${JSON.stringify(result)}`);

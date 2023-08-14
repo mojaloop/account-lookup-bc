@@ -43,6 +43,7 @@
 export type ParticipantLookup = {
 	partyId: string;
 	partyType: string;
+    partySubType: string | null;
 	currency: string | null;
 }
 
@@ -70,6 +71,7 @@ export type Association = {
     fspId: string;
     partyType: string;
     partyId: string;
+    partySubType: string|null;
     currency: string|null;
 }
 
