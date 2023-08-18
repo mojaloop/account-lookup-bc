@@ -3,7 +3,8 @@ FROM node:18.13.0-alpine AS builder
 # Create the project directory inside the container.
 WORKDIR /app
 
-RUN apk add --no-cache -t build-dependencies git make gcc g++ python3 libtool autoconf pkgconfig automake bash # wget tar xz
+RUN apk add --no-cache -t build-dependencies git make gcc g++ python3 \
+    libtool autoconf pkgconfig automake librdkafka-dev bash # wget tar xz
 
 RUN cd $(npm root -g)/npm
 RUN npm config set unsafe-perm true
@@ -17,7 +18,7 @@ COPY packages/http-oracle-svc/package*.json ./packages/http-oracle-svc/
 
 # If you are building your code for production
 #RUN npm ci --only=production
-RUN npm install
+RUN BUILD_LIBRDKAFKA=0 npm install
 
 ########################################
 # Copy code and build
