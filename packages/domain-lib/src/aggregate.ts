@@ -219,6 +219,7 @@ export class AccountLookupAggregate  {
 					this._logger.error(errorMessage);
 					const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 						partyId: partyId,
+						partyType: partyType,
 						partySubType: partySubType,
 						requesterFspId: requesterFspId,
 						errorDescription: errorMessage,
@@ -259,7 +260,7 @@ export class AccountLookupAggregate  {
 		const partySubType = message.payload?.partySubType ?? null;
 		const currency = message.payload?.currency ?? null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
 
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
@@ -286,7 +287,7 @@ export class AccountLookupAggregate  {
 			}
 		}
 
-		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partySubType, destinationFspId);
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			timerEndFn({success: "false"});
@@ -316,20 +317,21 @@ export class AccountLookupAggregate  {
 		if(this._logger.isDebugEnabled())
 			this._logger.debug(`Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
 
-		const partyId = message.payload.partyId ?? null;
-		const partySubType = message.payload.partySubType ?? null;
+			const partyId = message.payload.partyId ?? null;
+			const partyType = message.payload.partyType ?? null;
+			const partySubType = message.payload.partySubType ?? null;
 
 		const requesterFspId = message.payload.requesterFspId ?? null;
 		const destinationFspId = message.payload.destinationFspId ?? null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
 			timerEndFn({success: "false"});
 			return requesterParticipantError;
 		}
 
-		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partySubType, destinationFspId);
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			timerEndFn({success: "false"});
@@ -373,7 +375,7 @@ export class AccountLookupAggregate  {
 		const currency = message.payload.currency;
 		let ownerFspId = null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
 
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
@@ -399,7 +401,7 @@ export class AccountLookupAggregate  {
 			return new AccountLookUpUnableToGetParticipantFromOracleErrorEvent(errorPayload);
 		}
 
-		const validateDestinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partySubType, ownerFspId);
+		const validateDestinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, ownerFspId);
 
 		if(validateDestinationParticipantError){
 			this._logger.error(`Invalid participant info for participantId: ${ownerFspId}`);
@@ -436,7 +438,7 @@ export class AccountLookupAggregate  {
 		const currency = message.payload.currency;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
-		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, ownerFspId);
+		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, ownerFspId);
 
 		if(ownerParticipantError){
 			this._logger.error(`Invalid participant info for requester fsp id: ${ownerFspId}`);
@@ -503,7 +505,7 @@ export class AccountLookupAggregate  {
 		const currency = msg.payload?.currency ?? null;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
-		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, ownerFspId);
+		const ownerParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, ownerFspId);
 
 		if(ownerParticipantError){
 			this._logger.error(`Invalid participant info for ownerFspId: ${ownerFspId}`);
@@ -564,18 +566,19 @@ export class AccountLookupAggregate  {
 		this._logger.debug(`Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
 
 		const partyId = message.payload.partyId ?? null;
+		const partyType = message.payload.partyType ?? null;
 		const partySubType = message.payload.partySubType ?? null;
 
 		const requesterFspId = message.payload.requesterFspId ?? null;
 		const destinationFspId = message.payload.destinationFspId ?? null;
 
-		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partySubType, requesterFspId);
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, requesterFspId);
 		if(requesterParticipantError){
 			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
 			return requesterParticipantError;
 		}
 
-		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partySubType, destinationFspId);
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			return destinationParticipantError;
@@ -599,6 +602,7 @@ export class AccountLookupAggregate  {
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {
 		const partyId = message.payload?.partyId;
+		const partyType = message.payload?.partyType;
 		const partySubType = message.payload?.partySubType;
 		const requesterFspId = message.payload?.requesterFspId;
 
@@ -608,6 +612,7 @@ export class AccountLookupAggregate  {
 			const invalidMessageErrorPayload: AccountLookupBCInvalidMessageErrorPayload = {
 				requesterFspId: requesterFspId,
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				errorDescription: errorMessage
 			};
@@ -620,6 +625,7 @@ export class AccountLookupAggregate  {
 			const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 				requesterFspId: requesterFspId,
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				errorDescription: errorMessage,
 			};
@@ -628,7 +634,7 @@ export class AccountLookupAggregate  {
 		return null;
 	}
 
-	private async validateDestinationParticipantInfoOrGetErrorEvent(partyId:string, partySubType:string | null, participantId: string | null):Promise<DomainEventMsg | null>{
+	private async validateDestinationParticipantInfoOrGetErrorEvent(partyId:string, partyType:string, partySubType:string | null, participantId: string | null):Promise<DomainEventMsg | null>{
 		let participant: IParticipant | null = null;
 
 		if(!participantId){
@@ -637,6 +643,7 @@ export class AccountLookupAggregate  {
 			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId: partyId,
 				partySubType: partySubType,
+				partyType: partyType,
 				destinationFspId:participantId,
 				errorDescription: errorMessage
 			};
@@ -654,6 +661,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			const noSuchParticipantErrorPayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
 				errorDescription: errorMessage
@@ -666,6 +674,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
 				errorDescription: errorMessage
@@ -681,7 +690,7 @@ export class AccountLookupAggregate  {
 		return null;
 	}
 
-	private async validateRequesterParticipantInfoOrGetErrorEvent(partyId:string, partySubType:string | null, participantId: string | null):Promise<DomainEventMsg | null>{
+	private async validateRequesterParticipantInfoOrGetErrorEvent(partyId:string, partyType:string, partySubType:string | null, participantId: string | null):Promise<DomainEventMsg | null>{
 		let participant: IParticipant | null = null;
 
 		if(!participantId){
@@ -689,6 +698,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId:participantId,
 				errorDescription: errorMessage
@@ -707,6 +717,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			return new AccountLookupBCRequesterParticipantNotFoundErrorEvent({
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
 				errorDescription: errorMessage
@@ -718,6 +729,7 @@ export class AccountLookupAggregate  {
 			this._logger.error(errorMessage);
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
+				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
 				errorDescription: errorMessage
