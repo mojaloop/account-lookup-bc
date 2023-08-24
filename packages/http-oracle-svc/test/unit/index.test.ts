@@ -30,9 +30,10 @@
  ******/
 
 "use strict";
+
+import {Service} from "../../src/service";
 import fs from "fs";
 import {randomUUID} from "crypto";
-import {Service} from "../../src/service";
 
 const partyType:string = "bank";
 const partyId:string = randomUUID();
@@ -43,7 +44,6 @@ const filePath = process.env["ORACLE_DB_FILE_PATH"];
 const defaultHeaders = new Headers();
 defaultHeaders.append("Content-Type", "application/json");
 
-// TODO: Pass this to integration tests
 
 describe("http-oracle-svc unit tests", () => {
 	beforeAll(async () => {
