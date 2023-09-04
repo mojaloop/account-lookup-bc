@@ -87,9 +87,10 @@ export class RemoteOracleExpressRoutes {
     private extractRequestParams(req: express.Request) {
         const partyType = req.params["partyType"];
         const partyId = req.params["partyId"];
+        const partySubType = req.query["partySubType"]?.toString() ?? null;
         const currency = req.query["currency"]?.toString() ?? null;
         const fspId = req.body["fspId"] ?? null;
-        return { partyType, partyId, currency, fspId };
+        return { partyType, partyId, partySubType, currency, fspId };
     }
 
 
@@ -103,7 +104,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Fetching Participant FSP ID  with params [${params}].`);
 
         try {
-            const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.currency);
+            const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.partySubType, params.currency);
             this._logger.debug(`Fetched Participant FSP ID [${fetched}] with params [${params}].`);
             if(!fetched){
                 res.sendStatus(404);
@@ -133,7 +134,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Disassociating Participant with params [${params}].`);
 
         try {
-            await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.currency);
+            await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubType, params.currency);
             this._logger.debug(`Disassociated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
@@ -154,7 +155,7 @@ export class RemoteOracleExpressRoutes {
         this._logger.debug(`Associating Participant with params [${params}].`);
 
         try {
-            await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.currency);
+            await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubType, params.currency);
             this._logger.debug(`Associated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
