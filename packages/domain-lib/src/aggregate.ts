@@ -274,7 +274,7 @@ export class AccountLookupAggregate  {
 
 		if(!destinationFspId){
 			try{
-				destinationFspId = await this.getParticipantIdFromOracle(partyId, partyType,currency);
+				destinationFspId = await this._getParticipantIdFromOracle(partyId, partyType, partySubType, currency);
 			} catch(error:any){
 				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				this._logger.error(errorMessage + `- ${error.message}`);
@@ -389,7 +389,7 @@ export class AccountLookupAggregate  {
 		}
 
 		try{
-			ownerFspId = await this.getParticipantIdFromOracle(partyId,partyType, currency);
+			ownerFspId = await this._getParticipantIdFromOracle(partyId, partyType, partySubType, currency);
 		}catch(error){
 			//TODO: Create event for Unable to get requester Participant from oracle error
 			const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} partySubType: ${partySubType} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
@@ -468,7 +468,7 @@ export class AccountLookupAggregate  {
 		}
 
 		try{
-			await oracleAdapter.associateParticipant(ownerFspId, partyType, partyId, currency);
+			await oracleAdapter.associateParticipant(ownerFspId, partyType, partyId, partySubType, currency);
 		}catch(error: any){
 			const errorMessage = `Error associating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage + `- ${error.message}`);
@@ -506,8 +506,8 @@ export class AccountLookupAggregate  {
 
 		const ownerFspId = msg.payload?.ownerFspId ?? null;
 		const partyId = msg.payload?.partyId ?? null;
-		const partySubType = msg.payload?.partySubType ?? null;
 		const partyType = msg.payload?.partyType ?? null;
+		const partySubType = msg.payload?.partySubType ?? null;
 		const currency = msg.payload?.currency ?? null;
 		let oracleAdapter: IOracleProviderAdapter|null = null;
 
@@ -536,7 +536,7 @@ export class AccountLookupAggregate  {
 		}
 
 		try{
-			await oracleAdapter.disassociateParticipant(ownerFspId,partyType,partyId,currency);
+			await oracleAdapter.disassociateParticipant(ownerFspId,partyType,partyId,partySubType,currency);
 		}catch(err: unknown){
 			const error = (err as Error);
 			const errorMessage = `Error disassociating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
@@ -778,12 +778,12 @@ export class AccountLookupAggregate  {
 		return oracleAdapter;
 	}
 
-	private async getParticipantIdFromOracle(partyId:string, partyType:string, currency:string | null): Promise<string> {
+	private async _getParticipantIdFromOracle(partyId:string, partyType:string, partySubType:string | null, currency:string | null): Promise<string> {
 		const timerEndFn = this._histogram.startTimer({ callName: "getParticipantIdFromOracle"});
 
 		const oracleAdapter = await this.getOracleAdapter(partyType, currency);
 
-		const fspId = await oracleAdapter.getParticipantFspId(partyType,partyId, currency)
+		const fspId = await oracleAdapter.getParticipantFspId(partyType, partyId, partySubType, currency)
 			.catch(error=>{
 				const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle` + error?.message;
 				this._logger.error(errorMessage);
@@ -899,9 +899,9 @@ export class AccountLookupAggregate  {
 
 	//#region Account Lookup Routes
 	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string | null> {
-		const {partyId, partyType, currency} = accountIdentifier;
+		const {partyId, partyType, partySubType, currency} = accountIdentifier;
 
-		return await this.getParticipantIdFromOracle(partyId, partyType, currency).catch(error=>{
+		return await this._getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch(error=>{
 			const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} ` + error?.message;
 			this._logger.error(errorMessage);
 

@@ -95,16 +95,22 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter{
 		}
 	}
 
-	async getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null> {
+	async getParticipantFspId(partyType:string, partyId: string, partySubType:string | null, currency:string | null ):Promise<string|null> {
 		try {
-			const query = currency ? {
+			const query:any = {
 				partyId: partyId,
 				partyType: partyType,
+				partySubType: partySubType,
 				currency: currency
-			} : {
-				partyId: partyId,
-				partyType: partyType,
 			};
+
+			if(!partySubType) {
+				delete query.partySubType
+			}
+
+			if(!currency) {
+				delete query.currency
+			}
 
 			const data = await this.parties.findOne(query).catch(/* istanbul ignore next */(error: unknown) => {
 				const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${(error as Error).message}`;

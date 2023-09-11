@@ -248,6 +248,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             currency: "USD",
             partyId: "123456789",
             partyType: "DFSP",
+            partySubType: null,
         }
 
         // Act
@@ -263,6 +264,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             currency: "USD",
             partyId: "123456789",
             partyType: "DFSP",
+            partySubType: null,
         };
 
         jest.spyOn(oracleFinder, "getOracle").mockImplementationOnce(() => {
@@ -284,6 +286,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             currency: "USD",
             partyId: mockedPartyIds[1],
             partyType: mockedPartyTypes[2],
+            partySubType: null,
         };
 
         // Act
@@ -299,6 +302,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             currency: "USD",
             partyId: mockedPartyIds[0],
             partyType: mockedPartyTypes[0],
+            partySubType: mockedPartySubTypes[0],
         };
         // Act
         const result = await aggregate.getAccountLookUp(accountLookupRequest);
@@ -315,13 +319,14 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
         const destinationFspId = "destinationFspId";
+        const partySubType = mockedPartySubTypes[0];
         const payload :PartyQueryReceivedEvtPayload = {
                 partyId,
                 partyType,
                 requesterFspId ,
                 destinationFspId,
-                currency: null,
-                partySubType: null,
+                currency: "USD",
+                partySubType: partySubType,
             };
 
         jest.spyOn(messageProducer, "send");
@@ -335,8 +340,8 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             partyType,
             requesterFspId,
             destinationFspId,
-            currency: null,
-            partySubType: null
+            currency: "USD",
+            partySubType: partySubType
             };
 
         // Act
@@ -354,6 +359,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
         const partyType = mockedPartyTypes[0];
         const partyId = mockedPartyIds[0];
         const requesterFspId = mockedParticipantIds[0];
+        const partySubType = mockedPartySubTypes[0];
         const destinationFspIdFromOracle = mockedParticipantFspIds[0];
         const payload :PartyQueryReceivedEvtPayload = {
                 partyId,
@@ -361,7 +367,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
                 requesterFspId ,
                 destinationFspId: null,
                 currency: "USD",
-                partySubType: null,
+                partySubType: partySubType,
             };
 
         jest.spyOn(messageProducer, "send");
@@ -377,7 +383,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             requesterFspId,
             destinationFspId: destinationFspIdFromOracle,
             currency: "USD",
-            partySubType: null
+            partySubType: partySubType
             };
 
         // Act

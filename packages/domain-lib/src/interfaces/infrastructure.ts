@@ -61,9 +61,9 @@ export interface IOracleProviderAdapter{
     init(): Promise<void>;
     destroy(): Promise<void>;
     healthCheck(): Promise<boolean>;
-    getParticipantFspId(partyType:string, partyId: string, currency:string| null ):Promise<string|null>;
-    associateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
-    disassociateParticipant(fspId:string, partyType:string, partyId: string, currency:string| null):Promise<null>;
+    getParticipantFspId(partyType:string, partyId: string, partySubType:string | null, currency:string| null ):Promise<string|null>;
+    associateParticipant(fspId:string, partyType:string, partyId: string, partySubType:string| null, currency:string| null):Promise<null>;
+    disassociateParticipant(fspId:string, partyType:string, partyId: string, partySubType:string| null, currency:string| null):Promise<null>;
     getAllAssociations():Promise<Association[]>;
 }
 
