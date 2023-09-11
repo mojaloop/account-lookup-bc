@@ -40,30 +40,11 @@
 
 "use strict";
 
-import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
-	DomainEventMsg,
-	IMessage,
-	IMessageProducer,
-	MessageTypes
-} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {
-	DuplicateOracleError,
-	NoSuchOracleAdapterError,
-	OracleNotFoundError,
-	ParticipantNotFoundError,
-	UnableToGetOracleAssociationsError,
-	UnableToGetOracleFromOracleFinderError,
-	UnableToGetParticipantFspIdError,
-	UnableToRemoveOracleError
-} from "./errors";
-import {
-	IOracleFinder,
-	IOracleProviderAdapter,
-	IOracleProviderFactory,
-	IParticipantServiceAdapter
-} from "./interfaces/infrastructure";
-import {
+	AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
+	AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+	AccountLookUpUnknownErrorEvent,
+	AccountLookUpUnknownErrorPayload,
 	AccountLookupBCDestinationParticipantNotFoundErrorEvent,
 	AccountLookupBCDestinationParticipantNotFoundErrorPayload,
 	AccountLookupBCInvalidDestinationParticipantErrorEvent,
@@ -80,10 +61,9 @@ import {
 	AccountLookupBCUnableToDisassociateParticipantErrorPayload,
 	AccountLookupBCUnableToGetOracleAdapterErrorEvent,
 	AccountLookupBCUnableToGetOracleAdapterErrorPayload,
-	AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
-	AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
-	AccountLookUpUnknownErrorEvent,
-	AccountLookUpUnknownErrorPayload,
+	GetPartyQueryRejectedEvt,
+	GetPartyQueryRejectedResponseEvt,
+	GetPartyQueryRejectedResponseEvtPayload,
 	ParticipantAssociationCreatedEvt,
 	ParticipantAssociationCreatedEvtPayload,
 	ParticipantAssociationRemovedEvt,
@@ -98,15 +78,36 @@ import {
 	PartyInfoRequestedEvtPayload,
 	PartyQueryReceivedEvt,
 	PartyQueryResponseEvt,
-	PartyQueryResponseEvtPayload,
-	GetPartyQueryRejectedEvt,
-	GetPartyQueryRejectedResponseEvt,
-	GetPartyQueryRejectedResponseEvtPayload
+	PartyQueryResponseEvtPayload
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import {randomUUID} from "crypto";
 import {AddOracleDTO, Association, Oracle, OracleType, ParticipantLookup} from "./types";
-import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
+import {
+	DomainEventMsg,
+	IMessage,
+	IMessageProducer,
+	MessageTypes
+} from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import {
+	DuplicateOracleError,
+	NoSuchOracleAdapterError,
+	OracleNotFoundError,
+	ParticipantNotFoundError,
+	UnableToGetOracleAssociationsError,
+	UnableToGetOracleFromOracleFinderError,
+	UnableToGetParticipantFspIdError,
+	UnableToRemoveOracleError
+} from "./errors";
 import {IHistogram, IMetrics} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import {
+	IOracleFinder,
+	IOracleProviderAdapter,
+	IOracleProviderFactory,
+	IParticipantServiceAdapter
+} from "./interfaces/infrastructure";
+
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import {IParticipant} from "@mojaloop/participant-bc-public-types-lib";
+import {randomUUID} from "crypto";
 
 export class AccountLookupAggregate  {
 	private readonly _logger: ILogger;
@@ -116,7 +117,7 @@ export class AccountLookupAggregate  {
 	private readonly _participantService: IParticipantServiceAdapter;
 	private _oracleProvidersAdapters: IOracleProviderAdapter[];
 	private readonly _metrics:IMetrics;
-	private readonly _histo: IHistogram;
+	private readonly _histogram: IHistogram;
 
 	//#region Initialization
 	constructor(
@@ -135,7 +136,7 @@ export class AccountLookupAggregate  {
 		this._oracleProvidersAdapters = [];
 		this._metrics = metrics;
 
-		this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"]);
+		this._histogram = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"]);
 		// this._histo = metrics.getHistogram("AccountLookupAggregate", "AccountLookupAggregate calls", ["callName", "success"], [0.01, 0.05, 0.1, 0.5, 0.75, 1, 1.5, 2]);
 	}
 
@@ -175,8 +176,10 @@ export class AccountLookupAggregate  {
 
 	//#region Event Handlers
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
-		if(this._logger.isDebugEnabled()) this._logger.debug(`Got message in Account Lookup Handler - msgName: ${message.msgName}`);
-		const handlerTimerEndFn = this._histo.startTimer({ callName: "handleAccountLookUpEvent"});
+		if(this._logger.isDebugEnabled()){
+			this._logger.debug(`Got message in Account Lookup Handler - msgName: ${message.msgName}`);
+		}
+		const handlerTimerEndFn = this._histogram.startTimer({ callName: "handleAccountLookUpEvent"});
 
 		let eventToPublish = null;
 		const partyId = message.payload?.partyId ?? null;
@@ -249,9 +252,10 @@ export class AccountLookupAggregate  {
 
 	//#region handlePartyQueryReceivedEvt
 	private async handlePartyQueryReceivedEvt(message: PartyQueryReceivedEvt):Promise<DomainEventMsg>{
-		const timerEndFn = this._histo.startTimer({ callName: "handlePartyQueryReceivedEvt"});
-		if(this._logger.isDebugEnabled())
+		const timerEndFn = this._histogram.startTimer({ callName: "handlePartyQueryReceivedEvt"});
+		if(this._logger.isDebugEnabled()){
 			this._logger.debug(`Got PartyQueryReceivedEvt msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
+		}
 
 		let destinationFspId = message.payload?.destinationFspId ?? null;
 		const requesterFspId = message.payload?.requesterFspId ?? null;
@@ -272,7 +276,6 @@ export class AccountLookupAggregate  {
 			try{
 				destinationFspId = await this.getParticipantIdFromOracle(partyId, partyType,currency);
 			} catch(error:any){
-				//TODO: Create error event for this
 				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				this._logger.error(errorMessage + `- ${error.message}`);
 				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
@@ -288,6 +291,7 @@ export class AccountLookupAggregate  {
 		}
 
 		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(partyId, partyType, partySubType, destinationFspId);
+
 		if(destinationParticipantError){
 			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
 			timerEndFn({success: "false"});
@@ -313,14 +317,15 @@ export class AccountLookupAggregate  {
 
 	//#region handlePartyInfoAvailableEvt
 	private async handlePartyInfoAvailableEvt(message:PartyInfoAvailableEvt):Promise<DomainEventMsg>{
-		const timerEndFn = this._histo.startTimer({ callName: "handlePartyInfoAvailableEvt"});
+		const timerEndFn = this._histogram.startTimer({ callName: "handlePartyInfoAvailableEvt"});
 		if(this._logger.isDebugEnabled())
+		{
 			this._logger.debug(`Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`);
+		}
 
-			const partyId = message.payload.partyId ?? null;
-			const partyType = message.payload.partyType ?? null;
-			const partySubType = message.payload.partySubType ?? null;
-
+		const partyId = message.payload.partyId ?? null;
+		const partyType = message.payload.partyType ?? null;
+		const partySubType = message.payload.partySubType ?? null;
 		const requesterFspId = message.payload.requesterFspId ?? null;
 		const destinationFspId = message.payload.destinationFspId ?? null;
 
@@ -363,7 +368,7 @@ export class AccountLookupAggregate  {
 
 	//#region handleParticipantQueryReceivedEvt
 	private async handleParticipantQueryReceivedEvt(message: ParticipantQueryReceivedEvt):Promise<DomainEventMsg>{
-		const timerEndFn = this._histo.startTimer({ callName: "handleParticipantQueryReceivedEvt"});
+		const timerEndFn = this._histogram.startTimer({ callName: "handleParticipantQueryReceivedEvt"});
 		if(this._logger.isDebugEnabled())
 			this._logger.debug(`Got ParticipantQueryReceivedEvt for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} currency: ${message.payload.currency} - requesterFspId: ${message.payload.requesterFspId}`);
 
@@ -427,7 +432,7 @@ export class AccountLookupAggregate  {
 
 	//#region handleParticipantAssociationRequestReceivedEvt
 	private async handleParticipantAssociationRequestReceivedEvt(message: ParticipantAssociationRequestReceivedEvt) :Promise<DomainEventMsg>{
-		const timerEndFn = this._histo.startTimer({ callName: "handleParticipantAssociationRequestReceivedEvt"});
+		const timerEndFn = this._histogram.startTimer({ callName: "handleParticipantAssociationRequestReceivedEvt"});
 		if(this._logger.isDebugEnabled())
 			this._logger.debug(`Got ParticipantAssociationRequestReceivedEvt for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`);
 
@@ -494,9 +499,10 @@ export class AccountLookupAggregate  {
 
 	//#region handleParticipantDisassociateRequestReceivedEvt
 	private async handleParticipantDisassociateRequestReceivedEvt(msg: ParticipantDisassociateRequestReceivedEvt) :Promise<DomainEventMsg>{
-		const timerEndFn = this._histo.startTimer({ callName: "handleParticipantDisassociateRequestReceivedEvt"});
-		if(this._logger.isDebugEnabled())
+		const timerEndFn = this._histogram.startTimer({ callName: "handleParticipantDisassociateRequestReceivedEvt"});
+		if(this._logger.isDebugEnabled()){
 			this._logger.debug(`Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`);
+		}
 
 		const ownerFspId = msg.payload?.ownerFspId ?? null;
 		const partyId = msg.payload?.partyId ?? null;
@@ -597,7 +603,7 @@ export class AccountLookupAggregate  {
 		return event;
 	}
 	//#endregion
-	
+
 	//#region Validations
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {
@@ -710,7 +716,7 @@ export class AccountLookupAggregate  {
 				const error = (err as Error);
 				this._logger.error(`Error getting participant info for participantId: ${participantId} - ${error?.message}`);
 				return null;
-			});
+		});
 
 		if(!participant) {
 			const errorMessage = `No participant found for fspId: ${participantId}`;
@@ -773,7 +779,7 @@ export class AccountLookupAggregate  {
 	}
 
 	private async getParticipantIdFromOracle(partyId:string, partyType:string, currency:string | null): Promise<string> {
-		const timerEndFn = this._histo.startTimer({ callName: "getParticipantIdFromOracle"});
+		const timerEndFn = this._histogram.startTimer({ callName: "getParticipantIdFromOracle"});
 
 		const oracleAdapter = await this.getOracleAdapter(partyType, currency);
 

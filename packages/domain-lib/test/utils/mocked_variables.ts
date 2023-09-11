@@ -32,13 +32,14 @@
 
 "use strict";
 
-import { MemoryOracleFinder, MemoryOracleProviderFactory, MemoryMessageProducer, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IOracleFinder, IParticipantServiceAdapter } from "../../src";
+import { MemoryMessageProducer, MemoryOracleFinder, MemoryOracleProviderFactory, MemoryParticipantService } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+
+import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 const logger: ILogger = new ConsoleLogger();
-logger.setLogLevel(LogLevel.TRACE);
+logger.setLogLevel(LogLevel.FATAL);
 
 const oracleFinder: IOracleFinder = new MemoryOracleFinder(
     logger,
