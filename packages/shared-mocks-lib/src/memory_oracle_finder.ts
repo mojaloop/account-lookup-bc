@@ -41,26 +41,26 @@
 "use strict";
 
 import {
-    IOracleFinder, Oracle
+    IOracleFinder,
+    Oracle
 } from "@mojaloop/account-lookup-bc-domain-lib";
+
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleAdapters, notIncludedOracleAdapters } from "./mocked_data";
+import { mockedOracleAdapters } from "./mocked_data";
 
 export class MemoryOracleFinder implements IOracleFinder {
     private readonly _logger: ILogger;
-    private readonly _oraclesThatBelongToAggregate: Oracle[] ;
-    private readonly _oraclesThatDontBelongToAggregate: Oracle[];
+    private readonly _oracles: Oracle[] ;
 
     constructor(
         logger: ILogger,
         startWithPredefinedOracles = true
     ) {
         this._logger = logger;
-        this._oraclesThatBelongToAggregate = startWithPredefinedOracles ? mockedOracleAdapters : [];
-        this._oraclesThatDontBelongToAggregate = startWithPredefinedOracles ? notIncludedOracleAdapters : [];
+        this._oracles = startWithPredefinedOracles ? mockedOracleAdapters : [];
     }
     public get oracles(): Oracle[] {
-        return this._oraclesThatBelongToAggregate;
+        return this._oracles;
     }
 
     init(): Promise<void> {
@@ -70,27 +70,24 @@ export class MemoryOracleFinder implements IOracleFinder {
         return Promise.resolve();
     }
     addOracle(oracle: Oracle): Promise<void> {
-        this._oraclesThatBelongToAggregate.push(oracle);
+        this._oracles.push(oracle);
         return Promise.resolve();
     }
     removeOracle(id: string): Promise<void> {
-        this._oraclesThatBelongToAggregate.splice(this._oraclesThatBelongToAggregate.findIndex(o => o.id === id), 1);
+        this._oracles.splice(this._oracles.findIndex(o => o.id === id), 1);
         return Promise.resolve();
     }
     getAllOracles(): Promise<Oracle[]> {
-        return Promise.resolve(this._oraclesThatBelongToAggregate);
+        return Promise.resolve(this._oracles);
     }
     getOracleById(id: string): Promise<Oracle | null> {
-        return Promise.resolve(this._oraclesThatBelongToAggregate.find(o => o.id === id) || null);
+        return Promise.resolve(this._oracles.find(o => o.id === id) || null);
     }
     getOracleByName(name: string): Promise<Oracle | null> {
-        return Promise.resolve(this._oraclesThatBelongToAggregate.find(o => o.name === name) || null);
+        return Promise.resolve(this._oracles.find(o => o.name === name) || null);
     }
     getOracle(partyType: string, _currency: string | null): Promise<Oracle | null> {
-        let oracle = this._oraclesThatBelongToAggregate.find(o => o.partyType === partyType);
-        if(!oracle) {
-            oracle = this._oraclesThatDontBelongToAggregate.find(o => o.partyType === partyType);
-        }
+        let oracle = this._oracles.find(o => o.partyType === partyType);
         return Promise.resolve(oracle || null);
     }
 

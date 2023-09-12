@@ -40,11 +40,10 @@
 
 "use strict";
 
+import { Association, IOracleProviderAdapter, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain-lib";
 
-import { IOracleProviderAdapter, Oracle, OracleType, Association } from "@mojaloop/account-lookup-bc-domain-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { mockedOracleAdapterResults } from "./mocked_data";
-
+import { mockedOracleAssociations } from "./mocked_data";
 
 export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
 	oracleId: string;
@@ -74,31 +73,40 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
     }
 
     getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
-        const result = mockedOracleAdapterResults.find((result) => {
+        const result = mockedOracleAssociations.find((result) => {
             return result.partyId === partyId && result.partyType === partyType && result.partySubType === partySubType && result.currency === currency;
         });
 
         if(result) {
+            if(result.hasError){
+                return Promise.reject(new Error("Error"));
+            }
             return Promise.resolve(result.fspId);
         }
         return Promise.resolve(null);
     }
 
     associateParticipant(_fspId: string, partyType: string, _partyId: string, _partySubType: string | null, _currency: string | null): Promise<null> {
-        const isAssociationPossible = mockedOracleAdapterResults.find((result) => {
+        const result = mockedOracleAssociations.find((result) => {
             return result.partyType === partyType;
-        })?.association;
-        if(isAssociationPossible) {
+        });
+        if(result) {
+            if(result.hasError){
+                return Promise.reject(new Error("Error"));
+            }
             return Promise.resolve(null);
         }
         return Promise.reject(new Error("Association not possible"));
     }
 
     disassociateParticipant(_fspId: string, partyType: string, _partyId: string, _partySubType: string | null, _currency: string | null): Promise<null> {
-        const isDisassociationPossible = mockedOracleAdapterResults.find((result) => {
+        const result = mockedOracleAssociations.find((result) => {
             return result.partyType === partyType;
-        })?.disassociation;
-        if(isDisassociationPossible) {
+        });
+        if(result) {
+            if(result.hasError){
+                return Promise.reject(new Error("Error"));
+            }
             return Promise.resolve(null);
         }
         return Promise.reject(new Error("Disassociation not possible"));
@@ -106,7 +114,7 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
     }
 
     async getAllAssociations():Promise<Association[]> {
-        const association = mockedOracleAdapterResults[0];
+        const association = mockedOracleAssociations[0];
 
         return [{
             fspId: association.fspId,

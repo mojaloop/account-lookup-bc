@@ -34,18 +34,17 @@
 
 
  // Logger.
-import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+
 import {
     AccountLookupAggregate,
     AddOracleDTO,
     DuplicateOracleError,
-    OracleNotFoundError,
     Oracle,
+    OracleNotFoundError,
 } from "../../src";
-import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
-import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
+import { mockedOracleAdapters, mockedOracleAssociations } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 let aggregate: AccountLookupAggregate;
 
@@ -225,9 +224,10 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
         expect(oracles.length).toBe(expectedOraclesLength);
     });
 
+
     test("should return builtin oracle associations", async()=>{
         // Arrange
-        const mockedOracleAdapter = mockedOracleAdapterResults[0];
+        const mockedOracleAdapter = mockedOracleAssociations[0];
 
         // Act
         const result = await aggregate.getBuiltInOracleAssociations();

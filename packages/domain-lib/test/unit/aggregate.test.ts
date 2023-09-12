@@ -40,7 +40,7 @@ import {
 import { GetPartyQueryRejectedEvt, GetPartyQueryRejectedEvtPayload, GetPartyQueryRejectedResponseEvt, GetPartyQueryRejectedResponseEvtPayload, ParticipantAssociationCreatedEvtPayload, ParticipantAssociationRemovedEvtPayload, ParticipantAssociationRequestReceivedEvt, ParticipantAssociationRequestReceivedEvtPayload, ParticipantDisassociateRequestReceivedEvt, ParticipantDisassociateRequestReceivedEvtPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, ParticipantQueryResponseEvtPayload, PartyInfoAvailableEvt, PartyInfoAvailableEvtPayload, PartyInfoRequestedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload, PartyQueryResponseEvtPayload } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
-import { MemoryOracleProviderAdapter, getParticipantFspIdForOracleTypeAndSubType, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import { MemoryOracleProviderAdapter, mockedOracleAdapters, mockedParticipantFspIds, mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
@@ -471,7 +471,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
             partySubType
         };
 
-        const oracleParticipantFspId = getParticipantFspIdForOracleTypeAndSubType(partyType, partySubType) as string;
+        const oracleParticipantFspId = mockedParticipantFspIds[0];
 
         jest.spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({id: requesterFspId, type: "DFSP", isActive: true} as IParticipant as any)
@@ -533,7 +533,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
         await aggregate.handleAccountLookUpEvent(event);
 
         // Assert
-
         expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
             "payload": expectedPayload,
         }));

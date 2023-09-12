@@ -42,32 +42,13 @@
 
 import { Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 
-export const mockedPartyIds = ["party1", "party2", "party3","partyError"];
+export const mockedPartyIds = ["party", "party1", "party2","party3"];
 
-export const mockedPartyTypes = ["bank", "creditUnion", "insurance", "not_included", "lender"];
+export const mockedPartyTypes = ["bank", "creditUnion", "insurance","lender"];
 
-export const mockedPartySubTypes = ["savings", "checking", "order"];
+export const mockedPartySubTypes = ["savings", "checking", "order", "loan"];
 
-export const mockedParticipantIds = ["participant1", "participant2", "participant3","participantError","participantNull"];
-
-export const notIncludedOracleAdapters: Oracle[] = [
-    {
-        id: "0",
-        name: "oracle0",
-        endpoint: null,
-        partyType: mockedPartyTypes[3],
-        type: "builtin",
-        currency: "USD",
-    },
-    {
-        id: "0.1",
-        name: "oracle0.1",
-        endpoint: null,
-        partyType: mockedPartyTypes[3],
-        type: "builtin",
-        currency: "EUR",
-    }
-];
+export const mockedParticipantIds = ["participant", "participant1", "participant2", "participant3"];
 
 export const mockedOracleAdapters: Oracle [] = [
     {
@@ -87,30 +68,6 @@ export const mockedOracleAdapters: Oracle [] = [
         currency: "EUR",
     },
     {
-        id: "1.2",
-        name: "oracle1.2",
-        endpoint: null,
-        partyType: mockedPartyTypes[0],
-        type: "builtin",
-        currency: "USD",
-    },
-    {
-        id: "2",
-        name: "oracle2",
-        endpoint: null,
-        partyType: mockedPartyTypes[1],
-        type: "builtin",
-        currency: "EUR",
-    },
-    {
-        id: "2.2",
-        name: "oracle2.2",
-        endpoint: null,
-        partyType: mockedPartyTypes[1],
-        type: "builtin",
-        currency: "USD",
-    },
-    {
         id: "3",
         name: "oracle3",
         endpoint: "http://bank-oracle.com",
@@ -122,125 +79,53 @@ export const mockedOracleAdapters: Oracle [] = [
         id: "3.3",
         name: "oracle3.3",
         endpoint: "http://bank-oracle.com",
-        partyType: mockedPartyTypes[2],
+        partyType: mockedPartyTypes[3],
         type: "remote-http",
         currency: "EUR",
     }
 
 ];
 
-export const mockedParticipantFspIds = ["fspId1","fspId2","fspId3","fspId4","fspId5"];
+export const mockedParticipantFspIds = ["fspId","fspId1","fspId2","fspId3","fspId4"];
 
 
-export type OracleAdapterResults = {
+export type OracleAssociations = {
     partyType: string;
     partyId : string;
     fspId: string | null;
-    association: boolean;
-    disassociation: boolean;
+    hasError: boolean;
     partySubType: string | null;
     currency: string | null;
 }
 
-export const mockedOracleAdapterResults:OracleAdapterResults[] = [
+export const mockedOracleAssociations:OracleAssociations[] = [
     {
         partyType: mockedPartyTypes[0],
         fspId: mockedParticipantFspIds[0],
         partyId: mockedPartyIds[0],
-        association: true,
-        disassociation: true,
         partySubType: mockedPartySubTypes[0],
-        currency: "USD"
+        currency: "USD",
+        hasError: false
     },
     {
         partyType: mockedPartyTypes[1],
         fspId: mockedParticipantFspIds[1],
         partyId: mockedPartyIds[1],
-        association: false,
-        disassociation: true,
         partySubType: mockedPartySubTypes[1],
-        currency: "EUR"
+        currency: "EUR",
+        hasError: false
     },
     {
-        partyType: mockedPartyTypes[1],
-        partyId: mockedPartyIds[1],
-        fspId: mockedParticipantFspIds[1],
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: "EUR"
-    },
-    {
-        partyType: mockedPartyTypes[2],
-        fspId: mockedParticipantFspIds[2],
-        partyId: mockedPartyIds[2],
-        association: true,
-        disassociation: true,
-        partySubType: mockedPartySubTypes[2],
-        currency: "USD"
-    },
-    {
-        partyType: mockedPartyTypes[2],
-        partyId: mockedPartyIds[2],
-        fspId: mockedParticipantFspIds[2],
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: "USD"
-    },
-    {
-        partyType: mockedPartyTypes[2],
-        fspId: mockedParticipantFspIds[2],
-        partyId: mockedPartyIds[2],
-        association: true,
-        disassociation: true,
-        partySubType: null,
-        currency: null
-    },
-    {
-        partyType: mockedPartyTypes[0],
-        partyId: mockedPartyIds[0],
-        fspId: null,
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: null
-    },
-    {
-        partyType: mockedPartyTypes[0],
-        partyId: mockedPartyIds[0],
+        partyType: mockedPartyTypes[3],
         fspId: mockedParticipantFspIds[3],
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: null
+        partyId: mockedPartyIds[3],
+        partySubType: mockedPartySubTypes[3],
+        currency: "EUR",
+        hasError: true
     },
-    {
-        partyType: mockedPartyTypes[0],
-        partyId: mockedPartyIds[0],
-        fspId: mockedParticipantFspIds[3],
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: null
-    },
-    {
-        partyType: mockedPartyTypes[4],
-        partyId: mockedPartyIds[0],
-        fspId: mockedParticipantFspIds[0],
-        association: false,
-        disassociation: false,
-        partySubType: null,
-        currency: "USD"
-    }
-];
 
-export const getParticipantFspIdForOracleTypeAndSubType = (partyType: string, _partySubType: string|null): string|null => {
-    const result = mockedOracleAdapterResults.find((oracleAdapterResult) => {
-        return oracleAdapterResult.partyType === partyType;
-    });
-    return result?.fspId ?? null;
-};
+
+];
 
 
 
