@@ -1,3 +1,4 @@
+import {AccountLookUpUnableToGetParticipantFromOracleErrorPayload, AccountLookupBCInvalidDestinationParticipantErrorPayload, AccountLookupBCInvalidMessageErrorPayload, AccountLookupBCInvalidMessageTypeErrorPayload, AccountLookupBCInvalidRequesterParticipantErrorPayload, ParticipantQueryReceivedEvt, ParticipantQueryReceivedEvtPayload, PartyQueryReceivedEvt, PartyQueryReceivedEvtPayload} from "@mojaloop/platform-shared-lib-public-messages-lib";
 /**
  License
  --------------
@@ -29,57 +30,317 @@
 
  --------------
 **/
+import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
+import { logger, messageProducer, oracleFinder, oracleProviderFactory, participantService } from "../utils/mocked_variables";
+import { mockedParticipantIds, mockedPartyIds, mockedPartySubTypes, mockedPartyTypes } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+
+import { AccountLookupAggregate } from "../../src";
+import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
 
 "use strict";
+
 
 //TODO: Correct non happy path for tests. Below you will find the original tests for the non happy path. We were just using a single error to test the non happy path.
 //TODO: We need to add the new errors and replace all the tests with the new errors.If necessary more tests can be added.
 
+let aggregate: AccountLookupAggregate;
 
 describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
-//TODO: Delete this test once we have the new tests for the new errors.
-test("Empty test", async() =>{
-    expect(true).toBeTruthy();
-});
+    beforeAll(() => {
+        const metricsMock :IMetrics = new MetricsMock();
+        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
 
-//test("should publish error message if payload is invalid", async () => {
-//     // Arrange
-//     const message: IMessage = {
-//         fspiopOpaqueState: "fake opaque state",
-//         msgId: "fake msg id",
-//         msgKey: "fake msg key",
-//         msgTopic: "fake msg topic",
-//         msgName: "fake msg name",
-//         msgOffset: 0,
-//         msgPartition: 0,
-//         msgTimestamp: 0,
-//         msgType: MessageTypes.DOMAIN_EVENT,
-//         payload: null,
-//     };
+    });
 
-//     const errorMsg = InvalidMessagePayloadError.name;
 
-//     const errorPayload: AccountLookUpErrorEvtPayload = {
-// 		errorMsg,
-// 		partyId: null as unknown as string,
-//         sourceEvent: "fake msg name",
-//         partySubType:  null,
-//         partyType:  null,
-//         requesterFspId:  null,
-// 	};
 
-//     jest.spyOn(messageProducer, "send");
+    test("should publish InvalidMessageErrorPayload message if payload is invalid", async () => {
+        // Arrange
+        const message: IMessage = {
+            fspiopOpaqueState: "fake opaque state",
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: "fake msg name",
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: MessageTypes.DOMAIN_EVENT,
+            payload: null,
+        };
 
-//     // Act
-//     await aggregate.handleAccountLookUpEvent(message);
+        const errorPayload: AccountLookupBCInvalidMessageErrorPayload = {
+            partyId: null as any,
+            partyType: null as any,
+            partySubType: null,
+            requesterFspId: null,
+            errorDescription: "Message payload is null or undefined",
+        };
 
-//     // Assert
-//     expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
-//         "payload": errorPayload,
-//     }));
+        jest.spyOn(messageProducer, "send");
 
-// });
+        // Act
+        await aggregate.handleAccountLookUpEvent(message);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload,
+        }));
+
+    });
+
+    test("PartyQuery - should publish InvalidMessageTypeErrorEvent message if type is invalid", async () => {
+        // Arrange
+        const message: IMessage = {
+            fspiopOpaqueState: "fake opaque state",
+            msgId: "fake msg id",
+            msgKey: "fake msg key",
+            msgTopic: "fake msg topic",
+            msgName: "fake msg name",
+            msgOffset: 0,
+            msgPartition: 0,
+            msgTimestamp: 0,
+            msgType: "Invalid type" as unknown as MessageTypes.DOMAIN_EVENT,
+            payload: {
+                partyId: "1",
+                partyType: "type",
+                partySubType: null,
+                requesterFspId: "2" ,
+                destinationFspId: null,
+                currency: null,
+            }
+        };
+
+        const errorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
+            partyId: "1",
+            partyType: "type",
+            requesterFspId: "2",
+            partySubType: null as any,
+            errorDescription: `Message type is invalid ${message.msgType}`,
+        };
+
+        jest.spyOn(messageProducer, "send");
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(message);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": errorPayload,
+        }));
+
+    });
+
+    test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if no participant id is provided", async () => {
+        //Arrange
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const partyId = mockedPartyIds[0];
+
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId: null as any,
+            currency: "USD",
+            partySubType,
+            destinationFspId: null,
+        };
+
+        const responsePayload : AccountLookupBCInvalidRequesterParticipantErrorPayload= {
+           errorDescription: "Fsp Id is null or undefined",
+           requesterFspId: null as any,
+           partyId,
+           partySubType,
+           partyType,
+        };
+        const event = new ParticipantQueryReceivedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload,
+        }));
+
+    });
+
+    test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when destination fspId is not provided", async () => {
+        //Arrange
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId,
+            currency: "USD",
+            partySubType,
+            destinationFspId: null,
+        };
+
+        const responsePayload : AccountLookUpUnableToGetParticipantFromOracleErrorPayload= {
+            errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
+            currency: "USD",
+            partyId,
+            partySubType,
+            partyType
+        };
+
+        const event = new PartyQueryReceivedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true} as IParticipant as any);
+        jest.spyOn(oracleFinder, "getOracle").mockRejectedValueOnce(new Error("Error"));
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload,
+        }));
+
+    });
+
+    test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when destination fspId is not provided", async () => {
+        //Arrange
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId,
+            currency: "USD",
+            partySubType,
+            destinationFspId: null,
+        };
+
+        const responsePayload : AccountLookUpUnableToGetParticipantFromOracleErrorPayload= {
+            errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
+            currency: "USD",
+            partyId,
+            partySubType,
+            partyType
+        };
+
+        const event = new PartyQueryReceivedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true} as IParticipant as any);
+        jest.spyOn(oracleFinder, "getOracle").mockRejectedValueOnce(new Error("Error"));
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload,
+        }));
+
+    });
+
+    test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder doesn't find a oracle when destination fspId is not provided", async () => {
+        //Arrange
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId,
+            currency: "USD",
+            partySubType,
+            destinationFspId: null,
+        };
+
+        const responsePayload : AccountLookUpUnableToGetParticipantFromOracleErrorPayload= {
+            errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
+            currency: "USD",
+            partyId,
+            partySubType,
+            partyType
+        };
+
+        const event = new PartyQueryReceivedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true} as IParticipant as any);
+        jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload,
+        }));
+
+    });
+
+    test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder returns a oracle that don't belong to the adapter", async () => {
+        //Arrange
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const partyId = mockedPartyIds[0];
+        const requesterFspId = mockedParticipantIds[0];
+        const fakeOracleId = "fake oracle id";
+
+        const payload:PartyQueryReceivedEvtPayload = {
+            partyId,
+            partyType,
+            requesterFspId,
+            currency: "USD",
+            partySubType,
+            destinationFspId: null,
+        };
+
+        const responsePayload : AccountLookUpUnableToGetParticipantFromOracleErrorPayload= {
+            errorDescription: `Oracle adapter for ${partyType} and id: ${fakeOracleId} not present in oracle list`,
+            currency: "USD",
+            partyId,
+            partySubType,
+            partyType
+        };
+
+        const event = new PartyQueryReceivedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo")
+            .mockResolvedValueOnce({id: requesterFspId, type: partyType, isActive: true} as IParticipant as any);
+        jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce({
+            id: fakeOracleId,
+            type: "builtin",
+            currency: "USD",
+            endpoint: "http://oracle.com",
+            name: "oracle",
+            partyType
+        });
+
+        // Act
+        await aggregate.handleAccountLookUpEvent(event);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledWith(expect.objectContaining({
+            "payload": responsePayload,
+        }));
+
+    });
+
 
 // test("should publish error message if message Name is invalid", async () => {
 //     // Arrange

@@ -276,8 +276,8 @@ export class AccountLookupAggregate  {
 			try{
 				destinationFspId = await this._getParticipantIdFromOracle(partyId, partyType, partySubType, currency);
 			} catch(error:any){
-				const errorMessage = `Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
-				this._logger.error(errorMessage + `- ${error.message}`);
+				const errorMessage = error?.message ??
+					`Error while getting participantId from oracle for partyType: ${partyType} currency: ${currency} and partyId: ${partyId} - requesterFspId: ${requesterFspId}`;
 				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 					partyId: partyId,
 					partySubType: partySubType,
@@ -607,10 +607,10 @@ export class AccountLookupAggregate  {
 	//#region Validations
 
 	private validateMessageOrGetErrorEvent(message:IMessage): DomainEventMsg | null {
-		const partyId = message.payload?.partyId;
-		const partyType = message.payload?.partyType;
-		const partySubType = message.payload?.partySubType;
-		const requesterFspId = message.payload?.requesterFspId;
+		const partyId = message.payload?.partyId ?? null;
+		const partyType = message.payload?.partyType ?? null;
+		const partySubType = message.payload?.partySubType ?? null;
+		const requesterFspId = message.payload?.requesterFspId ?? null;
 
 		if(!message.payload){
 			const errorMessage = "Message payload is null or undefined";
@@ -756,21 +756,21 @@ export class AccountLookupAggregate  {
 	private async getOracleAdapter(partyType:string, currency:string | null): Promise<IOracleProviderAdapter> {
 		const oracle = await this._oracleFinder.getOracle(partyType, currency)
 			.catch(error=>{
-				const errorMessage = `Unable to get oracle for partyType: ${partyType} `;
-				this._logger.error(errorMessage + ` - ${error.message}`);
+				const errorMessage = `Unable to get oracle for partyType: ${partyType} and currency: ${currency ?? "Not Provided"}`;
+				this._logger.error(errorMessage, error?.message);
 				throw new UnableToGetOracleFromOracleFinderError(errorMessage);
 		});
 
 		if(!oracle) {
-			const errorMessage = `Oracle for ${partyType} not found`;
+			const errorMessage = `Oracle for partyType: ${partyType} and currency: ${currency ?? "Not Provided"} not found`;
 			this._logger.debug(errorMessage);
 			throw new OracleNotFoundError(errorMessage);
 		}
 
-		const oracleAdapter = this._oracleProvidersAdapters.find(provider=>provider.oracleId === oracle?.id);
+		const oracleAdapter = this._oracleProvidersAdapters.find(adapter=>adapter.oracleId === oracle?.id);
 
 		if(!oracleAdapter) {
-			const errorMessage = `Oracle adapter for ${partyType} and id: ${oracle.id} not found`;
+			const errorMessage = `Oracle adapter for ${partyType} and id: ${oracle.id} not present in oracle list`;
 			this._logger.debug(errorMessage);
 			throw new NoSuchOracleAdapterError(errorMessage);
 		}
@@ -785,15 +785,15 @@ export class AccountLookupAggregate  {
 
 		const fspId = await oracleAdapter.getParticipantFspId(partyType, partyId, partySubType, currency)
 			.catch(error=>{
-				const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle` + error?.message;
-				this._logger.error(errorMessage);
+				const errorMessage = `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle`;
+				this._logger.error(errorMessage, error?.message);
 				timerEndFn({success: "false"});
 				throw new UnableToGetParticipantFspIdError(errorMessage);
 			});
 
 		if(!(fspId)) {
-			const errorMessage = `partyId:${partyId} has no existing fspId owner in oracle`;
-			this._logger.debug(errorMessage);
+			const errorMessage = `PartyId:${partyId} has no fspId in oracle`;
+			this._logger.error(errorMessage);
 			timerEndFn({success: "false"});
 			throw new ParticipantNotFoundError(errorMessage);
 		}
