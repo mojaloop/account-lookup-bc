@@ -87,7 +87,7 @@ export class MemoryOracleFinder implements IOracleFinder {
         return Promise.resolve(this._oracles.find(o => o.name === name) || null);
     }
     getOracle(partyType: string, _currency: string | null): Promise<Oracle | null> {
-        let oracle = this._oracles.find(o => o.partyType === partyType);
+        const oracle = this._oracles.find(o => o.partyType === partyType);
         return Promise.resolve(oracle || null);
     }
 
