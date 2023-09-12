@@ -1,8 +1,10 @@
 import {
   AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+  AccountLookupBCDestinationParticipantNotFoundErrorPayload,
   AccountLookupBCInvalidDestinationParticipantErrorPayload,
   AccountLookupBCInvalidMessageErrorPayload,
   AccountLookupBCInvalidMessageTypeErrorPayload,
+  AccountLookupBCInvalidRequesterParticipantErrorEvent,
   AccountLookupBCInvalidRequesterParticipantErrorPayload,
   AccountLookupBCRequesterParticipantNotFoundErrorPayload,
   ParticipantQueryReceivedEvt,
@@ -41,14 +43,8 @@ import {
 
  --------------
 **/
-import {
-  IMessage,
-  MessageTypes,
-} from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import {
-  IMetrics,
-  MetricsMock,
-} from "@mojaloop/platform-shared-lib-observability-types-lib";
+import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
   logger,
   messageProducer,
@@ -57,6 +53,7 @@ import {
   participantService,
 } from "../utils/mocked_variables";
 import {
+  mockedParticipantFspIds,
   mockedParticipantIds,
   mockedPartyIds,
   mockedPartySubTypes,
@@ -129,7 +126,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should publish InvalidMessageTypeErrorEvent message if type is invalid", async () => {
+  test("should publish InvalidMessageTypeErrorEvent message if type is invalid", async () => {
     // Arrange
     const message: IMessage = {
       fspiopOpaqueState: "fake opaque state",
@@ -173,6 +170,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
+  //#region PartyQuery
   test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
@@ -188,14 +186,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload =
-      {
-        errorDescription: "Fsp Id is null or undefined",
-        requesterFspId: null as any,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      requesterFspId: null as any,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
@@ -212,7 +209,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if an error occurs when fetching requester participant from participant service", async () => {
+  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if an error occurs when fetching requester participant from participant service for validation", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -228,20 +225,17 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `Error getting participant info for participantId: ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+      errorDescription: `Error getting requester participant info for participantId: ${requesterFspId}`,
+      requesterFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
-    jest
-      .spyOn(participantService, "getParticipantInfo")
-      .mockRejectedValueOnce(new Error("Error"));
+    jest.spyOn(participantService, "getParticipantInfo").mockRejectedValueOnce(new Error("Error"));
 
     // Act
     await aggregate.handleAccountLookUpEvent(event);
@@ -255,7 +249,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send RequesterParticipantNotFoundErrorEvent if no requester participant is found from participant service", async () => {
+  test("PartyQuery - should send RequesterParticipantNotFoundErrorEvent if no requester participant is found from participant service for validation", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -271,20 +265,17 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `No participant found for fspId: ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+      errorDescription: `No requester participant found for fspId: ${requesterFspId}`,
+      requesterFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
-    jest
-      .spyOn(participantService, "getParticipantInfo")
-      .mockResolvedValueOnce(null);
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(null);
 
     // Act
     await aggregate.handleAccountLookUpEvent(event);
@@ -304,6 +295,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     const partySubType = mockedPartySubTypes[0];
     const partyId = mockedPartyIds[0];
     const requesterFspId = mockedParticipantIds[0];
+    const fakeParticipantId = "fake participant id";
 
     const payload: PartyQueryReceivedEvtPayload = {
       partyId,
@@ -314,19 +306,18 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `Participant id mismatch fake id ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+      errorDescription: `Requester Participant id mismatch ${fakeParticipantId} ${requesterFspId}`,
+      requesterFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
-      id: "fake id",
+      id: fakeParticipantId,
       type: partyType,
       isActive: true,
     } as IParticipant as any);
@@ -343,7 +334,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when destination fspId is not provided", async () => {
+  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder is unable to get an oracle to search the destination fspId", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -359,14 +350,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
-        currency: "USD",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
+      currency: "USD",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -376,9 +366,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       type: partyType,
       isActive: true,
     } as IParticipant as any);
-    jest
-      .spyOn(oracleFinder, "getOracle")
-      .mockRejectedValueOnce(new Error("Error"));
+    jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
 
     // Act
     await aggregate.handleAccountLookUpEvent(event);
@@ -392,7 +380,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when destination fspId is not provided", async () => {
+  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when searching for destination fspId", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -408,14 +396,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
-        currency: "USD",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
+      currency: "USD",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -425,9 +412,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       type: partyType,
       isActive: true,
     } as IParticipant as any);
-    jest
-      .spyOn(oracleFinder, "getOracle")
-      .mockRejectedValueOnce(new Error("Error"));
+    jest.spyOn(oracleFinder, "getOracle").mockRejectedValueOnce(new Error("Error"));
 
     // Act
     await aggregate.handleAccountLookUpEvent(event);
@@ -441,7 +426,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder doesn't find a oracle when destination fspId is not provided", async () => {
+  test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder doesn't find a oracle when searching for destination fspId", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -457,14 +442,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
-        currency: "USD",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
+      currency: "USD",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -505,14 +489,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `Oracle adapter for ${partyType} and id: ${fakeOracleId} not present in oracle list`,
-        currency: "USD",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Oracle adapter for ${partyType} and id: ${fakeOracleId} not present in oracle list`,
+      currency: "USD",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -559,14 +542,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: EUR from oracle`,
-        currency: "EUR",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: EUR from oracle`,
+      currency: "EUR",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -591,10 +573,10 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
   test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle doesn't have a participant associated", async () => {
     //Arrange
-    const partyType = mockedPartyTypes[2];
-    const partySubType = mockedPartySubTypes[2];
-    const partyId = mockedPartyIds[2];
-    const requesterFspId = mockedParticipantIds[2];
+    const partyType = mockedPartyTypes[4];
+    const partySubType = mockedPartySubTypes[4];
+    const partyId = mockedPartyIds[4];
+    const requesterFspId = mockedParticipantIds[4];
 
     const payload: PartyQueryReceivedEvtPayload = {
       partyId,
@@ -605,14 +587,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload =
-      {
-        errorDescription: `PartyId:${partyId} has no fspId associated in oracle`,
-        currency: "USD",
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `PartyId:${partyId} has no fspId associated in oracle`,
+      currency: "USD",
+      partyId,
+      partySubType,
+      partyType,
+    };
 
     const event = new PartyQueryReceivedEvt(payload);
 
@@ -634,52 +615,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     );
     expect(messageProducer.send).toBeCalledTimes(1);
   });
-  
-  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
-    //Arrange
-    const partyType = mockedPartyTypes[0];
-    const partySubType = mockedPartySubTypes[0];
-    const partyId = mockedPartyIds[0];
 
-    const payload: PartyQueryReceivedEvtPayload = {
-      partyId,
-      partyType,
-      requesterFspId: null as any,
-      currency: "USD",
-      partySubType,
-      destinationFspId: null,
-    };
-
-    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload =
-      {
-        errorDescription: "Fsp Id is null or undefined",
-        requesterFspId: null as any,
-        partyId,
-        partySubType,
-        partyType,
-      };
-    const event = new ParticipantQueryReceivedEvt(payload);
-
-    jest.spyOn(messageProducer, "send");
-
-    // Act
-    await aggregate.handleAccountLookUpEvent(event);
-
-    // Assert
-    expect(messageProducer.send).toHaveBeenCalledWith(
-      expect.objectContaining({
-        payload: responsePayload,
-      })
-    );
-    expect(messageProducer.send).toBeCalledTimes(1);
-  });
-
-  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if an error occurs when fetching requester participant from participant service", async () => {
+  test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if an error occurs when fetching destination participant for validation", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
     const partyId = mockedPartyIds[0];
     const requesterFspId = mockedParticipantIds[0];
+    const expectedDestinationFspId = mockedParticipantFspIds[0];
 
     const payload: PartyQueryReceivedEvtPayload = {
       partyId,
@@ -690,19 +633,23 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `Error getting participant info for participantId: ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
+      errorDescription: `Error getting destination participant info for participantId: ${expectedDestinationFspId}`,
+      destinationFspId: expectedDestinationFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
     jest
       .spyOn(participantService, "getParticipantInfo")
+      .mockResolvedValueOnce({
+        id: requesterFspId,
+        type: partyType,
+        isActive: true,
+      } as IParticipant as any)
       .mockRejectedValueOnce(new Error("Error"));
 
     // Act
@@ -717,12 +664,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send RequesterParticipantNotFoundErrorEvent if no requester participant is found from participant service", async () => {
+  test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if no destination participant is found from participant service for validation", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
     const partyId = mockedPartyIds[0];
     const requesterFspId = mockedParticipantIds[0];
+    const expectedDestinationFspId = mockedParticipantFspIds[0];
 
     const payload: PartyQueryReceivedEvtPayload = {
       partyId,
@@ -733,19 +681,23 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `No participant found for fspId: ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
+      errorDescription: `No destination participant found for fspId: ${expectedDestinationFspId}`,
+      destinationFspId: expectedDestinationFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
     jest
       .spyOn(participantService, "getParticipantInfo")
+      .mockResolvedValueOnce({
+        id: requesterFspId,
+        type: partyType,
+        isActive: true,
+      } as IParticipant as any)
       .mockResolvedValueOnce(null);
 
     // Act
@@ -760,12 +712,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if returned participant id mismatches the requester id", async () => {
-    //Arrange
+  test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if returned participant id mismatches the destination id", async () => {
+    // Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
     const partyId = mockedPartyIds[0];
     const requesterFspId = mockedParticipantIds[0];
+    const expectedDestinationFspId = mockedParticipantFspIds[0];
+    const fakeDestinationFspId = "fake destination fsp id";
 
     const payload: PartyQueryReceivedEvtPayload = {
       partyId,
@@ -776,22 +730,28 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload =
-      {
-        errorDescription: `Participant id mismatch fake id ${requesterFspId}`,
-        requesterFspId,
-        partyId,
-        partySubType,
-        partyType,
-      };
+    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
+      errorDescription: `Participant id mismatch ${fakeDestinationFspId} ${expectedDestinationFspId}`,
+      destinationFspId: expectedDestinationFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
     const event = new ParticipantQueryReceivedEvt(payload);
 
     jest.spyOn(messageProducer, "send");
-    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
-      id: "fake id",
-      type: partyType,
-      isActive: true,
-    } as IParticipant as any);
+    jest
+      .spyOn(participantService, "getParticipantInfo")
+      .mockResolvedValueOnce({
+        id: requesterFspId,
+        type: partyType,
+        isActive: true,
+      } as IParticipant as any)
+      .mockResolvedValueOnce({
+        id: fakeDestinationFspId,
+        type: partyType,
+        isActive: true,
+      } as IParticipant as any);
 
     // Act
     await aggregate.handleAccountLookUpEvent(event);
@@ -804,8 +764,12 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     );
     expect(messageProducer.send).toBeCalledTimes(1);
   });
+  //#endregion PartyQuery
 
+  //#region PartyInfoAvailable
 
+  
 
+  //#endregion PartyInfoAvailable
 
 });

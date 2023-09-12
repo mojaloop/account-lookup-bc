@@ -42,90 +42,91 @@
 
 import { Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 
-export const mockedPartyIds = ["party", "party1", "party2","party3"];
+export const mockedPartyIds = ["party", "party1", "party2", "party3", "party4"];
 
-export const mockedPartyTypes = ["bank", "creditUnion", "insurance","lender"];
+export const mockedPartyTypes = ["bank", "creditUnion", "insurance", "lender", "issuer"];
 
-export const mockedPartySubTypes = ["savings", "checking", "order", "loan"];
+export const mockedPartySubTypes = ["savings", "checking", "order", "loan", "credit"];
 
-export const mockedParticipantIds = ["participant", "participant1", "participant2", "participant3"];
+export const mockedParticipantIds = ["participant", "participant1", "participant2", "participant3", "participant4"];
 
-export const mockedOracleAdapters: Oracle [] = [
-    {
-        id: "1",
-        name: "oracle1",
-        endpoint: null,
-        partyType: mockedPartyTypes[0],
-        type: "builtin",
-        currency: "USD",
-    },
-    {
-        id: "1.1",
-        name: "oracle1.1",
-        endpoint: null,
-        partyType: mockedPartyTypes[0],
-        type: "builtin",
-        currency: "EUR",
-    },
-    {
-        id: "3",
-        name: "oracle3",
-        endpoint: "http://bank-oracle.com",
-        partyType: mockedPartyTypes[2],
-        type: "remote-http",
-        currency: "USD",
-    },
-    {
-        id: "3.3",
-        name: "oracle3.3",
-        endpoint: "http://bank-oracle.com",
-        partyType: mockedPartyTypes[3],
-        type: "remote-http",
-        currency: "EUR",
-    }
-
+export const mockedOracleAdapters: Oracle[] = [
+  {
+    id: "1",
+    name: "oracle1",
+    endpoint: null,
+    partyType: mockedPartyTypes[0],
+    type: "builtin",
+    currency: "USD",
+  },
+  {
+    id: "2",
+    name: "oracle2",
+    endpoint: null,
+    partyType: mockedPartyTypes[0],
+    type: "builtin",
+    currency: "USD",
+  },
+  {
+    id: "3",
+    name: "oracle without fspId",
+    endpoint: "http://bank-oracle.com",
+    partyType: mockedPartyTypes[3],
+    type: "remote-http",
+    currency: "USD",
+  },
+  {
+    id: "4",
+    name: "oracle with error",
+    endpoint: "http://bank-oracle.com",
+    partyType: mockedPartyTypes[4],
+    type: "remote-http",
+    currency: "EUR",
+  },
 ];
 
-export const mockedParticipantFspIds = ["fspId","fspId1","fspId2","fspId3","fspId4"];
-
+export const mockedParticipantFspIds = ["fspId", "fspId1", "fspId2", "fspId3", "fspId4"];
 
 export type OracleAssociations = {
-    partyType: string;
-    partyId : string;
-    fspId: string | null;
-    hasError: boolean;
-    partySubType: string | null;
-    currency: string | null;
-}
+  partyType: string;
+  partyId: string;
+  fspId: string | null;
+  hasError: boolean;
+  partySubType: string | null;
+  currency: string | null;
+};
 
-export const mockedOracleAssociations:OracleAssociations[] = [
-    {
-        partyType: mockedPartyTypes[0],
-        fspId: mockedParticipantFspIds[0],
-        partyId: mockedPartyIds[0],
-        partySubType: mockedPartySubTypes[0],
-        currency: "USD",
-        hasError: false
-    },
-    {
-        partyType: mockedPartyTypes[1],
-        fspId: mockedParticipantFspIds[1],
-        partyId: mockedPartyIds[1],
-        partySubType: mockedPartySubTypes[1],
-        currency: "EUR",
-        hasError: false
-    },
-    {
-        partyType: mockedPartyTypes[3],
-        fspId: mockedParticipantFspIds[3],
-        partyId: mockedPartyIds[3],
-        partySubType: mockedPartySubTypes[3],
-        currency: "EUR",
-        hasError: true
-    },
-
-
+export const mockedOracleAssociations: OracleAssociations[] = [
+  {
+    partyType: mockedPartyTypes[0],
+    fspId: mockedParticipantFspIds[0],
+    partyId: mockedPartyIds[0],
+    partySubType: mockedPartySubTypes[0],
+    currency: "USD",
+    hasError: false,
+  },
+  {
+    partyType: mockedPartyTypes[2],
+    fspId: null,
+    partyId: mockedPartyIds[2],
+    partySubType: mockedPartySubTypes[2],
+    currency: "EUR",
+    hasError: false,
+  },
+  {
+    partyType: mockedPartyTypes[3],
+    fspId: mockedParticipantFspIds[3],
+    partyId: mockedPartyIds[3],
+    partySubType: mockedPartySubTypes[3],
+    currency: "EUR",
+    hasError: true,
+  },
+  {
+    partyType: mockedPartyTypes[4],
+    fspId: null,
+    partyId: mockedPartyIds[4],
+    partySubType: mockedPartySubTypes[4],
+    currency: "USD",
+    hasError: false,
+  },
 ];
-
-
-
