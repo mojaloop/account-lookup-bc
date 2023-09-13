@@ -1,4 +1,3 @@
-
 /**
  License
  --------------
@@ -42,117 +41,128 @@
 "use strict";
 
 import { Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
-import {ILogger,ConsoleLogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import { ILogger, ConsoleLogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { HttpOracleProvider } from "../../src/oracles/adapters/remote/http_oracleprovider";
 import { UnableToInitRemoteOracleProvider } from "../../src/errors";
-import { FSP_ID_RESPONSE, NOT_FOUND_PARTY_ID, NOT_FOUND_PARTY_TYPE, PARTY_ID, PARTY_TYPE, RemoteOracleProviderHttpMock } from "../mocks/http_oracleprovider_mock";
+import { RemoteOracleProviderHttpMock } from "../mocks/http_oracleprovider_mock";
 
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
-let oracleproviderHttpServerMock : RemoteOracleProviderHttpMock;
+let oracleproviderHttpServerMock: RemoteOracleProviderHttpMock;
 let remoteOracleProvider: HttpOracleProvider;
 const oracle: Oracle = {
-    id: "test",
-    type: "remote-http",
-    endpoint: "http://localhost:3000",
-    name: "test",
-    partyType: "MSISDN",
-    currency: "USD",
-}
+  id: "test",
+  type: "remote-http",
+  endpoint: "http://localhost:3000",
+  name: "test",
+  partyType: "MSISDN",
+  currency: "USD",
+};
 
 describe("Implementations - Remote Oracle Provider Unit tests", () => {
-    beforeAll(async () => {
-        oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger, oracle.endpoint as string);
-        oracleproviderHttpServerMock.setUp();
-        remoteOracleProvider = new HttpOracleProvider(oracle, logger);
-    });
+  beforeAll(async () => {
+    oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger, oracle.endpoint as string);
+    oracleproviderHttpServerMock.setUp();
+    remoteOracleProvider = new HttpOracleProvider(oracle, logger);
+  });
 
-    afterAll(async () => {
-        oracleproviderHttpServerMock.disable();
-        jest.clearAllMocks();
-    });
+  afterAll(async () => {
+    oracleproviderHttpServerMock.disable();
+    jest.clearAllMocks();
+  });
 
-    test("should set correct values on initialization", async () => {
-        // Act
-        remoteOracleProvider.init();
+  test("should set correct values on initialization", async () => {
+    // Act
+    remoteOracleProvider.init();
 
-        // Assert
-        expect(remoteOracleProvider.type).toEqual(oracle.type);
-        expect(remoteOracleProvider.oracleId).toEqual(oracle.id);
-    });
+    // Assert
+    expect(remoteOracleProvider.type).toEqual(oracle.type);
+    expect(remoteOracleProvider.oracleId).toEqual(oracle.id);
+  });
 
-    test("should be able to destroy the oracle provider", async () => {
+  test("should be able to destroy the oracle provider", async () => {
+    // Act && Assert
+    await expect(remoteOracleProvider.destroy()).resolves.not.toThrow();
+  });
 
-        // Act && Assert
-        await expect(remoteOracleProvider.destroy()).resolves.not.toThrow();
+  test("should throw error if oracle endpoint not valid", async () => {
+    // Arrange
+    const oracle: Oracle = {
+      id: "test",
+      type: "remote-http",
+      endpoint: null,
+      name: "test",
+      partyType: "MSISDN",
+      currency: "USD",
+    };
+    const badRemoteOracleProvider = new HttpOracleProvider(oracle, logger);
 
-    });
+    // Act && Assert
+    expect(() => badRemoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);
+  });
 
-    test("should throw error if oracle endpoint not valid", async () => {
-        // Arrange
-        const oracle: Oracle = {
-            id: "test",
-            type: "remote-http",
-            endpoint: null,
-            name: "test",
-            partyType: "MSISDN",
-            currency: "USD",
-        }
-        const badRemoteOracleProvider = new HttpOracleProvider(oracle, logger);
+  test("should be able to health check remote oracle", async () => {
+    // Act
+    const healthCheck = await remoteOracleProvider.healthCheck();
 
-        // Act && Assert
-        expect(() => badRemoteOracleProvider.init()).toThrow(UnableToInitRemoteOracleProvider);
+    // Assert
+    expect(healthCheck).toEqual(true);
+  });
 
-    });
+  test("should throw error if couldn't get Participant FspId", async () => {
+    // Act && Assert
+    await expect(
+      remoteOracleProvider.getParticipantFspId("partyTypeNotFound", "partyId", "partySubType", "USD")
+    ).rejects.toThrowError();
+  });
 
-    test("should be able to health check remote oracle",async()=>{
-        // Act
-        const healthCheck = await remoteOracleProvider.healthCheck();
+  test("should be able to get Participant FspId", async () => {
+    // Act
+    const result = await remoteOracleProvider.getParticipantFspId("partyType", "partyId", null, null);
 
-        // Assert
-        expect(healthCheck).toEqual(true);
-    });
+    // Assert
+    expect(result).toEqual("fspIdSuccess");
+  });
 
-    test("should throw error if couldn't get Participant FspId",async()=>{
-        // Act && Assert
-        await expect(remoteOracleProvider.getParticipantFspId(NOT_FOUND_PARTY_TYPE, NOT_FOUND_PARTY_ID, null)).rejects.toThrowError();
-    });
+  test("should throw error if couldn't associate participant", async () => {
+    // Act && Assert
+    await expect(
+      remoteOracleProvider.associateParticipant("fakeFspId", "partyTypeNoAssociation", "partyId", "partySubType", "USD")
+    ).rejects.toThrowError();
+  });
 
-    test("should be able to get Participant FspId",async()=>{
-        // Act
-        const result = await remoteOracleProvider.getParticipantFspId("MSISDN", "123456789", null);
+  test("should be able to associate participant", async () => {
+    // Act
+    const result = await remoteOracleProvider.associateParticipant(
+      "fspId",
+      "partyTypeAssociation",
+      "partyId",
+      null,
+      null
+    );
 
-        // Assert
-        expect(result).toEqual(FSP_ID_RESPONSE);
-    });
+    // Assert
+    expect(result).toBeNull();
+  });
 
-    test("should throw error if couldn't associate participant",async()=>{
-        // Act && Assert
-        await expect(remoteOracleProvider.associateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE,NOT_FOUND_PARTY_ID, null))
-            .rejects.toThrowError();
-    });
+  test("should throw error if couldn't disassociate participant", async () => {
+    // Act && Assert
+    await expect(
+      remoteOracleProvider.disassociateParticipant("fspId", "partyTypeNoAssociation", "partyId", null, null)
+    ).rejects.toThrowError();
+  });
 
-    test("should be able to associate participant",async()=>{
-         // Act
-         const result = await remoteOracleProvider.associateParticipant("fakeSpId", PARTY_TYPE,PARTY_ID, null);
+  test("should be able to disassociate participant", async () => {
+    // Act
+    const result = await remoteOracleProvider.disassociateParticipant(
+      "fspId",
+      "partyTypeDisassociation",
+      "partyId",
+      null,
+      null
+    );
 
-         // Assert
-         expect(result).toBeNull();
-    });
-
-    test("should throw error if couldn't disassociate participant",async()=>{
-        // Act && Assert
-        await expect(remoteOracleProvider.disassociateParticipant("fakeFspId", NOT_FOUND_PARTY_TYPE, NOT_FOUND_PARTY_ID, null))
-            .rejects.toThrowError();
-    });
-
-    test("should be able to disassociate participant",async()=>{
-            // Act
-            const result = await remoteOracleProvider.disassociateParticipant("fakeFspId", PARTY_TYPE, PARTY_ID, null);
-
-            // Assert
-            expect(result).toBeNull();
-    });
-
+    // Assert
+    expect(result).toBeNull();
+  });
 });
-
