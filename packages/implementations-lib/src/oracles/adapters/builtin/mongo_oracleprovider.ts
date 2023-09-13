@@ -110,12 +110,12 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
         currency: currency,
       };
 
-      if (!partySubType) {
-        delete query.partySubType;
-      }
-
       if (!currency) {
         delete query.currency;
+      }
+
+      if (!partySubType) {
+        delete query.partySubType;
       }
 
       const data = await this.parties.findOne(query).catch(
@@ -148,37 +148,28 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     fspId: string,
     partyType: string,
     partyId: string,
+    partySubType: string | null,
     currency: string | null
   ): Promise<null> {
-    const participant = await this.parties.findOne({
-      partyId: partyId,
-      fspId: fspId,
-      partyType: partyType,
-      currency: currency,
-    });
+    const query: any = this.buildAssociationQuery(partyId, fspId, partyType, partySubType, currency);
 
-    if (participant) {
+    const association = await this.parties.findOne(query);
+
+    if (association) {
       const errorMessage = `Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
       this._logger.debug(errorMessage);
       throw new ParticipantAssociationAlreadyExistsError(errorMessage);
     }
 
-    await this.parties
-      .insertOne({
-        partyId: partyId,
-        fspId: fspId,
-        partyType: partyType,
-        currency: currency,
-      })
-      .catch(
-        /* istanbul ignore next */ (error: unknown) => {
-          const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${
-            (error as Error).message
-          }`;
-          this._logger.error(errorMessage + `  - ${error}`);
-          throw new UnableToAssociateParticipantError(errorMessage);
-        }
-      );
+    await this.parties.insertOne(query).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${
+          (error as Error).message
+        }`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToAssociateParticipantError(errorMessage);
+      }
+    );
 
     this._logger.debug(
       `Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`
@@ -190,24 +181,20 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     fspId: string,
     partyType: string,
     partyId: string,
+    partySubType: string | null,
     currency: string | null
   ): Promise<null> {
-    await this.parties
-      .deleteOne({
-        partyId: partyId,
-        fspId: fspId,
-        partyType: partyType,
-        currency: currency,
-      })
-      .catch(
-        /* istanbul ignore next */ (error: unknown) => {
-          const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${
-            (error as Error).message
-          }`;
-          this._logger.error(errorMessage + `  - ${error}`);
-          throw new UnableToDisassociateParticipantError(errorMessage);
-        }
-      );
+    const query: any = this.buildAssociationQuery(partyId, fspId, partyType, partySubType, currency);
+
+    await this.parties.deleteOne(query).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${
+          (error as Error).message
+        }`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToDisassociateParticipantError(errorMessage);
+      }
+    );
 
     this._logger.debug(
       `Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`
@@ -250,5 +237,30 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     });
 
     return mappedAssociations;
+  }
+
+  private buildAssociationQuery(
+    partyId: string,
+    fspId: string,
+    partyType: string,
+    partySubType: string | null,
+    currency: string | null
+  ) {
+    const query: any = {
+      partyId: partyId,
+      fspId: fspId,
+      partyType: partyType,
+      partySubType: partySubType,
+      currency: currency,
+    };
+
+    if (!currency) {
+      delete query.currency;
+    }
+
+    if (!partySubType) {
+      delete query.partySubType;
+    }
+    return query;
   }
 }

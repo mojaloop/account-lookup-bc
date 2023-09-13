@@ -64,8 +64,6 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
     beforeAll(async () => {
         oracleproviderHttpServerMock = new RemoteOracleProviderHttpMock(logger, oracle.endpoint as string);
         oracleproviderHttpServerMock.setUp();
-        //oracleproviderHttpServerMock.enable();
-
         remoteOracleProvider = new HttpOracleProvider(oracle, logger);
     });
 

@@ -46,83 +46,103 @@ import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleAssociations } from "./mocked_data";
 
 export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
-	oracleId: string;
-    type: OracleType;
+  oracleId: string;
+  type: OracleType;
 
-    private readonly _logger: ILogger;
+  private readonly _logger: ILogger;
 
-	constructor(
-		logger: ILogger,
-        oracle: Oracle,
-	) {
-		this._logger = logger;
-        this.oracleId = oracle.id;
-        this.type = oracle.type;
-	}
+  constructor(logger: ILogger, oracle: Oracle) {
+    this._logger = logger;
+    this.oracleId = oracle.id;
+    this.type = oracle.type;
+  }
 
-    init(): Promise<void> {
-        return Promise.resolve();
+  async init(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  async destroy(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  async healthCheck(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+
+  async getParticipantFspId(
+    partyType: string,
+    partyId: string,
+    partySubType: string | null,
+    currency: string | null
+  ): Promise<string | null> {
+    const association = mockedOracleAssociations.find((association) => {
+      return (
+        association.partyType === partyType &&
+        association.partyId === partyId &&
+        (partySubType ? association.partySubType === partySubType : true) &&
+        (currency ? association.currency === currency : true)
+      );
+    });
+
+    if (association) {
+      if (association.hasError) {
+        return Promise.reject(new Error("Error"));
+      }
+      return Promise.resolve(association.fspId);
     }
 
-    destroy(): Promise<void> {
-        return Promise.resolve();
+    return Promise.resolve(null);
+  }
+
+  async associateParticipant(
+    _fspId: string,
+    partyType: string,
+    _partyId: string,
+    _partySubType: string | null,
+    _currency: string | null
+  ): Promise<null> {
+    const result = mockedOracleAssociations.find((result) => {
+      return result.partyType === partyType;
+    });
+    if (result) {
+      if (result.hasError) {
+        return Promise.reject(new Error("Error"));
+      }
+      return Promise.resolve(null);
     }
+    return Promise.reject(new Error("Association not possible"));
+  }
 
-    healthCheck(): Promise<boolean> {
-        return Promise.resolve(true);
+  async disassociateParticipant(
+    _fspId: string,
+    partyType: string,
+    _partyId: string,
+    _partySubType: string | null,
+    _currency: string | null
+  ): Promise<null> {
+    const result = mockedOracleAssociations.find((result) => {
+      return result.partyType === partyType;
+    });
+    if (result) {
+      if (result.hasError) {
+        return Promise.reject(new Error("Error"));
+      }
+      return Promise.resolve(null);
     }
+    return Promise.reject(new Error("Disassociation not possible"));
+  }
 
-    getParticipantFspId(partyType: string, partyId: string, partySubType: string | null, currency: string | null): Promise<string | null> {
-        const result = mockedOracleAssociations.find((result) => {
-            return result.partyId === partyId && result.partyType === partyType && result.partySubType === partySubType && result.currency === currency;
-        });
+  async getAllAssociations(): Promise<Association[]> {
+    const association = mockedOracleAssociations[0];
 
-        if(result) {
-            if(result.hasError){
-                return Promise.reject(new Error("Error"));
-            }
-            return Promise.resolve(result.fspId);
-        }
-        return Promise.resolve(null);
-    }
-
-    associateParticipant(_fspId: string, partyType: string, _partyId: string, _partySubType: string | null, _currency: string | null): Promise<null> {
-        const result = mockedOracleAssociations.find((result) => {
-            return result.partyType === partyType;
-        });
-        if(result) {
-            if(result.hasError){
-                return Promise.reject(new Error("Error"));
-            }
-            return Promise.resolve(null);
-        }
-        return Promise.reject(new Error("Association not possible"));
-    }
-
-    disassociateParticipant(_fspId: string, partyType: string, _partyId: string, _partySubType: string | null, _currency: string | null): Promise<null> {
-        const result = mockedOracleAssociations.find((result) => {
-            return result.partyType === partyType;
-        });
-        if(result) {
-            if(result.hasError){
-                return Promise.reject(new Error("Error"));
-            }
-            return Promise.resolve(null);
-        }
-        return Promise.reject(new Error("Disassociation not possible"));
-
-    }
-
-    async getAllAssociations():Promise<Association[]> {
-        const association = mockedOracleAssociations[0];
-
-        return [{
-            fspId: association.fspId,
-            partyType: association.partyType,
-            partyId: association.partyId,
-            partySubType: association.partySubType,
-            currency: association.currency,
-        } as Association];
-
-	}
+    return [
+      {
+        fspId: association.fspId,
+        partyType: association.partyType,
+        partyId: association.partyId,
+        partySubType: association.partySubType,
+        currency: association.currency,
+      } as Association,
+    ];
+  }
 }
