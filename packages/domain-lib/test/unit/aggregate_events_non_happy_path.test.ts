@@ -1,13 +1,17 @@
 import {
   AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
   AccountLookUpUnknownErrorPayload,
+  AccountLookupBCDestinationParticipantNotFoundErrorEvent,
   AccountLookupBCDestinationParticipantNotFoundErrorPayload,
+  AccountLookupBCInvalidDestinationParticipantErrorEvent,
   AccountLookupBCInvalidDestinationParticipantErrorPayload,
   AccountLookupBCInvalidMessageErrorPayload,
   AccountLookupBCInvalidMessageTypeErrorPayload,
   AccountLookupBCInvalidRequesterParticipantErrorEvent,
   AccountLookupBCInvalidRequesterParticipantErrorPayload,
   AccountLookupBCRequesterParticipantNotFoundErrorPayload,
+  GetPartyQueryRejectedEvt,
+  GetPartyQueryRejectedEvtPayload,
   ParticipantQueryReceivedEvt,
   ParticipantQueryReceivedEvtPayload,
   PartyInfoAvailableEvt,
@@ -959,7 +963,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
   //#endregion PartyInfoAvailable
 
   //#region ParticipantQuery
-
   test("ParticipantQuery - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
     //Arrange
     const partyId = mockedPartyIds[0];
@@ -1042,7 +1045,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("ParticipantQuery - should send InvalidDestinationParticipantErrorEvent if owner id doesn't exist", async () => {
+  test("ParticipantQuery - should send DestinationParticipantNotFoundErrorEvent if owner id doesn't exist on participant service", async () => {
     //Arrange
     const partyId = mockedPartyIds[0];
     const partyType = mockedPartyTypes[0];
@@ -1058,7 +1061,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       requesterFspId,
     };
 
-    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
       errorDescription: `No destination participant found for fspId: ${ownerFspId}`,
       partyId,
       partySubType,
@@ -1082,6 +1085,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     // Assert
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
+        msgName: AccountLookupBCDestinationParticipantNotFoundErrorEvent.name,
         payload: responsePayload,
       })
     );
@@ -1089,4 +1093,104 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
   });
 
   //#endregion ParticipantQuery
+
+  //#region PartyQueryRejected
+  test("PartyQueryRejected - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    //Arrange
+    const partyId = mockedPartyIds[0];
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const destinationFspId = mockedParticipantFspIds[0];
+    const currency = "USD";
+    const payload: GetPartyQueryRejectedEvtPayload = {
+      currency,
+      partyId,
+      partySubType,
+      partyType,
+      destinationFspId: destinationFspId,
+      requesterFspId: null as any,
+      errorInformation: {
+        errorCode: "3200",
+        errorDescription: "Generic party error",
+        extensionList: null,
+      },
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      partyId,
+      partySubType,
+      partyType,
+      requesterFspId: null as any,
+    };
+
+    const event = new GetPartyQueryRejectedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
+      })
+    );
+  });
+
+  test("PartyQueryRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
+    //Arrange
+    const partyId = mockedPartyIds[0];
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const requesterFspId = mockedParticipantFspIds[0];
+    const currency = "USD";
+    const payload: GetPartyQueryRejectedEvtPayload = {
+      currency,
+      partyId,
+      partySubType,
+      partyType,
+      destinationFspId: null as any,
+      requesterFspId,
+      errorInformation: {
+        errorCode: "3200",
+        errorDescription: "Generic party error",
+        extensionList: null,
+      },
+    };
+
+    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+      errorDescription: "Destination FspId is null or undefined",
+      partyId,
+      partySubType,
+      partyType,
+      destinationFspId: null as any,
+    };
+
+    const event = new GetPartyQueryRejectedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
+      })
+    );
+  });
+
+  //#endregion
 });

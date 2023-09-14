@@ -505,14 +505,21 @@ export class AccountLookupAggregate {
 
   //#region Get Party Error
   private async getPartyQueryRejected(message: GetPartyQueryRejectedEvt): Promise<DomainEventMsg> {
-    this._logger.debug(
-      `Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
-    );
+    /* istanbul ignore next */
+    const timerEndFn = this._histogram.startTimer({
+      callName: "handlePartyQueryReceivedEvt",
+    });
+
+    /* istanbul ignore next */
+    if (this._logger.isDebugEnabled()) {
+      this._logger.debug(
+        `Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
+      );
+    }
 
     const partyId = message.payload.partyId ?? null;
     const partyType = message.payload.partyType ?? null;
     const partySubType = message.payload.partySubType ?? null;
-
     const requesterFspId = message.payload.requesterFspId ?? null;
     const destinationFspId = message.payload.destinationFspId ?? null;
 
@@ -524,6 +531,8 @@ export class AccountLookupAggregate {
     );
     if (requesterParticipantError) {
       this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
+      /* istanbul ignore next */
+      timerEndFn({ success: "false" });
       return requesterParticipantError;
     }
 
@@ -535,6 +544,8 @@ export class AccountLookupAggregate {
     );
     if (destinationParticipantError) {
       this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
+      /* istanbul ignore next */
+      timerEndFn({ success: "false" });
       return destinationParticipantError;
     }
 
@@ -547,6 +558,8 @@ export class AccountLookupAggregate {
     };
 
     const event = new GetPartyQueryRejectedResponseEvt(payload);
+    /* istanbul ignore next */
+    timerEndFn({ success: "true" });
 
     return event;
   }
