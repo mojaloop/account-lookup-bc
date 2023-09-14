@@ -1,5 +1,6 @@
 import {
   AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+  AccountLookUpUnknownErrorPayload,
   AccountLookupBCDestinationParticipantNotFoundErrorPayload,
   AccountLookupBCInvalidDestinationParticipantErrorPayload,
   AccountLookupBCInvalidMessageErrorPayload,
@@ -9,6 +10,8 @@ import {
   AccountLookupBCRequesterParticipantNotFoundErrorPayload,
   ParticipantQueryReceivedEvt,
   ParticipantQueryReceivedEvtPayload,
+  PartyInfoAvailableEvt,
+  PartyInfoAvailableEvtPayload,
   PartyQueryReceivedEvt,
   PartyQueryReceivedEvtPayload,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
@@ -89,6 +92,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     jest.clearAllMocks();
   });
 
+  //#region General Error Event Tests
   test("should publish InvalidMessageErrorPayload message if payload is invalid", async () => {
     // Arrange
     const message: IMessage = {
@@ -169,6 +173,93 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     );
     expect(messageProducer.send).toBeCalledTimes(1);
   });
+
+  test("should publish UnknownErrorEvent if an unhandled error occurs", async () => {
+    const message: IMessage = {
+      fspiopOpaqueState: "fake opaque state",
+      msgId: "fake msg id",
+      msgKey: "fake msg key",
+      msgTopic: "fake msg topic",
+      msgName: PartyQueryReceivedEvt.name,
+      msgOffset: 0,
+      msgPartition: 0,
+      msgTimestamp: 0,
+      msgType: MessageTypes.DOMAIN_EVENT,
+      payload: {
+        partyId: "1",
+        partyType: "type",
+        partySubType: null,
+        requesterFspId: "2",
+        destinationFspId: null,
+        currency: null,
+      },
+    };
+
+    const errorPayload: AccountLookUpUnknownErrorPayload = {
+      partyId: "1",
+      partyType: "type",
+      requesterFspId: "2",
+      currency: null,
+      errorDescription: `Unknown error while handling message ${message.msgName}`,
+    };
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(aggregate as any, "handlePartyQueryReceivedEvt").mockRejectedValueOnce(new Error("Error"));
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(message);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: errorPayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("should publish opaque state when publishing error event", async () => {
+    // Arrange
+    const payload: PartyQueryReceivedEvtPayload = {
+      partyId: "1",
+      partyType: "type",
+      requesterFspId: "2",
+      destinationFspId: null,
+      currency: null,
+      partySubType: null,
+    };
+
+    const message: IMessage = {
+      fspiopOpaqueState: {
+        fake: "fake opaque state",
+      },
+      msgId: "fake msg id",
+      msgKey: "fake msg key",
+      msgTopic: "fake msg topic",
+      msgName: "invalid name",
+      msgOffset: 0,
+      msgPartition: 0,
+      msgTimestamp: 0,
+      msgType: MessageTypes.DOMAIN_EVENT,
+      payload: payload,
+    };
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(message);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fspiopOpaqueState: {
+          fake: "fake opaque state",
+        },
+      })
+    );
+  });
+
+  //#endregion
 
   //#region PartyQuery
   test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
@@ -767,9 +858,235 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
   //#endregion PartyQuery
 
   //#region PartyInfoAvailable
+  test("PartyInfoAvailable - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    //Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const ownerFspId = mockedParticipantIds[0];
+    const destinationFspId = mockedParticipantFspIds[0];
 
-  
+    const payload: PartyInfoAvailableEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId: null as any,
+      currency: "USD",
+      partySubType,
+      ownerFspId,
+      firstName: "John",
+      lastName: "Doe",
+      middleName: "Middle",
+      merchantClassificationCode: "4321",
+      partyDoB: new Date(),
+      name: "John Doe",
+      destinationFspId,
+    };
 
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      requesterFspId: null as any,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new PartyInfoAvailableEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("PartyInfoAvailable - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
+    //Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const ownerFspId = mockedParticipantIds[0];
+    const requesterFspId = mockedParticipantFspIds[0];
+
+    const payload: PartyInfoAvailableEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId,
+      currency: "USD",
+      partySubType,
+      ownerFspId,
+      firstName: "John",
+      lastName: "Doe",
+      middleName: "Middle",
+      merchantClassificationCode: "4321",
+      partyDoB: new Date(),
+      name: "John Doe",
+      destinationFspId: null as any,
+    };
+
+    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+      errorDescription: "Destination FspId is null or undefined",
+      destinationFspId: null as any,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new PartyInfoAvailableEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
   //#endregion PartyInfoAvailable
 
+  //#region ParticipantQuery
+
+  test("ParticipantQuery - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    //Arrange
+    const partyId = mockedPartyIds[0];
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const currency = "USD";
+    const payload: ParticipantQueryReceivedEvtPayload = {
+      currency,
+      partyId,
+      partySubType,
+      partyType,
+      requesterFspId: null as any,
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      partyId,
+      partySubType,
+      partyType,
+      requesterFspId: null as any,
+    };
+
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("ParticipantQuery - should send UnableToGetParticipantFromOracleError if no couldnt fetch the owner fspId from oracle", async () => {
+    //Arrange
+    const partyId = mockedPartyIds[3];
+    const partyType = mockedPartyTypes[3];
+    const partySubType = mockedPartySubTypes[3];
+    const requesterFspId = mockedParticipantIds[3];
+    const currency = "EUR";
+    const payload: ParticipantQueryReceivedEvtPayload = {
+      currency,
+      partyId,
+      partySubType,
+      partyType,
+      requesterFspId,
+    };
+
+    const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
+      errorDescription: `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle`,
+      partyId,
+      partySubType,
+      partyType,
+      currency,
+    };
+
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("ParticipantQuery - should send InvalidDestinationParticipantErrorEvent if owner id doesn't exist", async () => {
+    //Arrange
+    const partyId = mockedPartyIds[0];
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const requesterFspId = mockedParticipantIds[0];
+    const ownerFspId = mockedParticipantFspIds[0];
+    const currency = "USD";
+    const payload: ParticipantQueryReceivedEvtPayload = {
+      currency,
+      partyId,
+      partySubType,
+      partyType,
+      requesterFspId,
+    };
+
+    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+      errorDescription: `No destination participant found for fspId: ${ownerFspId}`,
+      partyId,
+      partySubType,
+      partyType,
+      destinationFspId: ownerFspId,
+    };
+
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: true,
+    } as IParticipant as any);
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(null);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  //#endregion ParticipantQuery
 });
