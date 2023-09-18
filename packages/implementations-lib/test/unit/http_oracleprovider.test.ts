@@ -165,4 +165,20 @@ describe("Implementations - Remote Oracle Provider Unit tests", () => {
     // Assert
     expect(result).toBeNull();
   });
+
+  test("should be able to get all associations from oracle", async () => {
+    // Act
+    const result = await remoteOracleProvider.getAllAssociations();
+
+    // Assert
+    expect(result).toEqual([
+      {
+        fspId: "fspIdSuccess",
+        partyType: "partyType",
+        partyId: "partyId",
+        partySubType: "partySubType",
+        currency: "USD",
+      },
+    ]);
+  });
 });

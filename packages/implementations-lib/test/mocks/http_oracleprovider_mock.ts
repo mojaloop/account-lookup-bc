@@ -65,6 +65,17 @@ export class RemoteOracleProviderHttpMock {
       .delete(`/participants/partyTypeDisassociation/partyId`, { fspId: "fspId" })
       .reply(200, {})
 
+      .get("/participants/associations")
+      .reply(200, [
+        {
+          fspId: "fspIdSuccess",
+          partyType: "partyType",
+          partyId: "partyId",
+          partySubType: "partySubType",
+          currency: "USD",
+        },
+      ])
+
       .get(`/health`)
       .reply(200, {});
   }

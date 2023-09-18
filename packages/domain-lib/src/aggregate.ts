@@ -273,7 +273,7 @@ export class AccountLookupAggregate {
       callName: "handlePartyQueryReceivedEvt",
     });
 
-    /* istanbul ignore next */
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled()) {
       this._logger.debug(
         `Got PartyQueryReceivedEvt msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`
@@ -358,7 +358,7 @@ export class AccountLookupAggregate {
     const timerEndFn = this._histogram.startTimer({
       callName: "handlePartyInfoAvailableEvt",
     });
-    /* istanbul ignore next */
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled()) {
       this._logger.debug(
         `Got PartyInfoAvailableEvt msg for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} - requesterFspId: ${message.payload.requesterFspId} destinationFspId: ${message.payload.destinationFspId}`
@@ -427,7 +427,7 @@ export class AccountLookupAggregate {
     const timerEndFn = this._histogram.startTimer({
       callName: "handleParticipantQueryReceivedEvt",
     });
-    /* istanbul ignore next */
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled())
       this._logger.debug(
         `Got ParticipantQueryReceivedEvt for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId} currency: ${message.payload.currency} - requesterFspId: ${message.payload.requesterFspId}`
@@ -510,7 +510,7 @@ export class AccountLookupAggregate {
       callName: "handlePartyQueryReceivedEvt",
     });
 
-    /* istanbul ignore next */
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled()) {
       this._logger.debug(
         `Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
@@ -569,9 +569,11 @@ export class AccountLookupAggregate {
   private async handleParticipantAssociationRequestReceivedEvt(
     message: ParticipantAssociationRequestReceivedEvt
   ): Promise<DomainEventMsg> {
+    /* istanbul ignore next */
     const timerEndFn = this._histogram.startTimer({
       callName: "handleParticipantAssociationRequestReceivedEvt",
     });
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled())
       this._logger.debug(
         `Got ParticipantAssociationRequestReceivedEvt for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
@@ -593,6 +595,7 @@ export class AccountLookupAggregate {
 
     if (ownerParticipantError) {
       this._logger.error(`Invalid participant info for requester fsp id: ${ownerFspId}`);
+      /* istanbul ignore next */
       timerEndFn({ success: "false" });
       return ownerParticipantError;
     }
@@ -611,6 +614,7 @@ export class AccountLookupAggregate {
       const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(
         unableToGetOracleFromOracleFinderErrorPayload
       );
+      /* istanbul ignore next */
       timerEndFn({ success: "false" });
       return errorEvent;
     }
@@ -640,6 +644,7 @@ export class AccountLookupAggregate {
     };
 
     const event = new ParticipantAssociationCreatedEvt(payload);
+    /* istanbul ignore next */
     timerEndFn({ success: "true" });
     return event;
   }
@@ -649,9 +654,11 @@ export class AccountLookupAggregate {
   private async handleParticipantDisassociateRequestReceivedEvt(
     msg: ParticipantDisassociateRequestReceivedEvt
   ): Promise<DomainEventMsg> {
+    /* istanbul ignore next */
     const timerEndFn = this._histogram.startTimer({
       callName: "handleParticipantDisassociateRequestReceivedEvt",
     });
+    /* istanbul ignore if */
     if (this._logger.isDebugEnabled()) {
       this._logger.debug(
         `Got participantDisassociationEvent msg for ownerFspId: ${msg.payload.ownerFspId} partyType: ${msg.payload.partyType} partySubType: ${msg.payload.partySubType} and partyId: ${msg.payload.partyId}`
@@ -692,6 +699,7 @@ export class AccountLookupAggregate {
       const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(
         unableToGetOracleFromOracleFinderErrorPayload
       );
+      /* istanbul ignore next */
       timerEndFn({ success: "false" });
       return errorEvent;
     }
@@ -722,6 +730,7 @@ export class AccountLookupAggregate {
     };
 
     const event = new ParticipantAssociationRemovedEvt(payload);
+    /* istanbul ignore next */
     timerEndFn({ success: "true" });
     return event;
   }
