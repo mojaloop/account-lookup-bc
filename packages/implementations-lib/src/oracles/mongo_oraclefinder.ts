@@ -97,11 +97,13 @@ export class MongoOracleFinderRepo implements IOracleFinder {
         name: oracle.name,
         endpoint: oracle.endpoint,
       })
-      .catch((error: unknown) /* istanbul ignore next */ => {
-        const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
-        this._logger.error(errorMessage + `  - ${error}`);
-        throw new UnableToGetOracleError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: unknown) => {
+          const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
+          this._logger.error(errorMessage + `  - ${error}`);
+          throw new UnableToGetOracleError(errorMessage);
+        }
+      );
 
     if (oracleAlreadyPresent) {
       const errorMessage = `Oracle already present: ${oracle.id}`;
@@ -111,20 +113,20 @@ export class MongoOracleFinderRepo implements IOracleFinder {
 
     try {
       await this.oracleProviders.insertOne(oracle);
-    } catch (error: unknown) /* istanbul ignore next */ {
+    } catch (/* istanbul ignore next */ error: unknown) {
       const errorMessage = `Unable to insert oracle: ${(error as Error).message}`;
       this._logger.error(errorMessage + `  - ${error}`);
       throw new UnableToRegisterOracleError(errorMessage);
     }
   }
   async removeOracle(id: string): Promise<void> {
-    const deleteResult = await this.oracleProviders
-      .deleteOne({ id })
-      .catch((error: unknown) /* istanbul ignore next */ => {
+    const deleteResult = await this.oracleProviders.deleteOne({ id }).catch(
+      /* istanbul ignore next */ (error: unknown) => {
         const errorMessage = `Unable to delete oracle: ${(error as Error).message}`;
         this._logger.error(errorMessage + `  - ${error}`);
         throw new UnableToDeleteOracleError(errorMessage);
-      });
+      }
+    );
 
     if (deleteResult.deletedCount == 1) {
       return;
@@ -139,11 +141,13 @@ export class MongoOracleFinderRepo implements IOracleFinder {
     const oracles = await this.oracleProviders
       .find()
       .toArray()
-      .catch((error: unknown) /* istanbul ignore next */ => {
-        const errorMessage = `Unable to get all oracles: ${(error as Error).message}`;
-        this._logger.error(errorMessage + `  - ${error}`);
-        throw new UnableToGetOracleError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: unknown) => {
+          const errorMessage = `Unable to get all oracles: ${(error as Error).message}`;
+          this._logger.error(errorMessage + `  - ${error}`);
+          throw new UnableToGetOracleError(errorMessage);
+        }
+      );
 
     const mappedOracles: Oracle[] = [];
 
@@ -155,11 +159,13 @@ export class MongoOracleFinderRepo implements IOracleFinder {
   }
 
   async getOracleById(id: string): Promise<Oracle | null> {
-    const oracle = await this.oracleProviders.findOne({ id: id }).catch((error: unknown) /* istanbul ignore next */ => {
-      const errorMessage = `Unable to get oracle by id: ${(error as Error).message}`;
-      this._logger.error(errorMessage + `  - ${error}`);
-      throw new UnableToGetOracleError(errorMessage);
-    });
+    const oracle = await this.oracleProviders.findOne({ id: id }).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to get oracle by id: ${(error as Error).message}`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToGetOracleError(errorMessage);
+      }
+    );
 
     if (!oracle) {
       return null;

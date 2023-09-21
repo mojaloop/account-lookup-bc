@@ -1,24 +1,3 @@
-import {
-  AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
-  AccountLookUpUnknownErrorPayload,
-  AccountLookupBCDestinationParticipantNotFoundErrorEvent,
-  AccountLookupBCDestinationParticipantNotFoundErrorPayload,
-  AccountLookupBCInvalidDestinationParticipantErrorEvent,
-  AccountLookupBCInvalidDestinationParticipantErrorPayload,
-  AccountLookupBCInvalidMessageErrorPayload,
-  AccountLookupBCInvalidMessageTypeErrorPayload,
-  AccountLookupBCInvalidRequesterParticipantErrorEvent,
-  AccountLookupBCInvalidRequesterParticipantErrorPayload,
-  AccountLookupBCRequesterParticipantNotFoundErrorPayload,
-  GetPartyQueryRejectedEvt,
-  GetPartyQueryRejectedEvtPayload,
-  ParticipantQueryReceivedEvt,
-  ParticipantQueryReceivedEvtPayload,
-  PartyInfoAvailableEvt,
-  PartyInfoAvailableEvtPayload,
-  PartyQueryReceivedEvt,
-  PartyQueryReceivedEvtPayload,
-} from "@mojaloop/platform-shared-lib-public-messages-lib";
 /**
  License
  --------------
@@ -50,6 +29,44 @@ import {
 
  --------------
 **/
+"use strict";
+
+import {
+  AccountLookUpUnableToGetParticipantFromOracleErrorEvent,
+  AccountLookUpUnableToGetParticipantFromOracleErrorPayload,
+  AccountLookUpUnknownErrorPayload,
+  AccountLookupBCDestinationParticipantNotFoundErrorEvent,
+  AccountLookupBCDestinationParticipantNotFoundErrorPayload,
+  AccountLookupBCInvalidDestinationParticipantErrorEvent,
+  AccountLookupBCInvalidDestinationParticipantErrorPayload,
+  AccountLookupBCInvalidMessageErrorPayload,
+  AccountLookupBCInvalidMessagePayloadErrorEvent,
+  AccountLookupBCInvalidMessageTypeErrorPayload,
+  AccountLookupBCInvalidRequesterParticipantErrorEvent,
+  AccountLookupBCInvalidRequesterParticipantErrorPayload,
+  AccountLookupBCRequesterParticipantNotFoundErrorEvent,
+  AccountLookupBCRequesterParticipantNotFoundErrorPayload,
+  AccountLookupBCUnableToAssociateParticipantErrorEvent,
+  AccountLookupBCUnableToAssociateParticipantErrorPayload,
+  AccountLookupBCUnableToDisassociateParticipantErrorEvent,
+  AccountLookupBCUnableToDisassociateParticipantErrorPayload,
+  AccountLookupBCUnableToGetOracleAdapterErrorEvent,
+  AccountLookupBCUnableToGetOracleAdapterErrorPayload,
+  GetPartyQueryRejectedEvt,
+  GetPartyQueryRejectedEvtPayload,
+  ParticipantAssociationCreatedEvt,
+  ParticipantAssociationRequestReceivedEvt,
+  ParticipantAssociationRequestReceivedEvtPayload,
+  ParticipantDisassociateRequestReceivedEvt,
+  ParticipantDisassociateRequestReceivedEvtPayload,
+  ParticipantQueryReceivedEvt,
+  ParticipantQueryReceivedEvtPayload,
+  PartyInfoAvailableEvt,
+  PartyInfoAvailableEvtPayload,
+  PartyQueryReceivedEvt,
+  PartyQueryReceivedEvtPayload,
+} from "@mojaloop/platform-shared-lib-public-messages-lib";
+
 import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
@@ -69,8 +86,6 @@ import {
 
 import { AccountLookupAggregate } from "../../src";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-
-("use strict");
 
 let aggregate: AccountLookupAggregate;
 
@@ -129,6 +144,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: errorPayload,
+        msgName: AccountLookupBCInvalidMessagePayloadErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -299,6 +315,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -320,7 +337,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
       errorDescription: `Error getting requester participant info for participantId: ${requesterFspId}`,
       requesterFspId,
       partyId,
@@ -339,6 +356,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -379,6 +397,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCRequesterParticipantNotFoundErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -401,7 +420,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
       errorDescription: `Requester Participant id mismatch ${fakeParticipantId} ${requesterFspId}`,
       requesterFspId,
       partyId,
@@ -424,6 +443,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -470,6 +490,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -516,6 +537,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -562,6 +584,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -616,6 +639,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -661,6 +685,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -706,6 +731,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -728,7 +754,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
+    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
       errorDescription: `Error getting destination participant info for participantId: ${expectedDestinationFspId}`,
       destinationFspId: expectedDestinationFspId,
       partyId,
@@ -754,6 +780,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -802,6 +829,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCDestinationParticipantNotFoundErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -825,7 +853,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
+    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
       errorDescription: `Participant id mismatch ${fakeDestinationFspId} ${expectedDestinationFspId}`,
       destinationFspId: expectedDestinationFspId,
       partyId,
@@ -855,6 +883,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -904,6 +933,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -956,6 +986,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -996,12 +1027,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("ParticipantQuery - should send UnableToGetParticipantFromOracleError if no couldnt fetch the owner fspId from oracle", async () => {
+  test("ParticipantQuery - should send UnableToGetParticipantFromOracleError if couldnt fetch the owner fspId from oracle", async () => {
     //Arrange
     const partyId = mockedPartyIds[3];
     const partyType = mockedPartyTypes[3];
@@ -1040,6 +1072,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
+        msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -1192,5 +1225,237 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     );
   });
 
+  //#endregion
+
+  //#region handleParticipantAssociationRequestReceivedEvt
+  test("handleParticipantAssociationRequestReceivedEvt - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    // Arrange
+    const payload: ParticipantAssociationRequestReceivedEvtPayload = {
+      ownerFspId: null as any,
+      currency: "USD",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+      requesterFspId: null as any,
+    };
+
+    const event = new ParticipantAssociationRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
+      })
+    );
+  });
+
+  test("handleParticipantAssociationRequestReceivedEvt - should send UnableToGetOracleAdapterErrorEvent if couldnt get the oracle adapter", async () => {
+    // Arrange
+    const payload: ParticipantAssociationRequestReceivedEvtPayload = {
+      ownerFspId: mockedParticipantFspIds[0],
+      currency: "BAD_CURRENCY",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+    };
+
+    const responsePayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
+      currency: "BAD_CURRENCY",
+      partyId: mockedPartyIds[0],
+      partyType: mockedPartyTypes[0],
+      errorDescription: `Oracle for partyType: ${payload.partyType} and currency: ${payload.currency} not found`,
+    };
+
+    const event = new ParticipantAssociationRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: mockedParticipantFspIds[0],
+      type: mockedPartyTypes[0],
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCUnableToGetOracleAdapterErrorEvent.name,
+      })
+    );
+  });
+
+  test("handleParticipantAssociationRequestReceivedEvt - should send UnableToAssociateParticipantErrorEvent if is unable to associate party to participant", async () => {
+    // Arrange
+    const payload: ParticipantAssociationRequestReceivedEvtPayload = {
+      ownerFspId: mockedParticipantFspIds[3],
+      currency: "EUR",
+      partyId: mockedPartyIds[3],
+      partySubType: mockedPartySubTypes[3],
+      partyType: mockedPartyTypes[3],
+    };
+
+    const responsePayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
+      currency: "EUR",
+      errorDescription: `Error associating fspId: ${payload.ownerFspId} with party ${payload.partyId} ${payload.partyType}`,
+      partyId: mockedPartyIds[3],
+      partyType: mockedPartyTypes[3],
+      fspIdToAssociate: mockedParticipantFspIds[3],
+    };
+
+    const event = new ParticipantAssociationRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: mockedParticipantFspIds[3],
+      type: mockedPartyTypes[3],
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCUnableToAssociateParticipantErrorEvent.name,
+      })
+    );
+  });
+  //#endregion
+
+  //#region handleParticipantDisassociationRequestReceivedEvt
+  test("handleParticipantDisassociationRequestReceivedEvt - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    // Arrange
+    const payload: ParticipantDisassociateRequestReceivedEvtPayload = {
+      ownerFspId: null as any,
+      currency: "USD",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: "Requester FspId is null or undefined",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+      requesterFspId: null as any,
+    };
+
+    const event = new ParticipantDisassociateRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
+      })
+    );
+  });
+
+  test("handleParticipantDisassociationRequestReceivedEvt - should send UnableToGetOracleAdapterErrorEvent if couldnt get the oracle adapter", async () => {
+    // Arrange
+    const payload: ParticipantDisassociateRequestReceivedEvtPayload = {
+      ownerFspId: mockedParticipantFspIds[0],
+      currency: "BAD_CURRENCY",
+      partyId: mockedPartyIds[0],
+      partySubType: mockedPartySubTypes[0],
+      partyType: mockedPartyTypes[0],
+    };
+
+    const responsePayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
+      currency: "BAD_CURRENCY",
+      partyId: mockedPartyIds[0],
+      partyType: mockedPartyTypes[0],
+      errorDescription: `Oracle for partyType: ${payload.partyType} and currency: ${payload.currency} not found`,
+    };
+
+    const event = new ParticipantDisassociateRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: mockedParticipantFspIds[0],
+      type: mockedPartyTypes[0],
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCUnableToGetOracleAdapterErrorEvent.name,
+      })
+    );
+  });
+
+  test("handleParticipantDisassociationRequestReceivedEvt - should send UnableToDisassociateParticipantErrorEvent if is unable to associate party to participant", async () => {
+    // Arrange
+    const payload: ParticipantDisassociateRequestReceivedEvtPayload = {
+      ownerFspId: mockedParticipantFspIds[3],
+      currency: "EUR",
+      partyId: mockedPartyIds[3],
+      partySubType: mockedPartySubTypes[3],
+      partyType: mockedPartyTypes[3],
+    };
+
+    const responsePayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
+      currency: "EUR",
+      errorDescription: `Error disassociating fspId: ${payload.ownerFspId} with party ${payload.partyId} ${payload.partyType}`,
+      partyId: mockedPartyIds[3],
+      partyType: mockedPartyTypes[3],
+      fspIdToDisassociate: mockedParticipantFspIds[3],
+    };
+
+    const event = new ParticipantDisassociateRequestReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: mockedParticipantFspIds[3],
+      type: mockedPartyTypes[3],
+      isActive: true,
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledTimes(1);
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCUnableToDisassociateParticipantErrorEvent.name,
+      })
+    );
+  });
   //#endregion
 });

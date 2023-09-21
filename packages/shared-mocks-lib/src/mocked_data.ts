@@ -73,7 +73,7 @@ export const mockedOracleAdapters: Oracle[] = [
     endpoint: "http://bank-oracle.com",
     partyType: mockedPartyTypes[3],
     type: "remote-http",
-    currency: "USD",
+    currency: "EUR",
   },
   {
     id: "4",
@@ -81,7 +81,7 @@ export const mockedOracleAdapters: Oracle[] = [
     endpoint: "http://bank-oracle.com",
     partyType: mockedPartyTypes[4],
     type: "remote-http",
-    currency: "EUR",
+    currency: "USD",
   },
 ];
 

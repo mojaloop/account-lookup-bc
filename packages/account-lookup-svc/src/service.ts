@@ -317,12 +317,12 @@ process.on("SIGINT", _handle_int_and_term_signals.bind(this));
 process.on("SIGTERM", _handle_int_and_term_signals.bind(this));
 
 //do something when app is closing
-process.on(
-  "exit",
-  /* istanbul ignore next */ async () => {
-    globalLogger.info("Microservice - exiting...");
-  }
-);
+/* istanbul ignore next */
+process.on("exit", async () => {
+  globalLogger.info("Microservice - exiting...");
+});
+
+/* istanbul ignore next */
 process.on(
   "uncaughtException",
   /* istanbul ignore next */ (err: Error) => {

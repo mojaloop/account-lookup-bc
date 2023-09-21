@@ -89,10 +89,12 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
       .then((response: AxiosResponse) => {
         return response.status === 200;
       })
-      .catch((error: Error) /* istanbul ignore next */ => {
-        this._logger.error(`healthCheck: error getting health check - ${error}`);
-        return false;
-      });
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          this._logger.error(`healthCheck: error getting health check - ${error}`);
+          return false;
+        }
+      );
   }
 
   async getParticipantFspId(
@@ -116,11 +118,13 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
       .then((response: AxiosResponse) => {
         return response.data?.fspId ?? null;
       })
-      .catch((error: Error) /* istanbul ignore next */ => {
-        const errorMessage = `getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency}`;
-        this._logger.error(errorMessage + ` - ${error}`);
-        throw new UnableToGetParticipantError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToGetParticipantError(errorMessage);
+        }
+      );
   }
 
   async associateParticipant(
@@ -148,11 +152,13 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         );
         return null;
       })
-      .catch((error: Error) /* istanbul ignore next */ => {
-        const errorMessage = `associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
-        this._logger.error(errorMessage + ` - ${error}`);
-        throw new UnableToAssociateParticipantError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToAssociateParticipantError(errorMessage);
+        }
+      );
   }
 
   async disassociateParticipant(
@@ -184,11 +190,13 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
         );
         return null;
       })
-      .catch((error: Error) /* istanbul ignore next */ => {
-        const errorMessage = `disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
-        this._logger.error(errorMessage + ` - ${error}`);
-        throw new UnableToDisassociateParticipantError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToDisassociateParticipantError(errorMessage);
+        }
+      );
   }
 
   async getAllAssociations(): Promise<Association[]> {
@@ -199,10 +207,12 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
       .then((response: AxiosResponse) => {
         return response.data;
       })
-      .catch((error: Error) /* istanbul ignore next */ => {
-        const errorMessage = `getAllAssociations: error getting all associations`;
-        this._logger.error(errorMessage + ` - ${error}`);
-        throw new UnableToGetAssociationError(errorMessage);
-      });
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `getAllAssociations: error getting all associations`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToGetAssociationError(errorMessage);
+        }
+      );
   }
 }

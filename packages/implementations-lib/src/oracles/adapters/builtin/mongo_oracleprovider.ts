@@ -102,46 +102,38 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     partySubType: string | null,
     currency: string | null
   ): Promise<string | null> {
-    try {
-      const query: any = {
-        partyId: partyId,
-        partyType: partyType,
-        partySubType: partySubType,
-        currency: currency,
-      };
+    const query: any = {
+      partyId: partyId,
+      partyType: partyType,
+      partySubType: partySubType,
+      currency: currency,
+    };
 
-      if (!currency) {
-        delete query.currency;
-      }
-
-      if (!partySubType) {
-        delete query.partySubType;
-      }
-
-      const data = await this.parties.findOne(query).catch(
-        /* istanbul ignore next */ (error: unknown) => {
-          const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${
-            (error as Error).message
-          }`;
-          this._logger.error(errorMessage + `  - ${error}`);
-          throw new UnableToGetParticipantError(errorMessage);
-        }
-      );
-
-      if (!data) {
-        const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
-        this._logger.debug(errorMessage);
-        return null;
-      }
-
-      return data.fspId as unknown as string;
-    } catch (error: unknown) {
-      const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${
-        (error as Error).message
-      }`;
-      this._logger.error(errorMessage + `  - ${error}`);
-      throw new UnableToGetParticipantError(errorMessage);
+    if (!currency) {
+      delete query.currency;
     }
+
+    if (!partySubType) {
+      delete query.partySubType;
+    }
+
+    const data = await this.parties.findOne(query).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${
+          (error as Error).message
+        }`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToGetParticipantError(errorMessage);
+      }
+    );
+
+    if (!data) {
+      const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
+      this._logger.debug(errorMessage);
+      return null;
+    }
+
+    return data.fspId as unknown as string;
   }
 
   async associateParticipant(
@@ -151,7 +143,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     partySubType: string | null,
     currency: string | null
   ): Promise<null> {
-    const query: any = this.buildAssociationQuery(partyId, fspId, partyType, partySubType, currency);
+    const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
 
     const association = await this.parties.findOne(query);
 
@@ -184,7 +176,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     partySubType: string | null,
     currency: string | null
   ): Promise<null> {
-    const query: any = this.buildAssociationQuery(partyId, fspId, partyType, partySubType, currency);
+    const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
 
     await this.parties.deleteOne(query).catch(
       /* istanbul ignore next */ (error: unknown) => {
@@ -239,7 +231,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
     return mappedAssociations;
   }
 
-  private buildAssociationQuery(
+  private buildLookupQuery(
     partyId: string,
     fspId: string,
     partyType: string,

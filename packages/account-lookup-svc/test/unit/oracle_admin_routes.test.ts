@@ -95,8 +95,13 @@ describe("Oracle Admin Routes - Unit Test", () => {
     );
   });
 
+  afterEach(async () => {
+    jest.restoreAllMocks();
+  });
+
   afterAll(async () => {
     await Service.stop();
+    jest.clearAllMocks();
   });
 
   test("GET - should fetch an array of oracles", async () => {
@@ -109,7 +114,18 @@ describe("Oracle Admin Routes - Unit Test", () => {
     expect(response.body.length).toBeGreaterThan(0);
   });
 
-  test("GET - should fetch an array of oracle associations available", async () => {
+  test("GET - should throw 500 if an error occurred while fetching oracles", async () => {
+    // Arrange
+    jest.spyOn(mockedOracleFinder, "getAllOracles").mockRejectedValueOnce(new Error("Error fetching oracles"));
+
+    // Act
+    const response = await request(serverBaseUrl).get("/oracles");
+
+    // Assert
+    expect(response.status).toBe(500);
+  });
+
+  test("GET - should fetch an array of builtin oracle associations", async () => {
     // Arrange
     const expectedAssociations = mockedOracleAssociations[0];
 
@@ -123,6 +139,19 @@ describe("Oracle Admin Routes - Unit Test", () => {
     expect(associationResponse.currency).toEqual(expectedAssociations.currency);
     expect(associationResponse.partyId).toEqual(expectedAssociations.partyId);
     expect(associationResponse.partyType).toEqual(expectedAssociations.partyType);
+  });
+
+  test("GET - should throw 500 if an error occurred while fetching builtin oracle associations", async () => {
+    // Arrange
+    jest
+      .spyOn(mockedOracleFinder, "getAllOracles")
+      .mockRejectedValueOnce(new Error("Error fetching builtin oracle associations"));
+
+    // Act
+    const response = await request(serverBaseUrl).get("/oracles/builtin-associations");
+
+    // Assert
+    expect(response.status).toBe(500);
   });
 
   test("POST - should return an error when an invalid payload is passed", async () => {
@@ -150,10 +179,24 @@ describe("Oracle Admin Routes - Unit Test", () => {
     expect(checkIfValidUUID(response.body.id)).toBe(true);
   });
 
+  test("POST - should throw error if couldn't add the oracle", async () => {
+    // Arrange
+    jest.spyOn(mockedOracleFinder, "addOracle").mockRejectedValueOnce(new Error("Error adding oracle"));
+
+    // Act
+    const response = await request(serverBaseUrl).post("/oracles").send({
+      type: "builtin",
+      name: "oracle msisdn",
+      partyType: "MSISDN",
+    });
+
+    // Assert
+    expect(response.status).toBe(500);
+  });
+
   test("GET - should fetch the recently added oracle by id", async () => {
     // Arrange
     const oracles = await request(serverBaseUrl).get("/oracles");
-
     const oracleId = oracles.body[0].id;
 
     // Act
@@ -180,7 +223,6 @@ describe("Oracle Admin Routes - Unit Test", () => {
   test("GET - should return health condition of the specified oracle", async () => {
     // Arrange
     const oracles = await request(serverBaseUrl).get("/oracles");
-
     const oracleId = oracles.body[0].id;
 
     // Act
@@ -216,7 +258,6 @@ describe("Oracle Admin Routes - Unit Test", () => {
   test("DELETE - should delete the specified oracle", async () => {
     // Arrange
     const oracles = await request(serverBaseUrl).get("/oracles");
-
     const oracleId = oracles.body[0].id;
 
     // Act

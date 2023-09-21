@@ -106,13 +106,13 @@ describe("Account Lookup Routes - Unit Test", () => {
     await Service.stop();
   });
 
-  test("GET - should fetch fspId for partyId and partyType", async () => {
+  test("GET - should fetch fspId for partyId and partyType and partySubType", async () => {
     // Arrange
     const partyId = mockedPartyIds[0];
     const partyType = mockedPartyTypes[0];
 
     // Act
-    const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+    const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}?currency=USD`);
 
     // Assert
     expect(response.status).toBe(200);
@@ -125,7 +125,7 @@ describe("Account Lookup Routes - Unit Test", () => {
     const partyType = mockedPartyTypes[4];
 
     // Act
-    const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}`);
+    const response = await request(serverBaseUrl).get(`/${partyType}/${partyId}?currency=USD`);
 
     // Assert
     expect(response.status).toBe(404);

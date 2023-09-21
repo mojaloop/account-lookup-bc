@@ -44,18 +44,6 @@ import { AccountLookupHttpClient } from "../../src";
 import { ILogger, ConsoleLogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { AuthenticatedHttpRequester, IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import { HttpAccountLookupServiceMock } from "../mocks/http_account_lookup_service_mock";
-import {
-  FSP_ID,
-  FSP_ID2,
-  FSP_ID_WITH_CURRENCY_EUR,
-  FSP_ID_WITH_CURRENCY_USD,
-  FSP_ID_WITH_SUB_TYPE,
-  ID_1,
-  ID_2,
-  PARTY_ID,
-  PARTY_TYPE,
-} from "../mocks/data";
-import { ParticipantLookup } from "@mojaloop/account-lookup-bc-domain-lib";
 import nock from "nock";
 
 const logger: ILogger = new ConsoleLogger();
@@ -75,11 +63,9 @@ const CLIENT_SECRET = "client_secret";
 //TODO: need to replace nock, since it is not working with fetch
 describe("Client - Account Lookup Client Unit tests", () => {
   beforeAll(async () => {
-    authRequester = new AuthenticatedHttpRequester(logger, TOKEN_URL);
+    authRequester = new MemoryAuthRequester(logger, TOKEN_URL);
     authRequester.setUserCredentials(CLIENT_ID, USERNAME, PASSWORD);
     authRequester.setAppCredentials(CLIENT_ID, CLIENT_SECRET);
-    // accountLookupServiceMock = new HttpAccountLookupServiceMock(BASE_URL, TOKEN_URL);
-    // accountLookupServiceMock.setUp();
     accountLookupClient = new AccountLookupHttpClient(logger, BASE_URL, authRequester, 1000);
   });
 
@@ -101,9 +87,6 @@ describe("Client - Account Lookup Client Unit tests", () => {
   });
 
   test("GET - participantLookUp - should be able to get individual fspId using partyId and partyType", async () => {
-    //Arrange
-    nock(BASE_URL).get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`).reply(200, FSP_ID);
-
     // Act
     const result = await accountLookupClient.participantLookUp(PARTY_ID, PARTY_TYPE, null);
 

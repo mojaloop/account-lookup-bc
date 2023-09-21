@@ -29,17 +29,6 @@
 "use strict";
 
 import nock from "nock";
-import {
-  ID_1,
-  ID_2,
-  FSP_ID,
-  FSP_ID2,
-  FSP_ID_WITH_CURRENCY_EUR,
-  FSP_ID_WITH_CURRENCY_USD,
-  FSP_ID_WITH_SUB_TYPE,
-  PARTY_ID,
-  PARTY_TYPE,
-} from "./data";
 
 export class HttpAccountLookupServiceMock {
   private readonly BASE_URL: string;
@@ -51,59 +40,14 @@ export class HttpAccountLookupServiceMock {
   }
 
   public setUp(): void {
-    const tokenScope = nock(this.TOKEN_URL).persist().get("/").reply(200, {
-      isMock: true, // indicative
-      token_type: "Bearer",
-      scope: null,
-      access_token:
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzZWN1cml0eS1iYy11aSIsInJvbGVzIjpbIjNmMmVkOWJlLTc4MTMtNGYxYi1iYjEyLWE2NWExODViMTY5YiJdLCJpYXQiOjE2ODcyMTc2MTQsImV4cCI6MTcxODg0MDAxNCwiYXVkIjoibW9qYWxvb3Audm5leHQuZGVmYXVsdF9hdWRpZW5jZSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzIwMS8iLCJzdWIiOiJ1c2VyOjp1c2VyIiwianRpIjoiMmI5MzIyZmQtMzNhZi00ZDJiLTk4N2UtMjQwNjlmMWM0M2ZiIn0.zpU-HoqZK5U4ExUTpBCv_HqS0z6l0YN3oKIjvwueNwc",
-      expires_in: 604800,
-      refresh_token: null,
-      refresh_token_expires_in: null,
-    });
-
-    tokenScope.on("request", (req, interceptor) => {
-      console.log("interceptor matched request", interceptor.uri);
-    });
-
-    const lookupScope = nock(this.BASE_URL)
+    nock(this.BASE_URL)
       .persist()
-      .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
-      .reply(200, FSP_ID)
+      .get("/account-lookup/partyId/partyType")
+      .reply(200, "fspId")
 
-      .get(`/account-lookup/${PARTY_ID}/${PARTY_TYPE}`)
+      .get("/account-lookup/partyId/partyType")
       .query({ currency: "EUR" })
-      .reply(200, FSP_ID_WITH_CURRENCY_EUR)
-
-      .post("/account-lookup", {
-        [ID_1]: {
-          partyId: PARTY_ID,
-          partyType: PARTY_TYPE,
-          currency: null,
-        },
-        [ID_2]: {
-          partyId: PARTY_ID,
-          partyType: PARTY_TYPE,
-          currency: "USD",
-        },
-      })
-      .reply(200, { [ID_1]: FSP_ID, [ID_2]: FSP_ID2 })
-
-      .post("/account-lookup", {
-        [ID_1]: {
-          currency: null,
-        },
-        [ID_2]: {
-          partyId: PARTY_ID,
-          partyType: PARTY_TYPE,
-          currency: "USD",
-        },
-      })
-      .reply(422, "Invalid Body");
-
-    lookupScope.on("request", (req, interceptor) => {
-      console.log("interceptor matched request", interceptor.uri);
-    });
+      .reply(200, "fspIdEur");
   }
 
   public disable(): void {

@@ -574,10 +574,11 @@ export class AccountLookupAggregate {
       callName: "handleParticipantAssociationRequestReceivedEvt",
     });
     /* istanbul ignore if */
-    if (this._logger.isDebugEnabled())
+    if (this._logger.isDebugEnabled()) {
       this._logger.debug(
         `Got ParticipantAssociationRequestReceivedEvt for ownerFspId: ${message.payload.ownerFspId} partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
       );
+    }
 
     const ownerFspId = message.payload.ownerFspId;
     const partyId = message.payload.partyId;
@@ -603,8 +604,8 @@ export class AccountLookupAggregate {
     try {
       oracleAdapter = await this.getOracleAdapter(partyType, currency);
     } catch (error: any) {
-      const errorMessage = `Error getting oracle adapter for partyType: ${partyType} and currency: ${currency}`;
-      this._logger.error(errorMessage + ":" + error.message);
+      const errorMessage = error?.message;
+      this._logger.error(errorMessage, error);
       const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
         partyId,
         partyType,
@@ -623,7 +624,7 @@ export class AccountLookupAggregate {
       await oracleAdapter.associateParticipant(ownerFspId, partyType, partyId, partySubType, currency);
     } catch (error: any) {
       const errorMessage = `Error associating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
-      this._logger.error(errorMessage + `- ${error.message}`);
+      this._logger.error(errorMessage, error);
       const errorPayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
         fspIdToAssociate: ownerFspId,
         partyType,
@@ -688,8 +689,8 @@ export class AccountLookupAggregate {
     try {
       oracleAdapter = await this.getOracleAdapter(partyType, currency);
     } catch (error: any) {
-      const errorMessage = `Error getting oracle adapter for partyType: ${partyType} and currency: ${currency}`;
-      this._logger.error(errorMessage + ":" + error.message);
+      const errorMessage = error?.message;
+      this._logger.error(errorMessage, error.message);
       const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
         partyId,
         partyType,
@@ -706,10 +707,9 @@ export class AccountLookupAggregate {
 
     try {
       await oracleAdapter.disassociateParticipant(ownerFspId, partyType, partyId, partySubType, currency);
-    } catch (err: unknown) {
-      const error = err as Error;
+    } catch (error: any) {
       const errorMessage = `Error disassociating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
-      this._logger.error(errorMessage + ` - ${error.message}`);
+      this._logger.error(errorMessage, error);
       const errorPayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
         fspIdToDisassociate: ownerFspId,
         partyId,
@@ -1028,12 +1028,12 @@ export class AccountLookupAggregate {
 
   public async getBuiltInOracleAssociations(): Promise<Association[]> {
     const oracles = await this._oracleFinder.getAllOracles();
-    const builtInOracleType: OracleType = "builtin";
-    const builtinOracles = oracles.filter((o) => o.type === builtInOracleType);
+    const oracleType: OracleType = "builtin";
+    const builtinOracles = oracles.filter((o) => o.type === oracleType);
 
     let associations: Association[] = [];
     for (const oracle of builtinOracles) {
-      const oracleProvider = await this.getOracleAdapter(oracle.partyType, null).catch((error) => {
+      const oracleProvider = await this.getOracleAdapter(oracle.partyType, oracle.currency).catch((error) => {
         const errorMessage = `Unable to get oracle provider for oracle: ${oracle.id} ` + error?.message;
         this._logger.error(errorMessage);
         throw new OracleNotFoundError(errorMessage);

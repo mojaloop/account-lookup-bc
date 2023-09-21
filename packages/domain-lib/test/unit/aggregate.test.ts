@@ -447,7 +447,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
       partyType,
       ownerFspId,
       partySubType,
-      currency: null,
+      currency: "USD",
     };
 
     jest
@@ -489,7 +489,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
       partyType,
       ownerFspId,
       partySubType,
-      currency: null,
+      currency: "USD",
     };
 
     jest
