@@ -61,6 +61,8 @@ const CLIENT_ID = "security-bc-ui";
 const CLIENT_SECRET = "client_secret";
 
 //TODO: need to replace nock, since it is not working with fetch
+// https://github.com/nock/nock/issues/2397
+// Maybe replace it with msw?
 describe("Client - Account Lookup Client Unit tests", () => {
   beforeAll(async () => {
     authRequester = new MemoryAuthRequester(logger, TOKEN_URL);
