@@ -40,105 +40,179 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import {IOracleProviderAdapter, Oracle, OracleType, Association} from "@mojaloop/account-lookup-bc-domain-lib";
+import { IOracleProviderAdapter, Oracle, OracleType, Association } from "@mojaloop/account-lookup-bc-domain-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import axios, {AxiosInstance, AxiosResponse} from "axios";
-import { UnableToAssociateParticipantError, UnableToDisassociateParticipantError, UnableToGetParticipantError, UnableToInitRemoteOracleProvider } from "../../../errors";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
+import {
+  UnableToAssociateParticipantError,
+  UnableToDisassociateParticipantError,
+  UnableToGetAssociationError,
+  UnableToGetParticipantError,
+  UnableToInitRemoteOracleProvider,
+} from "../../../errors";
 
 export class HttpOracleProvider implements IOracleProviderAdapter {
-    private readonly _logger: ILogger;
-    private readonly _oracle: Oracle;
-    private httpClient: AxiosInstance;
+  private readonly _logger: ILogger;
+  private readonly _oracle: Oracle;
+  private httpClient: AxiosInstance;
 
-    oracleId: string;
-    type: OracleType;
+  oracleId: string;
+  type: OracleType;
 
-    constructor(oracle:Oracle, logger:ILogger) {
-        this._logger = logger.createChild(this.constructor.name);
-        this._oracle = oracle;
-        this.oracleId = this._oracle.id;
-        this.type = "remote-http";
+  constructor(oracle: Oracle, logger: ILogger) {
+    this._logger = logger.createChild(this.constructor.name);
+    this._oracle = oracle;
+    this.oracleId = this._oracle.id;
+    this.type = "remote-http";
+  }
+
+  init(): Promise<void> {
+    const url = this._oracle.endpoint;
+    if (!url) {
+      throw new UnableToInitRemoteOracleProvider("No endpoint defined for oracle");
+    } else {
+      this.httpClient = axios.create({
+        baseURL: this._oracle.endpoint as string,
+      });
     }
 
-    init(): Promise<void> {
-            const url = this._oracle.endpoint;
-            if(!url){
-                throw new UnableToInitRemoteOracleProvider('No endpoint defined for oracle');
-            }
-            else {
-                this.httpClient = axios.create({
-                    baseURL: this._oracle.endpoint as string,
-                });
-            }
+    return Promise.resolve();
+  }
 
-        return Promise.resolve();
-    }
+  destroy(): Promise<void> {
+    return Promise.resolve();
+  }
 
-    destroy(): Promise<void> {
-         return Promise.resolve();
-    }
-
-    async healthCheck(): Promise<boolean> {
-        return this.httpClient.get("/health").then((response: AxiosResponse) => {
-            return response.status === 200;
-        }).catch((error: Error) => {
-            this._logger.error(`healthCheck: error getting health check - ${error}`);
-            return false;
-        });
-    }
-
-    async getParticipantFspId(partyType:string, partyId:string, partySubType:string| null, currency:string| null ): Promise<string|null> {
-        let url = `/participants/${partyType}/${partyId}`;
-
-        if(currency){
-            url+=`?currency=${currency}`;
+  async healthCheck(): Promise<boolean> {
+    return this.httpClient
+      .get("/health")
+      .then((response: AxiosResponse) => {
+        return response.status === 200;
+      })
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          this._logger.error(`healthCheck: error getting health check - ${error}`);
+          return false;
         }
+      );
+  }
 
-        return this.httpClient.get(url).then((
-            response: AxiosResponse) => {
-            return response.data?.fspId ?? null;
-        }).catch((error: Error) => {
-            const errorMessage = `getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency}`;
-            this._logger.error(errorMessage + ` - ${error}`);
-            throw new UnableToGetParticipantError(errorMessage);
-        });
+  async getParticipantFspId(
+    partyType: string,
+    partyId: string,
+    partySubType: string | null,
+    currency: string | null
+  ): Promise<string | null> {
+    let url = `/participants/${partyType}/${partyId}`;
+
+    if (partySubType) {
+      url += `?partySubType=/${partySubType}`;
     }
 
-    async associateParticipant(fspId:string, partyType:string, partyId:string, partySubType:string| null, currency:string| null):Promise<null> {
-        let url = `/participants/${partyType}/${partyId}`;
-
-        if(currency) url+=`?currency=${currency}`;
-
-        return await this.httpClient.post(url, { fspId: fspId}).then((
-                _: AxiosResponse) => {
-                this._logger.debug(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`);
-                return null;
-            }).catch((error: Error) => {
-                const errorMessage = `associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
-                this._logger.error(errorMessage + ` - ${error}`);
-                throw new UnableToAssociateParticipantError(errorMessage);
-            });
+    if (currency) {
+      url += `?currency=${currency}`;
     }
 
-    async disassociateParticipant(fspId:string, partyType:string, partyId: string, partySubType:string| null, currency:string| null):Promise<null> {
-        let url = `/participants/${partyType}/${partyId}`;
+    return this.httpClient
+      .get(url)
+      .then((response: AxiosResponse) => {
+        return response.data?.fspId ?? null;
+      })
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `getParticipantFspId: error getting participant fspId for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToGetParticipantError(errorMessage);
+        }
+      );
+  }
 
-        if(currency) url+=`?currency=${currency}`;
+  async associateParticipant(
+    fspId: string,
+    partyType: string,
+    partyId: string,
+    partySubType: string | null,
+    currency: string | null
+  ): Promise<null> {
+    let url = `/participants/${partyType}/${partyId}`;
 
-        return await this.httpClient.delete(url, { data:{
-                fspId: fspId
-            }}).then((
-            _: AxiosResponse) => {
-                this._logger.debug(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`);
-                return null;
-            }).catch((error: Error) => {
-                const errorMessage = `disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
-                this._logger.error(errorMessage + ` - ${error}`);
-                throw new UnableToDisassociateParticipantError(errorMessage);
-            });
+    if (partySubType) {
+      url += `?partySubType=/${partySubType}`;
     }
 
-    async getAllAssociations():Promise<Association[]> {
-		return [];
-	}
+    if (currency) {
+      url += `?currency=${currency}`;
+    }
+
+    return await this.httpClient
+      .post(url, { fspId: fspId })
+      .then((_: AxiosResponse) => {
+        this._logger.debug(
+          `associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`
+        );
+        return null;
+      })
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `associateParticipant: error associating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToAssociateParticipantError(errorMessage);
+        }
+      );
+  }
+
+  async disassociateParticipant(
+    fspId: string,
+    partyType: string,
+    partyId: string,
+    partySubType: string | null,
+    currency: string | null
+  ): Promise<null> {
+    let url = `/participants/${partyType}/${partyId}`;
+
+    if (partySubType) {
+      url += `?partySubType=/${partySubType}`;
+    }
+
+    if (currency) {
+      url += `?currency=${currency}`;
+    }
+
+    return await this.httpClient
+      .delete(url, {
+        data: {
+          fspId: fspId,
+        },
+      })
+      .then((_: AxiosResponse) => {
+        this._logger.debug(
+          `disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`
+        );
+        return null;
+      })
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `disassociateParticipant: error disassociating participant for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToDisassociateParticipantError(errorMessage);
+        }
+      );
+  }
+
+  async getAllAssociations(): Promise<Association[]> {
+    const url = "/participants/associations";
+
+    return await this.httpClient
+      .get(url)
+      .then((response: AxiosResponse) => {
+        return response.data;
+      })
+      .catch(
+        /* istanbul ignore next */ (error: Error) => {
+          const errorMessage = `getAllAssociations: error getting all associations`;
+          this._logger.error(errorMessage + ` - ${error}`);
+          throw new UnableToGetAssociationError(errorMessage);
+        }
+      );
+  }
 }

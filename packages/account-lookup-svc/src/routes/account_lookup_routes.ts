@@ -60,7 +60,7 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
         const partySubType = req.query.partySubType?.toString() ?? null;
         const currency = req.query.currency?.toString() ?? null;
 
-        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency}`);
+        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
 
         try {
             const payload: ParticipantLookup = {

@@ -39,197 +39,199 @@
  **/
 "use strict";
 
- import {
-	Collection,
-	Document,
-	MongoClient,
-	WithId
-	} from "mongodb";
+import { Collection, Document, MongoClient, WithId } from "mongodb";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { NoSuchOracleError, OracleAlreadyRegisteredError, UnableToCloseDatabaseConnectionError, UnableToDeleteOracleError, UnableToGetOracleError, UnableToInitOracleFinderError, UnableToRegisterOracleError } from "../errors";
-import {IOracleFinder, Oracle} from "@mojaloop/account-lookup-bc-domain-lib";
+import {
+  NoSuchOracleError,
+  OracleAlreadyRegisteredError,
+  UnableToCloseDatabaseConnectionError,
+  UnableToDeleteOracleError,
+  UnableToGetOracleError,
+  UnableToInitOracleFinderError,
+  UnableToRegisterOracleError,
+} from "../errors";
+import { IOracleFinder, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
 
-export class MongoOracleFinderRepo implements IOracleFinder{
-	private readonly _logger: ILogger;
-	private readonly _connectionString: string;
-	private readonly _dbName;
-	private readonly _collectionName = "oracles";
-	private mongoClient: MongoClient;
-	private oracleProviders: Collection;
+export class MongoOracleFinderRepo implements IOracleFinder {
+  private readonly _logger: ILogger;
+  private readonly _connectionString: string;
+  private readonly _dbName;
+  private readonly _collectionName = "oracles";
+  private mongoClient: MongoClient;
+  private oracleProviders: Collection;
 
-	constructor(
-		logger: ILogger,
-        connectionString: string,
-		dbName:string
-	) {
-		this._logger = logger.createChild(this.constructor.name);
-        this._connectionString = connectionString;
-		this._dbName = dbName;
-	}
+  constructor(logger: ILogger, connectionString: string, dbName: string) {
+    this._logger = logger.createChild(this.constructor.name);
+    this._connectionString = connectionString;
+    this._dbName = dbName;
+  }
 
-	async init(): Promise<void> {
-		try {
-			this.mongoClient = new MongoClient(this._connectionString);
-			this.mongoClient.connect();
-			this.oracleProviders = this.mongoClient.db(this._dbName).collection(this._collectionName);
-		} catch (error: unknown) {
-			const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToInitOracleFinderError(errorMessage);
-		}
-	}
+  async init(): Promise<void> {
+    try {
+      this.mongoClient = new MongoClient(this._connectionString);
+      this.mongoClient.connect();
+      this.oracleProviders = this.mongoClient.db(this._dbName).collection(this._collectionName);
+    } catch (error: unknown) {
+      const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
+      this._logger.error(errorMessage + `  - ${error}`);
+      throw new UnableToInitOracleFinderError(errorMessage);
+    }
+  }
 
-	async destroy(): Promise<void> {
-		try{
-			await this.mongoClient.close();
-		}
-		catch(error: unknown){
-			const errorMessage = `Unable to close the database connection: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToCloseDatabaseConnectionError(errorMessage);
-		}
-	}
+  async destroy(): Promise<void> {
+    try {
+      await this.mongoClient.close();
+    } catch (error: unknown) {
+      const errorMessage = `Unable to close the database connection: ${(error as Error).message}`;
+      this._logger.error(errorMessage + `  - ${error}`);
+      throw new UnableToCloseDatabaseConnectionError(errorMessage);
+    }
+  }
 
-	async addOracle(oracle: Oracle): Promise<void> {
-		const oracleAlreadyPresent : Document | null = await this.oracleProviders.findOne(
-			{
-				partyType: oracle.partyType,
-				type: oracle.type,
-				id: oracle.id,
-				name: oracle.name,
-				endpoint: oracle.endpoint,
-			},
-		).catch((error: unknown) => {
-			const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetOracleError(errorMessage);
-		});
+  async addOracle(oracle: Oracle): Promise<void> {
+    const oracleAlreadyPresent: Document | null = await this.oracleProviders
+      .findOne({
+        partyType: oracle.partyType,
+        type: oracle.type,
+        id: oracle.id,
+        name: oracle.name,
+        endpoint: oracle.endpoint,
+      })
+      .catch(
+        /* istanbul ignore next */ (error: unknown) => {
+          const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
+          this._logger.error(errorMessage + `  - ${error}`);
+          throw new UnableToGetOracleError(errorMessage);
+        }
+      );
 
-		if(oracleAlreadyPresent){
-			const errorMessage = `Oracle already present: ${oracle.id}`;
-			this._logger.error(errorMessage);
-			throw new OracleAlreadyRegisteredError(errorMessage);
-		}
-
-		try {
-			await this.oracleProviders.insertOne(oracle);
-
-		} catch (error: unknown) {
-			const errorMessage = `Unable to insert oracle: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToRegisterOracleError(errorMessage);
-		}
-	}
-	async removeOracle(id: string): Promise<void> {
-		const deleteResult = await this.oracleProviders.deleteOne({id})
-		.catch((error: unknown) => {
-			const errorMessage = `Unable to delete oracle: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToDeleteOracleError(errorMessage);
-		});
-
-		if(deleteResult.deletedCount == 1){
-			return;
-		}
-		else{
-			const errorMessage = `Oracle with id ${id} not found`;
-			this._logger.debug(errorMessage);
-			throw new NoSuchOracleError(errorMessage);
-		}
-	}
-
-	async getAllOracles(): Promise<Oracle[]> {
-		const oracles = await this.oracleProviders.find().toArray()
-		.catch((error: unknown) => {
-			const errorMessage = `Unable to get all oracles: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetOracleError(errorMessage);
-		});
-
-		const mappedOracles: Oracle[] = [];
-
-		oracles.map((oracle: WithId<Document>) => {
-			mappedOracles.push(this.mapToOracle(oracle));
-		});
-
-		return mappedOracles;
-	}
-
-	async getOracleById(id:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({id: id })
-		.catch((error: unknown) => {
-			const errorMessage = `Unable to get oracle by id: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetOracleError(errorMessage);
-		});
-
-		if(!oracle){
-			return null;
-		}
-
-		return this.mapToOracle(oracle);
-	}
-
-	async getOracleByName(name:string):Promise<Oracle|null>{
-		const oracle = await this.oracleProviders.findOne({name: name })
-		.catch((error: unknown) => {
-			const errorMessage = `Unable to get oracle by name: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetOracleError(errorMessage);
-		});
-
-		if(!oracle){
-			return null;
-		}
-
-		return this.mapToOracle(oracle);
-	}
-
-    async getOracle(partyType: string, currency: string|null): Promise<Oracle | null>{
-		const oracles: Document | null = await this.oracleProviders.find(
-			{
-				partyType: partyType,
-			}
-		).toArray().catch((error: unknown) => {
-			const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetOracleError(errorMessage);
-		});
-
-
-		const mappedOraclesWithCurrency: Oracle[] = [];
-		const mappedOraclesWithoutCurrency: Oracle[] = [];
-
-		oracles.map((oracle: WithId<Document>) => {
-			if(oracle.currency === currency){
-				mappedOraclesWithCurrency.push(this.mapToOracle(oracle));
-			}
-			else{
-				mappedOraclesWithoutCurrency.push(this.mapToOracle(oracle));
-			}
-
-		});
-
-		const oracle = mappedOraclesWithCurrency.shift() ?? mappedOraclesWithoutCurrency.shift() ?? null;
-
-		if(!oracle){
-			const errorMessage = `Oracle with partyType ${partyType}  and currency ${currency} not found`;
-			this._logger.debug(errorMessage);
-			throw new NoSuchOracleError(errorMessage);
-		}
-
-		return oracle;
-
+    if (oracleAlreadyPresent) {
+      const errorMessage = `Oracle already present: ${oracle.id}`;
+      this._logger.error(errorMessage);
+      throw new OracleAlreadyRegisteredError(errorMessage);
     }
 
-	private mapToOracle(oracle: Document): Oracle {
-		return {
-			id: oracle.id,
-			name: oracle.name,
-			partyType: oracle.partyType,
-			endpoint: oracle.endpoint,
-			type: oracle.type,
-			currency: oracle.currency,
-		};
-	}
+    try {
+      await this.oracleProviders.insertOne(oracle);
+    } catch (/* istanbul ignore next */ error: unknown) {
+      const errorMessage = `Unable to insert oracle: ${(error as Error).message}`;
+      this._logger.error(errorMessage + `  - ${error}`);
+      throw new UnableToRegisterOracleError(errorMessage);
+    }
+  }
+  async removeOracle(id: string): Promise<void> {
+    const deleteResult = await this.oracleProviders.deleteOne({ id }).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to delete oracle: ${(error as Error).message}`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToDeleteOracleError(errorMessage);
+      }
+    );
+
+    if (deleteResult.deletedCount == 1) {
+      return;
+    } else {
+      const errorMessage = `Oracle with id ${id} not found`;
+      this._logger.debug(errorMessage);
+      throw new NoSuchOracleError(errorMessage);
+    }
+  }
+
+  async getAllOracles(): Promise<Oracle[]> {
+    const oracles = await this.oracleProviders
+      .find()
+      .toArray()
+      .catch(
+        /* istanbul ignore next */ (error: unknown) => {
+          const errorMessage = `Unable to get all oracles: ${(error as Error).message}`;
+          this._logger.error(errorMessage + `  - ${error}`);
+          throw new UnableToGetOracleError(errorMessage);
+        }
+      );
+
+    const mappedOracles: Oracle[] = [];
+
+    oracles.map((oracle: WithId<Document>) => {
+      mappedOracles.push(this.mapToOracle(oracle));
+    });
+
+    return mappedOracles;
+  }
+
+  async getOracleById(id: string): Promise<Oracle | null> {
+    const oracle = await this.oracleProviders.findOne({ id: id }).catch(
+      /* istanbul ignore next */ (error: unknown) => {
+        const errorMessage = `Unable to get oracle by id: ${(error as Error).message}`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToGetOracleError(errorMessage);
+      }
+    );
+
+    if (!oracle) {
+      return null;
+    }
+
+    return this.mapToOracle(oracle);
+  }
+
+  async getOracleByName(name: string): Promise<Oracle | null> {
+    const oracle = await this.oracleProviders
+      .findOne({ name: name })
+      .catch((error: unknown) /* istanbul ignore next */ => {
+        const errorMessage = `Unable to get oracle by name: ${(error as Error).message}`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToGetOracleError(errorMessage);
+      });
+
+    if (!oracle) {
+      return null;
+    }
+
+    return this.mapToOracle(oracle);
+  }
+
+  async getOracle(partyType: string, currency: string | null): Promise<Oracle | null> {
+    const oracles: Document | null = await this.oracleProviders
+      .find({
+        partyType: partyType,
+      })
+      .toArray()
+      .catch((error: unknown) /* istanbul ignore next */ => {
+        const errorMessage = `Unable to get oracle: ${(error as Error).message}`;
+        this._logger.error(errorMessage + `  - ${error}`);
+        throw new UnableToGetOracleError(errorMessage);
+      });
+
+    const mappedOraclesWithCurrency: Oracle[] = [];
+    const mappedOraclesWithoutCurrency: Oracle[] = [];
+
+    oracles.map((oracle: WithId<Document>) => {
+      if (oracle.currency === currency) {
+        mappedOraclesWithCurrency.push(this.mapToOracle(oracle));
+      } else {
+        mappedOraclesWithoutCurrency.push(this.mapToOracle(oracle));
+      }
+    });
+
+    const oracle = mappedOraclesWithCurrency.shift() ?? mappedOraclesWithoutCurrency.shift() ?? null;
+
+    if (!oracle) {
+      const errorMessage = `Oracle with partyType ${partyType}  and currency ${currency} not found`;
+      this._logger.debug(errorMessage);
+      throw new NoSuchOracleError(errorMessage);
+    }
+
+    return oracle;
+  }
+
+  private mapToOracle(oracle: Document): Oracle {
+    return {
+      id: oracle.id,
+      name: oracle.name,
+      partyType: oracle.partyType,
+      endpoint: oracle.endpoint,
+      type: oracle.type,
+      currency: oracle.currency,
+    };
+  }
 }

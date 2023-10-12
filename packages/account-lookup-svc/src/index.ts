@@ -43,5 +43,5 @@
 import { Service } from "./service";
 
 Service.start().then(() => {
-    console.log("Started account lookup service");
+  console.log("Started account lookup service");
 });

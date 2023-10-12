@@ -30,215 +30,213 @@
  --------------
  **/
 
- "use strict";
+"use strict";
 
-
- // Logger.
-import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { AccountLookupAggregate, AddOracleDTO, DuplicateOracleError, Oracle, OracleNotFoundError } from "../../src";
+import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
-    AccountLookupAggregate,
-    AddOracleDTO,
-    DuplicateOracleError,
-    OracleNotFoundError,
-    Oracle,
-} from "../../src";
-import { mockedOracleAdapters, MemoryOracleFinder,MemoryMessageProducer,MemoryOracleProviderFactory, MemoryParticipantService, mockedOracleAdapterResults } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
-import { logger, oracleFinder, oracleProviderFactory, messageProducer, participantService } from "../utils/mocked_variables";
-import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
+  logger,
+  messageProducer,
+  oracleFinder,
+  oracleProviderFactory,
+  participantService,
+} from "../utils/mocked_variables";
+import { mockedOracleAdapters, mockedOracleAssociations } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 let aggregate: AccountLookupAggregate;
 
 describe("Domain - Unit Tests Oracle admin routes", () => {
+  beforeAll(async () => {
+    const metricsMock: IMetrics = new MetricsMock();
+    aggregate = new AccountLookupAggregate(
+      logger,
+      oracleFinder,
+      oracleProviderFactory,
+      messageProducer,
+      participantService,
+      metricsMock
+    );
+    await aggregate.init();
+  });
 
-    beforeAll(async () => {
-        const metricsMock :IMetrics = new MetricsMock();
-        aggregate = new AccountLookupAggregate(logger, oracleFinder,oracleProviderFactory, messageProducer,participantService, metricsMock);
-        await aggregate.init();
+  afterEach(async () => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
+    jest.clearAllMocks();
+  });
+
+  test("should be able to get all oracles", async () => {
+    // Arrange
+    const expectedOraclesLength = mockedOracleAdapters.length;
+
+    // Act
+    const oracles = await aggregate.getAllOracles();
+
+    // Assert
+    expect(oracles.length).toBe(expectedOraclesLength);
+  });
+
+  test("should be able to get an oracle by its id", async () => {
+    // Arrange
+    const id = mockedOracleAdapters[0].id;
+
+    // Act
+    const oracle = await aggregate.getOracleById(id);
+
+    // Assert
+    expect(oracle?.id).toBe(id);
+  });
+
+  test("should be able to perform an health check on an existing oracle", async () => {
+    // Arrange
+    const id = mockedOracleAdapters[0].id;
+
+    // Act
+    const result = await aggregate.healthCheck(id);
+
+    // Assert
+    expect(result).toBeTruthy();
+  });
+
+  test("should throw an error when performing an health check on a non existing oracle", async () => {
+    // Arrange
+    const id = "non-existing-oracle";
+
+    // Act && Assert
+    await expect(aggregate.healthCheck(id)).rejects.toThrowError(OracleNotFoundError);
+  });
+
+  test("shouldnt be able to add oracle if oracle already exists", async () => {
+    // Arrange
+    const oracle = mockedOracleAdapters[0];
+
+    // Act && Assert
+    await expect(aggregate.addOracle(oracle)).rejects.toThrowError(DuplicateOracleError);
+  });
+
+  test("shouldnt be able to add oracle with same name", async () => {
+    // Arrange
+    const oracle: Oracle = {
+      name: mockedOracleAdapters[0].name,
+      endpoint: "http://localhost:3000",
+      id: "not-existing-id",
+      partyType: "DFSP",
+      type: "builtin",
+      currency: "USD",
+    };
+
+    // Act && Assert
+    await expect(aggregate.addOracle(oracle)).rejects.toThrowError(DuplicateOracleError);
+  });
+
+  test("should throw error if oracle type is not supported", async () => {
+    // Arrange
+    const oracle: any = {
+      name: "not-supported-oracle",
+      endpoint: "http://localhost:3000",
+      id: "not-existing-id",
+      partyType: "DFSP",
+      type: "not-supported-type",
+    };
+
+    // Act && Assert
+    await expect(aggregate.addOracle(oracle)).rejects.toThrowError();
+  });
+
+  test("should throw error if oracle finder can't add oracle", async () => {
+    // Arrange
+    const oracle: any = {
+      name: "not-supported-oracle",
+      endpoint: "http://localhost:3000",
+      id: "not-existing-id",
+      partyType: "DFSP",
+      type: "not-supported-type",
+    };
+
+    jest.spyOn(oracleFinder, "addOracle").mockImplementationOnce(() => {
+      throw new Error("error");
     });
 
-    afterEach(async () => {
-        jest.restoreAllMocks();
+    // Act && Assert
+    await expect(aggregate.addOracle(oracle)).rejects.toThrowError();
+  });
+
+  test("should be able to add oracle", async () => {
+    // Arrange
+    const oracle: AddOracleDTO = {
+      id: null,
+      name: "new-oracle",
+      endpoint: "http://localhost:3000",
+      partyType: "DFSP",
+      type: "builtin",
+      currency: "USD",
+    };
+
+    // Act
+    const result = await aggregate.addOracle(oracle);
+
+    // Assert
+    expect(result).toBeDefined();
+    expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === result)).toBeTruthy();
+  });
+
+  test("shouldnt be able to remove oracle if oracle doesn't exist", async () => {
+    // Arrange
+    const oracleId = "not-existing-id";
+
+    // Act && Assert
+    await expect(aggregate.removeOracle(oracleId)).rejects.toThrow(OracleNotFoundError);
+  });
+
+  test("shouldnt be able to remove oracle if oracle finder cant remove it", async () => {
+    // Arrange
+    const oracleId = mockedOracleAdapters[0].id;
+
+    jest.spyOn(oracleFinder, "removeOracle").mockImplementationOnce(() => {
+      throw new Error("error");
     });
 
-    afterAll(async () => {
-        jest.clearAllMocks();
-    });
+    // Act && Assert
+    await expect(aggregate.removeOracle(oracleId)).rejects.toThrowError();
+  });
 
-    test("should be able to get all oracles", async () => {
-        // Arrange
-        const expectedOraclesLength = mockedOracleAdapters.length;
+  test("should be able to remove oracle", async () => {
+    // Arrange
+    const oracleId = mockedOracleAdapters[0].id;
 
-        // Act
-        const oracles = await aggregate.getAllOracles();
+    // Act
+    await aggregate.removeOracle(oracleId);
 
-        // Assert
-        expect(oracles.length).toBe(expectedOraclesLength);
-    });
+    // Assert
+    expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
+  });
 
-    test("should be able to get an oracle by its id", async () => {
-        // Arrange
-        const id = mockedOracleAdapters[0].id;
+  test("should return all oracles", async () => {
+    // Arrange
+    const expectedOraclesLength = mockedOracleAdapters.length;
 
-        // Act
-        const oracle = await aggregate.getOracleById(id);
+    // Act
+    const oracles = await aggregate.getAllOracles();
 
-        // Assert
-        expect(oracle?.id).toBe(id);
-    });
+    // Assert
+    expect(oracles.length).toBe(expectedOraclesLength);
+  });
 
-    test("should be able to perform an health check on an existing oracle", async () => {
-        // Arrange
-        const id = mockedOracleAdapters[0].id;
+  test("should return builtin oracle associations", async () => {
+    // Arrange
+    const mockedOracleAdapter = mockedOracleAssociations[0];
 
-        // Act
-        const result = await aggregate.healthCheck(id);
+    // Act
+    const result = await aggregate.getBuiltInOracleAssociations();
 
-        // Assert
-        expect(result).toBeTruthy();
-
-    });
-
-    test("should throw an error when performing an health check on a non existing oracle", async () => {
-        // Arrange
-        const id = "non-existing-oracle";
-
-        // Act && Assert
-        await expect(aggregate.healthCheck(id)).rejects.toThrowError(OracleNotFoundError);
-    });
-
-
-    test("shouldnt be able to add oracle if oracle already exists", async () => {
-        // Arrange
-        const oracle = mockedOracleAdapters[0];
-
-        // Act && Assert
-        await expect(aggregate.addOracle(oracle)).rejects.toThrowError(DuplicateOracleError);
-    });
-
-    test("shouldnt be able to add oracle with same name", async () => {
-        // Arrange
-        const oracle:Oracle = {
-            name: mockedOracleAdapters[0].name,
-            endpoint: "http://localhost:3000",
-            id: "not-existing-id",
-            partyType: "DFSP",
-            type: "builtin",
-            currency: "USD",
-        };
-
-        // Act && Assert
-        await expect(aggregate.addOracle(oracle)).rejects.toThrowError(DuplicateOracleError);
-    });
-
-    test("should throw error if oracle type is not supported", async () => {
-        // Arrange
-        const oracle: any = {
-            name: "not-supported-oracle",
-            endpoint: "http://localhost:3000",
-            id: "not-existing-id",
-            partyType: "DFSP",
-            type: "not-supported-type",
-        };
-
-        // Act && Assert
-        await expect(aggregate.addOracle(oracle)).rejects.toThrowError();
-    });
-
-    test("should throw error if oracle finder can't add oracle", async () => {
-        // Arrange
-        const oracle: any = {
-            name: "not-supported-oracle",
-            endpoint: "http://localhost:3000",
-            id: "not-existing-id",
-            partyType: "DFSP",
-            type: "not-supported-type",
-        };
-
-        jest.spyOn(oracleFinder, "addOracle").mockImplementationOnce(() => {
-            throw new Error("error");
-        });
-
-        // Act && Assert
-        await expect(aggregate.addOracle(oracle)).rejects.toThrowError();
-    });
-
-    test("should be able to add oracle", async () => {
-        // Arrange
-        const oracle:AddOracleDTO = {
-            id: null,
-            name: "new-oracle",
-            endpoint: "http://localhost:3000",
-            partyType: "DFSP",
-            type: "builtin",
-            currency: "USD",
-        };
-
-        // Act
-        const result = await aggregate.addOracle(oracle);
-
-        // Assert
-        expect(result).toBeDefined();
-        expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === result)).toBeTruthy();
-
-    });
-
-    test("shouldnt be able to remove oracle if oracle doesn't exist", async () => {
-        // Arrange
-        const oracleId = "not-existing-id";
-
-        // Act && Assert
-        await expect(aggregate.removeOracle(oracleId)).rejects.toThrow(OracleNotFoundError);
-    });
-
-    test("shouldnt be able to remove oracle if oracle finder cant remove it", async () => {
-        // Arrange
-        const oracleId = mockedOracleAdapters[0].id;
-
-        jest.spyOn(oracleFinder, "removeOracle").mockImplementationOnce(() => {
-            throw new Error("error");
-        });
-
-        // Act && Assert
-        await expect(aggregate.removeOracle(oracleId)).rejects.toThrowError();
-    });
-
-    test("should be able to remove oracle", async () => {
-        // Arrange
-        const oracleId = mockedOracleAdapters[0].id;
-
-        // Act
-        await aggregate.removeOracle(oracleId);
-
-        // Assert
-        expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
-    });
-
-    test("should return all oracles", async () => {
-        // Arrange
-        const expectedOraclesLength = mockedOracleAdapters.length;
-
-        // Act
-        const oracles = await aggregate.getAllOracles();
-
-        // Assert
-        expect(oracles.length).toBe(expectedOraclesLength);
-    });
-
-    test("should return builtin oracle associations", async()=>{
-        // Arrange
-        const mockedOracleAdapter = mockedOracleAdapterResults[0];
-
-        // Act
-        const result = await aggregate.getBuiltInOracleAssociations();
-
-        // Assert
-        expect(result).toBeDefined();
-        expect(result.length).toBe(1);
-        expect(result[0].fspId).toBe(mockedOracleAdapter.fspId);
-        expect(result[0].currency).toBe(mockedOracleAdapter.currency);
-        expect(result[0].partyId).toBe(mockedOracleAdapter.partyId);
-        expect(result[0].partyType).toBe(mockedOracleAdapter.partyType);
-    });
-
+    // Assert
+    expect(result).toBeDefined();
+    expect(result.length).toBe(1);
+    expect(result[0].fspId).toBe(mockedOracleAdapter.fspId);
+    expect(result[0].currency).toBe(mockedOracleAdapter.currency);
+    expect(result[0].partyId).toBe(mockedOracleAdapter.partyId);
+    expect(result[0].partyType).toBe(mockedOracleAdapter.partyType);
+  });
 });
