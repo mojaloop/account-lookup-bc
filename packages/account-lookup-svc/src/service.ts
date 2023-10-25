@@ -62,7 +62,7 @@ import {
   AccountLookupBCTopics,
   ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { AuthenticatedHttpRequester, IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { AuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import express, { Express } from "express";
 import { Server } from "net";
 import process from "process";
@@ -70,7 +70,8 @@ import { OracleAdminExpressRoutes } from "./routes/oracle_admin_routes";
 import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 import { IMetrics } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import { PrometheusMetrics } from "@mojaloop/platform-shared-lib-observability-client-lib";
-import { ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations-lib/dist/external_adapters/participant_adapter";
+import { ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations-lib";
+import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-public-types-lib";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";

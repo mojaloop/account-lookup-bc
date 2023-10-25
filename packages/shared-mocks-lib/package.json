@@ -32,8 +32,8 @@
     "lint:fix": "eslint ./src --fix"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-client-lib": "^0.1.24",
-    "@mojaloop/security-bc-client-lib": "^0.1.31",
+    "@mojaloop/logging-bc-client-lib": "~0.1.24",
+    "@mojaloop/security-bc-public-types-lib": "~0.3.3",
     "@mojaloop/participant-bc-public-types-lib": "~0.0.11",
     "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.100",
     "@mojaloop/account-lookup-bc-domain-lib": "*"

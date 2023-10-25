@@ -32,7 +32,7 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
 import { ParticipantAdapter } from "../../src/external_adapters/participant_adapter";
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-public-types-lib";
 import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";

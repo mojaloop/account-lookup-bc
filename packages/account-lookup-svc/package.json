@@ -1,6 +1,6 @@
 {
   "name": "@mojaloop/account-lookup-bc-account-lookup-svc",
-  "version": "0.1.14",
+  "version": "0.3.0",
   "description": "Account Lookup BC service.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/mojaloop/account-lookup-bc/tree/main/packages/account-lookup-svc",
@@ -39,12 +39,13 @@
     "test:unit": "jest --passWithNoTests --detectOpenHandles --testMatch **/test/unit/**/*.test.ts || ECHO."
   },
   "dependencies": {
-    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "^0.3.65",
-    "@mojaloop/logging-bc-client-lib": "^0.1.24",
-    "@mojaloop/logging-bc-public-types-lib": "^0.1.19",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.100",
-    "@mojaloop/platform-shared-lib-public-messages-lib": "^0.1.145",
-    "@mojaloop/security-bc-client-lib": "^0.1.31",
+    "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib": "~0.3.65",
+    "@mojaloop/logging-bc-client-lib": "~0.1.24",
+    "@mojaloop/logging-bc-public-types-lib": "~0.1.19",
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "~0.2.100",
+    "@mojaloop/platform-shared-lib-public-messages-lib": "~0.1.145",
+    "@mojaloop/security-bc-client-lib": "~0.3.3",
+    "@mojaloop/security-bc-public-types-lib": "~0.3.3",
     "@mojaloop/platform-shared-lib-observability-client-lib": "~0.1.9",
     "@mojaloop/platform-shared-lib-observability-types-lib": "~0.1.8",
     "@mojaloop/participants-bc-client-lib": "~0.1.11",

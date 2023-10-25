@@ -33,13 +33,13 @@
     "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-public-types-lib": "^0.1.19",
+    "@mojaloop/logging-bc-public-types-lib": "~0.1.19",
     "@mojaloop/participant-bc-public-types-lib": "~0.0.11",
     "@mojaloop/participants-bc-client-lib": "~0.1.11",
-    "@mojaloop/security-bc-client-lib": "^0.1.31",
+    "@mojaloop/security-bc-public-types-lib": "~0.3.3",
     "@mojaloop/account-lookup-bc-domain-lib":"*",
-    "axios": "^1.4.0",
-    "mongodb": "^5.6.0"
+    "axios": "~1.4.0",
+    "mongodb": "5.6.0"
   },
   "devDependencies": {
     "@mojaloop/account-lookup-bc-shared-mocks-lib": "*",

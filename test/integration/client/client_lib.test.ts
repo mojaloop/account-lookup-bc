@@ -45,7 +45,7 @@ import { MongoOracleProviderRepo } from "../../../packages/implementations-lib/s
 import { Oracle } from "../../../packages/domain-lib/src";
 import { Collection, MongoClient } from "mongodb";
 import { AccountLookupHttpClient } from "./../../../packages/client-lib/src/account_lookup_http_client";
-import { IAuthenticatedHttpRequester, AuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
+import { IAuthenticatedHttpRequester, AuthenticatedHttpRequester } from "@mojaloop/security-bc-public-types-lib";
 import { Service } from "./../../../packages/account-lookup-svc/src/service";
 import { MongoOracleFinderRepo } from "@mojaloop/account-lookup-bc-implementations-lib";
 

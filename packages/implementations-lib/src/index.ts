@@ -44,5 +44,6 @@ export * from "./oracles/mongo_oraclefinder";
 export * from "./oracles/oracleadapter_factory";
 export * from "./oracles/adapters/builtin/mongo_oracleprovider";
 export * from "./oracles/adapters/remote/http_oracleprovider";
+export * from "./external_adapters/participant_adapter";
 export * from "./errors";
 

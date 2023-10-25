@@ -35,7 +35,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
 	UnableToGetFspIdError,
 } from "./errors";
-import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-client-lib";
+import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-public-types-lib";
 
 
 const SERVICE_BASE_PATH = "/account-lookup";
