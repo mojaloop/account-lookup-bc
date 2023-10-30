@@ -75,3 +75,10 @@ export type Association = {
     currency: string|null;
 }
 
+export declare type AssociationsSearchResults = {
+    pageSize: number;
+    totalPages: number;
+    pageIndex: number;
+    items: Association[];
+}
+  
