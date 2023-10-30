@@ -239,9 +239,9 @@ export class Service {
 
     // token helper
     if (!tokenHelper) {    
-      this.tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+      tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
     }
-    this.tokenHelper = tokenHelper as TokenHelper;
+    this.tokenHelper = tokenHelper;
     await this.tokenHelper.init();
 
     this.aggregate = new AccountLookupAggregate(
