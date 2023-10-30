@@ -42,133 +42,142 @@
 
 import express from "express";
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import {AccountLookupAggregate, OracleNotFoundError} from "@mojaloop/account-lookup-bc-domain-lib";
+import {AccountLookupAggregate, AssociationsSearchResults, OracleNotFoundError, AccountLookupPrivileges} from "@mojaloop/account-lookup-bc-domain-lib";
 import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
+import { IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
 
 export class OracleAdminExpressRoutes extends BaseRoutes {
-     constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger) {
-         super(logger, accountLookupAggregate);
-         this.logger.createChild(this.constructor.name);
+     constructor(accountLookupAggregate: AccountLookupAggregate, logger: ILogger, tokenHelper: ITokenHelper, authorizationClient: IAuthorizationClient) {
+        super(logger, accountLookupAggregate, tokenHelper, authorizationClient);
+        this.logger.createChild(this.constructor.name);
 
-         this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
+        this.mainRouter.get("/oracles",this.getAllOracles.bind(this));
 
-         this.mainRouter.get("/oracles/builtin-associations",this.getAllBuiltinOracleAssociations.bind(this));
+        this.mainRouter.get("/oracles/builtin-associations",this.getAllBuiltinOracleAssociations.bind(this));
 
-         this.mainRouter.get("/oracles/:id",[
-             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ],this.getOracleById.bind(this));
-
-         this.mainRouter.delete("/oracles/:id",[
+        this.mainRouter.get("/oracles/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ], this.deleteOracle.bind(this));
+        ],this.getOracleById.bind(this));
 
-         this.mainRouter.post("/oracles",[
+        this.mainRouter.delete("/oracles/:id",[
+            check("id").isString().notEmpty().withMessage("id must be a non empty string")
+        ], this.deleteOracle.bind(this));
+
+        this.mainRouter.post("/oracles",[
             check("name").isString().notEmpty().withMessage("name must be a non empty string").bail(),
             check("type").isString().isIn(['builtin','remote-http']).withMessage("type must be valid").bail(),
             check("partyType").isString().notEmpty().withMessage("partyType must be a non empty string").bail(),
             check("currency").optional(),
-         ], this.createOracle.bind(this));
+        ], this.createOracle.bind(this));
 
-         this.mainRouter.get("/oracles/health/:id",[
+        this.mainRouter.get("/oracles/health/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
-         ], this.healthCheck.bind(this));
+        ], this.healthCheck.bind(this));
 
-     }
+    }
 
 
     private async getAllOracles(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
         if (!this.validateRequest(req, res)) {
             return;
         }
 
         this.logger.info("Fetching all oracles");
-         try {
-             const fetched = await this.accountLookupAggregate.getAllOracles();
-             res.send(fetched);
-         } catch (err: unknown) {
-             this.logger.error(err);
-             res.status(500).json({
-                 status: "error",
-                 msg: (err as Error).message
-             });
-         }
+        try {
+            const fetched = await this.accountLookupAggregate.getAllOracles();
+            res.send(fetched);
+        } catch (err: unknown) {
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message
+            });
+        }
     }
 
     private async getAllBuiltinOracleAssociations(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
+            
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            this.logger.info("Fetching all builtin oracle associations");
+
+            const fetched = await this.accountLookupAggregate.getBuiltInOracleAssociations();
+            res.send(fetched);
+        } catch (err: unknown) {
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message
+            });
+        }
+    }
+
+    private async getOracleById (req: express.Request, res: express.Response, _next: express.NextFunction) {
+        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
         if (!this.validateRequest(req, res)) {
             return;
         }
 
-        this.logger.info("Fetching all builtin oracle associations");
-         try {
-             const fetched = await this.accountLookupAggregate.getBuiltInOracleAssociations();
-             res.send(fetched);
-         } catch (err: unknown) {
-             this.logger.error(err);
-             res.status(500).json({
-                 status: "error",
-                 msg: (err as Error).message
-             });
-         }
-    }
+        const id = req.params["id"] ?? null;
+        this.logger.info(`Fetching Oracle [${id}].`);
 
-    private async getOracleById (req: express.Request, res: express.Response, _next: express.NextFunction) {
-         if (!this.validateRequest(req, res)) {
-             return;
-         }
-
-         const id = req.params["id"] ?? null;
-         this.logger.info(`Fetching Oracle [${id}].`);
-
-         try {
-             const fetched = await this.accountLookupAggregate.getOracleById(id);
-             if(!fetched){
-                 res.status(404).json({
-                     status: "error",
-                     msg: "Oracle not found"
-                 });
-                 return;
-             }
-             res.send(fetched);
-         } catch (err: unknown) {
-             this.logger.error(err);
-             res.status(500).json({
-                 status: "error",
-                 msg: (err as Error).message
-             });
-         }
+        try {
+            const fetched = await this.accountLookupAggregate.getOracleById(id);
+            if(!fetched){
+                res.status(404).json({
+                    status: "error",
+                    msg: "Oracle not found"
+                });
+                return;
+            }
+            res.send(fetched);
+        } catch (err: unknown) {
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message
+            });
+        }
     }
 
     private async deleteOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.REMOVE_ORACLE);
         if (!this.validateRequest(req, res)) {
             return;
         }
         const id = req.params["id"] ?? null;
-         this.logger.info(`Deleting Oracle [${id}].`);
+        this.logger.info(`Deleting Oracle [${id}].`);
 
-         try {
-             const fetched = await this.accountLookupAggregate.removeOracle(id);
-             res.send(fetched);
-         } catch (err: unknown) {
-             if(err instanceof OracleNotFoundError){
-                 res.status(404).json({
-                     status: "error",
-                     msg: (err as Error).message
-                 });
-                 return;
-             }
+        try {
+            const fetched = await this.accountLookupAggregate.removeOracle(id);
+            res.send(fetched);
+        } catch (err: unknown) {
+            if(err instanceof OracleNotFoundError){
+                res.status(404).json({
+                    status: "error",
+                    msg: (err as Error).message
+                });
+                return;
+            }
 
-             this.logger.error(err);
-             res.status(500).json({
-                 status: "error",
-                 msg: (err as Error).message
-             });
-         }
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message
+            });
+        }
     }
 
 
     private async createOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.CREATE_ORACLE);
+
         if (!this.validateRequest(req, res)) {
             return;
         }

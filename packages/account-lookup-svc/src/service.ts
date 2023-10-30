@@ -47,6 +47,7 @@ import {
   IOracleFinder,
   IOracleProviderFactory,
   IParticipantServiceAdapter,
+  AccountLookupPrivilegesDefinition
 } from "@mojaloop/account-lookup-bc-domain-lib";
 import { IMessageProducer, IMessageConsumer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
@@ -62,7 +63,6 @@ import {
   AccountLookupBCTopics,
   ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { AuthenticatedHttpRequester } from "@mojaloop/security-bc-client-lib";
 import express, { Express } from "express";
 import { Server } from "net";
 import process from "process";
@@ -71,7 +71,8 @@ import { AccountLookupExpressRoutes } from "./routes/account_lookup_routes";
 import { IMetrics } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import { PrometheusMetrics } from "@mojaloop/platform-shared-lib-observability-client-lib";
 import { ParticipantAdapter } from "@mojaloop/account-lookup-bc-implementations-lib";
-import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-public-types-lib";
+import { AuthenticatedHttpRequester, AuthorizationClient, TokenHelper } from "@mojaloop/security-bc-client-lib";
+import { IAuthenticatedHttpRequester, IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
 
 // Global vars
 const BC_NAME = "account-lookup-bc";
@@ -107,8 +108,10 @@ const SVC_CLIENT_SECRET = process.env["SVC_CLIENT_ID"] || "superServiceSecret";
 
 const AUTH_N_SVC_BASEURL = process.env["AUTH_N_SVC_BASEURL"] || "http://localhost:3201";
 const AUTH_N_SVC_TOKEN_URL = AUTH_N_SVC_BASEURL + "/token"; // TODO this should not be known here, libs that use the base should add the suffix
-// const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
-// const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
+const AUTH_N_TOKEN_ISSUER_NAME = process.env["AUTH_N_TOKEN_ISSUER_NAME"] || "mojaloop.vnext.dev.default_issuer";
+const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.vnext.dev.default_audience";
+const AUTH_N_SVC_JWKS_URL = process.env["AUTH_N_SVC_JWKS_URL"] || `${AUTH_N_SVC_BASEURL}/.well-known/jwks.json`;
+const AUTH_Z_SVC_BASEURL = process.env["AUTH_Z_SVC_BASEURL"] || "http://localhost:3202";
 
 const consumerOptions: MLKafkaJsonConsumerOptions = {
   kafkaBrokerList: KAFKA_URL,
@@ -133,6 +136,8 @@ export class Service {
   static aggregate: AccountLookupAggregate;
   static expressServer: Server;
   static metrics: IMetrics;
+  static authorizationClient: IAuthorizationClient;
+  static tokenHelper: ITokenHelper;
 
   static async start(
     logger?: ILogger,
@@ -142,7 +147,8 @@ export class Service {
     oracleProviderFactory?: IOracleProviderFactory,
     authRequester?: IAuthenticatedHttpRequester,
     participantsServiceAdapter?: IParticipantServiceAdapter,
-    metrics?: IMetrics
+    metrics?: IMetrics,
+    authorizationClient?: IAuthorizationClient
   ): Promise<void> {
     console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -220,6 +226,20 @@ export class Service {
 
     this.logger.info("Kafka Producer Initialized");
 
+    // authorization client
+    if (!authorizationClient) {
+        // setup privileges - bootstrap app privs and get priv/role associations
+        authorizationClient = new AuthorizationClient(BC_NAME, APP_NAME, APP_VERSION, AUTH_Z_SVC_BASEURL, logger);
+        authorizationClient.addPrivilegesArray(AccountLookupPrivilegesDefinition);
+        await (authorizationClient as AuthorizationClient).bootstrap(true);
+        await (authorizationClient as AuthorizationClient).fetch();
+    }
+    this.authorizationClient = authorizationClient;
+
+    // token helper
+    this.tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+    await this.tokenHelper.init();
+
     this.aggregate = new AccountLookupAggregate(
       this.logger,
       this.oracleFinder,
@@ -245,8 +265,8 @@ export class Service {
       this.app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
 
       // Add admin and client http routes
-      const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger);
-      const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger);
+      const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
+      const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
       this.app.use("/admin", oracleAdminRoutes.mainRouter);
       this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
 

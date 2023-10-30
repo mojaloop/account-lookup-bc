@@ -33,14 +33,15 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError } from "@mojaloop/account-lookup-bc-domain-lib";
+import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError, AccountLookupPrivileges } from "@mojaloop/account-lookup-bc-domain-lib";
 import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
+import { IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
 
 export class AccountLookupExpressRoutes extends BaseRoutes {
 
-    constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger) {
-        super(logger, accountLookupAgg);
+    constructor(accountLookupAgg: AccountLookupAggregate, logger: ILogger, tokenHelper: ITokenHelper, authorizationClient: IAuthorizationClient) {
+        super(logger, accountLookupAgg, tokenHelper, authorizationClient);
         logger.createChild("AccountLookupExpressRoutes");
 
         this.mainRouter.get("/:partyType/:partyId",[
@@ -51,6 +52,8 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
     }
 
     private async getAccountLookUp(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
+
         if (!this.validateRequest(req, res)) {
             return;
         }
