@@ -55,11 +55,13 @@ import {
   MemoryMessageConsumer,
   MemoryParticipantService,
   MemoryAuthenticatedHttpRequesterMock,
-  mockedOracleAssociations,
+  MemoryAuthorizationClient,
+  MemoryTokenHelper,
+  mockedOracleAssociations
 } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
 import { IMessageConsumer, IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
-import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-public-types-lib";
+import { CallSecurityContext, IAuthenticatedHttpRequester, IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 
 const logger: ILogger = new ConsoleLogger();
@@ -79,215 +81,318 @@ const mockedAuthRequester: IAuthenticatedHttpRequester = new MemoryAuthenticated
 
 const mockedMetrics: IMetrics = new MetricsMock();
 
+const mockedAuthorizationClient: IAuthorizationClient = new MemoryAuthorizationClient(logger);
+
+const mockedTokenHelper: ITokenHelper = new MemoryTokenHelper(logger);
+
 const serverBaseUrl = (process.env["ADMIN_URL"] || "http://localhost:3030") + "/admin";
 
+const accessToken = "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkR1RVNzRFdmb2JjRURQODR4c2hjU2sxUFJsMnMwMUN0RW9ibkNoRUVFT2cifQ.eyJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzZWN1cml0eS1iYy11aSIsInJvbGVzIjpbImh1Yl9vcGVyYXRvciJdLCJpYXQiOjE2OTgwMjEwNTksImV4cCI6MTY5ODYyNTg1OSwiYXVkIjoibW9qYWxvb3Audm5leHQuZGV2LmRlZmF1bHRfYXVkaWVuY2UiLCJpc3MiOiJtb2phbG9vcC52bmV4dC5kZXYuZGVmYXVsdF9pc3N1ZXIiLCJzdWIiOiJ1c2VyOjp1c2VyIiwianRpIjoiYzFkNjdkMTEtYzExNS00MTU0LTlmZDEtZThlNDI5M2E3YjFkIn0.QK6QVblcaKldvdbCH6sWSa7kqrOjJ1urWcp6dyMWo0Ln7Faq29bPE4t4Mcd-WQVhO3a1sE-YhBrcpUNI0YCbbS5rRdI1SRqnCMWv3g9vyDKEnIFFu_6LM7K1Ct_JGpT4fP4KMVnT03mMeobIESbVu8Ep1zSfLWv2TAB4EzZUlh-HeJMDaUj8ESM91PdXmCHieM1br3JLwuy2WSxMJSbjYrH1G68TW38U4CPBTyhRwiwlB8Ro5MTjHqdH8EQC7A_E4iwwe-GkuoP63qOSPA0ZZ0O7Ry-dRhyips_S3cSjGWAgwXDyylh5Q4OjAtTpD1di1bm2uj1lXXkFC3cDQiV94Q";
+
+const securityContext:CallSecurityContext = {
+  "accessToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IkR1RVNzRFdmb2JjRURQODR4c2hjU2sxUFJsMnMwMUN0RW9ibkNoRUVFT2cifQ.eyJ0eXAiOiJCZWFyZXIiLCJhenAiOiJzZWN1cml0eS1iYy11aSIsInJvbGVzIjpbImFkbWluIl0sImlhdCI6MTY5ODE1NDUzNSwiZXhwIjoxNjk4NzU5MzM1LCJhdWQiOiJtb2phbG9vcC52bmV4dC5kZXYuZGVmYXVsdF9hdWRpZW5jZSIsImlzcyI6Im1vamFsb29wLnZuZXh0LmRldi5kZWZhdWx0X2lzc3VlciIsInN1YiI6InVzZXI6OmFkbWluIiwianRpIjoiZTg1MGY1NmItMDM2Yi00YTE0LWI5ZjUtNWUyZWM1NzFlMjdmIn0.kkdTEy1ISNu_nwHRpwg0iaK1aWPfMChZF1Lpbkne5LackYGXCnjnIY5Xt2fY0pJK2awEbduxPM7RWLKoZcKbw_9Vq63OupFqqr8s69q3EjLMZLSeGMTVVNWWEKKm16NM1LSD_z7Em7RcgeQFMcEtU2tOZvFpnvZpXk_-r-mL7AuYAy2ZVI05F0SMczInVAg_3s13yPs_oEPa-zeY9q-nU0d-pvNm7f0USZpZYULjcTmUkdNiM_rZsjdJxI4vrTmumTdts5JV7Qirt4Jk-kf-sFKRpnwQ_ORosBrQiW_B8usqqQb3qWkS4wXOgxnUMqoTneJzXHy_2L4AeDcrS_r6Dw",
+  "clientId": "1",
+  "platformRoleIds": ["2"],
+  "username": "admin"
+}
+
 describe("Oracle Admin Routes - Unit Test", () => {
-  beforeAll(async () => {
-    await Service.start(
-      logger,
-      mockedConsumer,
-      mockedProducer,
-      mockedOracleFinder,
-      mockedOracleProviderFactory,
-      mockedAuthRequester,
-      mockedParticipantService,
-      mockedMetrics
-    );
-  });
+	beforeAll(async () => {
+		await Service.start(
+			logger,
+			mockedConsumer,
+			mockedProducer,
+			mockedOracleFinder,
+			mockedOracleProviderFactory,
+			mockedAuthRequester,
+			mockedParticipantService,
+			mockedMetrics,
+			mockedAuthorizationClient,
+			mockedTokenHelper
+		);
+	});
 
-  afterEach(async () => {
-    jest.restoreAllMocks();
-  });
+	afterEach(async () => {
+		jest.restoreAllMocks();
+	});
 
-  afterAll(async () => {
-    await Service.stop();
-    jest.clearAllMocks();
-  });
+	afterAll(async () => {
+		await Service.stop();
+		jest.clearAllMocks();
+	});
 
-  test("GET - should fetch an array of oracles", async () => {
-    // Act
-    const response = await request(serverBaseUrl).get("/oracles");
+	test("GET - should fetch an array of oracles", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(Array.isArray(response.body)).toEqual(true);
-    expect(response.body.length).toBeGreaterThan(0);
-  });
+		// Act 
+		const response = await request(serverBaseUrl)
+			.get("/oracles")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-  test("GET - should throw 500 if an error occurred while fetching oracles", async () => {
-    // Arrange
-    jest.spyOn(mockedOracleFinder, "getAllOracles").mockRejectedValueOnce(new Error("Error fetching oracles"));
+		// Assert
+		expect(response.status).toBe(200);
+		expect(Array.isArray(response.body)).toEqual(true);
+		expect(response.body.length).toBeGreaterThan(0);
+	});
 
-    // Act
-    const response = await request(serverBaseUrl).get("/oracles");
+	test("GET - should throw 500 if an error occurred while fetching oracles", async () => {
+		// Arrange
+		jest.spyOn(mockedOracleFinder, "getAllOracles").mockRejectedValueOnce(new Error("Error fetching oracles"));
 
-    // Assert
-    expect(response.status).toBe(500);
-  });
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
+		
+		// Act
+		const response = await request(serverBaseUrl)
+			.get("/oracles")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-  test("GET - should fetch an array of builtin oracle associations", async () => {
-    // Arrange
-    const expectedAssociations = mockedOracleAssociations[0];
+		// Assert
+		expect(response.status).toBe(500);
+	});
 
-    // Act
-    const response = await request(serverBaseUrl).get("/oracles/builtin-associations");
+	test("GET - should fetch an array of builtin oracle associations", async () => {
+		// Arrange
+		const expectedAssociations = mockedOracleAssociations[0];
 
-    // Assert
-    expect(response.status).toBe(200);
-    const associationResponse: Association = response.body[0];
-    expect(associationResponse.fspId).toEqual(expectedAssociations.fspId);
-    expect(associationResponse.currency).toEqual(expectedAssociations.currency);
-    expect(associationResponse.partyId).toEqual(expectedAssociations.partyId);
-    expect(associationResponse.partyType).toEqual(expectedAssociations.partyType);
-  });
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-  test("GET - should throw 500 if an error occurred while fetching builtin oracle associations", async () => {
-    // Arrange
-    jest
-      .spyOn(mockedOracleFinder, "getAllOracles")
-      .mockRejectedValueOnce(new Error("Error fetching builtin oracle associations"));
+		// Act
+		const response = await request(serverBaseUrl)
+			.get("/oracles/builtin-associations")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Act
-    const response = await request(serverBaseUrl).get("/oracles/builtin-associations");
+		// Assert
+		expect(response.status).toBe(200);
+		const associationResponse: Association = response.body[0];
+		expect(associationResponse.fspId).toEqual(expectedAssociations.fspId);
+		expect(associationResponse.currency).toEqual(expectedAssociations.currency);
+		expect(associationResponse.partyId).toEqual(expectedAssociations.partyId);
+		expect(associationResponse.partyType).toEqual(expectedAssociations.partyType);
+	});
 
-    // Assert
-    expect(response.status).toBe(500);
-  });
+	test("GET - should throw 500 if an error occurred while fetching builtin oracle associations", async () => {
+		// Arrange
+		jest.spyOn(mockedOracleFinder, "getAllOracles")
+			.mockRejectedValueOnce(new Error("Error fetching builtin oracle associations"));
+		
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-  test("POST - should return an error when an invalid payload is passed", async () => {
-    // Act
-    const response = await request(serverBaseUrl).post("/oracles").send({
-      type: "invalid-type",
-      name: "oracle msisdn",
-      partyType: "MSISDN",
-    });
+		// Act
+		const response = await request(serverBaseUrl)
+			.get("/oracles/builtin-associations")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(422);
-  });
+		// Assert
+		expect(response.status).toBe(500);
+  	});
 
-  test("POST - should add a new oracle", async () => {
-    // Act
-    const response = await request(serverBaseUrl).post("/oracles").send({
-      type: "builtin",
-      name: "oracle msisdn",
-      partyType: "MSISDN",
-    });
+  	test("POST - should return an error when an invalid payload is passed", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(checkIfValidUUID(response.body.id)).toBe(true);
-  });
+		// Act
+		const response = await request(serverBaseUrl).post("/oracles")
+			.send({
+				type: "invalid-type",
+				name: "oracle msisdn",
+				partyType: "MSISDN",
+			})
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-  test("POST - should throw error if couldn't add the oracle", async () => {
-    // Arrange
-    jest.spyOn(mockedOracleFinder, "addOracle").mockRejectedValueOnce(new Error("Error adding oracle"));
+		// Assert
+		expect(response.status).toBe(422);
+  	});
 
-    // Act
-    const response = await request(serverBaseUrl).post("/oracles").send({
-      type: "builtin",
-      name: "oracle msisdn",
-      partyType: "MSISDN",
-    });
+  	test("POST - should add a new oracle", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
+			
+		// Act
+		const response = await request(serverBaseUrl)
+			.post("/oracles").send({
+				type: "builtin",
+				name: "oracle msisdn",
+				partyType: "MSISDN",
+			})
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(500);
-  });
 
-  test("GET - should fetch the recently added oracle by id", async () => {
-    // Arrange
-    const oracles = await request(serverBaseUrl).get("/oracles");
-    const oracleId = oracles.body[0].id;
+		// Assert
+		expect(response.status).toBe(200);
+		expect(checkIfValidUUID(response.body.id)).toBe(true);
+  	});
 
-    // Act
-    const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
+	test("POST - should throw error if couldn't add the oracle", async () => {
+		// Arrange
+		jest.spyOn(mockedOracleFinder, "addOracle").mockRejectedValueOnce(new Error("Error adding oracle"));
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body.name).toEqual("oracle1");
-    expect(response.body.type).toEqual("builtin");
-    expect(response.body.partyType).toEqual("bank");
-  });
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-  test("GET - should return not found error when fetched with non-existent id", async () => {
-    // Arrange
-    const oracleId = "non-existent-id";
+		// Act
+		const response = await request(serverBaseUrl)
+			.post("/oracles").send({
+				type: "builtin",
+				name: "oracle msisdn",
+				partyType: "MSISDN",
+			})		
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Act
-    const response = await request(serverBaseUrl).get(`/oracles/${oracleId}`);
+		// Assert
+		expect(response.status).toBe(500);
+	});
 
-    // Assert
-    expect(response.status).toBe(404);
-  });
+	test("GET - should fetch the recently added oracle by id", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValue(securityContext);
 
-  test("GET - should return health condition of the specified oracle", async () => {
-    // Arrange
-    const oracles = await request(serverBaseUrl).get("/oracles");
-    const oracleId = oracles.body[0].id;
+		const oracles = await request(serverBaseUrl)
+			.get("/oracles")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Act
-    const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+		const oracleId = oracles.body[0].id;
+		
+		// Act
+		const response = await request(serverBaseUrl)
+			.get(`/oracles/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual(true);
-  });
+		// Assert
+		expect(response.status).toBe(200);
+		expect(response.body.name).toEqual("oracle1");
+		expect(response.body.type).toEqual("builtin");
+		expect(response.body.partyType).toEqual("bank");
+	});
 
-  test("GET - should return not found error when health check with non-existent id", async () => {
-    // Arrange
-    const oracleId = "non-existent-id";
+	test("GET - should return not found error when fetched with non-existent id", async () => {
+		// Arrange
+		const oracleId = "non-existent-id";
 
-    // Act
-    const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
+		
+		// Act
+		const response = await request(serverBaseUrl)
+			.get(`/oracles/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(404);
-  });
+		// Assert
+		expect(response.status).toBe(404);
+	});
 
-  test("GET - should return an error when an invalid payload is passed", async () => {
-    // Arrange
-    const oracleId = "";
+	test("GET - should return health condition of the specified oracle", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValue(securityContext);
 
-    // Act
-    const response = await request(serverBaseUrl).get(`/oracles/health/${oracleId}`);
+		const oracles = await request(serverBaseUrl)
+			.get("/oracles")
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(404);
-  });
+		const oracleId = oracles.body[0].id;
 
-  test("DELETE - should delete the specified oracle", async () => {
-    // Arrange
-    const oracles = await request(serverBaseUrl).get("/oracles");
-    const oracleId = oracles.body[0].id;
+		// Act
+		const response = await request(serverBaseUrl)
+			.get(`/oracles/health/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Act
-    const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+		// Assert
+		expect(response.status).toBe(200);
+		expect(response.body).toEqual(true);
+	});
 
-    // Assert
-    expect(response.status).toBe(200);
-  });
+	test("GET - should return not found error when health check with non-existent id", async () => {
+		// Arrange
+		const oracleId = "non-existent-id";
 
-  test("DELETE - should return not found error when try to delete with non-existence id", async () => {
-    // Arrange
-    const oracleId = "non-existent-id";
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-    // Act
-    const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+		// Act
+		const response = await request(serverBaseUrl)
+			.get(`/oracles/health/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
 
-    // Assert
-    expect(response.status).toBe(404);
-  });
+		// Assert
+		expect(response.status).toBe(404);
+	});
 
-  test("DELETE - should return an error when an invalid payload is passed", async () => {
-    // Arrange
-    const oracleId = "";
+	test("GET - should return an error when an invalid payload is passed", async () => {
+		// Arrange
+		const oracleId = "";
 
-    // Act
-    const response = await request(serverBaseUrl).delete(`/oracles/${oracleId}`);
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
 
-    // Assert
-    expect(response.status).toBe(404);
-  });
+		// Act
+		const response = await request(serverBaseUrl)
+			.get(`/oracles/health/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
+
+		// Assert
+		expect(response.status).toBe(404);
+	});
+
+	test("DELETE - should delete the specified oracle", async () => {
+		// Arrange
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValue(securityContext);
+
+		const oracles = await request(serverBaseUrl)
+			.get("/oracles")
+			.set(`Authorization`, `Bearer ${accessToken}`);
+
+		const oracleId = oracles.body[0].id;
+
+
+		// Act
+		const response = await request(serverBaseUrl)
+			.delete(`/oracles/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
+
+		// Assert
+		expect(response.status).toBe(200);
+	});
+
+	test("DELETE - should return not found error when try to delete with non-existence id", async () => {
+		// Arrange
+		const oracleId = "non-existent-id";
+
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
+		
+		// Act
+		const response = await request(serverBaseUrl)
+			.delete(`/oracles/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
+
+		// Assert
+		expect(response.status).toBe(404);
+	});
+
+	test("DELETE - should return an error when an invalid payload is passed", async () => {
+		// Arrange
+		const oracleId = "";
+
+		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
+			.mockResolvedValueOnce(securityContext);
+
+		// Act
+		const response = await request(serverBaseUrl)
+			.delete(`/oracles/${oracleId}`)
+			.set(`Authorization`, `Bearer ${accessToken}`);
+
+		// Assert
+		expect(response.status).toBe(404);
+	});
 });
 
 function checkIfValidUUID(str: string): boolean {

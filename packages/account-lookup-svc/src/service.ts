@@ -148,7 +148,8 @@ export class Service {
     authRequester?: IAuthenticatedHttpRequester,
     participantsServiceAdapter?: IParticipantServiceAdapter,
     metrics?: IMetrics,
-    authorizationClient?: IAuthorizationClient
+    authorizationClient?: IAuthorizationClient,
+    tokenHelper?: ITokenHelper
   ): Promise<void> {
     console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
 
@@ -237,7 +238,10 @@ export class Service {
     this.authorizationClient = authorizationClient;
 
     // token helper
-    this.tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+    if (!tokenHelper) {    
+      this.tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+    }
+    this.tokenHelper = tokenHelper as TokenHelper;
     await this.tokenHelper.init();
 
     this.aggregate = new AccountLookupAggregate(

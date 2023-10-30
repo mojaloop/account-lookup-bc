@@ -21,32 +21,45 @@
 
  * Gates Foundation
  - Name Surname <name.surname@gatesfoundation.com>
-
- * Coil
- - Jason Bruwer <jason.bruwer@coil.com>
-
- * Crosslake
- - Pedro Sousa Barreto <pedrob@crosslaketech.com>
-
- * Gonçalo Garcia <goncalogarcia99@gmail.com>
-
+ 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
 "use strict";
 
-export * from "./memory_message_producer";
-export * from "./memory_message_consumer";
-export * from "./memory_oracle_finder";
-export * from "./memory_oracle_provider_adapter";
-export * from "./memory_oracle_provider_factory";
-export * from "./memory_participant_service";
-export * from "./memory_auth_requester";
-export * from "./memory_authorization_client";
-export * from "./memory_token_helper";
-export * from "./mocked_data";
+import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
+import { CallSecurityContext, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
 
+export class MemoryTokenHelper implements ITokenHelper {
+	private readonly logger: ILogger;
+	
+	constructor(
+		logger: ILogger,
+	) {
+		this.logger = logger;
+	}
+	
+	init(): Promise<void> {
+		return Promise.resolve();
+    }
+	
+    destroy(): Promise<void> {
+		return Promise.resolve();
+    }
+	
+	decodeToken(_accessToken: string) {
+		return;
+	}
+
+	verifyToken(_accessToken: string): Promise<boolean> {
+        return Promise.resolve(true);
+	}
+
+	getCallSecurityContextFromAccessToken(accessToken: string): Promise<CallSecurityContext | null> {
+		return Promise.resolve(null);
+	}
+}
