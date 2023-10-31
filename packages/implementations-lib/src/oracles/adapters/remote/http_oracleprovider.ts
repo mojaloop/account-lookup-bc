@@ -205,17 +205,24 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 		const url = "/participants/associations";
 
 		return await this.httpClient
-		.get(url)
-		.then((response: AxiosResponse) => {
-			return response.data;
-		})
-		.catch(
-			/* istanbul ignore next */ (error: Error) => {
-			const errorMessage = `getAllAssociations: error getting all associations`;
-			this._logger.error(errorMessage + ` - ${error}`);
-			throw new UnableToGetAssociationError(errorMessage);
-			}
-		);
+			.get(url)
+			.then((response: AxiosResponse) => {
+				return response.data;
+			})
+			.catch(
+				/* istanbul ignore next */ (error: Error) => {
+				const errorMessage = `getAllAssociations: error getting all associations`;
+				this._logger.error(errorMessage + ` - ${error}`);
+				throw new UnableToGetAssociationError(errorMessage);
+				}
+			);
 	}
 
+	searchAssociations(fspId: string | null, partyId: string | null, partyType: string | null, partySubType: string | null, currency: string | null, pageIndex?: number | undefined, pageSize?: number | undefined): Promise<AssociationsSearchResults> {
+		throw new Error("Method not implemented.");
+	}
+	
+	getSearchKeywords(): Promise<{ fieldName: string; distinctTerms: string[]; }[]> {
+		throw new Error("Method not implemented.");
+	}
 }

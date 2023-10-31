@@ -41,7 +41,7 @@
 "use strict";
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { Oracle, OracleType, Association } from "./../types";
+import { Oracle, OracleType, Association, AssociationsSearchResults } from "./../types";
 
 
 export interface IOracleFinder{
@@ -65,6 +65,16 @@ export interface IOracleProviderAdapter{
     associateParticipant(fspId:string, partyType:string, partyId: string, partySubType:string| null, currency:string| null):Promise<null>;
     disassociateParticipant(fspId:string, partyType:string, partyId: string, partySubType:string| null, currency:string| null):Promise<null>;
     getAllAssociations():Promise<Association[]>;
+    searchAssociations(
+        fspId:string|null,
+        partyId:string|null,
+        partyType:string|null,
+        partySubType:string|null,
+        currency:string|null,
+        pageIndex?:number,
+        pageSize?: number
+    ): Promise<AssociationsSearchResults>;
+    getSearchKeywords():Promise<{fieldName:string, distinctTerms:string[]}[]>
 }
 
 export interface IOracleProviderFactory {

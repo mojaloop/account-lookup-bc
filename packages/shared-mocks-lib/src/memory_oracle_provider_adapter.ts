@@ -40,7 +40,7 @@
 
 "use strict";
 
-import { Association, IOracleProviderAdapter, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain-lib";
+import { Association, AssociationsSearchResults, IOracleProviderAdapter, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain-lib";
 
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleAssociations } from "./mocked_data";
@@ -144,5 +144,12 @@ export class MemoryOracleProviderAdapter implements IOracleProviderAdapter {
         currency: association.currency,
       } as Association,
     ];
+  }
+
+  searchAssociations(fspId: string | null, partyId: string | null, partyType: string | null, partySubType: string | null, currency: string | null, pageIndex?: number | undefined, pageSize?: number | undefined): Promise<AssociationsSearchResults> {
+    throw new Error("Method not implemented.");
+  }
+  getSearchKeywords(): Promise<{ fieldName: string; distinctTerms: string[]; }[]> {
+    throw new Error("Method not implemented.");
   }
 }

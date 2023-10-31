@@ -134,6 +134,12 @@ export class UnableToInitRemoteOracleProvider extends Error {
     }
 }
 
+export class UnableToGetAssociationsError extends Error {
+    constructor(message: string) {
+        super(message);
+    }
+}
+
 
 
 

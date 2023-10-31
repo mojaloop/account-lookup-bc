@@ -51,6 +51,7 @@ import {
   UnableToGetAssociationError,
   UnableToAssociateParticipantError,
   UnableToDisassociateParticipantError,
+  UnableToGetAssociationsError,
 } from "../../../errors";
 
 const MAX_ENTRIES_PER_PAGE = 100;
@@ -248,4 +249,124 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		return query;
 	}
 
+	async searchAssociations(
+		fspId:string|null,
+		partyId:string|null,
+        partyType:string|null,
+        partySubType:string|null,
+        currency:string|null,
+        pageIndex = 0,
+        pageSize: number = MAX_ENTRIES_PER_PAGE
+    ): Promise<AssociationsSearchResults> {
+        // make sure we don't go over or below the limits
+        pageSize = Math.min(pageSize, MAX_ENTRIES_PER_PAGE);
+        pageIndex = Math.max(pageIndex, 0);
+
+        const searchResults: AssociationsSearchResults = {
+            pageSize: pageSize,
+            pageIndex: pageIndex,
+            totalPages: 0,
+            items: []
+        };
+
+        let filter: any = { $and: [] }; // eslint-disable-line @typescript-eslint/no-explicit-any
+        if(fspId){
+            filter.$and.push({ "fspId": fspId });
+        }
+		if(partyId){
+            filter.$and.push({ "partyId": {"$regex": partyId, "$options": "i"}});
+        }
+		if (partyType) {
+            filter.$and.push({ "partyType": partyType });
+        }
+		if (partySubType) {
+            filter.$and.push({ "partySubType": {"$regex": partySubType, "$options": "i"}});
+        }
+		if (currency) {
+            filter.$and.push({ "currency": currency });
+        }
+        if(filter.$and.length === 0) {
+            filter = {};
+        }
+
+        try {
+            const skip = Math.floor(pageIndex * pageSize);
+			const result = await this.parties.find(
+				filter,
+				{
+					sort:["updatedAt", "desc"], 
+					skip: skip,
+                    limit: 20
+				}
+			).toArray().catch((e: unknown) => {
+                this._logger.error(`Unable to get assocations: ${(e as Error).message}`);
+                throw new UnableToGetAssociationsError("Unable to get assocations");
+			});
+
+			searchResults.items = result as unknown as Association[];
+
+			const totalEntries = await this.parties.find(
+				filter
+            ).toArray().catch((e: unknown) => {
+                this._logger.error(`Unable to get associations page size: ${(e as Error).message}`);
+                throw new UnableToGetAssociationsError("Unable to get associations page size");
+			});
+
+			searchResults.totalPages = Math.ceil(totalEntries.length / pageSize);
+			searchResults.pageSize = Math.max(pageSize, result.length);
+            
+        } catch (err) {
+            this._logger.error(err);
+        }
+
+        return Promise.resolve(searchResults);
+    }
+
+	async getSearchKeywords():Promise<{fieldName:string, distinctTerms:string[]}[]>{
+        const retObj:{fieldName:string, distinctTerms:string[]}[] = [];
+
+        try {
+            const result = this.parties
+                .aggregate([
+					{$group: { "_id": { partyType: "$partyType", currency: "$currency", fspId: "$fspId" } } }
+				]);
+
+			const partyType:{fieldName:string, distinctTerms:string[]} = {
+				fieldName: "partyType",
+				distinctTerms: []
+			};
+
+			const currency:{fieldName:string, distinctTerms:string[]} = {
+				fieldName: "currency",
+				distinctTerms: []
+			};
+
+			const fspId:{fieldName:string, distinctTerms:string[]} = {
+				fieldName: "fspId",
+				distinctTerms: []
+			};
+
+			for await (const term of result) {
+
+				if(!partyType.distinctTerms.includes(term._id.partyType)) {
+					partyType.distinctTerms.push(term._id.partyType);
+				}
+				retObj.push(partyType);
+
+				if(!currency.distinctTerms.includes(term._id.currency)) {
+					currency.distinctTerms.push(term._id.currency);
+				}
+				retObj.push(currency);
+
+				if(!fspId.distinctTerms.includes(term._id.fspId)) {
+					fspId.distinctTerms.push(term._id.fspId);
+				}
+				retObj.push(fspId);
+			}
+        } catch (err) {
+            this._logger.error(err);
+        }
+
+        return Promise.resolve(retObj);
+    }
 }

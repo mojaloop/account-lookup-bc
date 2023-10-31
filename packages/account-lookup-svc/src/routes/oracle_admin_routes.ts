@@ -56,6 +56,8 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
         this.mainRouter.get("/oracles/builtin-associations",this.getAllBuiltinOracleAssociations.bind(this));
 
+        this.mainRouter.get("/oracles/associations",this.getAllOracleAssociations.bind(this));
+
         this.mainRouter.get("/oracles/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
         ],this.getOracleById.bind(this));
@@ -74,6 +76,12 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
         this.mainRouter.get("/oracles/health/:id",[
             check("id").isString().notEmpty().withMessage("id must be a non empty string")
         ], this.healthCheck.bind(this));
+
+        this.mainRouter.get("/oracles/health/:id",[
+            check("id").isString().notEmpty().withMessage("id must be a non empty string")
+        ], this.healthCheck.bind(this));
+
+        this.mainRouter.get("/oracles/builtin-associations/searchKeywords/", this._getSearchKeywords.bind(this));
 
     }
 
@@ -221,6 +229,63 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             res.status(500).json({
                 status: "error",
                 msg: (err as Error).message
+            });
+        }
+    }
+    
+    private async getAllOracleAssociations(req: express.Request, res: express.Response, _next: express.NextFunction) {
+        const fspId = req.query.fspId as string || null;
+        const partyId = req.query.partyId as string || null;
+        const partyType = req.query.partyType as string || null;
+        const partySubType = req.query.partySubType as string || null;
+        const currency = req.query.currency as string || null;
+ 
+
+        // optional pagination
+        const pageIndexStr = req.query.pageIndex as string || req.query.pageindex as string;
+        const pageIndex = pageIndexStr ? parseInt(pageIndexStr) : undefined;
+
+        const pageSizeStr = req.query.pageSize as string || req.query.pagesize as string;
+        const pageSize = pageSizeStr ? parseInt(pageSizeStr) : undefined;
+
+
+        try{
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
+            
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            const ret:AssociationsSearchResults = await this.accountLookupAggregate.getAllOracleAssociations(
+                fspId,
+                partyId,
+                partyType,
+                partySubType,
+                currency,
+                pageIndex,
+                pageSize
+            );
+            res.send(ret);
+        } catch (err: unknown) {
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message,
+            });
+        }
+    }
+    
+    private async _getSearchKeywords(req: express.Request, res: express.Response){
+        try{
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
+
+            const ret = await this.accountLookupAggregate.getSearchKeywords();
+            res.send(ret);
+        } catch (err: unknown) {
+            this.logger.error(err);
+            res.status(500).json({
+                status: "error",
+                msg: (err as Error).message,
             });
         }
     }
