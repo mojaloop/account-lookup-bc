@@ -52,20 +52,21 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
     }
 
     private async getAccountLookUp(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
-
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-
-        const partyId = req.params["partyId"];
-        const partyType = req.params["partyType"];
-        const partySubType = req.query.partySubType?.toString() ?? null;
-        const currency = req.query.currency?.toString() ?? null;
-
-        this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
-
         try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
+
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            const partyId = req.params["partyId"];
+            const partyType = req.params["partyType"];
+            const partySubType = req.query.partySubType?.toString() ?? null;
+            const currency = req.query.currency?.toString() ?? null;
+
+            this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
+
+
             const payload: ParticipantLookup = {
                currency,
                partyId,
@@ -75,7 +76,8 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
             this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency} - result: ${JSON.stringify(result)}`);
             res.send(result);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             if (err instanceof ParticipantNotFoundError) {
                 this.logger.debug(`AccountLookupExpressRoutes::getAccountLookUp - ParticipantNotFound`);

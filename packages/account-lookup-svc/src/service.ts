@@ -229,11 +229,22 @@ export class Service {
 
     // authorization client
     if (!authorizationClient) {
-        // setup privileges - bootstrap app privs and get priv/role associations
-        authorizationClient = new AuthorizationClient(BC_NAME, APP_NAME, APP_VERSION, AUTH_Z_SVC_BASEURL, logger);
-        authorizationClient.addPrivilegesArray(AccountLookupPrivilegesDefinition);
-        await (authorizationClient as AuthorizationClient).bootstrap(true);
-        await (authorizationClient as AuthorizationClient).fetch();
+      const messageConsumer = new MLKafkaJsonConsumer(
+          consumerOptions,
+          logger.createChild("authorizationClientConsumer")
+      );
+
+      // setup privileges - bootstrap app privs and get priv/role associations
+      authorizationClient = new AuthorizationClient(
+          BC_NAME, APP_NAME, APP_VERSION,
+          AUTH_Z_SVC_BASEURL, logger.createChild("AuthorizationClient"),
+          messageConsumer
+      );
+      authorizationClient.addPrivilegesArray(AccountLookupPrivilegesDefinition);
+      await (authorizationClient as AuthorizationClient).bootstrap(true);
+      await (authorizationClient as AuthorizationClient).fetch();
+      await (authorizationClient as AuthorizationClient).init();
+
     }
     this.authorizationClient = authorizationClient;
 

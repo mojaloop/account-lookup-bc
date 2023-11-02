@@ -87,16 +87,19 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
 
     private async getAllOracles(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
 
-        this.logger.info("Fetching all oracles");
         try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            this.logger.info("Fetching all oracles");
+
             const fetched = await this.accountLookupAggregate.getAllOracles();
             res.send(fetched);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -117,7 +120,9 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
             const fetched = await this.accountLookupAggregate.getBuiltInOracleAssociations();
             res.send(fetched);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
+
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -127,15 +132,15 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
     }
 
     private async getOracleById (req: express.Request, res: express.Response, _next: express.NextFunction) {
-        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-
-        const id = req.params["id"] ?? null;
-        this.logger.info(`Fetching Oracle [${id}].`);
-
         try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLES);
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            const id = req.params["id"] ?? null;
+            this.logger.info(`Fetching Oracle [${id}].`);
+
             const fetched = await this.accountLookupAggregate.getOracleById(id);
             if(!fetched){
                 res.status(404).json({
@@ -145,7 +150,8 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
                 return;
             }
             res.send(fetched);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -155,17 +161,18 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
     }
 
     private async deleteOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.REMOVE_ORACLE);
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-        const id = req.params["id"] ?? null;
-        this.logger.info(`Deleting Oracle [${id}].`);
-
         try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.REMOVE_ORACLE);
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+            const id = req.params["id"] ?? null;
+            this.logger.info(`Deleting Oracle [${id}].`);
+
             const fetched = await this.accountLookupAggregate.removeOracle(id);
             res.send(fetched);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             if(err instanceof OracleNotFoundError){
                 res.status(404).json({
                     status: "error",
@@ -184,21 +191,22 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
 
     private async createOracle(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.CREATE_ORACLE);
-
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-
-        const oracle = req.body;
-        this.logger.info(`Received Oracle [${oracle}] in createOracle.`);
-
         try {
+            this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.CREATE_ORACLE);
+
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+
+            const oracle = req.body;
+            this.logger.info(`Received Oracle [${oracle}] in createOracle.`);
+
             const createdId = await this.accountLookupAggregate.addOracle(oracle);
             res.send({
                 id: createdId
             });
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -208,15 +216,17 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
     }
 
     private async healthCheck(req: express.Request, res: express.Response, _next: express.NextFunction) {
-        if (!this.validateRequest(req, res)) {
-            return;
-        }
-        const id = req.params["id"];
-        this.logger.info(`Health check for Oracle ${id}.`);
         try {
+            if (!this.validateRequest(req, res)) {
+                return;
+            }
+            const id = req.params["id"];
+            this.logger.info(`Health check for Oracle ${id}.`);
+
             const fetched = await this.accountLookupAggregate.healthCheck(id);
             res.send(fetched);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             if(err instanceof OracleNotFoundError){
                 res.status(404).json({
                     status: "error",
@@ -266,7 +276,8 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
                 pageSize
             );
             res.send(ret);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
@@ -281,7 +292,8 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
             const ret = await this.accountLookupAggregate.getSearchKeywords();
             res.send(ret);
-        } catch (err: unknown) {
+        } catch (err: any) {
+            if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             res.status(500).json({
                 status: "error",
