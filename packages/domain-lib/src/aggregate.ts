@@ -839,9 +839,9 @@ export class AccountLookupAggregate {
 		}
 
 		if (!participant.isActive) {
-			this._logger.error(`${participant.id} is not active`);
-			
 			const errorMessage = `${participant.id} is not active`;
+			this._logger.error(errorMessage);
+
 			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -912,8 +912,8 @@ export class AccountLookupAggregate {
 		}
 
 		if (!participant.isActive) {
-			this._logger.error(`${participant.id} is not active`);
 			const errorMessage = `${participant.id} is not active`;
+			this._logger.error(errorMessage);
 			
 			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
 				partyId: partyId,
