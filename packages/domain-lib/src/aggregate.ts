@@ -55,6 +55,8 @@ import {
   AccountLookupBCInvalidMessageTypeErrorPayload,
   AccountLookupBCInvalidRequesterParticipantErrorEvent,
   AccountLookupBCRequesterParticipantNotFoundErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent,
+  AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent,
   AccountLookupBCUnableToAssociateParticipantErrorEvent,
   AccountLookupBCUnableToAssociateParticipantErrorPayload,
   AccountLookupBCUnableToDisassociateParticipantErrorEvent,
@@ -836,11 +838,18 @@ export class AccountLookupAggregate {
 			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 		}
 
-		// TODO enable participant.isActive check once this is implemented over the participants side
-		// if(!participant.isActive) {
-		// 	this._logger.debug(`${participant.id} is not active`);
-		// 	throw new RequiredParticipantIsNotActive();
-		// }
+		if (!participant.isActive) {
+			this._logger.error(`${participant.id} is not active`);
+			
+			const errorMessage = `${participant.id} is not active`;
+			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent({
+				partyId: partyId,
+				partyType: partyType,
+				partySubType: partySubType,
+				destinationFspId: participantId,
+				errorDescription: errorMessage,
+			});
+		}
 		return null;
 	}
 
@@ -902,11 +911,18 @@ export class AccountLookupAggregate {
 			});
 		}
 
-		// TODO enable participant.isActive check once this is implemented over the participants side
-		// if(!participant.isActive) {
-		// 	this._logger.debug(`${participant.id} is not active`);
-		// 	throw new RequiredParticipantIsNotActive();
-		// }
+		if (!participant.isActive) {
+			this._logger.error(`${participant.id} is not active`);
+			const errorMessage = `${participant.id} is not active`;
+			
+			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
+				partyId: partyId,
+				partyType: partyType,
+				partySubType: partySubType,
+				requesterFspId: participantId,
+				errorDescription: errorMessage,
+			});
+		}
 		return null;
 	}
 

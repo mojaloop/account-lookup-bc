@@ -32,15 +32,15 @@
     "lint:fix": "eslint ./src --fix"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-client-lib": "~0.1.24",
-    "@mojaloop/security-bc-public-types-lib": "~0.3.3",
-    "@mojaloop/participant-bc-public-types-lib": "~0.0.11",
-    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.100",
+    "@mojaloop/logging-bc-client-lib": "~0.1.29",
+    "@mojaloop/security-bc-public-types-lib": "~0.3.5",
+    "@mojaloop/participant-bc-public-types-lib": "~0.0.19",
+    "@mojaloop/platform-shared-lib-messaging-types-lib": "^0.2.102",
     "@mojaloop/account-lookup-bc-domain-lib": "*"
   },
   "devDependencies": {
-    "eslint": "^8.42.0",
-    "npm-check-updates": "^16.10.12",
+    "eslint": "^8.53.0",
+    "npm-check-updates": "^16.14.6",
     "typescript": "^5.1.0"
   }
 }
