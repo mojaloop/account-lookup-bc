@@ -211,7 +211,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 			})
 			.catch(
 				/* istanbul ignore next */ (error: Error) => {
-				const errorMessage = `getAllAssociations: error getting all associations`;
+				const errorMessage = "getAllAssociations: error getting all associations";
 				this._logger.error(errorMessage + ` - ${error}`);
 				throw new UnableToGetAssociationError(errorMessage);
 				}

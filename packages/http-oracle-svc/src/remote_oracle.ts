@@ -120,8 +120,7 @@ export class RemoteOracle implements IRemoteOracle {
 
                 if(this._associations.has(key)){
                     this._logger.warn(`Duplicate association found in file "${this._filePath}"`);
-                }
-                else{
+                } else{
                     this._associations.set(key, newAssociation);
                 }
                 

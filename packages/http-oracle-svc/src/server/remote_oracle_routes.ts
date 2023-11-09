@@ -169,7 +169,7 @@ export class RemoteOracleExpressRoutes {
 
     private async healthCheck(_req: express.Request, res: express.Response, _next: express.NextFunction) {
         try {
-            this._logger.debug(`Health Check.`);
+            this._logger.debug("Health Check.");
             const fetched = await this._oracle.healthCheck();
             this._logger.debug(`Health Check Result [${fetched}].`);
             res.send(fetched);

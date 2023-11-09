@@ -80,7 +80,7 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
             if (err instanceof ParticipantNotFoundError) {
-                this.logger.debug(`AccountLookupExpressRoutes::getAccountLookUp - ParticipantNotFound`);
+                this.logger.debug("AccountLookupExpressRoutes::getAccountLookUp - ParticipantNotFound");
                 res.status(404).json({
                     status: "error",
                     msg: (err as Error).message

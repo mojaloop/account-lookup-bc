@@ -60,7 +60,7 @@ export class AccountLookupHttpClient {
 
 	async participantLookUp(partyType:string, partyId:string, currency:string | null): Promise<string | null> {
 			if(!partyType || !partyId){
-				throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - partyType or partyId is null`);
+				throw new UnableToGetFspIdError("Account Lookup Client - Unable to Get FspId - partyType or partyId is null");
 			}
 
 			let urlBuilder = `${SERVICE_BASE_PATH}/${partyType}/${partyId}`;
