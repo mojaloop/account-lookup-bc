@@ -28,12 +28,12 @@
 
 "use strict";
 
-import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-types-lib";
-import { ParticipantAdapter } from "../../src/external_adapters/participant_adapter";
+import {ConsoleLogger, ILogger, LogLevel} from "@mojaloop/logging-bc-public-types-lib";
+import {ParticipantAdapter} from "../../src/external_adapters/participant_adapter";
 
-import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-public-types-lib";
-import { MemoryAuthenticatedHttpRequesterMock } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
+import {IParticipant, ParticipantTypes} from "@mojaloop/participant-bc-public-types-lib";
+import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-public-types-lib";
+import {MemoryAuthenticatedHttpRequesterMock} from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 
 const BASE_URL_PARTICIPANT_CLIENT: string = "http://localhost:1234";
 const AUTH_TOKEN_ENPOINT = "http://localhost:3101/authTokenEndpoint";
@@ -99,7 +99,7 @@ describe("Implementations - IParticipant Adapter Unit Tests", () => {
       name: "existingParticipantName",
       isActive: true,
       createdBy: "existingParticipantCreatedBy",
-      type: "DFSP",
+      type: ParticipantTypes.DFSP,
       createdDate: 1232131,
       approved: true,
       approvedBy: "existingParticipantApprovedBy",
@@ -136,7 +136,7 @@ describe("Implementations - IParticipant Adapter Unit Tests", () => {
       name: "existingParticipantName1",
       isActive: true,
       createdBy: "existingParticipantCreatedBy1",
-      type: "DFSP",
+      type: ParticipantTypes.DFSP,
       createdDate: 1232131,
       approved: true,
       approvedBy: "existingParticipantApprovedBy1",
@@ -148,7 +148,7 @@ describe("Implementations - IParticipant Adapter Unit Tests", () => {
       name: "existingParticipantName2",
       isActive: true,
       createdBy: "existingParticipantCreatedBy2",
-      type: "DFSP",
+      type: ParticipantTypes.DFSP,
       createdDate: 1232131,
       approved: true,
       approvedBy: "existingParticipantApprovedBy2",
