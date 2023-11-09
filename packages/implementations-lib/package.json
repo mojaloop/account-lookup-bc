@@ -35,10 +35,10 @@
   "dependencies": {
     "@mojaloop/logging-bc-public-types-lib": "~0.1.22",
     "@mojaloop/participant-bc-public-types-lib": "~0.0.19",
-    "@mojaloop/participants-bc-client-lib": "~0.3.2",
+    "@mojaloop/participants-bc-client-lib": "~0.3.3",
     "@mojaloop/security-bc-public-types-lib": "~0.3.5",
     "@mojaloop/account-lookup-bc-domain-lib":"*",
-    "axios": "~1.6.0",
+    "axios": "~1.6.1",
     "mongodb": "6.2.0"
   },
   "devDependencies": {

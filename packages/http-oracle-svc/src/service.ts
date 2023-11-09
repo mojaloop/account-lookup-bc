@@ -49,9 +49,12 @@ import { RemoteOracleExpressRoutes } from "./server/remote_oracle_routes";
 import {DefaultLogger} from "@mojaloop/logging-bc-client-lib";
 
 // Oracle routes
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const packageJSON = require("../package.json");
+
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "http-oracle-svc";
-const APP_VERSION = process.env.npm_package_version || "0.0.0";
+const APP_VERSION = packageJSON.version;
 const LOG_LEVEL: LogLevel = process.env["LOG_LEVEL"] as LogLevel || LogLevel.DEBUG;
 
 const REMOTE_ORACLE_PORT = process.env["REMOTE_ORACLE_PORT"] || 3031;
