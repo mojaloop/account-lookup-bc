@@ -46,6 +46,9 @@ import {
   AccountLookupBCInvalidRequesterParticipantErrorPayload,
   AccountLookupBCRequesterParticipantNotFoundErrorEvent,
   AccountLookupBCRequesterParticipantNotFoundErrorPayload,
+  AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload,
   AccountLookupBCUnableToAssociateParticipantErrorEvent,
   AccountLookupBCUnableToAssociateParticipantErrorPayload,
   AccountLookupBCUnableToDisassociateParticipantErrorEvent,
@@ -65,6 +68,12 @@ import {
   PartyInfoAvailableEvtPayload,
   PartyQueryReceivedEvt,
   PartyQueryReceivedEvtPayload,
+  AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent,
+  AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload,
+  AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
@@ -403,7 +412,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if returned participant id mismatches the requester id", async () => {
+  test("PartyQuery - should send RequiredRequesterParticipantIdMismatchErrorEvent if returned participant id mismatches the requester id", async () => {
     //Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -443,14 +452,106 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
-        msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
+        msgName: AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent.name,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("PartyQuery - should send RequiredRequesterParticipantIsNotApprovedErrorEvent if returned participant is not approved", async () => {
+    //Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const requesterFspId = mockedParticipantIds[0];
+
+    const payload: PartyQueryReceivedEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId,
+      currency: "USD",
+      partySubType,
+      destinationFspId: null,
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: `Payer participant fspId ${requesterFspId} is not approved`,
+      requesterFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: true,
+	  approved: false
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent.name,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  test("PartyQuery - should send RequiredRequesterParticipantIsNotActiveErrorEvent if returned participant is not active", async () => {
+    //Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const requesterFspId = mockedParticipantIds[0];
+
+    const payload: PartyQueryReceivedEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId,
+      currency: "USD",
+      partySubType,
+      destinationFspId: null,
+    };
+
+    const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+      errorDescription: `Payer participant fspId ${requesterFspId} is not active`,
+      requesterFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+      id: requesterFspId,
+      type: partyType,
+      isActive: false,
+      approved: true
+    } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
   test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder is unable to get an oracle to search the destination fspId", async () => {
-    //Arrange
+    //Arrange 
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
     const partyId = mockedPartyIds[0];
@@ -480,6 +581,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
     jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
 
@@ -527,6 +629,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+      approved: true
     } as IParticipant as any);
     jest.spyOn(oracleFinder, "getOracle").mockRejectedValueOnce(new Error("Error"));
 
@@ -574,6 +677,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
     jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
 
@@ -622,6 +726,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
     jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce({
       id: fakeOracleId,
@@ -676,6 +781,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -722,6 +828,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -770,6 +877,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         id: requesterFspId,
         type: partyType,
         isActive: true,
+		approved: true
       } as IParticipant as any)
       .mockRejectedValueOnce(new Error("Error"));
 
@@ -819,6 +927,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         id: requesterFspId,
         type: partyType,
         isActive: true,
+		approved: true
       } as IParticipant as any)
       .mockResolvedValueOnce(null);
 
@@ -835,7 +944,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toBeCalledTimes(1);
   });
 
-  test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if returned participant id mismatches the destination id", async () => {
+  test("PartyQuery - should send RequiredDestinationParticipantIdMismatchErrorEvent if returned participant id mismatches the destination id", async () => {
     // Arrange
     const partyType = mockedPartyTypes[0];
     const partySubType = mockedPartySubTypes[0];
@@ -853,7 +962,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       destinationFspId: null,
     };
 
-    const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+    const responsePayload: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload = {
       errorDescription: `Participant id mismatch ${fakeDestinationFspId} ${expectedDestinationFspId}`,
       destinationFspId: expectedDestinationFspId,
       partyId,
@@ -869,6 +978,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         id: requesterFspId,
         type: partyType,
         isActive: true,
+        approved: true,
       } as IParticipant as any)
       .mockResolvedValueOnce({
         id: fakeDestinationFspId,
@@ -883,7 +993,119 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     expect(messageProducer.send).toHaveBeenCalledWith(
       expect.objectContaining({
         payload: responsePayload,
-        msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
+        msgName: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent.name,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+
+  test("PartyQuery - should send RequiredDestinationParticipantIsNotApprovedErrorEvent if returned participant is not approved", async () => {
+    // Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const requesterFspId = mockedParticipantIds[0];
+    const expectedDestinationFspId = mockedParticipantFspIds[0];
+
+    const payload: PartyQueryReceivedEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId,
+      currency: "USD",
+      partySubType,
+      destinationFspId: null,
+    };
+
+    const responsePayload: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload = {
+      errorDescription: `Payee participant fspId ${expectedDestinationFspId} is not approved`,
+      destinationFspId: expectedDestinationFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest
+      .spyOn(participantService, "getParticipantInfo")
+      .mockResolvedValueOnce({
+        id: requesterFspId,
+        type: partyType,
+        isActive: true,
+        approved: true,
+      } as IParticipant as any)
+      .mockResolvedValueOnce({
+        id: expectedDestinationFspId,
+        type: partyType,
+        isActive: true,
+		approved: false
+      } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent.name,
+      })
+    );
+    expect(messageProducer.send).toBeCalledTimes(1);
+  });
+
+  
+  test("PartyQuery - should send RequiredDestinationParticipantIsNotActiveErrorEvent if returned participant is not active", async () => {
+    // Arrange
+    const partyType = mockedPartyTypes[0];
+    const partySubType = mockedPartySubTypes[0];
+    const partyId = mockedPartyIds[0];
+    const requesterFspId = mockedParticipantIds[0];
+    const expectedDestinationFspId = mockedParticipantFspIds[0];
+
+    const payload: PartyQueryReceivedEvtPayload = {
+      partyId,
+      partyType,
+      requesterFspId,
+      currency: "USD",
+      partySubType,
+      destinationFspId: null,
+    };
+
+    const responsePayload: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload = {
+      errorDescription: `Payee participant fspId ${expectedDestinationFspId} is not active`,
+      destinationFspId: expectedDestinationFspId,
+      partyId,
+      partySubType,
+      partyType,
+    };
+    const event = new ParticipantQueryReceivedEvt(payload);
+
+    jest.spyOn(messageProducer, "send");
+    jest
+      .spyOn(participantService, "getParticipantInfo")
+      .mockResolvedValueOnce({
+        id: requesterFspId,
+        type: partyType,
+        isActive: true,
+        approved: true,
+      } as IParticipant as any)
+      .mockResolvedValueOnce({
+        id: expectedDestinationFspId,
+        type: partyType,
+        isActive: false,
+		approved: true
+      } as IParticipant as any);
+
+    // Act
+    await aggregate.handleAccountLookUpEvent(event);
+
+    // Assert
+    expect(messageProducer.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: responsePayload,
+        msgName: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent.name,
       })
     );
     expect(messageProducer.send).toBeCalledTimes(1);
@@ -977,6 +1199,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1063,6 +1286,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1109,6 +1333,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
     jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(null);
 
@@ -1210,6 +1435,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: requesterFspId,
       type: partyType,
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1287,6 +1513,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: mockedParticipantFspIds[0],
       type: mockedPartyTypes[0],
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1327,6 +1554,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: mockedParticipantFspIds[3],
       type: mockedPartyTypes[3],
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1403,6 +1631,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: mockedParticipantFspIds[0],
       type: mockedPartyTypes[0],
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act
@@ -1443,6 +1672,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       id: mockedParticipantFspIds[3],
       type: mockedPartyTypes[3],
       isActive: true,
+	  approved: true
     } as IParticipant as any);
 
     // Act

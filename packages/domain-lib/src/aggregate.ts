@@ -56,6 +56,12 @@ import {
   AccountLookupBCInvalidRequesterParticipantErrorEvent,
   AccountLookupBCRequesterParticipantNotFoundErrorEvent,
   AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload,
+  AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload,
+  AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent,
+  AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload,
   AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent,
   AccountLookupBCUnableToAssociateParticipantErrorEvent,
   AccountLookupBCUnableToAssociateParticipantErrorPayload,
@@ -81,6 +87,7 @@ import {
   PartyQueryReceivedEvt,
   PartyQueryResponseEvt,
   PartyQueryResponseEvtPayload,
+  AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { AddOracleDTO, Association, AssociationsSearchResults, Oracle, OracleType, ParticipantLookup } from "./types";
 import {
@@ -828,27 +835,42 @@ export class AccountLookupAggregate {
 		if (participant.id !== participantId) {
 			const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
-			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+			const invalidParticipantIdErrorPayload: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
 				errorDescription: errorMessage,
 			};
-			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
+			return new AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent(invalidParticipantIdErrorPayload);
 		}
 
-		if (!participant.isActive) {
-			const errorMessage = `${participant.id} is not active`;
+		if (!participant.approved) {
+			const errorMessage = `Payee participant fspId ${participantId} is not approved`;
 			this._logger.error(errorMessage);
 
-			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent({
+			const errorPayload: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage,
-			});
+				errorDescription: errorMessage
+			};
+			return new AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent(errorPayload);
+		}
+
+		if (!participant.isActive) {
+			const errorMessage = `Payee participant fspId ${participantId} is not active`;
+			this._logger.error(errorMessage);
+
+			const errorPayload: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload = {
+				partyId: partyId,
+				partyType: partyType,
+				partySubType: partySubType,
+				destinationFspId: participantId,
+				errorDescription: errorMessage
+			};
+			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent(errorPayload);
 		}
 		return null;
 	}
@@ -902,7 +924,20 @@ export class AccountLookupAggregate {
 		if (participant.id !== participantId) {
 			const errorMessage = `Requester Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
-			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
+			return new AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent({
+				partyId: partyId,
+				partyType: partyType,
+				partySubType: partySubType,
+				requesterFspId: participantId,
+				errorDescription: errorMessage,
+			});
+		}
+
+		if (!participant.approved) {
+			const errorMessage = `Payer participant fspId ${participantId} is not approved`;
+			this._logger.error(errorMessage);
+			
+			return new AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
@@ -912,7 +947,7 @@ export class AccountLookupAggregate {
 		}
 
 		if (!participant.isActive) {
-			const errorMessage = `${participant.id} is not active`;
+			const errorMessage = `Payer participant fspId ${participantId} is not active`;
 			this._logger.error(errorMessage);
 			
 			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
