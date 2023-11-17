@@ -116,6 +116,8 @@ const AUTH_N_TOKEN_AUDIENCE = process.env["AUTH_N_TOKEN_AUDIENCE"] || "mojaloop.
 const AUTH_N_SVC_JWKS_URL = process.env["AUTH_N_SVC_JWKS_URL"] || `${AUTH_N_SVC_BASEURL}/.well-known/jwks.json`;
 const AUTH_Z_SVC_BASEURL = process.env["AUTH_Z_SVC_BASEURL"] || "http://localhost:3202";
 
+const SERVICE_START_TIMEOUT_MS= (process.env["SERVICE_START_TIMEOUT_MS"] && parseInt(process.env["SERVICE_START_TIMEOUT_MS"])) || 60_000;
+
 const consumerOptions: MLKafkaJsonConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
     kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
@@ -141,6 +143,7 @@ export class Service {
     static metrics: IMetrics;
     static authorizationClient: IAuthorizationClient;
     static tokenHelper: ITokenHelper;
+    static startupTimer: NodeJS.Timeout;
 
     static async start(
         logger?: ILogger,
@@ -155,6 +158,10 @@ export class Service {
         tokenHelper?: ITokenHelper
     ): Promise<void> {
         console.log(`Account-lookup-svc - service starting with PID: ${process.pid}`);
+
+        this.startupTimer = setTimeout(()=>{
+            throw new Error("Service start timed-out");
+        }, SERVICE_START_TIMEOUT_MS);
 
         if (!logger) {
             logger = new KafkaLogger(
@@ -279,6 +286,9 @@ export class Service {
 
         this.messageConsumer.setCallbackFn(this.aggregate.handleAccountLookUpEvent.bind(this.aggregate));
         this.logger.info("Aggregate Initialized");
+
+        // remove startup timeout
+        clearTimeout(this.startupTimer);
     }
 
     static async setupAndStartExpress(): Promise<void> {
