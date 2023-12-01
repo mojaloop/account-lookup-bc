@@ -60,10 +60,10 @@ export class OracleAdapterFactory implements IOracleProviderFactory {
     create(oracle: Oracle): IOracleProviderAdapter {
         switch (oracle.type) {
             case "builtin":
-                this._logger.debug(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
+                this._logger.info(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
                 return new MongoOracleProviderRepo(oracle, this._logger, this._builtinOracleMongoUrl, this._dbName);
             case "remote-http":
-                this._logger.debug(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
+                this._logger.info(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
                 return new HttpOracleProvider(oracle, this._logger);
             default:
                 {

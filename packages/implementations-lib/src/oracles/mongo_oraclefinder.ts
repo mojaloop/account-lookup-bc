@@ -132,7 +132,7 @@ export class MongoOracleFinderRepo implements IOracleFinder {
       return;
     } else {
       const errorMessage = `Oracle with id ${id} not found`;
-      this._logger.debug(errorMessage);
+      this._logger.info(errorMessage);
       throw new NoSuchOracleError(errorMessage);
     }
   }
@@ -217,7 +217,7 @@ export class MongoOracleFinderRepo implements IOracleFinder {
 
     if (!oracle) {
       const errorMessage = `Oracle with partyType ${partyType}  and currency ${currency} not found`;
-      this._logger.debug(errorMessage);
+      this._logger.info(errorMessage);
       throw new NoSuchOracleError(errorMessage);
     }
 

@@ -160,15 +160,18 @@ export class AccountLookupAggregate {
 
 	async init(): Promise<void> {
 		try {
+			this._logger.info("Initializing oracle finder");
 			await this._oracleFinder.init();
+			this._logger.info("Oracle finder initialized");
 			const oracles = await this._oracleFinder.getAllOracles();
-			this._logger.debug("Oracle finder initialized");
-		for await (const oracle of oracles) {
-			const oracleAdapter = this._oracleProvidersFactory.create(oracle);
-			await oracleAdapter.init();
-			this._oracleProvidersAdapters.push(oracleAdapter);
-			this._logger.debug("Oracle provider initialized " + oracle.name);
-		}
+			this._logger.info(`Found list of ${oracles.length} oracles`);
+			
+			for await (const oracle of oracles) {
+				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
+				await oracleAdapter.init();
+				this._oracleProvidersAdapters.push(oracleAdapter);
+				this._logger.info("Oracle provider initialized " + oracle.name);
+			}
 		} catch (error) {
 			this._logger.fatal("Unable to initialize account lookup aggregate" + error);
 			throw error;
@@ -220,38 +223,34 @@ export class AccountLookupAggregate {
 		try {
 			switch (message.msgName) {
 				case PartyQueryReceivedEvt.name:
-				eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
-				break;
+					eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
+					break;
 				case PartyInfoAvailableEvt.name:
-				eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
-				break;
+					eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
+					break;
 				case ParticipantQueryReceivedEvt.name:
-				eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
-				break;
+					eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
+					break;
 				case ParticipantAssociationRequestReceivedEvt.name:
-				eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(
-					message as ParticipantAssociationRequestReceivedEvt
-				);
-				break;
+					eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(message as ParticipantAssociationRequestReceivedEvt);
+					break;
 				case ParticipantDisassociateRequestReceivedEvt.name:
-				eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(
-					message as ParticipantDisassociateRequestReceivedEvt
-				);
-				break;
+					eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
+					break;
 				case GetPartyQueryRejectedEvt.name:
-				eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
-				break;
+					eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
+					break;
 				default: {
-				const errorMessage = `Message type has invalid format or value ${message.msgName}`;
-				this._logger.error(errorMessage);
-				const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
-					partyId: partyId,
-					partyType: partyType,
-					partySubType: partySubType,
-					requesterFspId: requesterFspId,
-					errorDescription: errorMessage,
-				};
-				eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
+					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
+					this._logger.error(errorMessage);
+					const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
+						partyId: partyId,
+						partyType: partyType,
+						partySubType: partySubType,
+						requesterFspId: requesterFspId,
+						errorDescription: errorMessage,
+					};
+					eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
 				}
 			}
 		} catch (error) {
@@ -979,7 +978,7 @@ export class AccountLookupAggregate {
 
 		if (!oracle) {
 			const errorMessage = `Oracle for partyType: ${partyType} and currency: ${currency ?? "Not Provided"} not found`;
-			this._logger.debug(errorMessage);
+			this._logger.info(errorMessage);
 			throw new OracleNotFoundError(errorMessage);
 		}
 
@@ -987,7 +986,7 @@ export class AccountLookupAggregate {
 
 		if (!oracleAdapter) {
 			const errorMessage = `Oracle adapter for ${partyType} and id: ${oracle.id} not present in oracle list`;
-			this._logger.debug(errorMessage);
+			this._logger.info(errorMessage);
 			throw new NoSuchOracleAdapterError(errorMessage);
 		}
 
@@ -1048,7 +1047,9 @@ export class AccountLookupAggregate {
 		}
 
 		const newOracle: Oracle = oracle as Oracle;
-
+		if(newOracle.type === "builtin") {
+			newOracle.endpoint = null;
+		}
 		const addedOracleProvider = this._oracleProvidersFactory.create(newOracle);
 
 		await this._oracleFinder.addOracle(newOracle);

@@ -80,7 +80,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 	async init(): Promise<void> {
 		try {
 			this.mongoClient = new MongoClient(this._connectionString);
-			this.mongoClient.connect();
+			await this.mongoClient.connect();
 			this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
 		} catch (error: unknown) {
 			const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
@@ -130,7 +130,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 
 		if (!data) {
 			const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
-			this._logger.debug(errorMessage);
+			this._logger.info(errorMessage);
 			return null;
 		}
 
@@ -150,7 +150,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 
 		if (association) {
 			const errorMessage = `Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
-			this._logger.debug(errorMessage);
+			this._logger.info(errorMessage);
 			throw new ParticipantAssociationAlreadyExistsError(errorMessage);
 		}
 
@@ -162,7 +162,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		}
 		);
 
-		this._logger.debug(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
+		this._logger.info(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 		return null;
 	}
 
@@ -183,7 +183,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		}
 		);
 
-		this._logger.debug(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
+		this._logger.info(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 		return null;
 	}
 
@@ -193,7 +193,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 			.command({ ping: 1 })
 			.catch(
 				/* istanbul ignore next */ (e: unknown) => {
-				this._logger.debug(`Unable to ping database: ${(e as Error).message}`);
+				this._logger.error(`Unable to ping database: ${(e as Error).message}`);
 				return false;
 				}
 			);

@@ -101,11 +101,11 @@ export class RemoteOracleExpressRoutes {
         }
         const params = this.extractRequestParams(req);
 
-        this._logger.debug(`Fetching Participant FSP ID  with params [${params}].`);
+        this._logger.info(`Fetching Participant FSP ID  with params [${params}].`);
 
         try {
             const fetched = await this._oracle.getParticipantFspId(params.partyType, params.partyId, params.partySubType, params.currency);
-            this._logger.debug(`Fetched Participant FSP ID [${fetched}] with params [${params}].`);
+            this._logger.info(`Fetched Participant FSP ID [${fetched}] with params [${params}].`);
             if(!fetched){
                 res.sendStatus(404);
             }else{
@@ -131,11 +131,11 @@ export class RemoteOracleExpressRoutes {
         }
 
         const params = this.extractRequestParams(req);
-        this._logger.debug(`Disassociating Participant with params [${params}].`);
+        this._logger.info(`Disassociating Participant with params [${params}].`);
 
         try {
             await this._oracle.disassociateParticipant(params.fspId, params.partyType, params.partyId, params.partySubType, params.currency);
-            this._logger.debug(`Disassociated Participant with params [${params}].`);
+            this._logger.info(`Disassociated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
             this._logger.error(`Error disassociating Participant with params [${params}]. -${err}`);
@@ -152,11 +152,11 @@ export class RemoteOracleExpressRoutes {
         }
 
         const params = this.extractRequestParams(req);
-        this._logger.debug(`Associating Participant with params [${params}].`);
+        this._logger.info(`Associating Participant with params [${params}].`);
 
         try {
             await this._oracle.associateParticipant(params.fspId, params.partyType, params.partyId, params.partySubType, params.currency);
-            this._logger.debug(`Associated Participant with params [${params}].`);
+            this._logger.info(`Associated Participant with params [${params}].`);
             res.sendStatus(200);
         } catch (err: unknown) {
             this._logger.error(err,`Error associating Participant with params [${params}]. -${err}`);
@@ -169,9 +169,9 @@ export class RemoteOracleExpressRoutes {
 
     private async healthCheck(_req: express.Request, res: express.Response, _next: express.NextFunction) {
         try {
-            this._logger.debug("Health Check.");
+            this._logger.info("Health Check.");
             const fetched = await this._oracle.healthCheck();
-            this._logger.debug(`Health Check Result [${fetched}].`);
+            this._logger.info(`Health Check Result [${fetched}].`);
             res.send(fetched);
         } catch (err: unknown) {
             /* istanbul ignore next */

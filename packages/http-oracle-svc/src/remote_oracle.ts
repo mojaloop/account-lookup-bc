@@ -155,10 +155,10 @@ export class RemoteOracle implements IRemoteOracle {
         const key = this.createKey({partyId, partyType, partySubType, currency});
         const association = this._associations.get(key);
         if (association) {
-            this._logger.debug(`Found association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
+            this._logger.info(`Found association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
             return association.fspId;
         }
-        this._logger.debug(`No association found for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
+        this._logger.info(`No association found for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency}`);
         return null;
     }
 
@@ -185,7 +185,7 @@ export class RemoteOracle implements IRemoteOracle {
         if (association && association.fspId===fspId) {
             this._associations.delete(key);
             await this._saveToFile();
-            this._logger.debug(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
+            this._logger.info(`Successfully removed association for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} with fspId: ${fspId}`);
             return null;
         } else {
             this._logger.error(`No association found for partyType: ${partyType}, partyId: ${partyId}, currency: ${currency} and fspId: ${fspId}`);
