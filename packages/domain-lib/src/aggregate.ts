@@ -420,6 +420,7 @@ export class AccountLookupAggregate {
 			partyId: message.payload.partyId,
 			partySubType: message.payload.partySubType,
 			currency: message.payload.currency,
+			extensionList: message.payload.extensionList
 		};
 
 		const event = new PartyQueryResponseEvt(payload);
