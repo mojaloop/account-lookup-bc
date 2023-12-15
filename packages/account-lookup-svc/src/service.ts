@@ -73,6 +73,7 @@ import {PrometheusMetrics} from "@mojaloop/platform-shared-lib-observability-cli
 import {ParticipantAdapter} from "@mojaloop/account-lookup-bc-implementations-lib";
 import {AuthenticatedHttpRequester, AuthorizationClient, TokenHelper} from "@mojaloop/security-bc-client-lib";
 import {IAuthenticatedHttpRequester, IAuthorizationClient, ITokenHelper} from "@mojaloop/security-bc-public-types-lib";
+import crypto from "crypto";
 
 // Global vars
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -117,6 +118,9 @@ const AUTH_N_SVC_JWKS_URL = process.env["AUTH_N_SVC_JWKS_URL"] || `${AUTH_N_SVC_
 const AUTH_Z_SVC_BASEURL = process.env["AUTH_Z_SVC_BASEURL"] || "http://localhost:3202";
 
 const SERVICE_START_TIMEOUT_MS= (process.env["SERVICE_START_TIMEOUT_MS"] && parseInt(process.env["SERVICE_START_TIMEOUT_MS"])) || 60_000;
+
+const INSTANCE_NAME = `${BC_NAME}_${APP_NAME}`;
+const INSTANCE_ID = `${INSTANCE_NAME}__${crypto.randomUUID()}`;
 
 const consumerOptions: MLKafkaJsonConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
@@ -256,7 +260,13 @@ export class Service {
 
         // token helper
         if (!tokenHelper) {
-            tokenHelper = new TokenHelper(AUTH_N_SVC_JWKS_URL, logger, AUTH_N_TOKEN_ISSUER_NAME, AUTH_N_TOKEN_AUDIENCE);
+            tokenHelper = new TokenHelper(
+                AUTH_N_SVC_JWKS_URL,
+                logger,
+                AUTH_N_TOKEN_ISSUER_NAME,
+                AUTH_N_TOKEN_AUDIENCE,
+                new MLKafkaJsonConsumer({kafkaBrokerList: KAFKA_URL, autoOffsetReset: "earliest", kafkaGroupId: INSTANCE_ID}, logger) // for jwt list - no groupId
+            );
         }
         this.tokenHelper = tokenHelper;
         await this.tokenHelper.init();
