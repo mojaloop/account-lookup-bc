@@ -34,10 +34,10 @@
     "npm_publish": "npm version patch && npm publish --tag=latest --access public"
   },
   "dependencies": {
-    "@mojaloop/logging-bc-client-lib": "~0.1.29",
-    "@mojaloop/security-bc-public-types-lib": "~0.3.6"
+    "@mojaloop/logging-bc-client-lib": "~0.5.2",
+    "@mojaloop/security-bc-public-types-lib": "~0.5.5"
   },
   "devDependencies": {
-    "nock": "^13.3.8"
+    "nock": "^13.4.0"
   }
 }
