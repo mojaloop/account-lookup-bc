@@ -1,67 +1,70 @@
 {
-  "name": "@mojaloop/account-lookup-bc",
-  "version": "0.0.1",
-  "description": "mojaloop account lookup bounded context.",
-  "license": "Apache-2.0",
-  "homepage": "https://github.com/mojaloop/account-lookup-bc",
-  "private": true,
-  "bugs": {
-    "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
-  },
-  "contributors": [
-    "Jose Antunes <jose.antunes@arg.software>",
-    "Rui Rocha <rui.rocha@arg.software>"
-  ],
-  "engines": {
-    "node": ">=18.13.0"
-  },
-  "scripts": {
-    "prepare": "husky install",
-    "pre_commit_check": "npm run build && npm run lint && npm run test:unit",
-    "build": "npm run build -ws",
-    "watch": "npm run watch -ws --parallel -v",
-    "clean": "(npm run clean:dist || true) && npm run clean:npm",
-    "clean:npm": "(rm -Rf node_modules || true) && npm -ws run clean:npm",
-    "clean:dist": "(rm -Rf dist || true) && npm -ws run clean:dist",
-    "lint": "npm run lint -ws -p ",
-    "lint:fix": "npm run lint:fix -ws -p",
-    "pretest": "npm run build",
-    "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "npm -ws --if-present run test:unit",
-    "test:integration": "jest --runInBand --forceExit --detectOpenHandles",
-    "posttest": "npm run coverage:merge && npm run coverage:gen-report",
-    "coverage:merge": "nyc merge ./coverage/ ./coverage/coverage.json",
-    "coverage:gen-report": "nyc report --reporter=lcov --reporter=text --temp-dir=./coverage",
-    "audit:check": "npm run audit:check -ws --parallel -v",
-    "dep:check": "(ncu -e 2 || true) && npm -ws run dep:check",
-    "dep:update": "(ncu -e 2 -u || true) && npm -ws run dep:update",
-    "start:account-lookup-svc": "npm -w @mojaloop/account-lookup-bc-account-lookup-svc start",
-    "start:http-oracle-svc": "npm -w @mojaloop/account-lookup-bc-http-oracle-svc start"
-  },
-  "devDependencies": {
-    "@types/jest": "^29.5.11",
-    "@types/node": "^20.10.4",
-    "@types/supertest": "^2.0.16",
-    "@typescript-eslint/eslint-plugin": "^6.14.0",
-    "@typescript-eslint/parser": "^6.14.0",
-    "eslint": "^8.55.0",
-    "husky": "^8.0.3",
-    "jest": "^29.7.0",
-    "mongodb": "^6.3.0",
-    "npm-check-updates": "^16.14.12",
-    "nyc": "^15.1.0",
-    "supertest": "^6.3.3",
-    "ts-jest": "^29.1.1",
-    "tslib": "~2.6.2",
-    "typescript": "^5.3.3"
-  },
-  "workspaces": [
-    "packages/domain-lib",
-    "packages/implementations-lib",
-    "packages/client-lib",
-    "packages/account-lookup-svc",
-    "packages/http-oracle-svc",
-    "packages/shared-mocks-lib",
-    "packages/*"
-  ]
+    "name": "@mojaloop/account-lookup-bc",
+    "version": "0.0.1",
+    "description": "mojaloop account lookup bounded context.",
+    "license": "Apache-2.0",
+    "homepage": "https://github.com/mojaloop/account-lookup-bc",
+    "private": true,
+    "bugs": {
+        "url": "https://github.com/mojaloop/account-lookup-bc/issues#readme"
+    },
+    "contributors": [
+        "Jose Antunes <jose.antunes@arg.software>",
+        "Rui Rocha <rui.rocha@arg.software>"
+    ],
+    "engines": {
+        "node": ">=20.10.0"
+    },
+    "scripts": {
+        "prepare": "husky install",
+        "pre_commit_check": "npm run build && npm run lint && npm run test:unit",
+        "build": "npm run build -ws",
+        "watch": "npm run watch -ws --parallel -v",
+        "clean": "(npm run clean:dist || true) && npm run clean:npm",
+        "clean:npm": "(rm -Rf node_modules || true) && npm -ws run clean:npm",
+        "clean:dist": "(rm -Rf dist || true) && npm -ws run clean:dist",
+        "lint": "npm run lint -ws -p ",
+        "lint:fix": "npm run lint:fix -ws -p",
+        "pretest": "npm run build",
+        "test": "npm run test:unit && npm run test:integration",
+        "test:unit": "npm -ws --if-present run test:unit",
+        "test:integration": "jest --runInBand --forceExit --detectOpenHandles",
+        "posttest": "npm run coverage:merge && npm run coverage:gen-report",
+        "coverage:merge": "nyc merge ./coverage/ ./coverage/coverage.json",
+        "coverage:gen-report": "nyc report --reporter=lcov --reporter=text --temp-dir=./coverage",
+        "audit:check": "npm run audit:check -ws --parallel -v",
+        "dep:check": "(ncu -e 2 || true) && npm -ws run dep:check",
+        "dep:update": "(ncu -e 2 -u || true) && npm -ws run dep:update",
+        "start:account-lookup-svc": "npm -w @mojaloop/account-lookup-bc-account-lookup-svc start",
+        "start:http-oracle-svc": "npm -w @mojaloop/account-lookup-bc-http-oracle-svc start"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.11",
+        "@types/node": "^20.10.4",
+        "@types/supertest": "^2.0.16",
+        "@typescript-eslint/eslint-plugin": "^6.14.0",
+        "@typescript-eslint/parser": "^6.14.0",
+        "eslint": "^8.56.0",
+        "husky": "^8.0.3",
+        "jest": "^29.7.0",
+        "mongodb": "^6.3.0",
+        "npm-check-updates": "^16.14.12",
+        "nyc": "^15.1.0",
+        "supertest": "^6.3.3",
+        "ts-jest": "^29.1.1",
+        "tslib": "~2.6.2",
+        "typescript": "^5.3.3"
+    },
+    "workspaces": [
+        "packages/domain-lib",
+        "packages/implementations-lib",
+        "packages/client-lib",
+        "packages/account-lookup-svc",
+        "packages/http-oracle-svc",
+        "packages/shared-mocks-lib",
+        "packages/*"
+    ],
+    "engines": {
+        "node": ">=20.10.0"
+    }
 }
