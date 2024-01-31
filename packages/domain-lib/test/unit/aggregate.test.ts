@@ -342,7 +342,9 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			firstName: "Maria",
 			middleName: "P",
 			lastName: "Lee",
-			extensionList: null
+			extensionList: null,
+			supportedCurrencies: null,
+			kycInfo: null,
 		};
 
 		jest.spyOn(participantService, "getParticipantInfo")
@@ -365,7 +367,9 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			firstName: "Maria",
 			middleName: "P",
 			lastName: "Lee",
-			extensionList: null
+			extensionList: null,
+			supportedCurrencies: null,
+			kycInfo: null,
 		};
 
 		// Act
