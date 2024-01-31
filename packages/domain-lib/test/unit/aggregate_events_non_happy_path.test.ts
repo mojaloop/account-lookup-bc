@@ -1135,7 +1135,9 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       partyDoB: new Date(),
       name: "John Doe",
       destinationFspId,
-      extensionList: null
+      extensionList: null,
+      supportedCurrencies: null,
+			kycInfo: null,
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
@@ -1184,7 +1186,9 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       partyDoB: new Date(),
       name: "John Doe",
       destinationFspId: null as any,
-      extensionList: null
+      extensionList: null,
+      supportedCurrencies: null,
+			kycInfo: null,
     };
 
     const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {

@@ -256,7 +256,7 @@ describe("http-oracle-svc unit tests", () => {
 		const result = Service.start();
 
 		// Assert
-		await expect(result).rejects.toThrowError();
+		await expect(result).rejects.toThrow();
 	});
 
 	test("should throw an error when trying to a stop server that is not running", async () => {
@@ -264,6 +264,6 @@ describe("http-oracle-svc unit tests", () => {
 		const result = Service.stop();
 
 		// Assert
-		await expect(result).rejects.toThrowError();
+		await expect(result).rejects.toThrow();
 	});
 });
