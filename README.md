@@ -6,7 +6,13 @@
 [![Docker pulls](https://img.shields.io/docker/pulls/mojaloop/account-lookup-bc.svg?style=flat)](https://hub.docker.com/r/mojaloop/account-lookup-bc)
 [![CircleCI](https://circleci.com/gh/mojaloop/account-lookup-bc.svg?style=svg)](https://circleci.com/gh/mojaloop/account-lookup-bc)
 
-The Accounts Lookup BC is responsible for locating and associating participants and parties with party or participant triggered transactions.
+The Accounts Lookup BC is responsible for locating and associating participants and parties with party or participant triggered transactions. 
+It implements the following usecases : 
+- Participant Look-up
+- Party Look-up
+- Manage Participants Registry information
+- Adding Participant Registry information
+- Deleting Participant Registry information 
 
 ## Contents
 - [account-lookup-bc](#account-lookup-bc)
@@ -18,17 +24,15 @@ The Accounts Lookup BC is responsible for locating and associating participants 
   - [Logging](#logging)
   - [Tests](#tests)
   - [Auditing Dependencies](#auditing-dependencies)
-  - [Container Scans](#container-scans)
-  - [Automated Releases](#automated-releases)
-    - [Potential problems](#potential-problems)
+  - [CI/CD](#cicd-pipelines)
   - [Documentation](#documentation)
 
 ## Packages
 The Account Lookup BC consists of the following packages;
 
 `account-lookup-svc`
-HTTP service for Settlements BC.
-[README](packages/api-svc/README.md)
+Account Lookup and Discovery Service.
+[README](packages/account-lookup-svc/README.md)
 
 `client-lib`
 Client library types.
@@ -104,17 +108,13 @@ coverage/lcov-report/index.html
 ## Auditing Dependencies
 We use npm audit to check dependencies for node vulnerabilities. 
 
-To start a new resolution process, run:
-```
-npm run audit:fix
-```
-You can then check to see if the CI will pass based on the current dependencies with:
+You can check to see if the CI will pass based on the current dependencies with:
 
 ```
 npm run audit:check
 ```
 
-## Container Scans
+## CI/CD Pipelines
 
 ### Execute locally the pre-commit checks - these will be executed with every commit and in the default CI/CD pipeline 
 
@@ -123,25 +123,21 @@ Make sure these pass before committing any code
 npm run pre_commit_check
 ```
 
+### Work Flow 
 
-As part of our CI/CD process, we use anchore-cli to scan our built docker container for vulnerabilities upon release.
-If you find your release builds are failing, refer to the [container scanning](https://github.com/mojaloop/ci-config#container-scanning) in our shared Mojaloop CI config repo. There is a good chance you simply need to update the `mojaloop-policy-generator.js` file and re-run the circleci workflow.
+ As part of our CI/CD process, we use CircleCI. The CircleCI workflow automates the process of publishing changed packages to the npm registry and building Docker images for select packages before publishing them to DockerHub. It also handles versioning, tagging commits, and pushing changes back to the repository. All code is automatically linted, built, and unit tested by CircleCI pipelines, where unit test results are kept for all runs. All libraries are automatically published to npm.js, and all Docker images are published to Docker Hub.
 
-For more information on anchore and anchore-cli, refer to:
-    - [Anchore CLI](https://github.com/anchore/anchore-cli)
-    - [Circle Orb Registry](https://circleci.com/orbs/registry/orb/anchore/anchore-engine)
+1. Setup : This phase initializes the environment, loads common functions, and retrieves commits and git change history since the last successful CI build.
 
-## Automated Releases
+2. Detecting Changed Packages : In this phase, the script identifies packages that have been changed since the last CI build. It analyzes the commit history to determine which packages require updating.
 
-As part of our CI/CD process, we use a combination of CircleCI, standard-version
-npm package and github-release CircleCI orb to automatically trigger our releases
-and image builds. This process essentially mimics a manual tag and release.
+3. Publishing Changed Packages to NPM : For each changed npm package, this phase increments the patch version, builds the package, and publishes it to the npm registry with the latest tag. It also commits the changes and tags the commit for tracking.
 
-On a merge to main, CircleCI is configured to use the mojaloopci github account
-to push the latest generated CHANGELOG and package version number.
+4. Building Docker Images and Publishing to DockerHub : For selected packages, this phase increments the patch version, builds Docker images for the package, and publishes them to DockerHub. Similar to npm publishing, it commits the changes and tags the commit for tracking.
 
-Once those changes are pushed, CircleCI will pull the updated main, tag and
-push a release triggering another subsequent build that also publishes a docker image.
+5. Pushing Commits to Git : Finally, this phase pushes all changes, including version increments, commits, and tags, back to the repository. It ensures that the repository is up-to-date with the latest changes made during the CI/CD process.
+
+
 
 ## Documentation
 The following documentation provides insight into the Settlements Bounded Context.

@@ -28,11 +28,11 @@ If you have followed the [general onboarding guide](https://github.com/mojaloop/
 * `node`, `npm` and (optionally) `nvm`
 
 ## 2. Service Overview 
-The Settlements BC consists of the following packages;
+The Account Lookup BC consists of the following packages;
 
 `account-lookup-svc`
-HTTP service for Settlements BC.
-[README](packages/api-svc/README.md)
+HTTP service for Account Lookup BC.
+[README](packages/account-lookup-svc/README.md)
 
 `client-lib`
 Client library types.
