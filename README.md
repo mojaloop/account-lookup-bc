@@ -11,8 +11,6 @@ It implements the following usecases :
 - Participant Look-up
 - Party Look-up
 - Manage Participants Registry information
-- Adding Participant Registry information
-- Deleting Participant Registry information 
 
 ## Contents
 - [account-lookup-bc](#account-lookup-bc)
@@ -20,7 +18,6 @@ It implements the following usecases :
   - [Packages](#packages)
   - [Running Locally](#running-locally)
   - [Configuration](#configuration)
-  - [API](#api)
   - [Logging](#logging)
   - [Tests](#tests)
   - [Auditing Dependencies](#auditing-dependencies)
@@ -61,11 +58,6 @@ Please follow the instruction in [Onboarding Document](Onboarding.md) to setup a
 ## Configuration
 
 See the README.md file on each services for more Environment Variable Configuration options.
-
-## API
-
-For endpoint documentation, see the [API documentation](https://github.com/mojaloop/mojaloop-specification/blob/master/admin-api/admin-api-specification-v1.0.md#api-resource-settlementmodels).
-
 
 ## Logging
 

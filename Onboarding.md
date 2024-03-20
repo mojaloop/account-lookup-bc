@@ -4,7 +4,6 @@
 
 ## Contents
 
-<!-- vscode-markdown-toc -->
 1. [Prerequisites](#1-prerequisites)
 2. [Service Overview](#2-service-overview)
 3. [Installing and Building](#3-installing-and-building)
@@ -13,11 +12,6 @@
 6. [Testing](#6-testing)
 7. [Common Errors/FAQs](#7-common-errorsfaqs)
 
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
 ##  1. Prerequisites
 
 If you have followed the [general onboarding guide](https://github.com/mojaloop/mojaloop/blob/main/onboarding.md#mojaloop-onboarding), you should already have the following cli tools installed:
