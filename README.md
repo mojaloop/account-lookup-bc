@@ -130,19 +130,20 @@ npm run pre_commit_check
 
 ### Work Flow 
 
- As part of our CI/CD process, we use CircleCI. The CircleCI workflow automates the process of publishing changed packages to the npm registry and building Docker images for select packages before publishing them to DockerHub. It also handles versioning, tagging commits, and pushing changes back to the repository. All code is automatically linted, built, and unit tested by CircleCI pipelines, where unit test results are kept for all runs. All libraries are automatically published to npm.js, and all Docker images are published to Docker Hub.
+ As part of our CI/CD process, we use CircleCI. The CircleCI workflow automates the process of publishing changed packages to the npm registry and building Docker images for select packages before publishing them to DockerHub. It also handles versioning, tagging commits, and pushing changes back to the repository.
 
+The process includes five phases. 
 1. Setup : This phase initializes the environment, loads common functions, and retrieves commits and git change history since the last successful CI build.
 
-2. Detecting Changed Packages : In this phase, the script identifies packages that have been changed since the last CI build. It analyzes the commit history to determine which packages require updating.
+2. Detecting Changed Package.
 
-3. Publishing Changed Packages to NPM : For each changed npm package, this phase increments the patch version, builds the package, and publishes it to the npm registry with the latest tag. It also commits the changes and tags the commit for tracking.
+3. Publishing Changed Packages to NPM.
 
-4. Building Docker Images and Publishing to DockerHub : For selected packages, this phase increments the patch version, builds Docker images for the package, and publishes them to DockerHub. Similar to npm publishing, it commits the changes and tags the commit for tracking.
+4. Building Docker Images and Publishing to DockerHub.
 
-5. Pushing Commits to Git : Finally, this phase pushes all changes, including version increments, commits, and tags, back to the repository. It ensures that the repository is up-to-date with the latest changes made during the CI/CD process.
+5. Pushing Commits to Git.
 
-
+ All code is automatically linted, built, and unit tested by CircleCI pipelines, where unit test results are kept for all runs. All libraries are automatically published to npm.js, and all Docker images are published to Docker Hub.
 
 ## Documentation
 The following documentation provides insight into the Settlements Bounded Context.
