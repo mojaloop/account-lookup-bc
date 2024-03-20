@@ -36,7 +36,7 @@ HTTP service for Account Lookup BC.
 
 `client-lib`
 Client library types.
-[README](./packages/public-types-lib/README.md)
+[README](./packages/client-lib/README.md)
 
 `domain-lib`
 Domain library types.
@@ -48,7 +48,7 @@ HTTP Oracle Service.
 
 `implementation-lib`
 Account Lookup Infrastructure Library.
-[README](packages/implementation-lib/README.md)
+[README](packages/implementations-lib/README.md)
 
 `shared-mocks-lib`
 Mock implementation used for testing.

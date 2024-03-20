@@ -36,7 +36,7 @@ Account Lookup and Discovery Service.
 
 `client-lib`
 Client library types.
-[README](./packages/public-types-lib/README.md)
+[README](./packages/client-lib/README.md)
 
 `domain-lib`
 Domain library types.
@@ -48,7 +48,7 @@ HTTP Oracle Service.
 
 `implementation-lib`
 Account Lookup Infrastructure Library.
-[README](packages/implementation-lib/README.md)
+[README](packages/implementations-lib/README.md)
 
 `shared-mocks-lib`
 Mock implementation used for testing.
@@ -107,6 +107,11 @@ coverage/lcov-report/index.html
 
 ## Auditing Dependencies
 We use npm audit to check dependencies for node vulnerabilities. 
+
+To start a new resolution process, run:
+```
+npm run audit:fix
+``` 
 
 You can check to see if the CI will pass based on the current dependencies with:
 
