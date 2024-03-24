@@ -165,7 +165,7 @@ export class AccountLookupAggregate {
 			this._logger.info("Oracle finder initialized");
 			const oracles = await this._oracleFinder.getAllOracles();
 			this._logger.info(`Found list of ${oracles.length} oracles`);
-			
+
 			for await (const oracle of oracles) {
 				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
 				await oracleAdapter.init();
@@ -220,6 +220,7 @@ export class AccountLookupAggregate {
 			return;
 		}
 
+        let successfullyHandled = false;
 		try {
 			switch (message.msgName) {
 				case PartyQueryReceivedEvt.name:
@@ -253,6 +254,7 @@ export class AccountLookupAggregate {
 					eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
 				}
 			}
+            successfullyHandled = true;
 		} catch (error) {
 			const errorMessage = `Unknown error while handling message ${message.msgName}`;
 			this._logger.error(errorMessage, error);
@@ -268,7 +270,7 @@ export class AccountLookupAggregate {
 
 		eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
 		await this._messageProducer.send(eventToPublish);
-		handlerTimerEndFn({ success: "true" });
+		handlerTimerEndFn({ success: successfullyHandled.toString() });
 	}
 
 	//#endregion
@@ -936,7 +938,7 @@ export class AccountLookupAggregate {
 		if (!participant.approved) {
 			const errorMessage = `Payer participant fspId ${participantId} is not approved`;
 			this._logger.error(errorMessage);
-			
+
 			return new AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -949,7 +951,7 @@ export class AccountLookupAggregate {
 		if (!participant.isActive) {
 			const errorMessage = `Payer participant fspId ${participantId} is not active`;
 			this._logger.error(errorMessage);
-			
+
 			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
 				partyId: partyId,
 				partyType: partyType,

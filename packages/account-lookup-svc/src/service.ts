@@ -97,6 +97,10 @@ const KAFKA_LOGS_TOPIC = process.env["KAFKA_LOGS_TOPIC"] || "logs";
 const DB_NAME = process.env.ACCOUNT_LOOKUP_DB_NAME ?? "account-lookup";
 const MONGO_URL = process.env["MONGO_URL"] || "mongodb://root:mongoDbPas42@localhost:27017/";
 
+const REDIS_HOST = process.env["REDIS_HOST"] || "localhost";
+const REDIS_PORT = (process.env["REDIS_PORT"] && parseInt(process.env["REDIS_PORT"])) || 6379;
+const REDIS_CACHE_DURATION_SECS = (process.env["REDIS_CACHE_DURATION_SECS"] && parseInt(process.env["REDIS_CACHE_DURATION_SECS"])) || 30; // 30 secs
+
 const PARTICIPANTS_SVC_URL = process.env["PARTICIPANTS_SVC_URL"] || "http://localhost:3010";
 const PARTICIPANTS_CACHE_TIMEOUT_MS =
     (process.env["PARTICIPANTS_CACHE_TIMEOUT_MS"] && parseInt(process.env["PARTICIPANTS_CACHE_TIMEOUT_MS"])) ||
@@ -186,7 +190,7 @@ export class Service {
         this.oracleFinder = oracleFinder;
 
         if (!oracleProviderFactory) {
-            oracleProviderFactory = new OracleAdapterFactory(MONGO_URL, DB_NAME, logger);
+            oracleProviderFactory = new OracleAdapterFactory(MONGO_URL, DB_NAME, logger, REDIS_HOST, REDIS_PORT, REDIS_CACHE_DURATION_SECS);
         }
         this.oracleProviderFactory = oracleProviderFactory;
 

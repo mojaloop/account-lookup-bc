@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import process from "process";
 
-import PubMessages, {TransferFulfilCommittedRequestedEvt} from "@mojaloop/platform-shared-lib-public-messages-lib";
+import PubMessages from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
 
@@ -17,6 +17,7 @@ logger.setLogLevel("warn");
 const kafkaConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
     kafkaGroupId: `als_perftest_responder`,
+
 };
 
 if(!SINGLE_MODE){

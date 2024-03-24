@@ -2,7 +2,7 @@
 import process from "process";
 import {randomUUID} from "crypto";
 
-import PubMessages, {TransferFulfilCommittedRequestedEvt} from "@mojaloop/platform-shared-lib-public-messages-lib";
+import PubMessages from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
 
@@ -25,8 +25,8 @@ const kafkaProducerOptions = {
 let messageProducer = new MLKafkaJsonProducer(kafkaProducerOptions, logger);
 await messageProducer.connect();
 
-const MESSAGE_COUNT = 0;
-const BATCH_SIZE = 600;
+const MESSAGE_COUNT = 1;
+const BATCH_SIZE = 10;
 const BATCH_WAIT_MS = 500;
 
 let sent=0;

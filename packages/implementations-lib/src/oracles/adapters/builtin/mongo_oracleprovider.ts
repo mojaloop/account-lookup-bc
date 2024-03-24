@@ -53,8 +53,18 @@ import {
   UnableToDisassociateParticipantError,
   UnableToGetAssociationsError,
 } from "../../../errors";
+import Redis from "ioredis";
 
 const MAX_ENTRIES_PER_PAGE = 100;
+const DEFAULT_REDIS_CACHE_DURATION_SECS = 5; // 5 secs
+
+interface IAssociationRecord {
+    fspId: string;
+    partyType: string;
+    partyId: string;
+    partySubType: string | null;
+    currency: string | null;
+}
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 	private readonly _logger: ILogger;
@@ -65,16 +75,35 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 	private parties: Collection;
 	private readonly _oracle: Oracle;
 
+    private readonly _redisClient: Redis;
+    private readonly _redisKeyPrefix= "mongoOracleProviderRepo";
+    private readonly _redisCacheDurationSecs:number;
+
 	public readonly oracleId: string;
 	public readonly type: OracleType;
 
-	constructor(oracle: Oracle, logger: ILogger, connectionString: string, dbName: string) {
+	constructor(
+        oracle: Oracle,
+        logger: ILogger,
+        connectionString: string,
+        dbName: string,
+        redisHost: string,
+        redisPort: number,
+        redisCacheDurationSecs = DEFAULT_REDIS_CACHE_DURATION_SECS
+    ) {
 		this._logger = logger.createChild(this.constructor.name);
 		this._oracle = oracle;
 		this.oracleId = this._oracle.id;
 		this._connectionString = connectionString;
 		this._dbName = dbName;
 		this.type = "builtin";
+        this._redisCacheDurationSecs = redisCacheDurationSecs;
+
+        this._redisClient = new Redis({
+            port: redisPort,
+            host: redisHost,
+            lazyConnect: true
+        });
 	}
 
 	async init(): Promise<void> {
@@ -87,6 +116,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 			this._logger.error(errorMessage + `  - ${error}`);
 			throw new UnableToInitOracleProvider(errorMessage);
 		}
+
+        try{
+            await this._redisClient.connect();
+            this._logger.debug("Connected to Redis successfully");
+        }catch(error: unknown){
+            this._logger.error(`Unable to connect to redis cache: ${(error as Error).message}`);
+            throw error;
+        }
 	}
 
 	async destroy(): Promise<void> {
@@ -99,12 +136,51 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		}
 	}
 
+    private _getKeyWithPrefix (partyType: string, partyId: string, partySubType: string | null, currency: string | null): string {
+        return `${this._redisKeyPrefix}_${partyType}_${partyId}_${partySubType}_${currency}`;
+    }
+
+    private async _getFromCache(
+        partyType: string,
+        partyId: string,
+        partySubType: string | null,
+        currency: string | null
+    ):Promise<IAssociationRecord | null>{
+        const objStr = await this._redisClient.get(this._getKeyWithPrefix(partyType, partyId, partySubType, currency));
+        if(!objStr) return null;
+
+        try{
+            const obj = JSON.parse(objStr);
+
+            // manual conversion for any non-primitive props or children
+            return obj;
+        }catch (e) {
+            this._logger.error(e);
+            return null;
+        }
+    }
+
+    private async _setToCache(record:IAssociationRecord):Promise<void>{
+        const key = this._getKeyWithPrefix(record.partyType, record.partyId, record.partySubType, record.currency);
+        await this._redisClient.setex(key, this._redisCacheDurationSecs, JSON.stringify(record));
+    }
+
+    private async _delFromCache(record:IAssociationRecord):Promise<void>{
+        const key = this._getKeyWithPrefix(record.partyType, record.partyId, record.partySubType, record.currency);
+        await this._redisClient.del(key);
+    }
+
 	async getParticipantFspId(
 		partyType: string,
 		partyId: string,
 		partySubType: string | null,
 		currency: string | null
 	): Promise<string | null> {
+        const cacheData = await this._getFromCache(partyType, partyId, partySubType, currency);
+        if (cacheData){
+            return cacheData.fspId;
+        }
+
 		const query: any = {
 			partyId: partyId,
 			partyType: partyType,
@@ -134,6 +210,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 			return null;
 		}
 
+        await this._setToCache({
+            fspId: data.fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
+
 		return data.fspId as unknown as string;
 	}
 
@@ -144,7 +228,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		partySubType: string | null,
 		currency: string | null
 	): Promise<null> {
-		const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
+		const query: any = this._buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
 
 		const association = await this.parties.findOne(query);
 
@@ -162,6 +246,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		}
 		);
 
+        await this._setToCache({
+            fspId: fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
+
 		this._logger.info(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 		return null;
 	}
@@ -173,7 +265,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		partySubType: string | null,
 		currency: string | null
 	): Promise<null> {
-		const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
+		const query: any = this._buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
 
 		await this.parties.deleteOne(query).catch(
 		/* istanbul ignore next */ (error: unknown) => {
@@ -182,6 +274,14 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 			throw new UnableToDisassociateParticipantError(errorMessage);
 		}
 		);
+
+        await this._delFromCache({
+            fspId: fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
 
 		this._logger.info(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
 		return null;
@@ -224,7 +324,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 		return mappedAssociations;
 	}
 
-	private buildLookupQuery(
+	private _buildLookupQuery(
 		partyId: string,
 		fspId: string,
 		partyType: string,
@@ -294,7 +394,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 			const result = await this.parties.find(
 				filter,
 				{
-					sort:["updatedAt", "desc"], 
+					sort:["updatedAt", "desc"],
 					skip: skip,
                     limit: 20
 				}
@@ -314,7 +414,7 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 
 			searchResults.totalPages = Math.ceil(totalEntries.length / pageSize);
 			searchResults.pageSize = Math.max(pageSize, result.length);
-            
+
         } catch (err) {
             this._logger.error(err);
         }
