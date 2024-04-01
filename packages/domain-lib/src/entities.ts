@@ -36,13 +36,25 @@
  - Rui Rocha <rui.rocha@arg.software>
 
  --------------
- **/
+**/
 
- "use strict";
+"use strict";
 
+import { IAssociation, IOracle, OracleType } from "@mojaloop/account-lookup-bc-public-types-lib";
 
-export * from "./aggregate";
-export * from "./entities";
-export * from "./errors";
-export * from "./interfaces/infrastructure";
-export * from "./privileges";
+export class Oracle implements IOracle {
+    id: string;
+    name: string;
+    type: OracleType;
+    partyType: string;
+    currency: string | null;
+    endpoint: string | null;
+}
+
+export class Association implements IAssociation {
+    fspId: string;
+    partyType: string;
+    partyId: string;
+    partySubType: string|null;
+    currency: string|null;
+}

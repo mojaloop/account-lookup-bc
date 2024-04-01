@@ -95,6 +95,7 @@ import {
 
 import { AccountLookupAggregate } from "../../src";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
+import { AccountLookupErrorCodeNames } from "@mojaloop/account-lookup-bc-public-types-lib";
 
 let aggregate: AccountLookupAggregate;
 
@@ -141,7 +142,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       partyType: null as any,
       partySubType: null,
       requesterFspId: null,
-      errorDescription: "Message payload is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD,
     };
 
     jest.spyOn(messageProducer, "send");
@@ -186,7 +187,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       partyType: "type",
       requesterFspId: "2",
       partySubType: null as any,
-      errorDescription: `Message type is invalid ${message.msgType}`,
+      errorCode: AccountLookupErrorCodeNames.INVALID_MESSAGE_TYPE,
     };
 
     jest.spyOn(messageProducer, "send");
@@ -229,7 +230,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       partyType: "type",
       requesterFspId: "2",
       currency: null,
-      errorDescription: `Unknown error while handling message ${message.msgName}`,
+      errorCode: AccountLookupErrorCodeNames.COMMAND_TYPE_UNKNOWN,
     };
 
     jest.spyOn(messageProducer, "send");
@@ -307,7 +308,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       requesterFspId: null as any,
       partyId,
       partySubType,
@@ -347,7 +348,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: `Error getting requester participant info for participantId: ${requesterFspId}`,
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       requesterFspId,
       partyId,
       partySubType,
@@ -388,7 +389,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCRequesterParticipantNotFoundErrorPayload = {
-      errorDescription: `No requester participant found for fspId: ${requesterFspId}`,
+      errorCode: AccountLookupErrorCodeNames.SOURCE_PARTICIPANT_NOT_FOUND,
       requesterFspId,
       partyId,
       partySubType,
@@ -430,7 +431,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: `Requester Participant id mismatch ${fakeParticipantId} ${requesterFspId}`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_ID_MISMATCH,
       requesterFspId,
       partyId,
       partySubType,
@@ -475,7 +476,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: `Payer participant fspId ${requesterFspId} is not approved`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_APPROVED,
       requesterFspId,
       partyId,
       partySubType,
@@ -521,7 +522,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: `Payer participant fspId ${requesterFspId} is not active`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_ACTIVE,
       requesterFspId,
       partyId,
       partySubType,
@@ -567,7 +568,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "USD",
       partyId,
       partySubType,
@@ -615,7 +616,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Unable to get oracle for partyType: ${partyType} and currency: USD`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "USD",
       partyId,
       partySubType,
@@ -663,7 +664,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Oracle for partyType: ${partyType} and currency: USD not found`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "USD",
       partyId,
       partySubType,
@@ -712,7 +713,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Oracle adapter for ${partyType} and id: ${fakeOracleId} not present in oracle list`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "USD",
       partyId,
       partySubType,
@@ -767,7 +768,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: EUR from oracle`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "EUR",
       partyId,
       partySubType,
@@ -814,7 +815,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `PartyId:${partyId} has no fspId associated in oracle`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       currency: "USD",
       partyId,
       partySubType,
@@ -862,7 +863,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
-      errorDescription: `Error getting destination participant info for participantId: ${expectedDestinationFspId}`,
+      errorCode: AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT,
       destinationFspId: expectedDestinationFspId,
       partyId,
       partySubType,
@@ -912,7 +913,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
-      errorDescription: `No destination participant found for fspId: ${expectedDestinationFspId}`,
+      errorCode: AccountLookupErrorCodeNames.DESTINATION_PARTICIPANT_NOT_FOUND,
       destinationFspId: expectedDestinationFspId,
       partyId,
       partySubType,
@@ -963,7 +964,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload = {
-      errorDescription: `Participant id mismatch ${fakeDestinationFspId} ${expectedDestinationFspId}`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_ID_MISMATCH,
       destinationFspId: expectedDestinationFspId,
       partyId,
       partySubType,
@@ -1018,7 +1019,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload = {
-      errorDescription: `Payee participant fspId ${expectedDestinationFspId} is not approved`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_NOT_APPROVED,
       destinationFspId: expectedDestinationFspId,
       partyId,
       partySubType,
@@ -1074,7 +1075,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload = {
-      errorDescription: `Payee participant fspId ${expectedDestinationFspId} is not active`,
+      errorCode: AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_NOT_ACTIVE,
       destinationFspId: expectedDestinationFspId,
       partyId,
       partySubType,
@@ -1141,7 +1142,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       requesterFspId: null as any,
       partyId,
       partySubType,
@@ -1192,7 +1193,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
-      errorDescription: "Destination FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT,
       destinationFspId: null as any,
       partyId,
       partySubType,
@@ -1238,7 +1239,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       partyId,
       partySubType,
       partyType,
@@ -1278,7 +1279,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
-      errorDescription: `Unable to get participant fspId for partyId: ${partyId}, partyType: ${partyType}, currency: ${currency} from oracle`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE,
       partyId,
       partySubType,
       partyType,
@@ -1325,7 +1326,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
-      errorDescription: `No destination participant found for fspId: ${ownerFspId}`,
+      errorCode: AccountLookupErrorCodeNames.DESTINATION_PARTICIPANT_NOT_FOUND,
       partyId,
       partySubType,
       partyType,
@@ -1381,7 +1382,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       partyId,
       partySubType,
       partyType,
@@ -1427,7 +1428,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
-      errorDescription: "Destination FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT,
       partyId,
       partySubType,
       partyType,
@@ -1471,7 +1472,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       partyId: mockedPartyIds[0],
       partySubType: mockedPartySubTypes[0],
       partyType: mockedPartyTypes[0],
@@ -1509,7 +1510,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       currency: "BAD_CURRENCY",
       partyId: mockedPartyIds[0],
       partyType: mockedPartyTypes[0],
-      errorDescription: `Oracle for partyType: ${payload.partyType} and currency: ${payload.currency} not found`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_ORACLE_ADAPTER,
     };
 
     const event = new ParticipantAssociationRequestReceivedEvt(payload);
@@ -1547,7 +1548,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
     const responsePayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
       currency: "EUR",
-      errorDescription: `Error associating fspId: ${payload.ownerFspId} with party ${payload.partyId} ${payload.partyType}`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_ASSOCIATE_PARTICIPANT,
       partyId: mockedPartyIds[3],
       partyType: mockedPartyTypes[3],
       fspIdToAssociate: mockedParticipantFspIds[3],
@@ -1589,7 +1590,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     };
 
     const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-      errorDescription: "Requester FspId is null or undefined",
+      errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
       partyId: mockedPartyIds[0],
       partySubType: mockedPartySubTypes[0],
       partyType: mockedPartyTypes[0],
@@ -1627,7 +1628,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
       currency: "BAD_CURRENCY",
       partyId: mockedPartyIds[0],
       partyType: mockedPartyTypes[0],
-      errorDescription: `Oracle for partyType: ${payload.partyType} and currency: ${payload.currency} not found`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_GET_ORACLE_ADAPTER,
     };
 
     const event = new ParticipantDisassociateRequestReceivedEvt(payload);
@@ -1665,7 +1666,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
     const responsePayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
       currency: "EUR",
-      errorDescription: `Error disassociating fspId: ${payload.ownerFspId} with party ${payload.partyId} ${payload.partyType}`,
+      errorCode: AccountLookupErrorCodeNames.UNABLE_TO_DISASSOCIATE_PARTICIPANT,
       partyId: mockedPartyIds[3],
       partyType: mockedPartyTypes[3],
       fspIdToDisassociate: mockedParticipantFspIds[3],

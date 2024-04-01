@@ -40,7 +40,8 @@ optionally within square brackets <email>.
 
 "use strict";
 
-import { IOracleProviderAdapter, Oracle, OracleType, Association, AssociationsSearchResults } from "@mojaloop/account-lookup-bc-domain-lib";
+import { IOracleProviderAdapter, Oracle, Association } from "@mojaloop/account-lookup-bc-domain-lib";
+import { OracleType, AssociationsSearchResults } from "@mojaloop/account-lookup-bc-public-types-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import axios, { AxiosInstance, AxiosResponse } from "axios";
 import {

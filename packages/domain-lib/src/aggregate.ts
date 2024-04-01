@@ -89,7 +89,8 @@ import {
   PartyQueryResponseEvtPayload,
   AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { AddOracleDTO, Association, AssociationsSearchResults, Oracle, OracleType, ParticipantLookup } from "./types";
+import { Association, Oracle } from "./entities";
+import { AddOracleDTO,  AssociationsSearchResults, OracleType, ParticipantLookup } from "@mojaloop/account-lookup-bc-public-types-lib";
 import {
   DomainEventMsg,
   IMessage,
@@ -117,6 +118,7 @@ import {
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
 import { randomUUID } from "crypto";
+import { AccountLookupErrorCodeNames } from "@mojaloop/account-lookup-bc-public-types-lib";
 
 export class AccountLookupAggregate {
 	private readonly _logger: ILogger;
@@ -243,12 +245,13 @@ export class AccountLookupAggregate {
 				default: {
 					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
 					this._logger.error(errorMessage);
+					const errorCode = AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD;
 					const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 						partyId: partyId,
 						partyType: partyType,
 						partySubType: partySubType,
 						requesterFspId: requesterFspId,
-						errorDescription: errorMessage,
+						errorCode: errorCode,
 					};
 					eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
 				}
@@ -256,12 +259,13 @@ export class AccountLookupAggregate {
 		} catch (error) {
 			const errorMessage = `Unknown error while handling message ${message.msgName}`;
 			this._logger.error(errorMessage, error);
+			const errorCode = AccountLookupErrorCodeNames.COMMAND_TYPE_UNKNOWN;
 			const errorPayload: AccountLookUpUnknownErrorPayload = {
 				partyId,
 				partyType,
 				currency,
 				requesterFspId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			eventToPublish = new AccountLookUpUnknownErrorEvent(errorPayload);
 		}
@@ -314,12 +318,13 @@ export class AccountLookupAggregate {
 			} catch (error: any) {
 				const errorMessage = error?.message;
 				this._logger.error(errorMessage, error);
+				const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE;
 				const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 					partyId: partyId,
 					partySubType: partySubType,
 					partyType: partyType,
 					currency: currency,
-					errorDescription: errorMessage,
+					errorCode: errorCode,
 				};
 				/* istanbul ignore next */
 				timerEndFn({ success: "false" });
@@ -472,12 +477,13 @@ export class AccountLookupAggregate {
 			const errorMessage = error?.message;
 			this._logger.error(errorMessage, error);
 			//TODO:Replace by owner error
+			const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_GET_PARTICIPANT_FROM_ORACLE;
 			const errorPayload: AccountLookUpUnableToGetParticipantFromOracleErrorPayload = {
 				partyId: partyId,
 				partySubType: partySubType,
 				partyType: partyType,
 				currency: currency,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			/* istanbul ignore next */
 			timerEndFn({ success: "false" });
@@ -616,11 +622,12 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = error?.message;
 			this._logger.error(errorMessage, error);
+			const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_GET_ORACLE_ADAPTER;
 			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
 				partyId,
 				partyType,
 				currency,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(
 				unableToGetOracleFromOracleFinderErrorPayload
@@ -635,12 +642,13 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = `Error associating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage, error);
+			const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_ASSOCIATE_PARTICIPANT;
 			const errorPayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
 				fspIdToAssociate: ownerFspId,
 				partyType,
 				partyId,
 				currency,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			const errorEvent = new AccountLookupBCUnableToAssociateParticipantErrorEvent(errorPayload);
 			timerEndFn({ success: "false" });
@@ -701,11 +709,12 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = error?.message;
 			this._logger.error(errorMessage, error.message);
+			const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_GET_ORACLE_ADAPTER;
 			const unableToGetOracleFromOracleFinderErrorPayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
 				partyId,
 				partyType,
 				currency,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			const errorEvent = new AccountLookupBCUnableToGetOracleAdapterErrorEvent(
 				unableToGetOracleFromOracleFinderErrorPayload
@@ -720,12 +729,13 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = `Error disassociating fspId: ${ownerFspId} with party ${partyId} ${partyType}`;
 			this._logger.error(errorMessage, error);
+			const errorCode = AccountLookupErrorCodeNames.UNABLE_TO_DISASSOCIATE_PARTICIPANT;
 			const errorPayload: AccountLookupBCUnableToDisassociateParticipantErrorPayload = {
 				fspIdToDisassociate: ownerFspId,
 				partyId,
 				partyType,
 				currency,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			const errorEvent = new AccountLookupBCUnableToDisassociateParticipantErrorEvent(errorPayload);
 			timerEndFn({ success: "false" });
@@ -759,12 +769,13 @@ export class AccountLookupAggregate {
 		if (!message.payload) {
 			const errorMessage = "Message payload is null or undefined";
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD;
 			const invalidMessageErrorPayload: AccountLookupBCInvalidMessageErrorPayload = {
 				requesterFspId: requesterFspId,
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			return new AccountLookupBCInvalidMessagePayloadErrorEvent(invalidMessageErrorPayload);
 		}
@@ -772,12 +783,13 @@ export class AccountLookupAggregate {
 		if (message.msgType !== MessageTypes.DOMAIN_EVENT) {
 			const errorMessage = `Message type is invalid ${message.msgType}`;
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_MESSAGE_TYPE;
 			const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
 				requesterFspId: requesterFspId,
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			return new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
 		}
@@ -795,12 +807,13 @@ export class AccountLookupAggregate {
 		if (!participantId) {
 			const errorMessage = "Destination FspId is null or undefined";
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT;
 			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId: partyId,
 				partySubType: partySubType,
 				partyType: partyType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 		}
@@ -810,12 +823,13 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = `Error getting destination participant info for participantId: ${participantId}`;
 			this._logger.error(errorMessage, error?.message);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT;
 			const invalidParticipantIdErrorPayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 
 			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
@@ -824,12 +838,13 @@ export class AccountLookupAggregate {
 		if (!participant) {
 			const errorMessage = `No destination participant found for fspId: ${participantId}`;
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.DESTINATION_PARTICIPANT_NOT_FOUND;
 			const noSuchParticipantErrorPayload: AccountLookupBCDestinationParticipantNotFoundErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			return new AccountLookupBCDestinationParticipantNotFoundErrorEvent(noSuchParticipantErrorPayload);
 		}
@@ -837,12 +852,13 @@ export class AccountLookupAggregate {
 		if (participant.id !== participantId) {
 			const errorMessage = `Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_ID_MISMATCH;
 			const invalidParticipantIdErrorPayload: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			};
 			return new AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent(invalidParticipantIdErrorPayload);
 		}
@@ -851,12 +867,13 @@ export class AccountLookupAggregate {
 			const errorMessage = `Payee participant fspId ${participantId} is not approved`;
 			this._logger.error(errorMessage);
 
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_NOT_APPROVED;
 			const errorPayload: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage
+				errorCode: errorCode
 			};
 			return new AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent(errorPayload);
 		}
@@ -865,12 +882,13 @@ export class AccountLookupAggregate {
 			const errorMessage = `Payee participant fspId ${participantId} is not active`;
 			this._logger.error(errorMessage);
 
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_DESTINATION_PARTICIPANT_NOT_ACTIVE;
 			const errorPayload: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload = {
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				destinationFspId: participantId,
-				errorDescription: errorMessage
+				errorCode: errorCode
 			};
 			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent(errorPayload);
 		}
@@ -888,12 +906,13 @@ export class AccountLookupAggregate {
 		if (!participantId) {
 			const errorMessage = "Requester FspId is null or undefined";
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT;
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 
@@ -902,62 +921,65 @@ export class AccountLookupAggregate {
 		} catch (error: any) {
 			const errorMessage = `Error getting requester participant info for participantId: ${participantId}`;
 			this._logger.error(errorMessage, error?.message);
+			const errorCode = AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT;
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 
 		if (!participant) {
 			const errorMessage = `No requester participant found for fspId: ${participantId}`;
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.SOURCE_PARTICIPANT_NOT_FOUND;
 			return new AccountLookupBCRequesterParticipantNotFoundErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 
 		if (participant.id !== participantId) {
 			const errorMessage = `Requester Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_ID_MISMATCH;
 			return new AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 
 		if (!participant.approved) {
 			const errorMessage = `Payer participant fspId ${participantId} is not approved`;
 			this._logger.error(errorMessage);
-			
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_APPROVED;
 			return new AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 
 		if (!participant.isActive) {
 			const errorMessage = `Payer participant fspId ${participantId} is not active`;
 			this._logger.error(errorMessage);
-			
+			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_ACTIVE;
 			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
 				requesterFspId: participantId,
-				errorDescription: errorMessage,
+				errorCode: errorCode,
 			});
 		}
 		return null;
