@@ -42,7 +42,8 @@ optionally within square brackets <email>.
 
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { MongoClient, Collection, WithId, Document } from "mongodb";
-import { IOracleProviderAdapter, OracleType, Oracle, Association, AssociationsSearchResults } from "@mojaloop/account-lookup-bc-domain-lib";
+import { IOracleProviderAdapter, Oracle, Association } from "@mojaloop/account-lookup-bc-domain-lib";
+import { OracleType, AssociationsSearchResults } from "@mojaloop/account-lookup-bc-public-types-lib";
 import {
   ParticipantAssociationAlreadyExistsError,
   UnableToCloseDatabaseConnectionError,

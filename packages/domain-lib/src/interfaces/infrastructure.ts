@@ -41,7 +41,8 @@
 "use strict";
 
 import { IParticipant } from "@mojaloop/participant-bc-public-types-lib";
-import { Oracle, OracleType, Association, AssociationsSearchResults } from "./../types";
+import { Oracle, Association } from "../entities";
+import { OracleType, AssociationsSearchResults } from "@mojaloop/account-lookup-bc-public-types-lib";
 
 
 export interface IOracleFinder{

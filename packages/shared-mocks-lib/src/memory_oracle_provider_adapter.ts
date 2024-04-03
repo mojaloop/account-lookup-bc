@@ -40,8 +40,8 @@
 
 "use strict";
 
-import { Association, AssociationsSearchResults, IOracleProviderAdapter, Oracle, OracleType } from "@mojaloop/account-lookup-bc-domain-lib";
-
+import { Association, IOracleProviderAdapter, Oracle } from "@mojaloop/account-lookup-bc-domain-lib";
+import { AssociationsSearchResults, OracleType } from "@mojaloop/account-lookup-bc-public-types-lib";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
 import { mockedOracleAssociations } from "./mocked_data";
 

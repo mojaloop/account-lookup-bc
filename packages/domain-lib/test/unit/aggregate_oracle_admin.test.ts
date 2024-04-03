@@ -32,7 +32,8 @@
 
 "use strict";
 
-import { AccountLookupAggregate, AddOracleDTO, DuplicateOracleError, Oracle, OracleNotFoundError } from "../../src";
+import { AccountLookupAggregate, DuplicateOracleError, Oracle, OracleNotFoundError } from "../../src";
+import { AddOracleDTO } from "@mojaloop/account-lookup-bc-public-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
   logger,

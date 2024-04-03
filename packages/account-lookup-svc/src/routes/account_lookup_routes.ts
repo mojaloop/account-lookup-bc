@@ -33,7 +33,8 @@
 
 import express from "express";
 import { ILogger } from "@mojaloop/logging-bc-public-types-lib";
-import { AccountLookupAggregate, ParticipantLookup, ParticipantNotFoundError, AccountLookupPrivileges } from "@mojaloop/account-lookup-bc-domain-lib";
+import { AccountLookupAggregate, ParticipantNotFoundError, AccountLookupPrivileges } from "@mojaloop/account-lookup-bc-domain-lib";
+import { ParticipantLookup } from "@mojaloop/account-lookup-bc-public-types-lib";
 import { check } from "express-validator";
 import { BaseRoutes } from "./base/base_routes";
 import { IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";

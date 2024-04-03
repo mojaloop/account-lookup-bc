@@ -32,7 +32,8 @@
 
 "use strict";
 
-import { AccountLookupAggregate, Oracle, ParticipantLookup } from "../../src";
+import { AccountLookupAggregate, Oracle } from "../../src";
+import { ParticipantLookup } from "@mojaloop/account-lookup-bc-public-types-lib";
 import {
 	GetPartyQueryRejectedEvt,
 	GetPartyQueryRejectedEvtPayload,
