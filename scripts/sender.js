@@ -2,11 +2,17 @@
 import process from "process";
 import {randomUUID} from "crypto";
 
-import PubMessages, {TransferFulfilCommittedRequestedEvt} from "@mojaloop/platform-shared-lib-public-messages-lib";
-import { MLKafkaJsonConsumer, MLKafkaJsonProducer } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
+import PubMessages from "@mojaloop/platform-shared-lib-public-messages-lib";
+import {
+    MLKafkaJsonConsumer,
+    MLKafkaJsonProducer,
+    MLKafkaRawProducerCompressionCodecs
+} from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
 
-const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+import stringify from "json-stringify-safe";
+
+const KAFKA_URL = process.env["KAFKA_URL"] || "redpanda-0.customredpandadomain.local:31092,redpanda-1.customredpandadomain.local:31092,redpanda-2.customredpandadomain.local:31092";
 
 const logger = new ConsoleLogger();
 logger.setLogLevel("info");
@@ -16,7 +22,9 @@ const kafkaConsumerOptions = {
     kafkaGroupId: `transfs_perftest2_sender`
 };
 const kafkaProducerOptions = {
-    kafkaBrokerList: KAFKA_URL
+    kafkaBrokerList: KAFKA_URL,
+    queueBufferingMaxMs: 0,
+    // compressionCodec: MLKafkaRawProducerCompressionCodecs.SNAPPY
 };
 
 
@@ -26,8 +34,8 @@ let messageProducer = new MLKafkaJsonProducer(kafkaProducerOptions, logger);
 await messageProducer.connect();
 
 const MESSAGE_COUNT = 0;
-const BATCH_SIZE = 600;
-const BATCH_WAIT_MS = 500;
+const BATCH_SIZE = 20;
+const BATCH_WAIT_MS = 250;
 
 let sent=0;
 
@@ -71,7 +79,7 @@ async function sendParticipantQueryReceivedEvt(batchSize){
 }
 
 async function sendPartyQueryReceivedEvt(batchSize){
-    const now = Date.now();
+    //const now = ;
     const toSend = [];
 
     for(let i=0; i<batchSize; i++){
@@ -79,7 +87,7 @@ async function sendPartyQueryReceivedEvt(batchSize){
             requesterFspId: requesterFspId,
             destinationFspId: ownerFspId,
             partyType: partyType,
-            partyId: partyId,
+            partyId: Math.floor(Math.random()*1000),
             partySubType: partySubType,
             currency: currency,
         };
@@ -89,16 +97,20 @@ async function sendPartyQueryReceivedEvt(batchSize){
             headers: {},
             requesterFspId: requesterFspId,
             destinationFspId: ownerFspId,
-            reqSendTimestamp:now
+            reqSendTimestamp: Date.now()
         }
-        evt.msgKey = evt.payload.requesterFspId;
+        evt.msgKey = evt.payload.partyId;
         toSend.push(evt);
     }
 
+    const start = Date.now();
+
+    // const stringMessage = stringify(toSend);
     await messageProducer.send(toSend);
+    const publishedTookMs = Date.now()-start;
 
     const elapsedSecs = (Date.now()-startTime)/1000;
-    console.log(`Batch sent - batchsize: ${batchSize} - total sent: ${sent} - elapsedSecs: ${elapsedSecs} avg msg/sec: ${sent/elapsedSecs}`);
+    console.log(`Batch sent - batchsize: ${batchSize} - total sent: ${sent} - elapsedSecs: ${elapsedSecs} avg msg/sec: ${(sent/elapsedSecs).toFixed(2)} - publish took: ${publishedTookMs}`);
 }
 
 

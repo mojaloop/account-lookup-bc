@@ -13,6 +13,7 @@ RUN npm install -g node-gyp
 # Copy all package and package-lock json files
 # A wildcard is used to ensure both package.json AND package-lock.json are copied
 COPY package*.json ./
+COPY packages/public-types-lib/package*.json ./packages/public-types-lib/
 COPY packages/domain-lib/package*.json ./packages/domain-lib/
 COPY packages/implementations-lib/package*.json ./packages/implementations-lib/
 COPY packages/account-lookup-svc/package*.json ./packages/account-lookup-svc/

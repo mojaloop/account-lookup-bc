@@ -33,6 +33,7 @@
         "test:unit": "jest --passWithNoTests --testMatch **/test/unit/**/*.test.ts"
     },
     "dependencies": {
+        "@mojaloop/account-lookup-bc-public-types-lib": "*",
         "@mojaloop/participant-bc-public-types-lib": "~0.5.4",
         "@mojaloop/logging-bc-public-types-lib": "~0.5.2",
         "@mojaloop/platform-shared-lib-messaging-types-lib": "~0.5.4",

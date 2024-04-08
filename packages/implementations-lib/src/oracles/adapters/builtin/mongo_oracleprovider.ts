@@ -54,205 +54,305 @@ import {
   UnableToDisassociateParticipantError,
   UnableToGetAssociationsError,
 } from "../../../errors";
+import Redis from "ioredis";
 
 const MAX_ENTRIES_PER_PAGE = 100;
+const DEFAULT_REDIS_CACHE_DURATION_SECS = 5; // 5 secs
+
+interface IAssociationRecord {
+    fspId: string;
+    partyType: string;
+    partyId: string;
+    partySubType: string | null;
+    currency: string | null;
+}
 
 export class MongoOracleProviderRepo implements IOracleProviderAdapter {
-	private readonly _logger: ILogger;
-	private readonly _connectionString: string;
-	private readonly _dbName;
-	private mongoClient: MongoClient;
-	private collectionName = "builtinOracleParties";
-	private parties: Collection;
-	private readonly _oracle: Oracle;
+    private readonly _logger: ILogger;
+    private readonly _connectionString: string;
+    private readonly _dbName;
+    private mongoClient: MongoClient;
+    private collectionName = "builtinOracleParties";
+    private parties: Collection;
+    private readonly _oracle: Oracle;
 
-	public readonly oracleId: string;
-	public readonly type: OracleType;
+    private readonly _redisClient: Redis;
+    private readonly _redisKeyPrefix= "mongoOracleProviderRepo";
+    private readonly _redisCacheDurationSecs:number;
 
-	constructor(oracle: Oracle, logger: ILogger, connectionString: string, dbName: string) {
-		this._logger = logger.createChild(this.constructor.name);
-		this._oracle = oracle;
-		this.oracleId = this._oracle.id;
-		this._connectionString = connectionString;
-		this._dbName = dbName;
-		this.type = "builtin";
-	}
+    public readonly oracleId: string;
+    public readonly type: OracleType;
 
-	async init(): Promise<void> {
-		try {
-			this.mongoClient = new MongoClient(this._connectionString);
-			await this.mongoClient.connect();
-			this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
-		} catch (error: unknown) {
-			const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToInitOracleProvider(errorMessage);
-		}
-	}
+    constructor(
+        oracle: Oracle,
+        logger: ILogger,
+        connectionString: string,
+        dbName: string,
+        redisHost: string,
+        redisPort: number,
+        redisCacheDurationSecs = DEFAULT_REDIS_CACHE_DURATION_SECS
+    ) {
+        this._logger = logger.createChild(this.constructor.name);
+        this._oracle = oracle;
+        this.oracleId = this._oracle.id;
+        this._connectionString = connectionString;
+        this._dbName = dbName;
+        this.type = "builtin";
+        this._redisCacheDurationSecs = redisCacheDurationSecs;
 
-	async destroy(): Promise<void> {
-		try {
-			await this.mongoClient.close();
-		} catch (error: unknown) {
-			const errorMessage = `Unable to close database connection: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToCloseDatabaseConnectionError(errorMessage);
-		}
-	}
+        this._redisClient = new Redis({
+            port: redisPort,
+            host: redisHost,
+            lazyConnect: true
+        });
+    }
 
-	async getParticipantFspId(
-		partyType: string,
-		partyId: string,
-		partySubType: string | null,
-		currency: string | null
-	): Promise<string | null> {
-		const query: any = {
-			partyId: partyId,
-			partyType: partyType,
-			partySubType: partySubType,
-			currency: currency,
-		};
+    async init(): Promise<void> {
+        try {
+            this.mongoClient = new MongoClient(this._connectionString);
+            await this.mongoClient.connect();
+            this.parties = this.mongoClient.db(this._dbName).collection(this.collectionName);
+        } catch (error: unknown) {
+            const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;
+            this._logger.error(errorMessage + `  - ${error}`);
+            throw new UnableToInitOracleProvider(errorMessage);
+        }
 
-		if (!currency) {
-			delete query.currency;
-		}
+        try{
+            await this._redisClient.connect();
+            this._logger.debug("Connected to Redis successfully");
+        }catch(error: unknown){
+            this._logger.error(`Unable to connect to redis cache: ${(error as Error).message}`);
+            throw error;
+        }
+    }
 
-		if (!partySubType) {
-			delete query.partySubType;
-		}
+    async destroy(): Promise<void> {
+        try {
+            await this.mongoClient.close();
+        } catch (error: unknown) {
+            const errorMessage = `Unable to close database connection: ${(error as Error).message}`;
+            this._logger.error(errorMessage + `  - ${error}`);
+            throw new UnableToCloseDatabaseConnectionError(errorMessage);
+        }
+    }
 
-		const data = await this.parties.findOne(query).catch(
-		/* istanbul ignore next */ (error: unknown) => {
-			const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToGetParticipantError(errorMessage);
-		}
-		);
+    private _getKeyWithPrefix (partyType: string, partyId: string, partySubType: string | null, currency: string | null): string {
+        return `${this._redisKeyPrefix}_${partyType}_${partyId}_${partySubType}_${currency}`;
+    }
 
-		if (!data) {
-			const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
-			this._logger.info(errorMessage);
-			return null;
-		}
+    private async _getFromCache(
+        partyType: string,
+        partyId: string,
+        partySubType: string | null,
+        currency: string | null
+    ):Promise<IAssociationRecord | null>{
+        const objStr = await this._redisClient.get(this._getKeyWithPrefix(partyType, partyId, partySubType, currency));
+        if(!objStr) return null;
 
-		return data.fspId as unknown as string;
-	}
+        try{
+            const obj = JSON.parse(objStr);
 
-	async associateParticipant(
-		fspId: string,
-		partyType: string,
-		partyId: string,
-		partySubType: string | null,
-		currency: string | null
-	): Promise<null> {
-		const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
+            // manual conversion for any non-primitive props or children
+            return obj;
+        }catch (e) {
+            this._logger.error(e);
+            return null;
+        }
+    }
 
-		const association = await this.parties.findOne(query);
+    private async _setToCache(record:IAssociationRecord):Promise<void>{
+        const key = this._getKeyWithPrefix(record.partyType, record.partyId, record.partySubType, record.currency);
+        await this._redisClient.setex(key, this._redisCacheDurationSecs, JSON.stringify(record));
+    }
 
-		if (association) {
-			const errorMessage = `Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
-			this._logger.info(errorMessage);
-			throw new ParticipantAssociationAlreadyExistsError(errorMessage);
-		}
+    private async _delFromCache(record:IAssociationRecord):Promise<void>{
+        const key = this._getKeyWithPrefix(record.partyType, record.partyId, record.partySubType, record.currency);
+        await this._redisClient.del(key);
+    }
 
-		await this.parties.insertOne(query).catch(
-		/* istanbul ignore next */ (error: unknown) => {
-			const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToAssociateParticipantError(errorMessage);
-		}
-		);
+    async getParticipantFspId(
+        partyType: string,
+        partyId: string,
+        partySubType: string | null,
+        currency: string | null
+    ): Promise<string | null> {
+        const cacheData = await this._getFromCache(partyType, partyId, partySubType, currency);
+        if (cacheData){
+            return cacheData.fspId;
+        }
 
-		this._logger.info(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
-		return null;
-	}
+        const query: any = {
+            partyId: partyId,
+            partyType: partyType,
+            partySubType: partySubType,
+            currency: currency,
+        };
 
-	async disassociateParticipant(
-		fspId: string,
-		partyType: string,
-		partyId: string,
-		partySubType: string | null,
-		currency: string | null
-	): Promise<null> {
-		const query: any = this.buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
+        if (!currency) {
+            delete query.currency;
+        }
 
-		await this.parties.deleteOne(query).catch(
-		/* istanbul ignore next */ (error: unknown) => {
-			const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
-			this._logger.error(errorMessage + `  - ${error}`);
-			throw new UnableToDisassociateParticipantError(errorMessage);
-		}
-		);
+        if (!partySubType) {
+            delete query.partySubType;
+        }
 
-		this._logger.info(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
-		return null;
-	}
+        const data = await this.parties.findOne(query).catch(
+            /* istanbul ignore next */ (error: unknown) => {
+                const errorMessage = `Unable to get participant for partyType ${partyType} partyId ${partyId} and currency ${currency}: ${(error as Error).message}`;
+                this._logger.error(errorMessage + `  - ${error}`);
+                throw new UnableToGetParticipantError(errorMessage);
+            }
+        );
 
-	async healthCheck(): Promise<boolean> {
-		await this.mongoClient
-			.db()
-			.command({ ping: 1 })
-			.catch(
-				/* istanbul ignore next */ (e: unknown) => {
-				this._logger.error(`Unable to ping database: ${(e as Error).message}`);
-				return false;
-				}
-			);
-		return true;
-	}
+        if (!data) {
+            const errorMessage = `Unable to find participant for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
+            this._logger.info(errorMessage);
+            return null;
+        }
 
-	async getAllAssociations(): Promise<Association[]> {
-		const associations = await this.parties
-			.find({})
-			.toArray()
-			.catch(
-				/* istanbul ignore next */ (error: unknown) => {
-				const errorMessage = `Unable to get associations: ${(error as Error).message}`;
-				this._logger.error(errorMessage + ` - ${error}`);
-				throw new UnableToGetAssociationError(errorMessage);
-				}
-			);
+        await this._setToCache({
+            fspId: data.fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
 
-		const mappedAssociations = associations.map((association: WithId<Document>) => {
-			return {
-				partyId: association.partyId ?? null,
-				fspId: association.fspId ?? null,
-				partyType: association.partyType ?? null,
-				currency: association.currency ?? null,
-			} as Association;
-		});
+        return data.fspId as unknown as string;
+    }
 
-		return mappedAssociations;
-	}
+    async associateParticipant(
+        fspId: string,
+        partyType: string,
+        partyId: string,
+        partySubType: string | null,
+        currency: string | null
+    ): Promise<null> {
+        const query: any = this._buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
 
-	private buildLookupQuery(
-		partyId: string,
-		fspId: string,
-		partyType: string,
-		partySubType: string | null,
-		currency: string | null
-	) {
-		const query: any = {
-			partyId: partyId,
-			fspId: fspId,
-			partyType: partyType,
-			partySubType: partySubType,
-			currency: currency,
-		};
+        const association = await this.parties.findOne(query);
 
-		if (!currency) {
-			delete query.currency;
-		}
+        if (association) {
+            const errorMessage = `Participant association already exists for partyType ${partyType} partyId ${partyId} and currency ${currency}`;
+            this._logger.info(errorMessage);
+            throw new ParticipantAssociationAlreadyExistsError(errorMessage);
+        }
 
-		if (!partySubType) {
-			delete query.partySubType;
-		}
-		return query;
-	}
+        await this.parties.insertOne(query).catch(
+            /* istanbul ignore next */ (error: unknown) => {
+                const errorMessage = `Unable to store participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
+                this._logger.error(errorMessage + `  - ${error}`);
+                throw new UnableToAssociateParticipantError(errorMessage);
+            }
+        );
 
-	async searchAssociations(
-		fspId:string|null,
-		partyId:string|null,
+        await this._setToCache({
+            fspId: fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
+
+        this._logger.info(`Participant association stored for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
+        return null;
+    }
+
+    async disassociateParticipant(
+        fspId: string,
+        partyType: string,
+        partyId: string,
+        partySubType: string | null,
+        currency: string | null
+    ): Promise<null> {
+        const query: any = this._buildLookupQuery(partyId, fspId, partyType, partySubType, currency);
+
+        await this.parties.deleteOne(query).catch(
+            /* istanbul ignore next */ (error: unknown) => {
+                const errorMessage = `Unable to delete participant association for partyType ${partyType} partyId ${partyId}, currency ${currency}: ${(error as Error).message}`;
+                this._logger.error(errorMessage + `  - ${error}`);
+                throw new UnableToDisassociateParticipantError(errorMessage);
+            }
+        );
+
+        await this._delFromCache({
+            fspId: fspId,
+            partyId: partyId,
+            partyType: partyType,
+            partySubType:partySubType,
+            currency: currency
+        });
+
+        this._logger.info(`Participant association deleted for partyType ${partyType} partyId ${partyId} and currency ${currency}`);
+        return null;
+    }
+
+    async healthCheck(): Promise<boolean> {
+        await this.mongoClient
+            .db()
+            .command({ ping: 1 })
+            .catch(
+                /* istanbul ignore next */ (e: unknown) => {
+                    this._logger.error(`Unable to ping database: ${(e as Error).message}`);
+                    return false;
+                }
+            );
+        return true;
+    }
+
+    async getAllAssociations(): Promise<Association[]> {
+        const associations = await this.parties
+            .find({})
+            .toArray()
+            .catch(
+                /* istanbul ignore next */ (error: unknown) => {
+                    const errorMessage = `Unable to get associations: ${(error as Error).message}`;
+                    this._logger.error(errorMessage + ` - ${error}`);
+                    throw new UnableToGetAssociationError(errorMessage);
+                }
+            );
+
+        const mappedAssociations = associations.map((association: WithId<Document>) => {
+            return {
+                partyId: association.partyId ?? null,
+                fspId: association.fspId ?? null,
+                partyType: association.partyType ?? null,
+                currency: association.currency ?? null,
+            } as Association;
+        });
+
+        return mappedAssociations;
+    }
+
+    private _buildLookupQuery(
+        partyId: string,
+        fspId: string,
+        partyType: string,
+        partySubType: string | null,
+        currency: string | null
+    ) {
+        const query: any = {
+            partyId: partyId,
+            fspId: fspId,
+            partyType: partyType,
+            partySubType: partySubType,
+            currency: currency,
+        };
+
+        if (!currency) {
+            delete query.currency;
+        }
+
+        if (!partySubType) {
+            delete query.partySubType;
+        }
+        return query;
+    }
+
+    async searchAssociations(
+        fspId:string|null,
+        partyId:string|null,
         partyType:string|null,
         partySubType:string|null,
         currency:string|null,
@@ -274,16 +374,16 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
         if(fspId){
             filter.$and.push({ "fspId": fspId });
         }
-		if(partyId){
+        if(partyId){
             filter.$and.push({ "partyId": {"$regex": partyId, "$options": "i"}});
         }
-		if (partyType) {
+        if (partyType) {
             filter.$and.push({ "partyType": partyType });
         }
-		if (partySubType) {
+        if (partySubType) {
             filter.$and.push({ "partySubType": {"$regex": partySubType, "$options": "i"}});
         }
-		if (currency) {
+        if (currency) {
             filter.$and.push({ "currency": currency });
         }
         if(filter.$and.length === 0) {
@@ -292,30 +392,30 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
 
         try {
             const skip = Math.floor(pageIndex * pageSize);
-			const result = await this.parties.find(
-				filter,
-				{
-					sort:["updatedAt", "desc"], 
-					skip: skip,
+            const result = await this.parties.find(
+                filter,
+                {
+                    sort:["updatedAt", "desc"],
+                    skip: skip,
                     limit: 20
-				}
-			).toArray().catch((e: unknown) => {
+                }
+            ).toArray().catch((e: unknown) => {
                 this._logger.error(`Unable to get assocations: ${(e as Error).message}`);
                 throw new UnableToGetAssociationsError("Unable to get assocations");
-			});
+            });
 
-			searchResults.items = result as unknown as Association[];
+            searchResults.items = result as unknown as Association[];
 
-			const totalEntries = await this.parties.find(
-				filter
+            const totalEntries = await this.parties.find(
+                filter
             ).toArray().catch((e: unknown) => {
                 this._logger.error(`Unable to get associations page size: ${(e as Error).message}`);
                 throw new UnableToGetAssociationsError("Unable to get associations page size");
-			});
+            });
 
-			searchResults.totalPages = Math.ceil(totalEntries.length / pageSize);
-			searchResults.pageSize = Math.max(pageSize, result.length);
-            
+            searchResults.totalPages = Math.ceil(totalEntries.length / pageSize);
+            searchResults.pageSize = Math.max(pageSize, result.length);
+
         } catch (err) {
             this._logger.error(err);
         }
@@ -323,47 +423,47 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
         return Promise.resolve(searchResults);
     }
 
-	async getSearchKeywords():Promise<{fieldName:string, distinctTerms:string[]}[]>{
+    async getSearchKeywords():Promise<{fieldName:string, distinctTerms:string[]}[]>{
         const retObj:{fieldName:string, distinctTerms:string[]}[] = [];
 
         try {
             const result = this.parties
                 .aggregate([
-					{$group: { "_id": { partyType: "$partyType", currency: "$currency", fspId: "$fspId" } } }
-				]);
+                    {$group: { "_id": { partyType: "$partyType", currency: "$currency", fspId: "$fspId" } } }
+                ]);
 
-			const partyType:{fieldName:string, distinctTerms:string[]} = {
-				fieldName: "partyType",
-				distinctTerms: []
-			};
+            const partyType:{fieldName:string, distinctTerms:string[]} = {
+                fieldName: "partyType",
+                distinctTerms: []
+            };
 
-			const currency:{fieldName:string, distinctTerms:string[]} = {
-				fieldName: "currency",
-				distinctTerms: []
-			};
+            const currency:{fieldName:string, distinctTerms:string[]} = {
+                fieldName: "currency",
+                distinctTerms: []
+            };
 
-			const fspId:{fieldName:string, distinctTerms:string[]} = {
-				fieldName: "fspId",
-				distinctTerms: []
-			};
+            const fspId:{fieldName:string, distinctTerms:string[]} = {
+                fieldName: "fspId",
+                distinctTerms: []
+            };
 
-			for await (const term of result) {
+            for await (const term of result) {
 
-				if(!partyType.distinctTerms.includes(term._id.partyType)) {
-					partyType.distinctTerms.push(term._id.partyType);
-				}
-				retObj.push(partyType);
+                if(!partyType.distinctTerms.includes(term._id.partyType)) {
+                    partyType.distinctTerms.push(term._id.partyType);
+                }
+                retObj.push(partyType);
 
-				if(!currency.distinctTerms.includes(term._id.currency)) {
-					currency.distinctTerms.push(term._id.currency);
-				}
-				retObj.push(currency);
+                if(!currency.distinctTerms.includes(term._id.currency)) {
+                    currency.distinctTerms.push(term._id.currency);
+                }
+                retObj.push(currency);
 
-				if(!fspId.distinctTerms.includes(term._id.fspId)) {
-					fspId.distinctTerms.push(term._id.fspId);
-				}
-				retObj.push(fspId);
-			}
+                if(!fspId.distinctTerms.includes(term._id.fspId)) {
+                    fspId.distinctTerms.push(term._id.fspId);
+                }
+                retObj.push(fspId);
+            }
         } catch (err) {
             this._logger.error(err);
         }
@@ -371,3 +471,4 @@ export class MongoOracleProviderRepo implements IOracleProviderAdapter {
         return Promise.resolve(retObj);
     }
 }
+
