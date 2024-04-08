@@ -51,17 +51,31 @@ export class OracleAdapterFactory implements IOracleProviderFactory {
     private readonly _builtinOracleMongoUrl: string;
     private readonly _dbName:string;
 
-    constructor(builtinOracleMongoUrl: string, dbName:string, logger: ILogger) {
+    private readonly _redisHost:string;
+    private readonly _redisPort:number;
+    private readonly _redisCacheDurationSecs:number;
+
+    constructor(
+        builtinOracleMongoUrl: string, dbName:string, logger: ILogger,
+        redisHost: string, redisPort: number, redisCacheDurationSecs: number
+    ) {
         this._logger = logger.createChild(this.constructor.name);
         this._builtinOracleMongoUrl = builtinOracleMongoUrl;
         this._dbName = dbName;
+
+        this._redisHost = redisHost;
+        this._redisPort = redisPort;
+        this._redisCacheDurationSecs = redisCacheDurationSecs;
     }
 
     create(oracle: Oracle): IOracleProviderAdapter {
         switch (oracle.type) {
             case "builtin":
                 this._logger.info(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
-                return new MongoOracleProviderRepo(oracle, this._logger, this._builtinOracleMongoUrl, this._dbName);
+                return new MongoOracleProviderRepo(
+                    oracle, this._logger, this._builtinOracleMongoUrl, this._dbName,
+                    this._redisHost, this._redisPort, this._redisCacheDurationSecs
+                );
             case "remote-http":
                 this._logger.info(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
                 return new HttpOracleProvider(oracle, this._logger);

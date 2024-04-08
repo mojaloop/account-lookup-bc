@@ -1,11 +1,12 @@
 /// <reference lib="dom" />
 import process from "process";
 
-import PubMessages, {TransferFulfilCommittedRequestedEvt} from "@mojaloop/platform-shared-lib-public-messages-lib";
+import PubMessages from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { MLKafkaJsonConsumer, MLKafkaJsonProducer } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 import {ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
+import crypto from "crypto";
 
-const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+const KAFKA_URL = process.env["KAFKA_URL"] || "redpanda-0.customredpandadomain.local:31092,redpanda-1.customredpandadomain.local:31092,redpanda-2.customredpandadomain.local:31092";
 const SINGLE_MODE = process.env["SINGLE_MODE"] && Boolean(process.env["SINGLE_MODE"]) || false;
 const CONSUMER_BATCH_SIZE = (process.env["CONSUMER_BATCH_SIZE"] && parseInt(process.env["CONSUMER_BATCH_SIZE"])) || 500;
 const CONSUMER_BATCH_TIMEOUT_MS = (process.env["CONSUMER_BATCH_TIMEOUT_MS"] && parseInt(process.env["CONSUMER_BATCH_TIMEOUT_MS"])) || 50;
@@ -16,7 +17,8 @@ logger.setLogLevel("warn");
 
 const kafkaConsumerOptions = {
     kafkaBrokerList: KAFKA_URL,
-    kafkaGroupId: `als_perftest_responder`,
+    kafkaGroupId: `als_perftest_responder_${crypto.randomUUID()}`,
+
 };
 
 if(!SINGLE_MODE){
@@ -45,6 +47,7 @@ let batchProcessed = 0;
 async function handler(message){
     const now = Date.now();
     if(message.msgName ==="ParticipantQueryResponseEvt") {
+        // end of get participant flow - collect timing
         if(!message.fspiopOpaqueState || !message.fspiopOpaqueState.reqSendTimestamp){
             console.log("Could not find message.fspiopOpaqueState.reqSendTimestamp forParticipantQueryResponseEvt");
             return;
@@ -90,6 +93,7 @@ async function handler(message){
             batchProcessed++;
         }
     }else if(message.msgName === "PartyQueryResponseEvt"){
+        // end of get party flow - collect timing
         if(!message.fspiopOpaqueState || !message.fspiopOpaqueState.reqSendTimestamp){
             console.log("Could not find message.fspiopOpaqueState.reqSendTimestamp forParticipantQueryResponseEvt");
             return;

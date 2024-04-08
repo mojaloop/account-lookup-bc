@@ -69,7 +69,7 @@ export class MongoOracleFinderRepo implements IOracleFinder {
   async init(): Promise<void> {
     try {
       this.mongoClient = new MongoClient(this._connectionString);
-      this.mongoClient.connect();
+      await this.mongoClient.connect();
       this.oracleProviders = this.mongoClient.db(this._dbName).collection(this._collectionName);
     } catch (error: unknown) {
       const errorMessage = `Unable to connect to the database: ${(error as Error).message}`;

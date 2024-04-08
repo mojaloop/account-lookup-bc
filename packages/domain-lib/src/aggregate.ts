@@ -167,7 +167,7 @@ export class AccountLookupAggregate {
 			this._logger.info("Oracle finder initialized");
 			const oracles = await this._oracleFinder.getAllOracles();
 			this._logger.info(`Found list of ${oracles.length} oracles`);
-			
+
 			for await (const oracle of oracles) {
 				const oracleAdapter = this._oracleProvidersFactory.create(oracle);
 				await oracleAdapter.init();
@@ -195,12 +195,123 @@ export class AccountLookupAggregate {
 
 	//#region Event Handler
 
+    async handleAccountLookUpEventBatch (sourceMessages: IMessage[]): Promise<void>{
+        // eslint-disable-next-line no-async-promise-executor
+        return new Promise<void>(async (resolve, reject) => {
+            const startTime = Date.now();
+            const timerEndFn = this._histogram.startTimer({ callName: "handleAccountLookUpEventBatch"});
+
+            try {
+                const allEventsToPublish = [];
+
+                for (const message of sourceMessages) {
+
+                    const handlerTimerEndFn = this._histogram.startTimer({
+                        callName: "handleAccountLookUpEvent",
+                    });
+
+                    let eventToPublish = null;
+                    const partyId = message.payload?.partyId ?? null;
+                    const partySubType = message.payload?.partySubType ?? null;
+                    const partyType = message.payload?.partyType ?? null;
+                    const currency = message.payload?.currency ?? null;
+                    const requesterFspId = message.payload?.requesterFspId ?? null;
+                    const fspiopOpaqueState = message.fspiopOpaqueState;
+                    const errorMessage = this.validateMessageOrGetErrorEvent(message);
+
+                    if (errorMessage) {
+                        errorMessage.fspiopOpaqueState = message.fspiopOpaqueState;
+                        allEventsToPublish.push(errorMessage);
+                        /* istanbul ignore next */
+                        handlerTimerEndFn({success: "false"});
+                        continue;
+                    }
+
+                    try {
+                        switch (message.msgName) {
+                            case PartyQueryReceivedEvt.name:
+                                eventToPublish = await this.handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
+                                break;
+                            case PartyInfoAvailableEvt.name:
+                                eventToPublish = await this.handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
+                                break;
+                            case ParticipantQueryReceivedEvt.name:
+                                eventToPublish = await this.handleParticipantQueryReceivedEvt(message as ParticipantQueryReceivedEvt);
+                                break;
+                            case ParticipantAssociationRequestReceivedEvt.name:
+                                eventToPublish = await this.handleParticipantAssociationRequestReceivedEvt(message as ParticipantAssociationRequestReceivedEvt);
+                                break;
+                            case ParticipantDisassociateRequestReceivedEvt.name:
+                                eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
+                                break;
+                            case GetPartyQueryRejectedEvt.name:
+                                eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
+                                break;
+                            default: {
+                                const errorMessage = `Message type has invalid format or value ${message.msgName}`;
+                                this._logger.error(errorMessage);
+                                const errorCode = AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD;
+                                const invalidMessageTypeErrorPayload: AccountLookupBCInvalidMessageTypeErrorPayload = {
+                                    partyId: partyId,
+                                    partyType: partyType,
+                                    partySubType: partySubType,
+                                    requesterFspId: requesterFspId,
+                                    errorCode: errorCode,
+                                };
+                                eventToPublish = new AccountLookupBCInvalidMessageTypeErrorEvent(invalidMessageTypeErrorPayload);
+                            }
+                        }
+                    } catch (error) {
+                        const errorMessage = `Unknown error while handling message ${message.msgName}`;
+                        this._logger.error(errorMessage, error);
+                        const errorCode = AccountLookupErrorCodeNames.COMMAND_TYPE_UNKNOWN;
+                        const errorPayload: AccountLookUpUnknownErrorPayload = {
+                            partyId,
+                            partyType,
+                            currency,
+                            requesterFspId,
+                            errorCode: errorCode,
+                        };
+                        eventToPublish = new AccountLookUpUnknownErrorEvent(errorPayload);
+                    }
+
+                    handlerTimerEndFn({success: "true"});
+
+                    if (eventToPublish){
+                        eventToPublish.fspiopOpaqueState = fspiopOpaqueState;
+                        allEventsToPublish.push(eventToPublish);
+                    }
+                }
+
+                if (allEventsToPublish) {
+                    const handlerTimerEndFn_phase3 = this._histogram.startTimer({
+                        callName: "handleAccountLookUpEventBatch - producer send",
+                    });
+                    await this._messageProducer.send(allEventsToPublish);
+                    handlerTimerEndFn_phase3({success: "true"});
+                }
+
+                timerEndFn({success: "true"});
+                this._logger.debug(`  Completed batch in AccountLookupAggregate batch size: ${sourceMessages.length}`);
+                this._logger.debug(`  Took: ${Date.now() - startTime}`);
+                this._logger.debug("\n\n");
+                return resolve();
+            }catch (error){
+                const errorMessage = "Unknown error while handling message batch";
+                this._logger.error(errorMessage, error);
+                return reject();
+            }
+        });
+    }
+
+
+    /*
 	async handleAccountLookUpEvent(message: IMessage): Promise<void> {
-		/* istanbul ignore next */
+		/!* istanbul ignore next *!/
 		if (this._logger.isDebugEnabled()) {
 			this._logger.debug(`Got message in Account Lookup Handler - msgName: ${message.msgName}`);
 		}
-		/* istanbul ignore next */
+		/!* istanbul ignore next *!/
 		const handlerTimerEndFn = this._histogram.startTimer({
 			callName: "handleAccountLookUpEvent",
 		});
@@ -217,7 +328,7 @@ export class AccountLookupAggregate {
 		if (errorMessage) {
 			errorMessage.fspiopOpaqueState = message.fspiopOpaqueState;
 			await this._messageProducer.send(errorMessage);
-			/* istanbul ignore next */
+			/!* istanbul ignore next *!/
 			handlerTimerEndFn({ success: "false" });
 			return;
 		}
@@ -274,7 +385,7 @@ export class AccountLookupAggregate {
 		await this._messageProducer.send(eventToPublish);
 		handlerTimerEndFn({ success: "true" });
 	}
-
+*/
 	//#endregion
 
 	//#region Get Participant - Where a Participant DFSP requests Participant association information based on a Party identifier, this UC is used by the switch to validate the request and provide the requested association data to the requesting DFSP.
@@ -802,6 +913,10 @@ export class AccountLookupAggregate {
 		partySubType: string | null,
 		participantId: string | null
 	): Promise<DomainEventMsg | null> {
+        const timerEndFn = this._histogram.startTimer({
+            callName: "validateDestinationParticipantInfoOrGetErrorEvent",
+        });
+
 		let participant: IParticipant | null = null;
 
 		if (!participantId) {
@@ -815,11 +930,16 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode,
 			};
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 		}
 
+        const participantSvcTimerEndFn = this._histogram.startTimer({
+            callName: "participantService.getParticipantInfo",
+        });
 		try {
 			participant = await this._participantService.getParticipantInfo(participantId);
+            participantSvcTimerEndFn({ success: "true" });
 		} catch (error: any) {
 			const errorMessage = `Error getting destination participant info for participantId: ${participantId}`;
 			this._logger.error(errorMessage, error?.message);
@@ -831,7 +951,8 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode,
 			};
-
+            participantSvcTimerEndFn({ success: "false" });
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCInvalidDestinationParticipantErrorEvent(invalidParticipantIdErrorPayload);
 		}
 
@@ -846,6 +967,7 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode,
 			};
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCDestinationParticipantNotFoundErrorEvent(noSuchParticipantErrorPayload);
 		}
 
@@ -860,6 +982,7 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode,
 			};
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent(invalidParticipantIdErrorPayload);
 		}
 
@@ -875,6 +998,7 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode
 			};
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent(errorPayload);
 		}
 
@@ -890,8 +1014,10 @@ export class AccountLookupAggregate {
 				destinationFspId: participantId,
 				errorCode: errorCode
 			};
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent(errorPayload);
 		}
+        timerEndFn({ success: "true" });
 		return null;
 	}
 
@@ -901,12 +1027,16 @@ export class AccountLookupAggregate {
 		partySubType: string | null,
 		participantId: string | null
 	): Promise<DomainEventMsg | null> {
+        const timerEndFn = this._histogram.startTimer({
+            callName: "validateRequesterParticipantInfoOrGetErrorEvent",
+        });
 		let participant: IParticipant | null = null;
 
 		if (!participantId) {
 			const errorMessage = "Requester FspId is null or undefined";
 			this._logger.error(errorMessage);
 			const errorCode = AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT;
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -916,12 +1046,18 @@ export class AccountLookupAggregate {
 			});
 		}
 
+        const participantSvcTimerEndFn = this._histogram.startTimer({
+            callName: "participantService.getParticipantInfo",
+        });
 		try {
 			participant = await this._participantService.getParticipantInfo(participantId);
+            participantSvcTimerEndFn({ success: "true" });
 		} catch (error: any) {
 			const errorMessage = `Error getting requester participant info for participantId: ${participantId}`;
 			this._logger.error(errorMessage, error?.message);
 			const errorCode = AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT;
+            participantSvcTimerEndFn({ success: "false" });
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCInvalidRequesterParticipantErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -935,6 +1071,7 @@ export class AccountLookupAggregate {
 			const errorMessage = `No requester participant found for fspId: ${participantId}`;
 			this._logger.error(errorMessage);
 			const errorCode = AccountLookupErrorCodeNames.SOURCE_PARTICIPANT_NOT_FOUND;
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequesterParticipantNotFoundErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -948,6 +1085,7 @@ export class AccountLookupAggregate {
 			const errorMessage = `Requester Participant id mismatch ${participant.id} ${participantId}`;
 			this._logger.error(errorMessage);
 			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_ID_MISMATCH;
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -961,6 +1099,7 @@ export class AccountLookupAggregate {
 			const errorMessage = `Payer participant fspId ${participantId} is not approved`;
 			this._logger.error(errorMessage);
 			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_APPROVED;
+            timerEndFn({ success: "false" });
 			return new AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
@@ -974,7 +1113,8 @@ export class AccountLookupAggregate {
 			const errorMessage = `Payer participant fspId ${participantId} is not active`;
 			this._logger.error(errorMessage);
 			const errorCode = AccountLookupErrorCodeNames.REQUIRED_SOURCE_PARTICIPANT_NOT_ACTIVE;
-			return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
+            timerEndFn({ success: "false" });
+            return new AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent({
 				partyId: partyId,
 				partyType: partyType,
 				partySubType: partySubType,
@@ -982,6 +1122,8 @@ export class AccountLookupAggregate {
 				errorCode: errorCode,
 			});
 		}
+
+        timerEndFn({ success: "true" });
 		return null;
 	}
 
@@ -989,6 +1131,9 @@ export class AccountLookupAggregate {
 
 	//#region Oracles
 	private async getOracleAdapter(partyType: string, currency: string | null): Promise<IOracleProviderAdapter> {
+        const timerEndFn = this._histogram.startTimer({
+            callName: "getOracleAdapter",
+        });
 		let oracle: Oracle | null = null;
 
 		try {
@@ -998,12 +1143,14 @@ export class AccountLookupAggregate {
 				currency ?? "Not Provided"
 			}`;
 			this._logger.error(errorMessage, error?.message);
+            timerEndFn({ success: "false" });
 			throw new UnableToGetOracleFromOracleFinderError(errorMessage);
 		}
 
 		if (!oracle) {
 			const errorMessage = `Oracle for partyType: ${partyType} and currency: ${currency ?? "Not Provided"} not found`;
 			this._logger.info(errorMessage);
+            timerEndFn({ success: "false" });
 			throw new OracleNotFoundError(errorMessage);
 		}
 
@@ -1012,9 +1159,11 @@ export class AccountLookupAggregate {
 		if (!oracleAdapter) {
 			const errorMessage = `Oracle adapter for ${partyType} and id: ${oracle.id} not present in oracle list`;
 			this._logger.info(errorMessage);
+            timerEndFn({ success: "false" });
 			throw new NoSuchOracleAdapterError(errorMessage);
 		}
 
+        timerEndFn({ success: "true" });
 		return oracleAdapter;
 	}
 

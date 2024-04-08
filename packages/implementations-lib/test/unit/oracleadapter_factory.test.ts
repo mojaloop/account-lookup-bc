@@ -52,7 +52,7 @@ jest.mock("../../src/oracles/adapters/remote/http_oracleprovider");
 const logger: ILogger = new ConsoleLogger();
 logger.setLogLevel(LogLevel.FATAL);
 
-const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger);
+const oracleAdapterFactory = new OracleAdapterFactory("mongo_url","db name 2", logger, "null",  0,  0);
 
 describe("Implementations - Oracle Adapter Factory Unit tests", () => {
 

@@ -29,7 +29,7 @@
  - Pedro Sousa Barreto <pedrob@crosslaketech.com>
 
  * Gonçalo Garcia <goncalogarcia99@gmail.com>
- 
+
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
  - Rui Rocha <rui.rocha@arg.software>
@@ -40,7 +40,7 @@
 "use strict";
 
 import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
-import { IMessageProducer } from "@mojaloop/platform-shared-lib-messaging-types-lib";
+import { IMessageProducer, IMessage } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 
 export class MemoryMessageProducer implements IMessageProducer {
 	private readonly logger: ILogger;
@@ -50,11 +50,11 @@ export class MemoryMessageProducer implements IMessageProducer {
 	) {
 		this.logger = logger;
 	}
-	
+
 	async connect (): Promise<void> {
 		return Promise.resolve();
 	}
-	
+
 	async disconnect(): Promise<void> {
 		return Promise.resolve();
 	}
@@ -63,11 +63,10 @@ export class MemoryMessageProducer implements IMessageProducer {
 		return Promise.resolve();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	async send(_message: any): Promise<void>{
+	async send(message: IMessage | IMessage[]): Promise<void>{
 		return Promise.resolve();
 	}
 
 
-	
+
 }

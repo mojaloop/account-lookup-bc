@@ -149,7 +149,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 
 		return await this.httpClient
 			.post(url, { fspId: fspId })
-			.then((_: AxiosResponse) => {
+			.then(() => {
 				this._logger.info(`associateParticipant: participant associated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`);
 				return null;
 			})
@@ -185,7 +185,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 				fspId: fspId,
 				},
 			})
-			.then((_: AxiosResponse) => {
+			.then(() => {
 				this._logger.info(`disassociateParticipant: participant disassociated for partyType: ${partyType}, partyId: ${partyId}, partySubType: ${partySubType}, currency: ${currency} with fspId: ${fspId}`);
 				return null;
 			})
@@ -218,7 +218,7 @@ export class HttpOracleProvider implements IOracleProviderAdapter {
 	searchAssociations(fspId: string | null, partyId: string | null, partyType: string | null, partySubType: string | null, currency: string | null, pageIndex?: number | undefined, pageSize?: number | undefined): Promise<AssociationsSearchResults> {
 		throw new Error("Method not implemented.");
 	}
-	
+
 	getSearchKeywords(): Promise<{ fieldName: string; distinctTerms: string[]; }[]> {
 		throw new Error("Method not implemented.");
 	}

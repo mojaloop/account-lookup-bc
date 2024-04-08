@@ -223,14 +223,14 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		jest.spyOn(messageProducer, "send");
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(message);
+		await aggregate.handleAccountLookUpEventBatch([message]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
+			expect.arrayContaining([expect.objectContaining({
 				fspiopOpaqueState: "fake opaque state",
 				payload: responsePayload
-			})
+			})])
 		);
 	});
 	//#endregion
@@ -268,13 +268,13 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
+            expect.arrayContaining([expect.objectContaining({
 				payload: responsePayload,
-			})
+			})])
 		);
 	});
 
@@ -311,13 +311,13 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
+            expect.arrayContaining([expect.objectContaining({
 				payload: responsePayload,
-			})
+			})])
 		);
 	});
 	//#endregion
@@ -374,13 +374,13 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		const result = await aggregate.handleAccountLookUpEvent(event);
+		const result = await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
+			expect.arrayContaining([expect.objectContaining({
 				payload: responsePayload,
-			})
+			})])
 		);
 	});
 
@@ -421,13 +421,13 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
-				payload: responsePayload,
-			})
+            expect.arrayContaining([expect.objectContaining({
+                payload: responsePayload,
+            })])
 		);
 	});
 
@@ -451,7 +451,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: ownerFspId, type: partyType, isActive: true, approved: true } as IParticipant as any);
-			
+
 		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantAssociationRequestReceivedEvt(payload);
@@ -464,13 +464,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
-				payload: expectedPayload,
-			})
+            expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
 		);
 	});
 	//#endregion
@@ -493,7 +491,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: ownerFspId, type: partyType, isActive: true, approved: true } as IParticipant as any);
-		
+
 		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantDisassociateRequestReceivedEvt(payload);
@@ -506,13 +504,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
-				payload: expectedPayload,
-			})
+			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
 		);
 	});
 	//#endregion
@@ -566,13 +562,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEvent(event);
+		await aggregate.handleAccountLookUpEventBatch([event]);
 
 		// Assert
 		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.objectContaining({
-				payload: expectedPayload,
-			})
+			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
 		);
 	});
 	//#endregion
