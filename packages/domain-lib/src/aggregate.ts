@@ -69,9 +69,11 @@ import {
   AccountLookupBCUnableToDisassociateParticipantErrorPayload,
   AccountLookupBCUnableToGetOracleAdapterErrorEvent,
   AccountLookupBCUnableToGetOracleAdapterErrorPayload,
-  GetPartyQueryRejectedEvt,
-  GetPartyQueryRejectedResponseEvt,
-  GetPartyQueryRejectedResponseEvtPayload,
+  PartyRejectedEvt,
+  PartyRejectedResponseEvt,
+  PartyRejectedResponseEvtPayload,
+  ParticipantRejectedResponseEvt,
+  ParticipantRejectedResponseEvtPayload,
   ParticipantAssociationCreatedEvt,
   ParticipantAssociationCreatedEvtPayload,
   ParticipantAssociationRemovedEvt,
@@ -88,6 +90,7 @@ import {
   PartyQueryResponseEvt,
   PartyQueryResponseEvtPayload,
   AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent,
+  ParticipantRejectedEvt,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { Association, Oracle } from "./entities";
 import { AddOracleDTO,  AssociationsSearchResults, OracleType, ParticipantLookup } from "@mojaloop/account-lookup-bc-public-types-lib";
@@ -244,9 +247,12 @@ export class AccountLookupAggregate {
                             case ParticipantDisassociateRequestReceivedEvt.name:
                                 eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
                                 break;
-                            case GetPartyQueryRejectedEvt.name:
-                                eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
+                            case PartyRejectedEvt.name:
+                                eventToPublish = await this.getPartyRejected(message as PartyRejectedEvt);
                                 break;
+							case ParticipantRejectedEvt.name:
+								eventToPublish = await this.getParticipantRejected(message as ParticipantRejectedEvt);
+								break;
                             default: {
                                 const errorMessage = `Message type has invalid format or value ${message.msgName}`;
                                 this._logger.error(errorMessage);
@@ -350,8 +356,8 @@ export class AccountLookupAggregate {
 				case ParticipantDisassociateRequestReceivedEvt.name:
 					eventToPublish = await this.handleParticipantDisassociateRequestReceivedEvt(message as ParticipantDisassociateRequestReceivedEvt);
 					break;
-				case GetPartyQueryRejectedEvt.name:
-					eventToPublish = await this.getPartyQueryRejected(message as GetPartyQueryRejectedEvt);
+				case PartyRejectedEvt.name:
+					eventToPublish = await this.getPartyRejected(message as PartyRejectedEvt);
 					break;
 				default: {
 					const errorMessage = `Message type has invalid format or value ${message.msgName}`;
@@ -633,16 +639,16 @@ export class AccountLookupAggregate {
 	//#endregion
 
 	//#region Get Party Error
-	private async getPartyQueryRejected(message: GetPartyQueryRejectedEvt): Promise<DomainEventMsg> {
+	private async getPartyRejected(message: PartyRejectedEvt): Promise<DomainEventMsg> {
 		/* istanbul ignore next */
 		const timerEndFn = this._histogram.startTimer({
-			callName: "handlePartyQueryReceivedEvt",
+			callName: "handlePartyRejectedEvt",
 		});
 
 		/* istanbul ignore if */
 		if (this._logger.isDebugEnabled()) {
 			this._logger.debug(
-				`Got getPartyQueryRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
+				`Got getPartyRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
 			);
 		}
 
@@ -678,7 +684,7 @@ export class AccountLookupAggregate {
 			return destinationParticipantError;
 		}
 
-		const payload: GetPartyQueryRejectedResponseEvtPayload = {
+		const payload: PartyRejectedResponseEvtPayload = {
 			partyId: message.payload.partyId,
 			partyType: message.payload.partyType,
 			partySubType: message.payload.partySubType,
@@ -686,7 +692,69 @@ export class AccountLookupAggregate {
 			errorInformation: message.payload.errorInformation,
 		};
 
-		const event = new GetPartyQueryRejectedResponseEvt(payload);
+		const event = new PartyRejectedResponseEvt(payload);
+		/* istanbul ignore next */
+		timerEndFn({ success: "true" });
+
+		return event;
+	}
+	//#endregion
+
+	//#region Get Participant Error
+	private async getParticipantRejected(message: PartyRejectedEvt): Promise<DomainEventMsg> {
+		/* istanbul ignore next */
+		const timerEndFn = this._histogram.startTimer({
+			callName: "handleParticipantRejectedEvt",
+		});
+
+		/* istanbul ignore if */
+		if (this._logger.isDebugEnabled()) {
+			this._logger.debug(
+				`Got getParticipantRejected msg for partyType: ${message.payload.partyType} partySubType: ${message.payload.partySubType} and partyId: ${message.payload.partyId}`
+			);
+		}
+
+		const partyId = message.payload.partyId ?? null;
+		const partyType = message.payload.partyType ?? null;
+		const partySubType = message.payload.partySubType ?? null;
+		const requesterFspId = message.payload.requesterFspId ?? null;
+		const destinationFspId = message.payload.destinationFspId ?? null;
+
+		const requesterParticipantError = await this.validateRequesterParticipantInfoOrGetErrorEvent(
+			partyId,
+			partyType,
+			partySubType,
+			requesterFspId
+		);
+		if (requesterParticipantError) {
+			this._logger.error(`Invalid participant info for requesterFspId: ${requesterFspId}`);
+			/* istanbul ignore next */
+			timerEndFn({ success: "false" });
+			return requesterParticipantError;
+		}
+
+		const destinationParticipantError = await this.validateDestinationParticipantInfoOrGetErrorEvent(
+			partyId,
+			partyType,
+			partySubType,
+			destinationFspId
+		);
+		if (destinationParticipantError) {
+			this._logger.error(`Invalid participant info for destinationFspId: ${destinationFspId}`);
+			/* istanbul ignore next */
+			timerEndFn({ success: "false" });
+			return destinationParticipantError;
+		}
+
+		const payload: ParticipantRejectedResponseEvtPayload = {
+			partyId: message.payload.partyId,
+			partyType: message.payload.partyType,
+			partySubType: message.payload.partySubType,
+			currency: message.payload.currency,
+			errorInformation: message.payload.errorInformation,
+		};
+
+		const event = new ParticipantRejectedResponseEvt(payload);
 		/* istanbul ignore next */
 		timerEndFn({ success: "true" });
 

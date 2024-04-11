@@ -55,8 +55,8 @@ import {
     AccountLookupBCUnableToDisassociateParticipantErrorPayload,
     AccountLookupBCUnableToGetOracleAdapterErrorEvent,
     AccountLookupBCUnableToGetOracleAdapterErrorPayload,
-    GetPartyQueryRejectedEvt,
-    GetPartyQueryRejectedEvtPayload,
+    PartyRejectedEvt,
+    PartyRejectedEvtPayload,
     ParticipantAssociationCreatedEvt,
     ParticipantAssociationRequestReceivedEvt,
     ParticipantAssociationRequestReceivedEvtPayload,
@@ -74,6 +74,8 @@ import {
     AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorPayload,
     AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent,
     AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload,
+    ParticipantRejectedEvtPayload,
+    ParticipantRejectedEvt,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 
 import {IMessage, MessageTypes} from "@mojaloop/platform-shared-lib-messaging-types-lib";
@@ -1358,15 +1360,15 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
     //#endregion ParticipantQuery
 
-    //#region PartyQueryRejected
-    test("PartyQueryRejected - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+    //#region PartyRejected
+    test("PartyRejected - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
         //Arrange
         const partyId = mockedPartyIds[0];
         const partyType = mockedPartyTypes[0];
         const partySubType = mockedPartySubTypes[0];
         const destinationFspId = mockedParticipantFspIds[0];
         const currency = "USD";
-        const payload: GetPartyQueryRejectedEvtPayload = {
+        const payload: PartyRejectedEvtPayload = {
             currency,
             partyId,
             partySubType,
@@ -1388,7 +1390,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             requesterFspId: null as any,
         };
 
-        const event = new GetPartyQueryRejectedEvt(payload);
+        const event = new PartyRejectedEvt(payload);
 
         jest.spyOn(messageProducer, "send");
 
@@ -1405,14 +1407,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         );
     });
 
-    test("PartyQueryRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
+    test("PartyRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
         //Arrange
         const partyId = mockedPartyIds[0];
         const partyType = mockedPartyTypes[0];
         const partySubType = mockedPartySubTypes[0];
         const requesterFspId = mockedParticipantFspIds[0];
         const currency = "USD";
-        const payload: GetPartyQueryRejectedEvtPayload = {
+        const payload: PartyRejectedEvtPayload = {
             currency,
             partyId,
             partySubType,
@@ -1434,7 +1436,108 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             destinationFspId: null as any,
         };
 
-        const event = new GetPartyQueryRejectedEvt(payload);
+        const event = new PartyRejectedEvt(payload);
+
+        jest.spyOn(messageProducer, "send");
+        jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
+            id: requesterFspId,
+            type: partyType,
+            isActive: true,
+            approved: true
+        } as IParticipant as any);
+
+        // Act
+        await aggregate.handleAccountLookUpEventBatch([event]);
+
+        // Assert
+        expect(messageProducer.send).toHaveBeenCalledTimes(1);
+        expect(messageProducer.send).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.objectContaining({
+                payload: responsePayload,
+                msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
+            })])
+        );
+    });
+
+    //#endregion
+
+    //#region ParticipantRejected
+    test("ParticipantRejected - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
+      //Arrange
+      const partyId = mockedPartyIds[0];
+      const partyType = mockedPartyTypes[0];
+      const partySubType = mockedPartySubTypes[0];
+      const destinationFspId = mockedParticipantFspIds[0];
+      const currency = "USD";
+      const payload: ParticipantRejectedEvtPayload = {
+          currency,
+          partyId,
+          partySubType,
+          partyType,
+          destinationFspId: destinationFspId,
+          requesterFspId: null as any,
+          errorInformation: {
+              errorCode: "3200",
+              errorDescription: "Generic party error",
+              extensionList: null,
+          },
+      };
+
+      const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+          errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
+          partyId,
+          partySubType,
+          partyType,
+          requesterFspId: null as any,
+      };
+
+      const event = new ParticipantRejectedEvt(payload);
+
+      jest.spyOn(messageProducer, "send");
+
+      // Act
+      await aggregate.handleAccountLookUpEventBatch([event]);
+
+      // Assert
+      expect(messageProducer.send).toHaveBeenCalledTimes(1);
+      expect(messageProducer.send).toHaveBeenCalledWith(
+          expect.arrayContaining([expect.objectContaining({
+              payload: responsePayload,
+              msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
+          })])
+      );
+    });
+
+    test("ParticipantRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
+        //Arrange
+        const partyId = mockedPartyIds[0];
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const requesterFspId = mockedParticipantFspIds[0];
+        const currency = "USD";
+        const payload: ParticipantRejectedEvtPayload = {
+            currency,
+            partyId,
+            partySubType,
+            partyType,
+            destinationFspId: null as any,
+            requesterFspId,
+            errorInformation: {
+                errorCode: "3200",
+                errorDescription: "Generic party error",
+                extensionList: null,
+            },
+        };
+
+        const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
+            errorCode: AccountLookupErrorCodeNames.INVALID_DESTINATION_PARTICIPANT,
+            partyId,
+            partySubType,
+            partyType,
+            destinationFspId: null as any,
+        };
+
+        const event = new ParticipantRejectedEvt(payload);
 
         jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({

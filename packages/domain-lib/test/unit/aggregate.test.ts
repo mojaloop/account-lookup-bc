@@ -35,10 +35,10 @@
 import { AccountLookupAggregate, Oracle } from "../../src";
 import { ParticipantLookup } from "@mojaloop/account-lookup-bc-public-types-lib";
 import {
-	GetPartyQueryRejectedEvt,
-	GetPartyQueryRejectedEvtPayload,
-	GetPartyQueryRejectedResponseEvt,
-	GetPartyQueryRejectedResponseEvtPayload,
+	PartyRejectedEvt,
+	PartyRejectedEvtPayload,
+	PartyRejectedResponseEvt,
+	PartyRejectedResponseEvtPayload,
 	ParticipantAssociationCreatedEvtPayload,
 	ParticipantAssociationRemovedEvtPayload,
 	ParticipantAssociationRequestReceivedEvt,
@@ -53,7 +53,10 @@ import {
 	PartyInfoRequestedEvtPayload,
 	PartyQueryReceivedEvt,
 	PartyQueryReceivedEvtPayload,
-	PartyQueryResponseEvtPayload
+	PartyQueryResponseEvtPayload,
+	ParticipantRejectedEvtPayload,
+	ParticipantRejectedEvt,
+	ParticipantRejectedResponseEvtPayload
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
@@ -513,9 +516,9 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 	});
 	//#endregion
 
-	//#region getPartyQueryRejected
+	//#region PartyRejected
 
-	test("getPartyQueryRejected - should publish event with query response", async () => {
+	test("PartyRejected - should publish event with error response", async () => {
 		// Arrange
 		const partyType = mockedPartyTypes[0];
 		const partyId = mockedPartyIds[0];
@@ -535,7 +538,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			}
 		};
 
-		const payload: GetPartyQueryRejectedEvtPayload = {
+		const payload: PartyRejectedEvtPayload = {
 			partyId,
 			currency: "USD",
 			requesterFspId: requesterFspId,
@@ -551,9 +554,67 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 
 		jest.spyOn(messageProducer, "send");
 
-		const event = new GetPartyQueryRejectedEvt(payload);
+		const event = new PartyRejectedEvt(payload);
 
-		const expectedPayload: GetPartyQueryRejectedResponseEvtPayload = {
+		const expectedPayload: PartyRejectedResponseEvtPayload = {
+			currency: "USD",
+			errorInformation,
+			partyId,
+			partySubType,
+			partyType,
+		};
+
+		// Act
+		await aggregate.handleAccountLookUpEventBatch([event]);
+
+		// Assert
+		expect(messageProducer.send).toHaveBeenCalledWith(
+			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
+		);
+	});
+	//#endregion
+
+	//#region ParticipantRejected
+
+	test("ParticipantRejected - should publish event with error response", async () => {
+		// Arrange
+		const partyType = mockedPartyTypes[0];
+		const partyId = mockedPartyIds[0];
+		const partySubType = mockedPartySubTypes[0];
+		const requesterFspId = mockedParticipantIds[0];
+		const destinationFspId = "destinationFspId";
+		const errorInformation = {
+			errorCode: "3200",
+			errorDescription: "Generic ID not found",
+			extensionList: {
+				extension: [
+					{
+						key: "key1",
+						value: "value1",
+					}
+				]
+			}
+		};
+
+		const payload: ParticipantRejectedEvtPayload = {
+			partyId,
+			currency: "USD",
+			requesterFspId: requesterFspId,
+			destinationFspId,
+			partySubType: partySubType,
+			partyType,
+			errorInformation
+		};
+
+		jest.spyOn(participantService, "getParticipantInfo")
+			.mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true, approved: true } as IParticipant as any)
+			.mockResolvedValueOnce({ id: destinationFspId, type: "DFSP", isActive: true, approved: true } as IParticipant as any);
+
+		jest.spyOn(messageProducer, "send");
+
+		const event = new ParticipantRejectedEvt(payload);
+
+		const expectedPayload: ParticipantRejectedResponseEvtPayload = {
 			currency: "USD",
 			errorInformation,
 			partyId,
