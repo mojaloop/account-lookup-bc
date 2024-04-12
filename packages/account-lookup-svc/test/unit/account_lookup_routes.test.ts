@@ -138,7 +138,7 @@ describe("Account Lookup Routes - Unit Test", () => {
 
 		// Assert
 		expect(response.status).toBe(200);
-		expect(response.text).toEqual(mockedParticipantFspIds[0]);
+        expect(response.body?.fspId).toEqual(mockedParticipantFspIds[0]);
 	});
 
 	test("GET - should receive 404 when fsp id not found", async () => {
@@ -175,7 +175,7 @@ describe("Account Lookup Routes - Unit Test", () => {
 
 		// Assert
 		expect(response.status).toBe(200);
-		expect(response.text).toEqual(mockedParticipantFspIds[0]);
+        expect(response.body?.fspId).toEqual(mockedParticipantFspIds[0]);
 	});
 
 	test("GET - should get not found when url is invalid", async () => {

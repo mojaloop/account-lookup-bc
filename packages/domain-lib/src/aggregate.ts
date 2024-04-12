@@ -1421,7 +1421,7 @@ export class AccountLookupAggregate {
 	//#endregion
 
 	//#region Account Lookup Routes
-	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string | null> {
+	public async getAccountLookUp(accountIdentifier: ParticipantLookup): Promise<string> {
 		const { partyId, partyType, partySubType, currency } = accountIdentifier;
 
 		return await this._getParticipantIdFromOracle(partyId, partyType, partySubType, currency).catch((error) => {

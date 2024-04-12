@@ -35,7 +35,7 @@ import {ILogger} from "@mojaloop/logging-bc-public-types-lib";
 import {
 	UnableToGetFspIdError,
 } from "./errors";
-import {IAuthenticatedHttpRequester} from "@mojaloop/security-bc-public-types-lib";
+import {ForbiddenError, IAuthenticatedHttpRequester, UnauthorizedError} from "@mojaloop/security-bc-public-types-lib";
 
 
 const SERVICE_BASE_PATH = "/account-lookup";
@@ -59,38 +59,47 @@ export class AccountLookupHttpClient {
 	}
 
 	async participantLookUp(partyType:string, partyId:string, currency:string | null): Promise<string | null> {
-			if(!partyType || !partyId){
-				throw new UnableToGetFspIdError("Account Lookup Client - Unable to Get FspId - partyType or partyId is null");
-			}
+        if(!partyType || !partyId){
+            throw new UnableToGetFspIdError("Account Lookup Client - Unable to Get FspId - partyType or partyId is null");
+        }
 
-			let urlBuilder = `${SERVICE_BASE_PATH}/${partyType}/${partyId}`;
+        let urlBuilder = `${SERVICE_BASE_PATH}/${partyType}/${partyId}`;
 
-			if (currency) {
-				urlBuilder += `?currency=${currency}`;
-			}
+        if (currency) {
+            urlBuilder += `?currency=${currency}`;
+        }
 
-			const url = new URL(urlBuilder, this._baseUrlHttpService).toString();
+        const url = new URL(urlBuilder, this._baseUrlHttpService).toString();
 
-			const resp = await this._authRequester.fetch(url, this._requestTimeoutMs)
-				.catch((err) => {
-					console.log(err);
-					this._logger.error(`Account Lookup Client - Unable to Get FspId - ${err}`);
-					throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
-				});
+        const resp = await this._authRequester.fetch(url, this._requestTimeoutMs)
+            .catch((err) => {
+                console.log(err);
+                this._logger.error(`Account Lookup Client - Unable to Get FspId - ${err}`);
+                throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
+            });
 
-			if(resp.status === 200){
-                const data = await resp.text().catch((err) => {
-					this._logger.error(err.message);
-					throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
-				});
-                return data;
+        if(resp.status === 200 ||  resp.status === 401 || resp.status === 403){
+            // unpack the body, we need it in all cases
+            const dataObj = await resp.json().catch((err) => {
+                this._logger.error(err.message);
+                throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${err}`);
+            });
+
+            if (resp.status === 200) return dataObj.fspId;
+
+            if (resp.status === 401){
+                throw new UnauthorizedError(dataObj.msg || "UnauthorizedError");
             }
+            if (resp.status === 403){
+                throw new ForbiddenError(dataObj.msg || "ForbiddenError");
+            }
+        }
 
-			if(resp.status === 404){
-				return null;
-			}
+        if (resp.status === 404){
+            return null;
+        }
 
-			throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${resp.status}`);
+        throw new UnableToGetFspIdError(`Account Lookup Client - Unable to Get FspId - ${resp.status}`);
 	}
 
 }

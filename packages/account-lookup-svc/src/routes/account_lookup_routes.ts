@@ -65,9 +65,6 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
             const partySubType = req.query.partySubType?.toString() ?? null;
             const currency = req.query.currency?.toString() ?? null;
 
-            this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${partySubType} ${currency}`);
-
-
             const payload: ParticipantLookup = {
                currency,
                partyId,
@@ -75,8 +72,10 @@ export class AccountLookupExpressRoutes extends BaseRoutes {
                partySubType
             };
             const result = await this.accountLookupAggregate.getAccountLookUp(payload);
-            this.logger.info(`AccountLookupExpressRoutes::getAccountLookUp - ${partyId} ${partyType} ${currency} - result: ${JSON.stringify(result)}`);
-            res.send(result);
+
+            res.send({
+                fspId: result
+            });
         } catch (err: any) {
             if (this._handleUnauthorizedError(err, res)) return;
             this.logger.error(err);
