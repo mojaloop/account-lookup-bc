@@ -32,7 +32,6 @@
 "use strict";
 
 export enum AccountLookupPrivileges {
-    VIEW_PARTY_PARTICIPANT_ID = "ACCOUNT_LOOKUP_VIEW_PARTY_PARTICIPANT_ID",
     VIEW_ALL_ORACLES = "ACCOUNT_LOOKUP_VIEW_ALL_ORACLES",
     CREATE_ORACLE = "ACCOUNT_LOOKUP_CREATE_ORACLE",
     REMOVE_ORACLE = "ACCOUNT_LOOKUP_REMOVE_ORACLE",
@@ -41,23 +40,18 @@ export enum AccountLookupPrivileges {
 
 export const AccountLookupPrivilegesDefinition = [
     {
-        privId: AccountLookupPrivileges.VIEW_PARTY_PARTICIPANT_ID,
-        labelName: "View Party Participant Id",
-        description: "Allows for the retrieval of participant id belonging to the party"
-    },
-    {
         privId: AccountLookupPrivileges.VIEW_ALL_ORACLES,
         labelName: "View All Oracles",
         description: "Allows for the retrieval of any oracles"
     },
     {
         privId: AccountLookupPrivileges.CREATE_ORACLE,
-        labelName: "View All Oracle Associations",
+        labelName: "Register new Oracles in the system",
         description: "Allows for the creation of an oracle"
     },
     {
         privId: AccountLookupPrivileges.REMOVE_ORACLE,
-        labelName: "View All Oracle Associations",
+        labelName: "Remove existing Oracles from the system",
         description: "Allows for the removal of an oracle"
     },
     {

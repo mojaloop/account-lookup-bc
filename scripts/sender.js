@@ -12,7 +12,7 @@ import {ConsoleLogger} from "@mojaloop/logging-bc-public-types-lib";
 
 import stringify from "json-stringify-safe";
 
-const KAFKA_URL = process.env["KAFKA_URL"] || "redpanda-0.customredpandadomain.local:31092,redpanda-1.customredpandadomain.local:31092,redpanda-2.customredpandadomain.local:31092";
+const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
 
 const logger = new ConsoleLogger();
 logger.setLogLevel("info");

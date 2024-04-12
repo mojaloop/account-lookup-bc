@@ -320,12 +320,6 @@ export class Service {
             this.app.use(express.json()); // for parsing application/json
             this.app.use(express.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
-            // Add admin and client http routes
-            const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
-            const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
-            this.app.use("/admin", oracleAdminRoutes.mainRouter);
-            this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
-
             // Add health and metrics http routes
             this.app.get("/health", (req: express.Request, res: express.Response) => {
                 return res.send({status: "OK"});
@@ -334,6 +328,12 @@ export class Service {
                 const strMetrics = await (this.metrics as PrometheusMetrics).getMetricsForPrometheusScrapper();
                 return res.send(strMetrics);
             });
+
+            // Add admin and client http routes
+            const oracleAdminRoutes = new OracleAdminExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
+            const accountLookupClientRoutes = new AccountLookupExpressRoutes(this.aggregate, this.logger, this.tokenHelper, this.authorizationClient);
+            this.app.use("/admin", oracleAdminRoutes.mainRouter);
+            this.app.use("/account-lookup", accountLookupClientRoutes.mainRouter);
 
             this.app.use((req, res) => {
                 // catch all

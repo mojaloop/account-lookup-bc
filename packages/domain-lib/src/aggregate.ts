@@ -303,6 +303,7 @@ export class AccountLookupAggregate {
                 this._logger.debug("\n\n");
                 return resolve();
             }catch (error){
+                timerEndFn({success: "false"});
                 const errorMessage = "Unknown error while handling message batch";
                 this._logger.error(errorMessage, error);
                 return reject();
