@@ -69,22 +69,20 @@ export class OracleAdapterFactory implements IOracleProviderFactory {
     }
 
     create(oracle: Oracle): IOracleProviderAdapter {
-        switch (oracle.type) {
-            case "builtin":
-                this._logger.info(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
-                return new MongoOracleProviderRepo(
-                    oracle, this._logger, this._builtinOracleMongoUrl, this._dbName,
-                    this._redisHost, this._redisPort, this._redisCacheDurationSecs
-                );
-            case "remote-http":
-                this._logger.info(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
-                return new HttpOracleProvider(oracle, this._logger);
-            default:
-                {
-                    const errorMessage = `Oracle type ${oracle.type} not supported`;
-                    this._logger.error(errorMessage);
-                    throw new OracleTypeNotSupportedError(errorMessage);
-                }
+        if (oracle.type === "builtin") {
+            this._logger.info(`Creating Builtin Oracle Provider for Oracle ${oracle.id}`);
+            return new MongoOracleProviderRepo(
+                oracle, this._logger, this._builtinOracleMongoUrl, this._dbName,
+                this._redisHost, this._redisPort, this._redisCacheDurationSecs
+            );
+        } else if (oracle.type === "remote-http") {
+            this._logger.info(`Creating Remote Http Oracle Provider for Oracle ${oracle.id}`);
+            return new HttpOracleProvider(oracle, this._logger);
+        } else {
+            // default is to throw
+            const errorMessage = `Oracle type ${oracle.type} not supported`;
+            this._logger.error(errorMessage);
+            throw new OracleTypeNotSupportedError(errorMessage);
         }
     }
 }
