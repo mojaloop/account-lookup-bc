@@ -34,11 +34,11 @@
     },
     "dependencies": {
         "@mojaloop/account-lookup-bc-public-types-lib": "*",
-        "@mojaloop/participant-bc-public-types-lib": "~0.5.4",
-        "@mojaloop/logging-bc-public-types-lib": "~0.5.2",
-        "@mojaloop/platform-shared-lib-messaging-types-lib": "~0.5.4",
-        "@mojaloop/platform-shared-lib-public-messages-lib": "~0.5.16",
-        "@mojaloop/platform-shared-lib-observability-types-lib": "~0.5.2"
+        "@mojaloop/participant-bc-public-types-lib": "~0.5.5",
+        "@mojaloop/logging-bc-public-types-lib": "~0.5.4",
+        "@mojaloop/platform-shared-lib-messaging-types-lib": "~0.6.2",
+        "@mojaloop/platform-shared-lib-public-messages-lib": "~0.5.20",
+        "@mojaloop/platform-shared-lib-observability-types-lib": "~0.5.5"
     },
     "devDependencies": {
         "@mojaloop/account-lookup-bc-shared-mocks-lib": "*",
