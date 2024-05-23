@@ -90,6 +90,12 @@ const LOG_LEVEL: LogLevel = (process.env["LOG_LEVEL"] as LogLevel) || LogLevel.D
 
 // Message Consumer/Publisher
 const KAFKA_URL = process.env["KAFKA_URL"] || "localhost:9092";
+const KAFKA_AUTH_ENABLED = process.env["KAFKA_AUTH_ENABLED"] && process.env["KAFKA_AUTH_ENABLED"].toUpperCase()==="TRUE" || false;
+const KAFKA_AUTH_PROTOCOL = process.env["KAFKA_AUTH_PROTOCOL"] || "sasl_plaintext";
+const KAFKA_AUTH_MECHANISM = process.env["KAFKA_AUTH_MECHANISM"] || "plain";
+const KAFKA_AUTH_USERNAME = process.env["KAFKA_AUTH_USERNAME"] || "user";
+const KAFKA_AUTH_PASSWORD = process.env["KAFKA_AUTH_PASSWORD"] || "password";
+
 //const KAFKA_AUDITS_TOPIC = process.env["KAFKA_AUDITS_TOPIC"] || "audits";
 const KAFKA_LOGS_TOPIC = process.env["KAFKA_LOGS_TOPIC"] || "logs";
 
@@ -129,16 +135,34 @@ const INSTANCE_ID = `${INSTANCE_NAME}__${crypto.randomUUID()}`;
 const CONSUMER_BATCH_SIZE = (process.env["CONSUMER_BATCH_SIZE"] && parseInt(process.env["CONSUMER_BATCH_SIZE"])) || 50;
 const CONSUMER_BATCH_TIMEOUT_MS = (process.env["CONSUMER_BATCH_TIMEOUT_MS"] && parseInt(process.env["CONSUMER_BATCH_TIMEOUT_MS"])) || 5;
 
+let globalLogger: ILogger;
+
+// kafka common options
+const kafkaProducerCommonOptions:MLKafkaJsonProducerOptions = {
+    kafkaBrokerList: KAFKA_URL,
+    producerClientId: `${INSTANCE_ID}`,
+};
+const kafkaConsumerCommonOptions:MLKafkaJsonConsumerOptions ={
+    kafkaBrokerList: KAFKA_URL
+};
+if(KAFKA_AUTH_ENABLED){
+    kafkaProducerCommonOptions.authentication = kafkaConsumerCommonOptions.authentication = {
+        protocol: KAFKA_AUTH_PROTOCOL as "plaintext" | "ssl" | "sasl_plaintext" | "sasl_ssl",
+        mechanism: KAFKA_AUTH_MECHANISM as "PLAIN" | "GSSAPI" | "SCRAM-SHA-256" | "SCRAM-SHA-512",
+        username: KAFKA_AUTH_USERNAME,
+        password: KAFKA_AUTH_PASSWORD
+    };
+}
 
 const consumerOptions: MLKafkaJsonConsumerOptions = {
-    kafkaBrokerList: KAFKA_URL,
+    ...kafkaConsumerCommonOptions,
     kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
     batchSize: CONSUMER_BATCH_SIZE,
     batchTimeoutMs: CONSUMER_BATCH_TIMEOUT_MS
 };
 
 const producerOptions: MLKafkaJsonProducerOptions = {
-    kafkaBrokerList: KAFKA_URL,
+    ...kafkaProducerCommonOptions,
     producerClientId: `${INSTANCE_ID}`,
 };
 
@@ -182,7 +206,7 @@ export class Service {
                 ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
                 APP_NAME,
                 APP_VERSION,
-                kafkaProducerOptions,
+                producerOptions,
                 KAFKA_LOGS_TOPIC,
                 LOG_LEVEL
             );
@@ -250,7 +274,7 @@ export class Service {
 
             const consumerHandlerLogger = logger.createChild("authorizationClientConsumer");
             const messageConsumer = new MLKafkaJsonConsumer({
-                kafkaBrokerList: KAFKA_URL,
+                ...kafkaConsumerCommonOptions,
                 kafkaGroupId: `${BC_NAME}_${APP_NAME}_authz_client`
             }, consumerHandlerLogger);
 
@@ -277,7 +301,11 @@ export class Service {
                 logger,
                 AUTH_N_TOKEN_ISSUER_NAME,
                 AUTH_N_TOKEN_AUDIENCE,
-                new MLKafkaJsonConsumer({kafkaBrokerList: KAFKA_URL, autoOffsetReset: "earliest", kafkaGroupId: INSTANCE_ID}, logger) // for jwt list - no groupId
+                new MLKafkaJsonConsumer(
+                    {
+                        ...kafkaConsumerCommonOptions,
+                        autoOffsetReset: "earliest", kafkaGroupId: INSTANCE_ID
+                    }, logger) // for jwt list - no groupId
             );
         }
         this.tokenHelper = tokenHelper;
@@ -362,12 +390,6 @@ export class Service {
         }
     }
 }
-
-const kafkaProducerOptions = {
-    kafkaBrokerList: KAFKA_URL,
-};
-
-let globalLogger: ILogger;
 
 /**
  * process termination and cleanup
