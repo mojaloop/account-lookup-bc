@@ -178,9 +178,9 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
     // Act
     const result = await aggregate.addOracle(oracle);
 
-    // Assert
+      // Assert (using private accessor)
     expect(result).toBeDefined();
-    expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === result)).toBeTruthy();
+    expect(aggregate["_oracleProvidersAdapters"].find((o) => o.oracleId === result)).toBeTruthy();
   });
 
   test("shouldnt be able to remove oracle if oracle doesn't exist", async () => {
@@ -210,8 +210,8 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
     // Act
     await aggregate.removeOracle(oracleId);
 
-    // Assert
-    expect(aggregate.oracleProvidersAdapters.find((o) => o.oracleId === oracleId)).toBeFalsy();
+    // Assert (using private accessor)
+    expect(aggregate["_oracleProvidersAdapters"].find((o) => o.oracleId === oracleId)).toBeFalsy();
   });
 
   test("should return all oracles", async () => {

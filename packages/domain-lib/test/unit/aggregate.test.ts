@@ -129,39 +129,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		expect(aggregate.init()).resolves;
 	});
 
-	test("should be able to get oracle adapters", async () => {
-		// Arrange
-		const expectedArrayLength = mockedOracleAdapters.length;
-
-		// Act
-		const oracleAdapters = aggregate.oracleProvidersAdapters;
-
-		// Assert
-		expect(oracleAdapters).toBeDefined();
-		expect(oracleAdapters.length).toBe(expectedArrayLength);
-	});
-
-	test("shouldnt be able to get change original oracle adapter array", async () => {
-		// Arrange
-		const expectedArrayLength = mockedOracleAdapters.length;
-		const mockedOracle: Oracle = {
-		id: "mockedOracle",
-		partyType: "mockedPartyType",
-		name: "mockedOracle",
-		endpoint: null,
-		type: "builtin",
-		currency: "USD",
-		};
-		const oracleAdapters = aggregate.oracleProvidersAdapters;
-		oracleAdapters.push(new MemoryOracleProviderAdapter(logger, mockedOracle));
-
-		// Act
-		const oracleAdaptersAfterPush = aggregate.oracleProvidersAdapters;
-
-		// Assert
-		expect(oracleAdaptersAfterPush.length).toBe(expectedArrayLength);
-	});
-
 	test("should throw error if couldnt destroy aggregate", async () => {
 		// Arrange
 		jest.spyOn(oracleFinder, "destroy").mockImplementationOnce(() => {

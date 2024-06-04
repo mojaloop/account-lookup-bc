@@ -56,4 +56,4 @@ COPY --from=builder /app .
 EXPOSE 3030
 
 ENV NODE_ENV=production
-CMD [ "npm", "run", "start:account-lookup-svc" ]
+CMD [ "node", "packages/account-lookup-svc/dist/index.js" ]

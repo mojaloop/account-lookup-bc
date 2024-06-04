@@ -32,7 +32,7 @@ export abstract class BaseRoutes {
     public get logger(): ILogger {
         return this._logger;
     }
-   
+
     get mainRouter(): express.Router {
         return this._mainRouter;
     }
@@ -94,7 +94,7 @@ export abstract class BaseRoutes {
 
         return false;
     }
-    
+
     protected _enforcePrivilege(secCtx: CallSecurityContext, privilegeId: string): void {
         for (const roleId of secCtx.platformRoleIds) {
             if (this._authorizationClient.roleHasPrivilege(roleId, privilegeId)) {
