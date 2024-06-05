@@ -76,8 +76,9 @@ import {
     AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorPayload,
     ParticipantRejectedEvtPayload,
     ParticipantRejectedEvt,
+    AccountLookUpUnknownErrorEvent,
+    AccountLookupBCInvalidMessageTypeErrorEvent,
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
-
 import {IMessage, MessageTypes} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import {IMetrics, MetricsMock} from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
@@ -102,13 +103,13 @@ import {AccountLookupErrorCodeNames} from "@mojaloop/account-lookup-bc-public-ty
 let aggregate: AccountLookupAggregate;
 
 describe("Domain - Unit Tests for aggregate events with non happy path", () => {
+
     beforeAll(async () => {
         const metricsMock: IMetrics = new MetricsMock();
         aggregate = new AccountLookupAggregate(
             logger,
             oracleFinder,
             oracleProviderFactory,
-            messageProducer,
             participantService,
             metricsMock
         );
@@ -147,19 +148,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorCode: AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD,
         };
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([message]);
+        const result = await aggregate.handleEvent(message);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: errorPayload,
-                msgName: AccountLookupBCInvalidMessagePayloadErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(errorPayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidMessagePayloadErrorEvent.name);
     });
 
     test("should publish InvalidMessageTypeErrorEvent message if type is invalid", async () => {
@@ -192,18 +187,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorCode: AccountLookupErrorCodeNames.INVALID_MESSAGE_TYPE,
         };
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([message]);
+        const result = await aggregate.handleEvent(message);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: errorPayload,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(errorPayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidMessageTypeErrorEvent.name);
     });
 
     test("should publish UnknownErrorEvent if an unhandled error occurs", async () => {
@@ -235,19 +225,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorCode: AccountLookupErrorCodeNames.COMMAND_TYPE_UNKNOWN,
         };
 
-        jest.spyOn(messageProducer, "send");
-        jest.spyOn(aggregate as any, "handlePartyQueryReceivedEvt").mockRejectedValueOnce(new Error("Error"));
+        jest.spyOn(aggregate as any, "_handlePartyQueryReceivedEvt").mockRejectedValueOnce(new Error("Error"));
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([message]);
+        const result = await aggregate.handleEvent(message);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: errorPayload,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(errorPayload);
+        expect(result.msgName).toEqual(AccountLookUpUnknownErrorEvent.name);
     });
 
     test("should publish opaque state when publishing error event", async () => {
@@ -276,19 +261,22 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             payload: payload,
         };
 
-        jest.spyOn(messageProducer, "send");
+        const errorPayload = {
+            partyId: payload.partyId,
+            partyType: payload.partyType,
+            partySubType: payload.partySubType,
+            requesterFspId: payload.requesterFspId,
+            errorCode: AccountLookupErrorCodeNames.INVALID_MESSAGE_PAYLOAD
+        }
+
+        
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([message]);
+        const result = await aggregate.handleEvent(message);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                fspiopOpaqueState: {
-                    fake: "fake opaque state",
-                },
-            })])
-        );
+        expect(result.payload).toEqual(errorPayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidMessageTypeErrorEvent.name);
     });
 
     //#endregion
@@ -318,19 +306,21 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
+        const errorPayload = {
+            partyId: payload.partyId,
+            partyType: payload.partyType,
+            partySubType: payload.partySubType,
+            requesterFspId: payload.requesterFspId,
+            errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT
+        }
+
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(errorPayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("PartyQuery - should send InvalidRequesterParticipantErrorEvent if an error occurs when fetching requester participant from participant service for validation", async () => {
@@ -358,19 +348,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockRejectedValueOnce(new Error("Error"));
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                    payload: responsePayload,
-                    msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-                })]))
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("PartyQuery - should send RequesterParticipantNotFoundErrorEvent if no requester participant is found from participant service for validation", async () => {
@@ -398,20 +383,14 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(null);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequesterParticipantNotFoundErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequesterParticipantNotFoundErrorEvent.name);
     });
 
     test("PartyQuery - should send RequiredRequesterParticipantIdMismatchErrorEvent if returned participant id mismatches the requester id", async () => {
@@ -440,7 +419,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: fakeParticipantId,
             type: partyType,
@@ -448,16 +426,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredRequesterParticipantIdMismatchErrorEvent.name);
     });
 
     test("PartyQuery - should send RequiredRequesterParticipantIsNotApprovedErrorEvent if returned participant is not approved", async () => {
@@ -485,7 +458,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -494,16 +466,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredRequesterParticipantIsNotApprovedErrorEvent.name);
     });
 
     test("PartyQuery - should send RequiredRequesterParticipantIsNotActiveErrorEvent if returned participant is not active", async () => {
@@ -531,7 +498,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -540,16 +506,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredRequesterParticipantIsNotActiveErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder is unable to get an oracle to search the destination fspId", async () => {
@@ -578,7 +539,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -588,16 +548,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder throws error when searching for destination fspId", async () => {
@@ -626,7 +581,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -636,16 +590,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         jest.spyOn(oracleFinder, "getOracle").mockRejectedValueOnce(new Error("Error"));
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder doesn't find a oracle when searching for destination fspId", async () => {
@@ -674,7 +623,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -684,16 +632,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         jest.spyOn(oracleFinder, "getOracle").mockResolvedValueOnce(null);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle finder returns a oracle that don't belong to the adapters array", async () => {
@@ -723,7 +666,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -740,16 +682,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         });
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle throws error when getting a participant", async () => {
@@ -778,7 +715,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -787,16 +723,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send UnableToGetParticipantFromOracleErrorPayload if oracle doesn't have a participant associated", async () => {
@@ -825,7 +756,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -834,16 +764,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if an error occurs when fetching destination participant for validation", async () => {
@@ -872,7 +797,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest
             .spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({
@@ -884,16 +808,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             .mockRejectedValueOnce(new Error("Error"));
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidDestinationParticipantErrorEvent.name);
     });
 
     test("PartyQuery - should send InvalidDestinationParticipantErrorEvent if no destination participant is found from participant service for validation", async () => {
@@ -922,7 +841,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest
             .spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({
@@ -934,16 +852,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             .mockResolvedValueOnce(null);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCDestinationParticipantNotFoundErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCDestinationParticipantNotFoundErrorEvent.name);
     });
 
     test("PartyQuery - should send RequiredDestinationParticipantIdMismatchErrorEvent if returned participant id mismatches the destination id", async () => {
@@ -973,7 +886,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest
             .spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({
@@ -989,16 +901,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredDestinationParticipantIdMismatchErrorEvent.name);
     });
 
 
@@ -1028,7 +935,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest
             .spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({
@@ -1045,16 +951,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredDestinationParticipantIsNotApprovedErrorEvent.name);
     });
 
 
@@ -1084,7 +985,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest
             .spyOn(participantService, "getParticipantInfo")
             .mockResolvedValueOnce({
@@ -1101,16 +1001,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCRequiredDestinationParticipantIsNotActiveErrorEvent.name);
     });
     //#endregion PartyQuery
 
@@ -1151,19 +1046,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new PartyInfoAvailableEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("PartyInfoAvailable - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
@@ -1202,7 +1091,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
         const event = new PartyInfoAvailableEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -1211,16 +1099,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidDestinationParticipantErrorEvent.name);
     });
     //#endregion PartyInfoAvailable
 
@@ -1249,19 +1132,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("ParticipantQuery - should send UnableToGetParticipantFromOracleError if couldnt fetch the owner fspId from oracle", async () => {
@@ -1289,7 +1166,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -1298,16 +1174,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookUpUnableToGetParticipantFromOracleErrorEvent.name);
     });
 
     test("ParticipantQuery - should send DestinationParticipantNotFoundErrorEvent if owner id doesn't exist on participant service", async () => {
@@ -1336,7 +1207,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantQueryReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -1346,16 +1216,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce(null);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                msgName: AccountLookupBCDestinationParticipantNotFoundErrorEvent.name,
-                payload: responsePayload,
-            })])
-        );
-        expect(messageProducer.send).toBeCalledTimes(1);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCDestinationParticipantNotFoundErrorEvent.name);
     });
 
     //#endregion ParticipantQuery
@@ -1392,19 +1257,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyRejectedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("PartyRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
@@ -1438,7 +1297,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new PartyRejectedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -1447,65 +1305,54 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidDestinationParticipantErrorEvent.name);
     });
 
     //#endregion
 
     //#region ParticipantRejected
     test("ParticipantRejected - should send InvalidRequesterParticipantErrorEvent if no requester participant id is provided", async () => {
-      //Arrange
-      const partyId = mockedPartyIds[0];
-      const partyType = mockedPartyTypes[0];
-      const partySubType = mockedPartySubTypes[0];
-      const destinationFspId = mockedParticipantFspIds[0];
-      const currency = "USD";
-      const payload: ParticipantRejectedEvtPayload = {
-          currency,
-          partyId,
-          partySubType,
-          partyType,
-          destinationFspId: destinationFspId,
-          requesterFspId: null as any,
-          errorInformation: {
-              errorCode: "3200",
-              errorDescription: "Generic party error",
-              extensionList: null,
-          },
-      };
+        //Arrange
+        const partyId = mockedPartyIds[0];
+        const partyType = mockedPartyTypes[0];
+        const partySubType = mockedPartySubTypes[0];
+        const destinationFspId = mockedParticipantFspIds[0];
+        const currency = "USD";
+        const payload: ParticipantRejectedEvtPayload = {
+            currency,
+            partyId,
+            partySubType,
+            partyType,
+            destinationFspId: destinationFspId,
+            requesterFspId: null as any,
+            errorInformation: {
+                errorCode: "3200",
+                errorDescription: "Generic party error",
+                extensionList: null,
+            },
+        };
 
-      const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
-          errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
-          partyId,
-          partySubType,
-          partyType,
-          requesterFspId: null as any,
-      };
+        const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
+            errorCode: AccountLookupErrorCodeNames.INVALID_SOURCE_PARTICIPANT,
+            partyId,
+            partySubType,
+            partyType,
+            requesterFspId: null as any,
+        };
 
-      const event = new ParticipantRejectedEvt(payload);
+        const event = new ParticipantRejectedEvt(payload);
 
-      jest.spyOn(messageProducer, "send");
 
-      // Act
-      await aggregate.handleAccountLookUpEventBatch([event]);
+        // Act
+        const result = await aggregate.handleEvent(event);
 
-      // Assert
-      expect(messageProducer.send).toHaveBeenCalledTimes(1);
-      expect(messageProducer.send).toHaveBeenCalledWith(
-          expect.arrayContaining([expect.objectContaining({
-              payload: responsePayload,
-              msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-          })])
-      );
+        // Assert
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("ParticipantRejected - should send InvalidDestinationParticipantErrorEvent if no destination participant id is provided", async () => {
@@ -1539,7 +1386,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantRejectedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: requesterFspId,
             type: partyType,
@@ -1548,16 +1394,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidDestinationParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidDestinationParticipantErrorEvent.name);
     });
 
     //#endregion
@@ -1583,19 +1424,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("handleParticipantAssociationRequestReceivedEvt - should send UnableToGetOracleAdapterErrorEvent if couldnt get the oracle adapter", async () => {
@@ -1617,7 +1452,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: mockedParticipantFspIds[0],
             type: mockedPartyTypes[0],
@@ -1626,16 +1460,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCUnableToGetOracleAdapterErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCUnableToGetOracleAdapterErrorEvent.name);
     });
 
     test("handleParticipantAssociationRequestReceivedEvt - should send UnableToAssociateParticipantErrorEvent if is unable to associate party to participant", async () => {
@@ -1658,7 +1487,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantAssociationRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: mockedParticipantFspIds[3],
             type: mockedPartyTypes[3],
@@ -1667,16 +1495,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCUnableToAssociateParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCUnableToAssociateParticipantErrorEvent.name);
     });
     //#endregion
 
@@ -1701,19 +1524,13 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCInvalidRequesterParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCInvalidRequesterParticipantErrorEvent.name);
     });
 
     test("handleParticipantDisassociationRequestReceivedEvt - should send UnableToGetOracleAdapterErrorEvent if couldnt get the oracle adapter", async () => {
@@ -1735,7 +1552,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: mockedParticipantFspIds[0],
             type: mockedPartyTypes[0],
@@ -1744,16 +1560,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCUnableToGetOracleAdapterErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCUnableToGetOracleAdapterErrorEvent.name);
     });
 
     test("handleParticipantDisassociationRequestReceivedEvt - should send UnableToDisassociateParticipantErrorEvent if is unable to associate party to participant", async () => {
@@ -1776,7 +1587,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
         const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
-        jest.spyOn(messageProducer, "send");
         jest.spyOn(participantService, "getParticipantInfo").mockResolvedValueOnce({
             id: mockedParticipantFspIds[3],
             type: mockedPartyTypes[3],
@@ -1785,16 +1595,11 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         } as IParticipant as any);
 
         // Act
-        await aggregate.handleAccountLookUpEventBatch([event]);
+        const result = await aggregate.handleEvent(event);
 
         // Assert
-        expect(messageProducer.send).toHaveBeenCalledTimes(1);
-        expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-                msgName: AccountLookupBCUnableToDisassociateParticipantErrorEvent.name,
-            })])
-        );
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(AccountLookupBCUnableToDisassociateParticipantErrorEvent.name);
     });
     //#endregion
 });

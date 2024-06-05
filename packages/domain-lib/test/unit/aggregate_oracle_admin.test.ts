@@ -37,7 +37,6 @@ import { AddOracleDTO } from "@mojaloop/account-lookup-bc-public-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
   logger,
-  messageProducer,
   oracleFinder,
   oracleProviderFactory,
   participantService,
@@ -53,7 +52,6 @@ describe("Domain - Unit Tests Oracle admin routes", () => {
       logger,
       oracleFinder,
       oracleProviderFactory,
-      messageProducer,
       participantService,
       metricsMock
     );

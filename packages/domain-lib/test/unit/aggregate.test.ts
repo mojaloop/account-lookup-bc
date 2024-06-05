@@ -56,13 +56,17 @@ import {
 	PartyQueryResponseEvtPayload,
 	ParticipantRejectedEvtPayload,
 	ParticipantRejectedEvt,
-	ParticipantRejectedResponseEvtPayload
+	ParticipantRejectedResponseEvtPayload,
+	PartyInfoRequestedEvt,
+	PartyQueryResponseEvt,
+	ParticipantAssociationCreatedEvt,
+	ParticipantQueryResponseEvt,
+	ParticipantAssociationRemovedEvt,
+	ParticipantRejectedResponseEvt
 } from "@mojaloop/platform-shared-lib-public-messages-lib";
 import { IMessage, MessageTypes } from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import {
-	MemoryOracleProviderAdapter,
-	mockedOracleAdapters,
 	mockedParticipantFspIds,
 	mockedParticipantIds,
 	mockedPartyIds,
@@ -71,7 +75,6 @@ import {
 } from "@mojaloop/account-lookup-bc-shared-mocks-lib";
 import {
 	logger,
-	messageProducer,
 	oracleFinder,
 	oracleProviderFactory,
 	participantService
@@ -88,10 +91,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			logger,
 			oracleFinder,
 			oracleProviderFactory,
-			messageProducer,
 			participantService,
 			metricsMock
 		);
+
+		await aggregate.init();
 	});
 
 	afterEach(async () => {
@@ -147,7 +151,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 	//#endregion
 
 	//#region Publish Event
-
 	test("should publish opaque state when publishing successful event", async () => {
 		// Arrange
 		const partyType = mockedPartyTypes[0];
@@ -155,53 +158,48 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		const requesterFspId = mockedParticipantIds[0];
 		const destinationFspId = "destinationFspId";
 		const payload: PartyQueryReceivedEvtPayload = {
-		partyId,
-		partyType,
-		requesterFspId,
-		destinationFspId,
-		currency: null,
-		partySubType: null,
+			partyId,
+			partyType,
+			requesterFspId,
+			destinationFspId,
+			currency: null,
+			partySubType: null,
 		};
 
 		const message: IMessage = {
-		fspiopOpaqueState: "fake opaque state",
-		msgId: "fake msg id",
-		msgKey: "fake msg key",
-		msgTopic: "fake msg topic",
-		msgName: PartyQueryReceivedEvt.name,
-		msgOffset: 0,
-		msgPartition: 0,
-		msgTimestamp: 0,
-		msgType: MessageTypes.DOMAIN_EVENT,
-		payload: payload,
+			fspiopOpaqueState: "fake opaque state",
+			msgId: "fake msg id",
+			msgKey: "fake msg key",
+			msgTopic: "fake msg topic",
+			msgName: PartyQueryReceivedEvt.name,
+			msgOffset: 0,
+			msgPartition: 0,
+			msgTimestamp: 0,
+			msgType: MessageTypes.DOMAIN_EVENT,
+			payload: payload,
 		};
 
 		const responsePayload: PartyInfoRequestedEvtPayload = {
-		partyId,
-		partyType,
-		requesterFspId,
-		destinationFspId,
-		currency: null,
-		partySubType: null,
+			partyId,
+			partyType,
+			requesterFspId,
+			destinationFspId,
+			currency: null,
+			partySubType: null,
 		};
 
 		jest
-		.spyOn(participantService, "getParticipantInfo")
-		.mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, approved: true } as IParticipant)
-		.mockResolvedValueOnce({ id: destinationFspId, type: partyType, isActive: true, approved: true } as IParticipant);
+			.spyOn(participantService, "getParticipantInfo")
+			.mockResolvedValueOnce({ id: requesterFspId, type: partyType, isActive: true, approved: true } as IParticipant)
+			.mockResolvedValueOnce({ id: destinationFspId, type: partyType, isActive: true, approved: true } as IParticipant);
 
-		jest.spyOn(messageProducer, "send");
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([message]);
+		const result = await aggregate.handleEvent(message);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.arrayContaining([expect.objectContaining({
-				fspiopOpaqueState: "fake opaque state",
-				payload: responsePayload
-			})])
-		);
+        expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(PartyInfoRequestedEvt.name);
 	});
 	//#endregion
 
@@ -222,7 +220,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			partySubType: partySubType
 		};
 
-		jest.spyOn(messageProducer, "send");
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true, approved: true } as IParticipant)
 			.mockResolvedValueOnce({ id: destinationFspId, type: "HUB", isActive: true, approved: true } as IParticipant);
@@ -238,14 +235,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-				payload: responsePayload,
-			})])
-		);
+		expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(PartyInfoRequestedEvt.name);
 	});
 
 	test("handlePartyQueryReceivedEvt - should get destination fspId from oracle if none is provided", async () => {
@@ -264,7 +258,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			partySubType: partySubType
 		};
 
-		jest.spyOn(messageProducer, "send");
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: requesterFspId, isActive: true, approved: true } as IParticipant);
 		jest.spyOn(participantService, "getParticipantInfo")
@@ -281,14 +274,10 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result =await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-				payload: responsePayload,
-			})])
-		);
+		expect(result.payload).toEqual(responsePayload);
 	});
 	//#endregion
 
@@ -321,7 +310,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: requesterFspId, type: "HUB", isActive: true, approved: true } as IParticipant)
 			.mockResolvedValueOnce({ id: "2", type: "HUB", isActive: true, approved: true } as IParticipant);
-		jest.spyOn(messageProducer, "send");
 
 		const event = new PartyInfoAvailableEvt(payload);
 		const responsePayload: PartyQueryResponseEvtPayload = {
@@ -344,14 +332,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		const result = await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.arrayContaining([expect.objectContaining({
-				payload: responsePayload,
-			})])
-		);
+		expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(PartyQueryResponseEvt.name);
 	});
 
 	//#endregion
@@ -378,7 +363,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true, approved: true } as IParticipant)
 			.mockResolvedValueOnce({ id: oracleParticipantFspId, type: "DFSP", isActive: true, approved: true } as IParticipant);
-		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantQueryReceivedEvt(payload);
 		const responsePayload: ParticipantQueryResponseEvtPayload = {
@@ -391,14 +375,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([expect.objectContaining({
-                payload: responsePayload,
-            })])
-		);
+		expect(result.payload).toEqual(responsePayload);
+        expect(result.msgName).toEqual(ParticipantQueryResponseEvt.name);
 	});
 
 	//#endregion
@@ -406,6 +387,15 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 	//#region handleParticipantAssociationRequestReceivedEvt
 	test("handleParticipantAssociationRequestReceivedEvt - should associate participant and publish message", async () => {
 		// Arrange
+		const oracle: Oracle = {
+			id: "1",
+			name: "randomname",
+			type: "builtin",
+			partyType: "randomPartyType",
+			currency: null,
+			endpoint: null,
+		}
+
 		const partyType = mockedPartyTypes[0];
 		const partySubType = mockedPartySubTypes[0];
 		const partyId = mockedPartyIds[0];
@@ -419,10 +409,15 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			currency: "USD"
 		};
 
+		jest.spyOn(oracleFinder, "getAllOracles")
+			.mockResolvedValueOnce([oracle]);
+
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: ownerFspId, type: partyType, isActive: true, approved: true } as IParticipant);
+	
+		jest.spyOn(oracleFinder, "getOracle")
+			.mockResolvedValueOnce(oracle);
 
-		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantAssociationRequestReceivedEvt(payload);
 
@@ -434,18 +429,26 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-            expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
-		);
+		expect(result.payload).toEqual(expectedPayload);
+        expect(result.msgName).toEqual(ParticipantAssociationCreatedEvt.name);
 	});
 	//#endregion
 
 	//#region handleParticipantDisassociateRequestReceivedEvt
 	test("handleParticipantDisassociateRequestReceivedEvt - should disassociate participant and publish message", async () => {
 		// Arrange
+		const oracle: Oracle = {
+			id: "1",
+			name: "randomname",
+			type: "builtin",
+			partyType: "randomPartyType",
+			currency: null,
+			endpoint: null,
+		}
+
 		const partyType = mockedPartyTypes[0];
 		const partySubType = mockedPartySubTypes[0];
 		const partyId = mockedPartyIds[0];
@@ -459,10 +462,12 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			currency: "USD"
 		};
 
+		jest.spyOn(oracleFinder, "getAllOracles")
+			.mockResolvedValueOnce([oracle]);
+
 		jest.spyOn(participantService, "getParticipantInfo")
 			.mockResolvedValueOnce({ id: ownerFspId, type: partyType, isActive: true, approved: true } as IParticipant);
 
-		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantDisassociateRequestReceivedEvt(payload);
 
@@ -474,12 +479,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
-		);
+		expect(result.payload).toEqual(expectedPayload);
+        expect(result.msgName).toEqual(ParticipantAssociationRemovedEvt.name);
 	});
 	//#endregion
 
@@ -519,7 +523,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			.mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true, approved: true } as IParticipant)
 			.mockResolvedValueOnce({ id: destinationFspId, type: "DFSP", isActive: true, approved: true } as IParticipant);
 
-		jest.spyOn(messageProducer, "send");
 
 		const event = new PartyRejectedEvt(payload);
 
@@ -532,12 +535,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
-		);
+		expect(result.payload).toEqual(expectedPayload);
+        expect(result.msgName).toEqual(PartyRejectedResponseEvt.name);
 	});
 	//#endregion
 
@@ -577,7 +579,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			.mockResolvedValueOnce({ id: requesterFspId, type: "DFSP", isActive: true, approved: true } as IParticipant)
 			.mockResolvedValueOnce({ id: destinationFspId, type: "DFSP", isActive: true, approved: true } as IParticipant);
 
-		jest.spyOn(messageProducer, "send");
 
 		const event = new ParticipantRejectedEvt(payload);
 
@@ -590,12 +591,11 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		// Act
-		await aggregate.handleAccountLookUpEventBatch([event]);
+		const result = await aggregate.handleEvent(event);
 
 		// Assert
-		expect(messageProducer.send).toHaveBeenCalledWith(
-			expect.arrayContaining([ expect.objectContaining({ payload: expectedPayload}) ])
-		);
+		expect(result.payload).toEqual(expectedPayload);
+        expect(result.msgName).toEqual(ParticipantRejectedResponseEvt.name);
 	});
 	//#endregion
 
