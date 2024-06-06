@@ -69,11 +69,12 @@ import process from "process";
 import {OracleAdminExpressRoutes} from "./routes/oracle_admin_routes";
 import {AccountLookupExpressRoutes} from "./routes/account_lookup_routes";
 import {IMetrics} from "@mojaloop/platform-shared-lib-observability-types-lib";
-import {PrometheusMetrics} from "@mojaloop/platform-shared-lib-observability-client-lib";
+import {OpenTelemetryClient, PrometheusMetrics} from "@mojaloop/platform-shared-lib-observability-client-lib";
 import {ParticipantAdapter} from "@mojaloop/account-lookup-bc-implementations-lib";
 import {AuthenticatedHttpRequester, AuthorizationClient, TokenHelper} from "@mojaloop/security-bc-client-lib";
 import {IAuthenticatedHttpRequester, IAuthorizationClient, ITokenHelper} from "@mojaloop/security-bc-public-types-lib";
 import crypto from "crypto";
+import {AccountLookupEventHandler} from "./handler";
 
 // Global vars
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -132,7 +133,7 @@ const SERVICE_START_TIMEOUT_MS= (process.env["SERVICE_START_TIMEOUT_MS"] && pars
 const INSTANCE_NAME = `${BC_NAME}_${APP_NAME}`;
 const INSTANCE_ID = `${INSTANCE_NAME}__${crypto.randomUUID()}`;
 
-const CONSUMER_BATCH_SIZE = (process.env["CONSUMER_BATCH_SIZE"] && parseInt(process.env["CONSUMER_BATCH_SIZE"])) || 50;
+const CONSUMER_BATCH_SIZE = (process.env["CONSUMER_BATCH_SIZE"] && parseInt(process.env["CONSUMER_BATCH_SIZE"])) || 250;
 const CONSUMER_BATCH_TIMEOUT_MS = (process.env["CONSUMER_BATCH_TIMEOUT_MS"] && parseInt(process.env["CONSUMER_BATCH_TIMEOUT_MS"])) || 5;
 
 let globalLogger: ILogger;
@@ -154,13 +155,6 @@ if(KAFKA_AUTH_ENABLED){
     };
 }
 
-const consumerOptions: MLKafkaJsonConsumerOptions = {
-    ...kafkaConsumerCommonOptions,
-    kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
-    batchSize: CONSUMER_BATCH_SIZE,
-    batchTimeoutMs: CONSUMER_BATCH_TIMEOUT_MS
-};
-
 const producerOptions: MLKafkaJsonProducerOptions = {
     ...kafkaProducerCommonOptions,
     producerClientId: `${INSTANCE_ID}`,
@@ -177,6 +171,7 @@ export class Service {
     static authRequester: IAuthenticatedHttpRequester;
     static participantsServiceAdapter: IParticipantServiceAdapter;
     static aggregate: AccountLookupAggregate;
+    static eventHandler:AccountLookupEventHandler;
     static expressServer: Server;
     static metrics: IMetrics;
     static authorizationClient: IAuthorizationClient;
@@ -234,7 +229,12 @@ export class Service {
         this.messageProducer = messageProducer;
 
         if (!messageConsumer) {
-            messageConsumer = new MLKafkaJsonConsumer(consumerOptions, logger);
+            messageConsumer = new MLKafkaJsonConsumer({
+                ...kafkaConsumerCommonOptions,
+                kafkaGroupId: `${BC_NAME}_${APP_NAME}`,
+                batchSize: CONSUMER_BATCH_SIZE,
+                batchTimeoutMs: CONSUMER_BATCH_TIMEOUT_MS
+            }, logger);
         }
         this.messageConsumer = messageConsumer;
 
@@ -243,6 +243,7 @@ export class Service {
             authRequester.setAppCredentials(SVC_CLIENT_ID, SVC_CLIENT_SECRET);
         }
         this.authRequester = authRequester;
+        this.logger.info("AuthenticatedHttpRequester Initialised");
 
         if (!participantsServiceAdapter) {
             const authRequester: IAuthenticatedHttpRequester = new AuthenticatedHttpRequester(logger, AUTH_N_SVC_TOKEN_URL);
@@ -255,6 +256,7 @@ export class Service {
             );
         }
         this.participantsServiceAdapter = participantsServiceAdapter;
+        this.logger.info("ParticipantAdapter Initialised");
 
         if (!metrics) {
             const labels: Map<string, string> = new Map<string, string>();
@@ -265,6 +267,10 @@ export class Service {
             metrics = PrometheusMetrics.getInstance();
         }
         this.metrics = metrics;
+        this.logger.info("PrometheusMetrics Initialised");
+
+        await Service.setupTracing();
+        this.logger.info("Tracing Initialised");
 
         // authorization client
         if (!authorizationClient) {
@@ -275,7 +281,7 @@ export class Service {
             const consumerHandlerLogger = logger.createChild("authorizationClientConsumer");
             const messageConsumer = new MLKafkaJsonConsumer({
                 ...kafkaConsumerCommonOptions,
-                kafkaGroupId: `${BC_NAME}_${APP_NAME}_authz_client`
+                kafkaGroupId: `${INSTANCE_ID}_authz_client`
             }, consumerHandlerLogger);
 
             // setup privileges - bootstrap app privs and get priv/role associations
@@ -293,6 +299,7 @@ export class Service {
 
         }
         this.authorizationClient = authorizationClient;
+        this.logger.info("AuthorizationClient Initialised");
 
         // token helper
         if (!tokenHelper) {
@@ -304,41 +311,38 @@ export class Service {
                 new MLKafkaJsonConsumer(
                     {
                         ...kafkaConsumerCommonOptions,
-                        autoOffsetReset: "earliest", kafkaGroupId: INSTANCE_ID
+                        autoOffsetReset: "earliest", kafkaGroupId: `${INSTANCE_ID}_tokenHelper`
                     }, logger) // for jwt list - no groupId
             );
         }
         this.tokenHelper = tokenHelper;
         await this.tokenHelper.init();
-
-        this.logger.info("Kafka Producer Initialized");
+        this.logger.info("TokenHelper Initialised");
 
         this.aggregate = new AccountLookupAggregate(
             this.logger,
             this.oracleFinder,
             this.oracleProviderFactory,
-            this.messageProducer,
             this.participantsServiceAdapter,
             this.metrics
         );
 
-        await this.aggregate.init();
-
-        // all inits done
-        this.messageConsumer.setTopics([AccountLookupBCTopics.DomainRequests]);
-        await this.messageConsumer.connect();
-        await this.messageConsumer.startAndWaitForRebalance();
-        logger.info("Kafka Consumer Initialized");
-
-        await this.messageProducer.connect();
+        // create handler and start it
+        this.eventHandler = new AccountLookupEventHandler(
+            this.logger, this.aggregate,
+            this.messageConsumer, this.messageProducer,
+            this.metrics, OpenTelemetryClient.getInstance()
+        );
+        await this.eventHandler.start();
 
         await this.setupAndStartExpress();
 
-        this.messageConsumer.setBatchCallbackFn(this.aggregate.handleAccountLookUpEventBatch.bind(this.aggregate));
-        this.logger.info("Aggregate Initialized");
-
         // remove startup timeout
         clearTimeout(this.startupTimer);
+    }
+
+    static async setupTracing():Promise<void>{
+        OpenTelemetryClient.Start(BC_NAME, APP_NAME, APP_VERSION, INSTANCE_ID, this.logger);
     }
 
     static async setupAndStartExpress(): Promise<void> {
@@ -378,13 +382,16 @@ export class Service {
     }
 
     static async stop(): Promise<void> {
-        this.logger.debug("Tearing down aggregate");
-        await this.aggregate.destroy();
-        this.logger.debug("Tearing down message consumer");
+        this.logger.info("Tearing down the event handler");
+        await this.eventHandler.destroy();
+        this.logger.info("Tearing down message consumer");
         await this.messageConsumer.destroy(true);
-        this.logger.debug("Tearing down message producer");
+        this.logger.info("Tearing down message producer");
         await this.messageProducer.destroy();
-        this.logger.debug("Tearing down express server");
+        this.logger.info("Tearing down tokenHelper");
+        await this.tokenHelper.destroy();
+
+        this.logger.info("Tearing down express server");
         if (this.expressServer) {
             this.expressServer.close();
         }

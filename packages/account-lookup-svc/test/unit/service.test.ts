@@ -49,13 +49,10 @@ import { ConsoleLogger, ILogger, LogLevel } from "@mojaloop/logging-bc-public-ty
 import { IMessageConsumer, IMessageProducer} from "@mojaloop/platform-shared-lib-messaging-types-lib";
 import { IMetrics, MetricsMock } from "@mojaloop/platform-shared-lib-observability-types-lib";
 import { Service } from "../../src/service";
-import { KafkaLogger } from "@mojaloop/logging-bc-client-lib";
-import { IAuthenticatedHttpRequester, IAuthorizationClient, ITokenHelper } from "@mojaloop/security-bc-public-types-lib";
+import { IAuthenticatedHttpRequester } from "@mojaloop/security-bc-public-types-lib";
 import {
     MLKafkaJsonConsumer,
     MLKafkaJsonProducer,
-    MLKafkaJsonConsumerOptions,
-    MLKafkaJsonProducerOptions,
 } from "@mojaloop/platform-shared-lib-nodejs-kafka-client-lib";
 
 const logger: ILogger = new ConsoleLogger();
@@ -80,6 +77,28 @@ jest.mock('@mojaloop/platform-shared-lib-nodejs-kafka-client-lib');
 jest.mock('@mojaloop/account-lookup-bc-implementations-lib');
 jest.mock('@mojaloop/security-bc-client-lib');
 jest.mock('@mojaloop/account-lookup-bc-domain-lib');
+jest.mock("@mojaloop/platform-shared-lib-observability-client-lib", () => {
+    const originalModule = jest.requireActual("@mojaloop/platform-shared-lib-observability-client-lib");
+
+    return {
+        ...originalModule,
+        OpenTelemetryClient: {
+            Start: jest.fn(),
+            getInstance: jest.fn(() => ({
+                trace: {
+                    getTracer: jest.fn(() => ({
+                        startActiveSpan: jest.fn((spanName, spanOptions, context, callback) => {
+                            const mockSpan = {
+                              end: jest.fn(),
+                            };
+                            return callback(mockSpan);
+                    })})),
+                },
+                
+            })),
+        },
+    };
+});
 
 describe('Command Handler - Unit Tests for TransfersBC Command Handler Service', () => {
 
