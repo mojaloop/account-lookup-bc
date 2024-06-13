@@ -82,7 +82,7 @@ const packageJSON = require("../package.json");
 
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
-const APP_VERSION = packageJSON.version;
+const BC_VERSION = packageJSON.version;
 
 // Logger
 // service constants
@@ -200,7 +200,7 @@ export class Service {
             logger = new KafkaLogger(
                 ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
                 APP_NAME,
-                APP_VERSION,
+                BC_VERSION,
                 producerOptions,
                 KAFKA_LOGS_TOPIC,
                 LOG_LEVEL
@@ -262,7 +262,7 @@ export class Service {
             const labels: Map<string, string> = new Map<string, string>();
             labels.set("bc", BC_NAME);
             labels.set("app", APP_NAME);
-            labels.set("version", APP_VERSION);
+            labels.set("version", BC_VERSION);
             PrometheusMetrics.Setup({prefix: "", defaultLabels: labels}, this.logger);
             metrics = PrometheusMetrics.getInstance();
         }
@@ -286,10 +286,12 @@ export class Service {
 
             // setup privileges - bootstrap app privs and get priv/role associations
             authorizationClient = new AuthorizationClient(
-                BC_NAME, APP_NAME, APP_VERSION,
-                AUTH_Z_SVC_BASEURL, logger.createChild("AuthorizationClient"),
+                BC_NAME,
+                BC_VERSION,
+                AUTH_Z_SVC_BASEURL, 
+                logger.createChild("AuthorizationClient"),
                 authRequester,
-                messageConsumer
+                messageConsumer,
             );
             authorizationClient.addPrivilegesArray(AccountLookupPrivilegesDefinition);
             await (authorizationClient as AuthorizationClient).bootstrap(true);
@@ -342,7 +344,7 @@ export class Service {
     }
 
     static async setupTracing():Promise<void>{
-        OpenTelemetryClient.Start(BC_NAME, APP_NAME, APP_VERSION, INSTANCE_ID, this.logger);
+        OpenTelemetryClient.Start(BC_NAME, APP_NAME, BC_VERSION, INSTANCE_ID, this.logger);
     }
 
     static async setupAndStartExpress(): Promise<void> {
@@ -374,7 +376,7 @@ export class Service {
 
             this.expressServer = this.app.listen(SVC_DEFAULT_HTTP_PORT, () => {
                 this.logger.info(`🚀 Server ready on port ${SVC_DEFAULT_HTTP_PORT}`);
-                this.logger.info(`Oracle Admin and Account Lookup server v: ${APP_VERSION} started`);
+                this.logger.info(`Oracle Admin and Account Lookup server v: ${BC_VERSION} started`);
 
                 resolve();
             });
@@ -382,17 +384,24 @@ export class Service {
     }
 
     static async stop(): Promise<void> {
-        this.logger.info("Tearing down the event handler");
-        await this.eventHandler.destroy();
-        this.logger.info("Tearing down message consumer");
-        await this.messageConsumer.destroy(true);
-        this.logger.info("Tearing down message producer");
-        await this.messageProducer.destroy();
-        this.logger.info("Tearing down tokenHelper");
-        await this.tokenHelper.destroy();
-
-        this.logger.info("Tearing down express server");
+        if (this.eventHandler) {
+            this.logger.info("Tearing down the event handler");
+            await this.eventHandler.destroy();
+        }
+        if (this.messageConsumer) {
+            this.logger.info("Tearing down message consumer");
+            await this.messageConsumer.destroy(true);
+        }
+        if (this.messageProducer) {
+            this.logger.info("Tearing down message producer");
+            await this.messageProducer.destroy();
+        }
+        if (this.tokenHelper) {
+            this.logger.info("Tearing down tokenHelper");
+            await this.tokenHelper.destroy();
+        }
         if (this.expressServer) {
+            this.logger.info("Tearing down express server");
             this.expressServer.close();
         }
     }

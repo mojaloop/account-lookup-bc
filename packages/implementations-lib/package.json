@@ -36,7 +36,7 @@
         "@mojaloop/logging-bc-public-types-lib": "~0.5.4",
         "@mojaloop/participant-bc-public-types-lib": "~0.5.5",
         "@mojaloop/participants-bc-client-lib": "~0.5.5",
-        "@mojaloop/security-bc-public-types-lib": "~0.5.7",
+        "@mojaloop/security-bc-public-types-lib": "~0.6.1",
         "@mojaloop/account-lookup-bc-domain-lib": "*",
         "axios": "~1.7.2",
         "mongodb": "6.7.0",
