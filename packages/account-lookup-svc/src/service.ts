@@ -82,7 +82,7 @@ const packageJSON = require("../package.json");
 
 const BC_NAME = "account-lookup-bc";
 const APP_NAME = "account-lookup-svc";
-const BC_VERSION = packageJSON.version;
+const APP_VERSION = packageJSON.version;
 
 // Logger
 // service constants
@@ -200,7 +200,7 @@ export class Service {
             logger = new KafkaLogger(
                 ACCOUNT_LOOKUP_BOUNDED_CONTEXT_NAME,
                 APP_NAME,
-                BC_VERSION,
+                APP_VERSION,
                 producerOptions,
                 KAFKA_LOGS_TOPIC,
                 LOG_LEVEL
@@ -262,7 +262,7 @@ export class Service {
             const labels: Map<string, string> = new Map<string, string>();
             labels.set("bc", BC_NAME);
             labels.set("app", APP_NAME);
-            labels.set("version", BC_VERSION);
+            labels.set("version", APP_VERSION);
             PrometheusMetrics.Setup({prefix: "", defaultLabels: labels}, this.logger);
             metrics = PrometheusMetrics.getInstance();
         }
@@ -287,7 +287,7 @@ export class Service {
             // setup privileges - bootstrap app privs and get priv/role associations
             authorizationClient = new AuthorizationClient(
                 BC_NAME,
-                BC_VERSION,
+                APP_VERSION,
                 AUTH_Z_SVC_BASEURL, 
                 logger.createChild("AuthorizationClient"),
                 authRequester,
@@ -344,7 +344,7 @@ export class Service {
     }
 
     static async setupTracing():Promise<void>{
-        OpenTelemetryClient.Start(BC_NAME, APP_NAME, BC_VERSION, INSTANCE_ID, this.logger);
+        OpenTelemetryClient.Start(BC_NAME, APP_NAME, APP_VERSION, INSTANCE_ID, this.logger);
     }
 
     static async setupAndStartExpress(): Promise<void> {
@@ -376,7 +376,7 @@ export class Service {
 
             this.expressServer = this.app.listen(SVC_DEFAULT_HTTP_PORT, () => {
                 this.logger.info(`🚀 Server ready on port ${SVC_DEFAULT_HTTP_PORT}`);
-                this.logger.info(`Oracle Admin and Account Lookup server v: ${BC_VERSION} started`);
+                this.logger.info(`Oracle Admin and Account Lookup server v: ${APP_VERSION} started`);
 
                 resolve();
             });
