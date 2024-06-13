@@ -286,10 +286,12 @@ export class Service {
 
             // setup privileges - bootstrap app privs and get priv/role associations
             authorizationClient = new AuthorizationClient(
-                BC_NAME, APP_NAME, APP_VERSION,
-                AUTH_Z_SVC_BASEURL, logger.createChild("AuthorizationClient"),
+                BC_NAME,
+                APP_VERSION,
+                AUTH_Z_SVC_BASEURL, 
+                logger.createChild("AuthorizationClient"),
                 authRequester,
-                messageConsumer
+                messageConsumer,
             );
             authorizationClient.addPrivilegesArray(AccountLookupPrivilegesDefinition);
             await (authorizationClient as AuthorizationClient).bootstrap(true);
@@ -382,17 +384,24 @@ export class Service {
     }
 
     static async stop(): Promise<void> {
-        this.logger.info("Tearing down the event handler");
-        await this.eventHandler.destroy();
-        this.logger.info("Tearing down message consumer");
-        await this.messageConsumer.destroy(true);
-        this.logger.info("Tearing down message producer");
-        await this.messageProducer.destroy();
-        this.logger.info("Tearing down tokenHelper");
-        await this.tokenHelper.destroy();
-
-        this.logger.info("Tearing down express server");
+        if (this.eventHandler) {
+            this.logger.info("Tearing down the event handler");
+            await this.eventHandler.destroy();
+        }
+        if (this.messageConsumer) {
+            this.logger.info("Tearing down message consumer");
+            await this.messageConsumer.destroy(true);
+        }
+        if (this.messageProducer) {
+            this.logger.info("Tearing down message producer");
+            await this.messageProducer.destroy();
+        }
+        if (this.tokenHelper) {
+            this.logger.info("Tearing down tokenHelper");
+            await this.tokenHelper.destroy();
+        }
         if (this.expressServer) {
+            this.logger.info("Tearing down express server");
             this.expressServer.close();
         }
     }
