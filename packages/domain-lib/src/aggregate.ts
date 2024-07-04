@@ -202,6 +202,9 @@ export class AccountLookupAggregate {
             switch (message.msgName) {
                 case PartyQueryReceivedEvt.name:
                     eventToPublish = await this._handlePartyQueryReceivedEvt(message as PartyQueryReceivedEvt);
+					if (message.fspiopOpaqueState.headers) {
+                        message.fspiopOpaqueState.headers["fspiop-destination"] = eventToPublish.payload.destinationFspId;
+                    }
                     break;
                 case PartyInfoAvailableEvt.name:
                     eventToPublish = await this._handlePartyInfoAvailableEvt(message as PartyInfoAvailableEvt);
