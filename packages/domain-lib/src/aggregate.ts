@@ -190,11 +190,12 @@ export class AccountLookupAggregate {
         const partyType = message.payload?.partyType ?? null;
         const currency = message.payload?.currency ?? null;
         const requesterFspId = message.payload?.requesterFspId ?? null;
-        // const fspiopOpaqueState = message.fspiopOpaqueState;
-        const errorMessage = this._validateMessageOrGetErrorEvent(message);
+
+		const errorMessage = this._validateMessageOrGetErrorEvent(message);
 
         if (errorMessage) {
-            errorMessage.fspiopOpaqueState = message.fspiopOpaqueState;
+			errorMessage.inboundProtocolType = message.inboundProtocolType;
+			errorMessage.inboundProtocolOpaqueState = message.inboundProtocolOpaqueState;
             return Promise.resolve(errorMessage);
         }
 
@@ -400,7 +401,6 @@ export class AccountLookupAggregate {
 			partyId: message.payload.partyId,
 			partySubType: message.payload.partySubType,
 			currency: message.payload.currency,
-			extensionList: message.payload.extensionList,
 			kycInfo: message.payload.kycInfo,
 			supportedCurrencies: message.payload.supportedCurrencies,
 		};
