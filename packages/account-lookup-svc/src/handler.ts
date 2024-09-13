@@ -150,8 +150,9 @@ export class AccountLookupEventHandler{
                     handlerTimerEndFn({success: "true"});
 
                     if (eventToPublish){
-                        // pass-through the opaque fspiop state
-                        eventToPublish.fspiopOpaqueState = message.fspiopOpaqueState;
+                        // pass-through the opaque state
+                        eventToPublish.inboundProtocolType = message.inboundProtocolType;
+                        eventToPublish.inboundProtocolOpaqueState = message.inboundProtocolOpaqueState;
 
                         // propagate tracingInfo to output event
                         eventToPublish.tracingInfo = {};

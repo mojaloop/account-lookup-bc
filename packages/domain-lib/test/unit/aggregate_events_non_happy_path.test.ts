@@ -128,7 +128,8 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     test("should publish InvalidMessageErrorPayload message if payload is invalid", async () => {
         // Arrange
         const message: IMessage = {
-            fspiopOpaqueState: "fake opaque state",
+            inboundProtocolType: "FSPIOP_v1_1",
+            inboundProtocolOpaqueState: "fake opaque state",
             msgId: "fake msg id",
             msgKey: "fake msg key",
             msgTopic: "fake msg topic",
@@ -160,7 +161,8 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
     test("should publish InvalidMessageTypeErrorEvent message if type is invalid", async () => {
         // Arrange
         const message: IMessage = {
-            fspiopOpaqueState: "fake opaque state",
+            inboundProtocolType: "FSPIOP_v1_1",
+            inboundProtocolOpaqueState: "fake opaque state",
             msgId: "fake msg id",
             msgKey: "fake msg key",
             msgTopic: "fake msg topic",
@@ -168,7 +170,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             msgOffset: 0,
             msgPartition: 0,
             msgTimestamp: 0,
-            msgType: "Invalid type" as unknown as MessageTypes.DOMAIN_EVENT,
+            msgType: "Invalid type" as unknown as MessageTypes,
             payload: {
                 partyId: "1",
                 partyType: "type",
@@ -198,7 +200,8 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
 
     test("should publish UnknownErrorEvent if an unhandled error occurs", async () => {
         const message: IMessage = {
-            fspiopOpaqueState: "fake opaque state",
+            inboundProtocolType: "FSPIOP_v1_1",
+            inboundProtocolOpaqueState: "fake opaque state",
             msgId: "fake msg id",
             msgKey: "fake msg key",
             msgTopic: "fake msg topic",
@@ -247,7 +250,8 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
         };
 
         const message: IMessage = {
-            fspiopOpaqueState: {
+            inboundProtocolType: "FSPIOP_v1_1",
+            inboundProtocolOpaqueState: {
                 fake: "fake opaque state",
             },
             msgId: "fake msg id",
@@ -1032,7 +1036,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             partyDoB: new Date(),
             name: "John Doe",
             destinationFspId,
-            extensionList: null,
             supportedCurrencies: null,
             kycInfo: null,
         };
@@ -1077,7 +1080,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             partyDoB: new Date(),
             name: "John Doe",
             destinationFspId: null as any,
-            extensionList: null,
             supportedCurrencies: null,
             kycInfo: null,
         };
@@ -1243,7 +1245,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
-                extensionList: null,
             },
         };
 
@@ -1283,7 +1284,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
-                extensionList: null,
             },
         };
 
@@ -1332,7 +1332,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
-                extensionList: null,
             },
         };
 
@@ -1372,7 +1371,6 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
-                extensionList: null,
             },
         };
 

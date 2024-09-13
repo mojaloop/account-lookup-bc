@@ -167,7 +167,8 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		};
 
 		const message: IMessage = {
-			fspiopOpaqueState: "fake opaque state",
+            inboundProtocolType: "FSPIOP_v1_1",
+            inboundProtocolOpaqueState: "fake opaque state",
 			msgId: "fake msg id",
 			msgKey: "fake msg key",
 			msgTopic: "fake msg topic",
@@ -302,7 +303,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			firstName: "Maria",
 			middleName: "P",
 			lastName: "Lee",
-			extensionList: null,
 			supportedCurrencies: null,
 			kycInfo: null,
 		};
@@ -326,7 +326,6 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			firstName: "Maria",
 			middleName: "P",
 			lastName: "Lee",
-			extensionList: null,
 			supportedCurrencies: null,
 			kycInfo: null,
 		};
