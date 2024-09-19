@@ -1038,6 +1038,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             destinationFspId,
             supportedCurrencies: null,
             kycInfo: null,
+            extensions: [],
         };
 
         const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
@@ -1082,6 +1083,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             destinationFspId: null as any,
             supportedCurrencies: null,
             kycInfo: null,
+            extensions: [],
         };
 
         const responsePayload: AccountLookupBCInvalidDestinationParticipantErrorPayload = {
@@ -1245,6 +1247,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
+                extensions: [],
             },
         };
 
@@ -1284,6 +1287,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
+                extensions: [],
             },
         };
 
@@ -1332,6 +1336,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
+                extensions: [],
             },
         };
 
@@ -1371,6 +1376,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             errorInformation: {
                 errorCode: "3200",
                 errorDescription: "Generic party error",
+                extensions: [],
             },
         };
 
@@ -1410,6 +1416,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             partyId: mockedPartyIds[0],
             partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[0],
+            extensions: [],
         };
 
         const responsePayload: AccountLookupBCInvalidRequesterParticipantErrorPayload = {
@@ -1439,6 +1446,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             partyId: mockedPartyIds[0],
             partySubType: mockedPartySubTypes[0],
             partyType: mockedPartyTypes[0],
+            extensions: [],
         };
 
         const responsePayload: AccountLookupBCUnableToGetOracleAdapterErrorPayload = {
@@ -1473,6 +1481,7 @@ describe("Domain - Unit Tests for aggregate events with non happy path", () => {
             partyId: mockedPartyIds[3],
             partySubType: mockedPartySubTypes[3],
             partyType: mockedPartyTypes[3],
+            extensions: [],
         };
 
         const responsePayload: AccountLookupBCUnableToAssociateParticipantErrorPayload = {
