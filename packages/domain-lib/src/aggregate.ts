@@ -403,6 +403,7 @@ export class AccountLookupAggregate {
 			currency: message.payload.currency,
 			kycInfo: message.payload.kycInfo,
 			supportedCurrencies: message.payload.supportedCurrencies,
+			extensions: message.payload.extensions
 		};
 
 		const event = new PartyQueryResponseEvt(payload);
@@ -696,7 +697,8 @@ export class AccountLookupAggregate {
 			partyId: message.payload.partyId,
 			ownerFspId: message.payload.ownerFspId,
 			partyType: message.payload.partyType,
-			partySubType: message.payload.partySubType
+			partySubType: message.payload.partySubType,
+			extensions: message.payload.extensions
 		};
 
 		const event = new ParticipantAssociationCreatedEvt(payload);

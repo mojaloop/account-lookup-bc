@@ -305,6 +305,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			lastName: "Lee",
 			supportedCurrencies: null,
 			kycInfo: null,
+			extensions: [],
 		};
 
 		jest.spyOn(participantService, "getParticipantInfo")
@@ -328,6 +329,7 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			lastName: "Lee",
 			supportedCurrencies: null,
 			kycInfo: null,
+			extensions: [],
 		};
 
 		// Act
@@ -405,7 +407,8 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			partyType,
 			ownerFspId,
 			partySubType,
-			currency: "USD"
+			currency: "USD",
+			extensions: [],
 		};
 
 		jest.spyOn(oracleFinder, "getAllOracles")
@@ -424,7 +427,8 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 			partyId,
 			partyType,
 			ownerFspId,
-			partySubType
+			partySubType,
+			extensions: [],
 		};
 
 		// Act
@@ -498,14 +502,12 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		const errorInformation = {
 			errorCode: "3200",
 			errorDescription: "Generic ID not found",
-			extensionList: {
-				extension: [
-					{
-						key: "key1",
-						value: "value1",
-					}
-				]
-			}
+			extensions: [
+				{
+					key: "key1",
+					value: "value1",
+				}
+			]
 		};
 
 		const payload: PartyRejectedEvtPayload = {
@@ -554,14 +556,12 @@ describe("Domain - Unit Tests Events for Account Lookup Aggregate", () => {
 		const errorInformation = {
 			errorCode: "3200",
 			errorDescription: "Generic ID not found",
-			extensionList: {
-				extension: [
-					{
-						key: "key1",
-						value: "value1",
-					}
-				]
-			}
+			extensions: [
+				{
+					key: "key1",
+					value: "value1",
+				}
+			]
 		};
 
 		const payload: ParticipantRejectedEvtPayload = {
