@@ -139,8 +139,8 @@ export class AccountLookupEventHandler{
                     kind: SpanKind.CONSUMER,
                     attributes: {
                         "msgName": message.msgName,
-                        "entityId": message.payload.partyId,
-                        "partyId": message.payload.partyId,
+                        "entityId": message.payload?.partyId,
+                        "partyId": message.payload?.partyId,
                         "batchSize": receivedMessages.length
                     }
                 };
@@ -173,7 +173,7 @@ export class AccountLookupEventHandler{
             this._logger.error(errorMessage, error);
             throw error;
         }finally {
-            if (outputEvents) {
+            if (outputEvents.length > 0) {
                 const timerEndFn_kafkaSend = this._histo.startTimer({
                     callName: "handleAccountLookUpEventBatch - producer send",
                 });
