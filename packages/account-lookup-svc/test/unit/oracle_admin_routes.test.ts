@@ -1,27 +1,26 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
  Contributors
  --------------
- This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ This is the official list of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '' in the first column. People who have
+ should be listed with a '*' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
- Gates Foundation organization for an example). Those individuals should have
+ Mojaloop Foundation for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+ * Mojaloop Foundation
+ - Name Surname <name.surname@mojaloop.io>
 
  * Coil
  - Jason Bruwer <jason.bruwer@coil.com>
@@ -146,7 +145,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
 	//#region Base router
     test("GET - should return 401 due to missing Authorization header", async () => {
-        // Arrange 
+        // Arrange
         const oracleId = "1fb2e1f3-c58e-9afe-8cfd-7e65eea2fca9";
 
         // Act
@@ -156,9 +155,9 @@ describe("Oracle Admin Routes - Unit Test", () => {
         // Assert
         expect(response.status).toBe(401);
     });
-    
+
     test("GET - should return 401 due to invalid Authorization header bearer", async () => {
-        // Arrange 
+        // Arrange
         const oracleId = "1fb2e1f3-c58e-9afe-8cfd-7e65eea2fca9";
 
         // Act
@@ -171,7 +170,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
     });
 
     test("GET - should throw general error with request to get a transfer by its id", async () => {
-        // Arrange 
+        // Arrange
         const oracleId = "1fb2e1f3-c58e-9afe-8cfd-7e65eea2fca9";
 
         jest.spyOn(mockedAuthorizationClient, "roleHasPrivilege")
@@ -237,7 +236,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
         jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
             .mockResolvedValueOnce(securityContext);
-            
+
         // Act
         const response = await request(serverBaseUrl)
             .get(`/oracles/${oracleId}`)
@@ -250,16 +249,16 @@ describe("Oracle Admin Routes - Unit Test", () => {
     test("GET - should give UnauthorizedError", async () => {
         // Arrange
         const oracleId = "existing-id";
-    
+
         jest.spyOn(aggregate, "getOracleById")
             .mockResolvedValueOnce({} as Oracle);
-    
-            
+
+
         // Act
         const response = await request(serverBaseUrl)
             .get(`/oracles/${oracleId}`)
             .set(`Authorization`, `Bearer ${accessToken}`);
-    
+
         // Assert
         expect(response.status).toBe(401);
     });
@@ -270,7 +269,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
 
-		// Act 
+		// Act
 		const response = await request(serverBaseUrl)
 			.get("/oracles")
 			.set(`Authorization`, `Bearer ${accessToken}`);
@@ -287,7 +286,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.get("/oracles")
@@ -324,7 +323,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 		// Arrange
 		jest.spyOn(mockedOracleFinder, "getAllOracles")
 			.mockRejectedValueOnce(new Error("Error fetching builtin oracle associations"));
-		
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
 
@@ -359,7 +358,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 		// Arrange
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-			
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.post("/oracles").send({
@@ -388,7 +387,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 				type: "builtin",
 				name: "oracle msisdn",
 				partyType: "MSISDN",
-			})		
+			})
 			.set(`Authorization`, `Bearer ${accessToken}`);
 
 		// Assert
@@ -405,7 +404,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 			.set(`Authorization`, `Bearer ${accessToken}`);
 
 		const oracleId = oracles.body[0].id;
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.get(`/oracles/${oracleId}`)
@@ -424,7 +423,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.get(`/oracles/${oracleId}`)
@@ -437,12 +436,12 @@ describe("Oracle Admin Routes - Unit Test", () => {
 	test("GET - should throw 500 if an error occurred while fetching oracle by id", async () => {
 		// Arrange
 		const oracleId = "invalid-id";
-		
+
 		jest.spyOn(mockedOracleFinder, "getOracleById").mockRejectedValueOnce(new Error("Error fetching oracle by id"));
 
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.get(`/oracles/${oracleId}`)
@@ -460,7 +459,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 		jest.spyOn(aggregate, "healthCheck")
 			.mockResolvedValueOnce(true);
 
-			
+
 		const oracles = await request(serverBaseUrl)
 			.get("/oracles")
 			.set(`Authorization`, `Bearer ${accessToken}`);
@@ -512,13 +511,13 @@ describe("Oracle Admin Routes - Unit Test", () => {
 	test("GET - should throw 500 if an error occurred while healtchecking an oracle by id", async () => {
 		// Arrange
 		const oracleId = "invalid-id";
-		
+
 		jest.spyOn(aggregate, "healthCheck")
 			.mockRejectedValueOnce(new Error("Error health checking oracle by id"));
-			
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.get(`/oracles/health/${oracleId}`)
@@ -556,7 +555,7 @@ describe("Oracle Admin Routes - Unit Test", () => {
 
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.delete(`/oracles/${oracleId}`)
@@ -585,12 +584,12 @@ describe("Oracle Admin Routes - Unit Test", () => {
 	test("DELETE - should throw 500 if an error occurred while deleting oracle by id", async () => {
 		// Arrange
 		const oracleId = "invalid-id";
-		
+
 		jest.spyOn(mockedOracleFinder, "getOracleById").mockRejectedValueOnce(new Error("Error deleting oracle by id"));
 
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 			.mockResolvedValueOnce(securityContext);
-		
+
 		// Act
 		const response = await request(serverBaseUrl)
 			.delete(`/oracles/${oracleId}`)
@@ -603,38 +602,38 @@ describe("Oracle Admin Routes - Unit Test", () => {
 	test("GET - should fetch an array of all oracle associations", async () => {
 		// Arrange
 		const expectedAssociations = mockedOracleAssociations;
-		
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 		  .mockResolvedValueOnce(securityContext);
-		
+
 		jest.spyOn(aggregate, "getAllOracleAssociations")
 		  .mockResolvedValueOnce(expectedAssociations as unknown as AssociationsSearchResults);
-	
+
 		// Act
 		const response = await request(serverBaseUrl)
 		  .get("/oracles/associations")
 		  .set(`Authorization`, `Bearer ${accessToken}`);
-	
+
 		// Assert
 		expect(response.status).toBe(200);
 		expect(Array.isArray(response.body)).toEqual(true);
 		expect(response.body.length).toBeGreaterThan(0);
 		expect(response.body).toEqual(expectedAssociations);
 	  });
-	
+
 	  test("GET - should throw 500 if an error occurred while fetching oracle associations", async () => {
 		// Arrange
 		jest.spyOn(aggregate, "getAllOracleAssociations")
 		  .mockRejectedValueOnce(new Error("Error fetching oracle associations"));
-	
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 		  .mockResolvedValueOnce(securityContext);
-	
+
 		// Act
 		const response = await request(serverBaseUrl)
 		  .get("/oracles/associations")
 		  .set(`Authorization`, `Bearer ${accessToken}`);
-	
+
 		// Assert
 		expect(response.status).toBe(500);
 		expect(response.body).toEqual(expect.objectContaining({
@@ -649,38 +648,38 @@ describe("Oracle Admin Routes - Unit Test", () => {
 			fieldName: "test",
 			distinctTerms: ["test1","test2"],
 		}];
-		
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 		  .mockResolvedValueOnce(securityContext);
-		
+
 		jest.spyOn(aggregate, "getSearchKeywords")
 		  .mockResolvedValueOnce(expectedSearchKeywords);
-	
+
 		// Act
 		const response = await request(serverBaseUrl)
 		  .get("/oracles/builtin-associations/searchKeywords")
 		  .set(`Authorization`, `Bearer ${accessToken}`);
-	
+
 		// Assert
 		expect(response.status).toBe(200);
 		expect(Array.isArray(response.body)).toEqual(true);
 		expect(response.body.length).toBeGreaterThan(0);
 		expect(response.body).toEqual(expectedSearchKeywords);
 	  });
-	  
+
 	  test("GET - should throw 500 if an error occurred while fetching oracle associations", async () => {
 		// Arrange
 		jest.spyOn(aggregate, "getSearchKeywords")
 		  .mockRejectedValueOnce(new Error("Error fetching search keywords"));
-	
+
 		jest.spyOn(mockedTokenHelper, "getCallSecurityContextFromAccessToken")
 		  .mockResolvedValueOnce(securityContext);
-	
+
 		// Act
 		const response = await request(serverBaseUrl)
 		  .get("/oracles/builtin-associations/searchKeywords")
 		  .set(`Authorization`, `Bearer ${accessToken}`);
-	
+
 		// Assert
 		expect(response.status).toBe(500);
 		expect(response.body).toEqual(expect.objectContaining({

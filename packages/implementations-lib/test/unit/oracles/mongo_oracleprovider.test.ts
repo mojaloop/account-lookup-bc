@@ -1,27 +1,26 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
  Contributors
  --------------
- This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ This is the official list of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '' in the first column. People who have
+ should be listed with a '*' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
- Gates Foundation organization for an example). Those individuals should have
+ Mojaloop Foundation for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+ * Mojaloop Foundation
+ - Name Surname <name.surname@mojaloop.io>
 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
@@ -163,7 +162,7 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
         redisConnectSpy.mockRejectedValueOnce(new Error("Redis connection error"));
 
         // Act & Assert
-        await expect(mongoOracleProviderRepo.init()).rejects.toThrow(Error); 
+        await expect(mongoOracleProviderRepo.init()).rejects.toThrow(Error);
         expect(mongoConnectSpy).toHaveBeenCalled();
         expect(redisConnectSpy).toHaveBeenCalled();
     });
@@ -203,7 +202,7 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
         const partySubType = "subtype";
         const currency = "USD";
         const expectedFspId = "fsp123";
-        redisGetSpy.mockResolvedValue(null); 
+        redisGetSpy.mockResolvedValue(null);
         findOneSpy.mockResolvedValue({ fspId: expectedFspId });
 
         // Act
@@ -221,7 +220,7 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
         const partyId = "id";
         const partySubType = null;
         const currency = null;
-        redisGetSpy.mockResolvedValue(null); 
+        redisGetSpy.mockResolvedValue(null);
         findOneSpy.mockResolvedValue(null);
 
         // Act
@@ -356,22 +355,22 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
           { _id: "2", partyId: "party456", fspId: "fsp456", partyType: "business", currency: "EUR" }
         ];
         toArraySpy.mockResolvedValue(mockAssociations);
-    
+
         // Act
         const result = await mongoOracleProviderRepo.getAllAssociations();
-    
+
         // Assert
         expect(result).toEqual([
           { partyId: "party123", fspId: "fsp123", partyType: "individual", currency: "USD" },
           { partyId: "party456", fspId: "fsp456", partyType: "business", currency: "EUR" }
         ]);
     });
-    
+
     it("should throw UnableToGetAssociationError if database query fails", async () => {
         // Arrange
         const error = new Error("Database error");
         toArraySpy.mockRejectedValue(error);
-    
+
         // Act & Assert
         await expect(mongoOracleProviderRepo.getAllAssociations()).rejects.toThrow(UnableToGetAssociationError);
     });
@@ -382,12 +381,12 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
           { partyId: "party123", fspId: "fsp123", partyType: "individual", currency: "USD", updatedAt: new Date() },
           { partyId: "party456", fspId: "fsp456", partyType: "business", currency: "EUR", updatedAt: new Date() }
         ];
-        toArraySpy.mockResolvedValueOnce(mockAssociations); 
-        toArraySpy.mockResolvedValueOnce(mockAssociations); 
-    
+        toArraySpy.mockResolvedValueOnce(mockAssociations);
+        toArraySpy.mockResolvedValueOnce(mockAssociations);
+
         // Act
         const results = await mongoOracleProviderRepo.searchAssociations(null, "party", null, null, null, 0, 20);
-    
+
         // Assert
         expect(results.items).toEqual(mockAssociations);
         expect(results.totalPages).toEqual(1);
@@ -430,8 +429,8 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
     // it('should handle errors during search operation', async () => {
     //     // Arrange
     //     const errorMessage = 'Search error';
-    //     toArraySpy.mockImplementationOnce(() => new Error(errorMessage)); 
-    
+    //     toArraySpy.mockImplementationOnce(() => new Error(errorMessage));
+
     //     // Act & Assert
     //     await expect(mongoOracleProviderRepo.searchAssociations(null, null, null, null, null, 0, 10))
     //         .rejects.toThrow(UnableToGetAssociationsError);
@@ -439,8 +438,8 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
 
     it('should handle pagination and limit results correctly', async () => {
         // Arrange
-        const mockItems = new Array(30).fill({ fspId: "fsp1", partyType: "type1", partyId: "party1" }); 
-        toArraySpy.mockResolvedValueOnce(mockItems.slice(0, 20)).mockResolvedValueOnce(mockItems); 
+        const mockItems = new Array(30).fill({ fspId: "fsp1", partyType: "type1", partyId: "party1" });
+        toArraySpy.mockResolvedValueOnce(mockItems.slice(0, 20)).mockResolvedValueOnce(mockItems);
 
         // Act
         const result = await mongoOracleProviderRepo.searchAssociations('fsp1', 'party1', 'type1', null, null, 1, 20);
@@ -462,7 +461,7 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
             [Symbol.asyncIterator]: jest.fn(() => ({
                 next: jest.fn()
                     .mockResolvedValueOnce({ value: amountTypeResult, done: false })
-                    .mockResolvedValueOnce({ done: true }), 
+                    .mockResolvedValueOnce({ done: true }),
             })),
         });
 
@@ -471,7 +470,7 @@ describe("Implementations - Mongo Oracle Provider Repo Unit Tests", () => {
             { fieldName: 'currency', distinctTerms: ['USD'] },
             { fieldName: 'fspId', distinctTerms: ['FSP1'] },
         ];
-        
+
         // Act
         const result = await mongoOracleProviderRepo.getSearchKeywords();
 
