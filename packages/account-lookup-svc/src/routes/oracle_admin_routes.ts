@@ -1,27 +1,26 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
  Contributors
  --------------
- This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ This is the official list of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '' in the first column. People who have
+ should be listed with a '*' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
- Gates Foundation organization for an example). Those individuals should have
+ Mojaloop Foundation for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+ * Mojaloop Foundation
+ - Name Surname <name.surname@mojaloop.io>
 
  * Coil
  - Jason Bruwer <jason.bruwer@coil.com>
@@ -112,7 +111,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
     private async getAllBuiltinOracleAssociations(req: express.Request, res: express.Response, _next: express.NextFunction) {
         try {
             this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
-            
+
             if (!this.validateRequest(req, res)) {
                 return;
             }
@@ -243,14 +242,14 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             });
         }
     }
-    
+
     private async getAllOracleAssociations(req: express.Request, res: express.Response, _next: express.NextFunction) {
         const fspId = req.query.fspId as string || null;
         const partyId = req.query.partyId as string || null;
         const partyType = req.query.partyType as string || null;
         const partySubType = req.query.partySubType as string || null;
         const currency = req.query.currency as string || null;
- 
+
 
         // optional pagination
         const pageIndexStr = req.query.pageIndex as string || req.query.pageindex as string;
@@ -262,7 +261,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
 
         try{
             this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);
-            
+
             if (!this.validateRequest(req, res)) {
                 return;
             }
@@ -286,7 +285,7 @@ export class OracleAdminExpressRoutes extends BaseRoutes {
             });
         }
     }
-    
+
     private async _getSearchKeywords(req: express.Request, res: express.Response){
         try{
             this._enforcePrivilege(req.securityContext!, AccountLookupPrivileges.VIEW_ALL_ORACLE_ASSOCIATIONS);

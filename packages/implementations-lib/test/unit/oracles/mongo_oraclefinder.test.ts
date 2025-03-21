@@ -1,27 +1,26 @@
 /**
  License
  --------------
- Copyright © 2021 Mojaloop Foundation
+ Copyright © 2020-2025 Mojaloop Foundation
+ The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
 
- The Mojaloop files are made available by the Mojaloop Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License.
-
- You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+ http://www.apache.org/licenses/LICENSE-2.0
 
  Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
  Contributors
  --------------
- This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ This is the official list of the Mojaloop project contributors for this file.
  Names of the original copyright holders (individuals or organizations)
- should be listed with a '' in the first column. People who have
+ should be listed with a '*' in the first column. People who have
  contributed from an organization can be listed under the organization
  that actually holds the copyright for their contributions (see the
- Gates Foundation organization for an example). Those individuals should have
+ Mojaloop Foundation for an example). Those individuals should have
  their names indented and be marked with a '-'. Email address can be added
  optionally within square brackets <email>.
 
- * Gates Foundation
- - Name Surname <name.surname@gatesfoundation.com>
+ * Mojaloop Foundation
+ - Name Surname <name.surname@mojaloop.io>
 
  * Arg Software
  - José Antunes <jose.antunes@arg.software>
@@ -31,7 +30,7 @@
  **/
 
  "use strict";
- 
+
  import { MongoClient } from 'mongodb';
  import { MongoOracleFinderRepo } from '../../../src/oracles/mongo_oraclefinder'; // adjust path as necessary
  import { ConsoleLogger, ILogger, LogLevel } from '@mojaloop/logging-bc-public-types-lib';
@@ -96,8 +95,8 @@ jest.mock('mongodb', () => {
         Collection: mockCollection,
     };
 });
- 
-  
+
+
 const connectionString = 'mongodb://localhost:27017';
 const dbName = 'testDB';
 
@@ -114,7 +113,7 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
     });
 
     it('should initialize the MongoDB connection and oracles collection', async () => {
-        // Act 
+        // Act
         await mongoOraclesRepo.init();
 
         // Assert
@@ -179,10 +178,10 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
             name: mockOracle.name,
             endpoint: mockOracle.endpoint,
         };
-    
+
         const errorMessage = 'Find error';
         mongoFindOneSpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.addOracle(mockOracle)).rejects.toThrow(UnableToGetOracleError);
     });
@@ -209,36 +208,36 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
         // Act & Assert
         await expect(mongoOraclesRepo.addOracle(mockOracle)).rejects.toThrow(UnableToRegisterOracleError);
     });
-      
+
     it('should remove oracle from the collection', async () => {
         // Arrange
         const oracleId = 'testOracleId';
         const deleteResult = { deletedCount: 1 };
         mongoDeleteOneSpy.mockResolvedValueOnce(deleteResult);
-    
+
         // Act
         await mongoOraclesRepo.removeOracle(oracleId);
-    
+
         // Assert
         expect(mongoDeleteOneSpy).toHaveBeenCalledWith({ id: oracleId });
     });
-    
+
     it('should throw NoSuchOracleError when oracle with given id does not exist', async () => {
         // Arrange
         const oracleId = 'nonExistentOracleId';
         const deleteResult = { deletedCount: 0 };
         mongoDeleteOneSpy.mockResolvedValueOnce(deleteResult);
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.removeOracle(oracleId)).rejects.toThrow(NoSuchOracleError);
     });
-    
+
     it('should throw UnableToDeleteOracleError when unable to delete oracle', async () => {
         // Arrange
         const oracleId = 'testOracleId';
         const errorMessage = 'Delete error';
         mongoDeleteOneSpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.removeOracle(oracleId)).rejects.toThrow(UnableToDeleteOracleError);
     });
@@ -247,21 +246,21 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
         // Arrange
         const mockOracles = [{}, {}]; // Mocked oracles array
         const toArrayResult = mockOracles.map((oracle) => ({ ...oracle }));
-    
+
         mongoToArraySpy.mockResolvedValueOnce(toArrayResult);
-    
+
         // Act
         const result = await mongoOraclesRepo.getAllOracles();
-    
+
         // Assert
         expect(result).toEqual(mockOracles);
     });
-    
+
     it('should throw UnableToGetOracleError when unable to retrieve oracles', async () => {
         // Arrange
         const errorMessage = 'Find error';
         mongoToArraySpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.getAllOracles()).rejects.toThrow(UnableToGetOracleError);
     });
@@ -271,34 +270,34 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
         const oracleId = 'testOracleId';
         const mockOracle = { id: oracleId }; // Mocked oracle object
         mongoFindOneSpy.mockResolvedValueOnce(mockOracle);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracleById(oracleId);
-    
+
         // Assert
         expect(result).toEqual(mockOracle);
         expect(mongoFindOneSpy).toHaveBeenCalledWith({ id: oracleId });
     });
-    
+
     it('should return null when oracle with given id does not exist', async () => {
         // Arrange
         const nonExistentOracleId = 'nonExistentOracleId';
         mongoFindOneSpy.mockResolvedValueOnce(null);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracleById(nonExistentOracleId);
-    
+
         // Assert
         expect(result).toBeNull();
         expect(mongoFindOneSpy).toHaveBeenCalledWith({ id: nonExistentOracleId });
     });
-    
+
     it('should throw UnableToGetOracleError when unable to retrieve oracle by id', async () => {
         // Arrange
         const oracleId = 'testOracleId';
         const errorMessage = 'Find error';
         mongoFindOneSpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.getOracleById(oracleId)).rejects.toThrow(UnableToGetOracleError);
     });
@@ -308,34 +307,34 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
         const oracleName = 'testOracleName';
         const mockOracle = { name: oracleName }; // Mocked oracle object
         mongoFindOneSpy.mockResolvedValueOnce(mockOracle);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracleByName(oracleName);
-    
+
         // Assert
         expect(result).toEqual(mockOracle);
         expect(mongoFindOneSpy).toHaveBeenCalledWith({ name: oracleName });
     });
-    
+
     it('should return null when oracle with given name does not exist', async () => {
         // Arrange
         const nonExistentOracleName = 'nonExistentOracleName';
         mongoFindOneSpy.mockResolvedValueOnce(null);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracleByName(nonExistentOracleName);
-    
+
         // Assert
         expect(result).toBeNull();
         expect(mongoFindOneSpy).toHaveBeenCalledWith({ name: nonExistentOracleName });
     });
-    
+
     it('should throw UnableToGetOracleError when unable to retrieve oracle by name', async () => {
         // Arrange
         const oracleName = 'testOracleName';
         const errorMessage = 'Find error';
         mongoFindOneSpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.getOracleByName(oracleName)).rejects.toThrow(UnableToGetOracleError);
     });
@@ -346,53 +345,53 @@ describe("Implementations - Mongo Oracles Repo Unit Tests", () => {
         const currency = 'testCurrency';
         const mockOracles = [{ partyType: partyType, currency: currency }, { partyType: partyType, currency: 'otherCurrency' }];
         const toArrayResult = mockOracles.map((oracle) => ({ ...oracle }));
-    
+
         mongoToArraySpy.mockResolvedValueOnce(toArrayResult);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracle(partyType, currency);
-    
+
         // Assert
         expect(result).toEqual(mockOracles[0]);
         expect(mongoToArraySpy).toHaveBeenCalledWith();
     });
-    
+
     it('should return oracle by partyType only if currency is null', async () => {
         // Arrange
         const partyType = 'testPartyType';
         const currency = null;
         const mockOracle = { partyType: partyType, currency: 'testCurrency' };
         const toArrayResult = [mockOracle];
-    
+
         mongoToArraySpy.mockResolvedValueOnce(toArrayResult);
-    
+
         // Act
         const result = await mongoOraclesRepo.getOracle(partyType, currency);
-    
+
         // Assert
         expect(result).toEqual(mockOracle);
         expect(mongoToArraySpy).toHaveBeenCalledWith();
     });
-    
+
     it('should return null when oracle with given partyType and currency does not exist', async () => {
         // Arrange
         const partyType = 'nonExistentPartyType';
         const currency = 'nonExistentCurrency';
         const toArrayResult:Oracle[] = [];
-    
+
         mongoToArraySpy.mockResolvedValueOnce(toArrayResult);
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.getOracle(partyType, currency)).rejects.toThrow(NoSuchOracleError);
     });
-    
+
     it('should throw NoSuchOracleError when unable to retrieve oracle by partyType and currency', async () => {
         // Arrange
         const partyType = 'testPartyType';
         const currency = 'testCurrency';
         const errorMessage = 'Find error';
         mongoToArraySpy.mockRejectedValueOnce(new Error(errorMessage));
-    
+
         // Act & Assert
         await expect(mongoOraclesRepo.getOracle(partyType, currency)).rejects.toThrow(UnableToGetOracleError);
     });
