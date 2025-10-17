@@ -1,4 +1,12 @@
-# account-lookup-bc
+# [DEPRECATED] account-lookup-bc
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+**Deprecation Notice**: This repo was deprecated as of October 2025. It is no longer maintained, and is no longer referenced by any releases of Mojaloop.
+
+For a list of active Mojaloop repos, please refer to [Mojaloop documentation](https://docs.mojaloop.io) or [Mojaloop GitHub Org](https://github.com/mojaloop).
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
 **EXPERIMENTAL** vNext Account Lookup Bounded Context
 
 [![Git Commit](https://img.shields.io/github/last-commit/mojaloop/account-lookup-bc.svg?style=flat)](https://github.com/mojaloop/account-lookup-bc/commits/master)
